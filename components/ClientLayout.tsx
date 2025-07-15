@@ -63,6 +63,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     backgroundSize: "contain",
                     height: "88%",
                     backgroundClip: "content-box",
+                    backgroundColor: "#101111", // dark gray (tailwind zinc-900)
+                    // You can tweak the color as needed
                   }}
                   className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
                 >

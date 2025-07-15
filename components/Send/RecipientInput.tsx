@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { ActionButton } from "../Common/ActionButton";
 
 interface RecipientInputProps {
   recipientAddress: string;
@@ -32,12 +33,7 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
           className="mt-2 text-base tracking-tight leading-none text-neutral-600 bg-transparent outline-none placeholder:text-neutral-600"
         />
       </div>
-      <button
-        onClick={onChooseRecipient}
-        className="flex overflow-hidden gap-1.5 justify-center items-center px-2.5 pt-1.5 pb-2 text-sm font-medium tracking-normal leading-none text-white whitespace-nowrap bg-blue-500 rounded-xl shadow hover:bg-blue-600 transition-colors"
-      >
-        Choose
-      </button>
+      <ActionButton text="Choose" onClick={onChooseRecipient} />
     </section>
   );
 };
