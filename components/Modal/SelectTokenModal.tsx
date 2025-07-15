@@ -26,7 +26,7 @@ export function SelectTokenModal({ isOpen, onClose }: ModalProp<SelectTokenModal
               Choose token
             </h1>
           </div>
-          <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6" onClick={onClose} />
+          <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />
         </header>
 
         <main className="flex flex-col gap-3 items-start self-stretch px-1.5 pt-1.5 pb-5">

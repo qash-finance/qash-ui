@@ -1,12 +1,12 @@
 "use client";
-import React, { useState } from "react";
-import { NavSection } from "./NavSection";
+import React, { useState, useEffect } from "react";
+import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import Account from "./Account";
 import { useRouter, usePathname } from "next/navigation";
 
 interface NavProps {
-  onActionItemClick?: (index: number) => void;
+  onActionItemClick?: (sectionIndex: number, itemIndex: number) => void;
   onTeamItemClick?: (index: number) => void;
   onConnectWallet?: () => void;
 }
@@ -16,46 +16,70 @@ export enum SidebarLink {
   Dashboard = "dashboard/pending-recieve",
   Send = "send",
   Batch = "batch",
+  Gift = "gift",
   GroupPayment = "group-payment",
   AddressBook = "address-book",
+  AccountManagement = "account-management",
+  Transactions = "transactions",
 }
 
 const actionItems = [
-  { icon: "/sidebar/dashboard.svg", label: "Dashboard", isActive: true, link: SidebarLink.Dashboard },
-  { icon: "/sidebar/send.svg", label: "Send", isActive: false, link: SidebarLink.Send },
-  { icon: "/sidebar/batch.svg", label: "Batch", isActive: false, link: SidebarLink.Batch },
-  { icon: "/sidebar/group-payment.svg", label: "Group Payment", isActive: false, link: SidebarLink.GroupPayment },
-  { icon: "/sidebar/address-book.svg", label: "Address Book", isActive: false, link: SidebarLink.AddressBook },
-];
-
-const teamItems = [
-  { icon: "/sidebar/account-management.svg", label: "Account Management", isActive: false },
-  { icon: "/sidebar/transaction.svg", label: "Transaction", isActive: false },
+  {
+    title: "Action",
+    items: [
+      { icon: "/sidebar/dashboard.gif", label: "Dashboard", isActive: true, link: SidebarLink.Dashboard },
+      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send },
+      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift },
+      { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch },
+      { icon: "/sidebar/group-payment.gif", label: "Group Payment", isActive: false, link: SidebarLink.GroupPayment },
+      { icon: "/sidebar/address-book.gif", label: "Address Book", isActive: false, link: SidebarLink.AddressBook },
+    ],
+  },
+  {
+    title: "Team",
+    items: [
+      {
+        icon: "/sidebar/account-management.gif",
+        label: "Account Management",
+        isActive: false,
+        link: SidebarLink.AccountManagement,
+      },
+      { icon: "/sidebar/transactions.gif", label: "Transactions", isActive: false, link: SidebarLink.Transactions },
+    ],
+  },
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, onTeamItemClick, onConnectWallet }) => {
-  // Remove actionItemsState, just use actionItems
-  const [teamItemsState, setTeamItems] = useState(teamItems);
   const [isConnected, setIsConnected] = useState(false);
+  const [action, setActions] = useState(actionItems);
   const router = useRouter();
   const pathname = usePathname();
 
-  const handleActionItemClick = (index: number) => {
-    // No need to set isActive, it's derived from pathname
-    const link = actionItems[index].link;
+  useEffect(() => {
+    setActions(prev =>
+      prev.map(section => ({
+        ...section,
+        items: section.items.map(item => ({
+          ...item,
+          isActive: item.label === "Dashboard" ? pathname?.startsWith("/dashboard") : pathname?.includes(item.link),
+        })),
+      })),
+    );
+  }, [pathname]);
+
+  const handleActionItemClick = (sectionIndex: number, itemIndex: number) => {
+    const link = action[sectionIndex].items[itemIndex].link;
+    setActions(prev =>
+      prev.map((section, sIdx) => ({
+        ...section,
+        items: section.items.map((item, i) => ({
+          ...item,
+          isActive: sIdx === sectionIndex && i === itemIndex,
+        })),
+      })),
+    );
     router.push(`/${link}`);
-    onActionItemClick?.(index);
-  };
-
-  // Compute isActive for each item based on pathname
-  const actionItemsWithActive = actionItems.map(item => ({
-    ...item,
-    isActive: pathname === `/${item.link}`,
-  }));
-
-  const handleTeamItemClick = (index: number) => {
-    setTeamItems(items => items.map((item, i) => ({ ...item, isActive: i === index })));
-    onTeamItemClick?.(index);
+    onActionItemClick?.(sectionIndex, itemIndex);
   };
 
   const handleConnectWallet = () => {
@@ -79,14 +103,9 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, onTeamItemClick
               <span className="self-stretch my-auto text-neutral-500">Beta</span>
             </div>
           </header>
-
           <div className="h-[1px] bg-neutral-700 my-3" />
-
           {/* Action */}
-          <NavSection title="Action" items={actionItemsWithActive} onItemClick={handleActionItemClick} />
-
-          {/* Team */}
-          <NavSection title="Team" items={teamItemsState} onItemClick={handleTeamItemClick} />
+          <NavSections sections={action} onItemClick={handleActionItemClick} />
         </div>
 
         {/* Account */}

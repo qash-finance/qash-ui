@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { AmountInput } from "./AmountInput";
 import { RecipientInput } from "./RecipientInput";
 import { TransactionOptions } from "./TransactionOptions";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS } from "@/types/modal";
 
 export const SendTransactionForm: React.FC = () => {
   const [amount, setAmount] = useState("0.00");
@@ -12,6 +14,7 @@ export const SendTransactionForm: React.FC = () => {
   const [privateTransaction, setPrivateTransaction] = useState(false);
   const [recallableTime, setRecallableTime] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const { openModal } = useModal();
 
   const handleTokenSelect = () => {
     // In a real app, this would open a token selection modal
@@ -19,8 +22,7 @@ export const SendTransactionForm: React.FC = () => {
   };
 
   const handleChooseRecipient = () => {
-    // In a real app, this would open a contacts modal
-    console.log("Choose recipient clicked");
+    openModal(MODAL_IDS.SELECT_RECIPIENT);
   };
 
   const handleChooseRecallableTime = () => {

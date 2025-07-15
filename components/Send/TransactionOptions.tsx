@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
-import { ToggleSwitch } from "./ToggleSwitch";
+import { ToggleSwitch } from "../Common/ToggleSwitch";
+import { ActionButton } from "../Common/ActionButton";
 
 interface TransactionOptionsProps {
   sendAsGift: boolean;
@@ -50,12 +51,7 @@ export const TransactionOptions: React.FC<TransactionOptionsProps> = ({
             Get your money back after recallable time expires
           </p>
         </div>
-        <button
-          onClick={onChooseRecallableTime}
-          className="flex overflow-hidden gap-1.5 justify-center items-center px-2.5 pt-1.5 pb-2 text-sm font-medium tracking-normal leading-none text-white whitespace-nowrap bg-blue-500 rounded-xl shadow hover:bg-blue-600 transition-colors"
-        >
-          Choose
-        </button>
+        <ActionButton text="Choose" onClick={onChooseRecallableTime} className="" />
       </section>
     </div>
   );
