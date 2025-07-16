@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/services/auth/context";
+import { AuthenticatedApiClient } from "@/services/api";
 
 export interface WalletAuthHook {
   // Auth state
@@ -19,6 +20,9 @@ export interface WalletAuthHook {
   // Utilities
   isSessionValid: () => boolean;
   getSessionToken: () => string | null;
+
+  // Authenticated API client
+  api: AuthenticatedApiClient;
 }
 
 export function useWalletAuth(): WalletAuthHook {
@@ -27,6 +31,14 @@ export function useWalletAuth(): WalletAuthHook {
 
   // Combine auth error with local error
   const error = auth.error || localError;
+
+  // Create authenticated API client
+  const api = new AuthenticatedApiClient(
+    process.env.NEXT_PUBLIC_SERVER_URL || "",
+    () => auth.sessionToken,
+    () => auth.refreshToken(),
+    () => auth.logout(),
+  );
 
   const clearError = useCallback(() => {
     auth.clearError();
@@ -84,6 +96,7 @@ export function useWalletAuth(): WalletAuthHook {
     clearError,
     isSessionValid: auth.isSessionValid,
     getSessionToken,
+    api,
   };
 }
 
@@ -106,47 +119,37 @@ export function useAuthGuard(redirectTo?: string) {
   };
 }
 
-// Hook for making authenticated API calls
+// Hook for making authenticated API calls (alternative approach)
 export function useAuthenticatedApi() {
-  const { getSessionToken, isAuthenticated } = useWalletAuth();
+  const { api, isAuthenticated } = useWalletAuth();
 
   const makeAuthenticatedRequest = useCallback(
-    async (url: string, options: RequestInit = {}) => {
+    async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, data?: any) => {
       if (!isAuthenticated) {
         throw new Error("Not authenticated");
       }
 
-      const token = getSessionToken();
-      if (!token) {
-        throw new Error("No session token available");
+      switch (method) {
+        case "GET":
+          return await api.getData(url);
+        case "POST":
+          return await api.postData(url, data);
+        case "PUT":
+          return await api.putData(url, data);
+        case "PATCH":
+          return await api.patchData(url, data);
+        case "DELETE":
+          return await api.deleteData(url);
+        default:
+          throw new Error(`Unsupported HTTP method: ${method}`);
       }
-
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...options.headers,
-      };
-
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({
-          message: "Request failed",
-          statusCode: response.status,
-        }));
-        throw new Error(error.message || "Request failed");
-      }
-
-      return response.json();
     },
-    [getSessionToken, isAuthenticated],
+    [api, isAuthenticated],
   );
 
   return {
     makeAuthenticatedRequest,
+    api,
     isAuthenticated,
   };
 }
