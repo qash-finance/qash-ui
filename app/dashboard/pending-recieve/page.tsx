@@ -1,5 +1,5 @@
-import DashboardContainer from "@/components/Dashboard/PendingRecieve/DashboardContainer";
+import { PendingRecieveContainer } from "@/components/Dashboard/PendingRecieve/PendingRecieveContainer";
 
 export default function PendingReceivePage() {
-  return <DashboardContainer />;
+  return <PendingRecieveContainer />;
 }

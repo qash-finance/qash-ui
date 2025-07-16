@@ -1,5 +1,5 @@
 import * as React from "react";
-import { StatusBadge } from "./StatusBadge";
+import { StatusBadge } from "../../Common/StatusBadge";
 
 interface RequestHistoryRowProps {
   amount: string;
@@ -40,7 +40,7 @@ export const RequestHistoryRow: React.FC<RequestHistoryRowProps> = ({
         </div>
       </td>
       <td className=" gap-2.5 items-start px-2.5 py-2 border border-solid border-zinc-800 w-[78px] max-md:w-[70px] max-sm:w-[60px]">
-        <StatusBadge status={status} />
+        <StatusBadge status={status} text={status} />
       </td>
       <td className=" justify-center items-center p-2.5 w-9 h-9 border border-solid border-zinc-800">
         <img src="/external-link-icon.svg" alt="external-link-icon" className="w-4 h-4" />

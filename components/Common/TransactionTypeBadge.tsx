@@ -6,7 +6,7 @@ interface TransactionBadgeProps {
   className?: string;
 }
 
-export function TransactionBadge({ type, className = "" }: TransactionBadgeProps) {
+export function TransactionTypeBadge({ type, className = "" }: TransactionBadgeProps) {
   const isP2IDR = type === "P2ID-R";
 
   return (

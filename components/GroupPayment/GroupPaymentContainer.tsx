@@ -2,8 +2,11 @@
 import * as React from "react";
 import { GroupCard } from "./GroupCard";
 import { PaymentDetails } from "./PaymentDetails";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS } from "@/types/modal";
 
 const GroupPaymentContainer: React.FC = () => {
+  const { openModal } = useModal();
   const groupsData = [
     {
       imageSrc: "/group-payment/default-group-payment-avatar.svg",
@@ -49,7 +52,9 @@ const GroupPaymentContainer: React.FC = () => {
               boxShadow:
                 "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset",
             }}
-            onClick={() => {}}
+            onClick={() => {
+              openModal(MODAL_IDS.CREATE_NEW_GROUP);
+            }}
           >
             New group
           </button>

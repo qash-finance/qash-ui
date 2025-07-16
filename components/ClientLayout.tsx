@@ -4,7 +4,7 @@ import { ReactNode, useMemo } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
-import toast, { Toaster } from "react-hot-toast";
+import toast, { resolveValue, ToastBar, Toaster } from "react-hot-toast";
 import { WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import ConnectWalletButton from "./ConnectWallet/ConnectWalletButton";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
