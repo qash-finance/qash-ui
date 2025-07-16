@@ -1,10 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useAnalytics } from './analytics-context';
-import {
-  AnalyticsEventType,
-  TrackEventDto,
-  TrackTransactionDto,
-} from './analytics-types';
+import { useCallback, useEffect, useState } from "react";
+import { useAnalytics } from "../../contexts/AnalyticsProvider";
+import { AnalyticsEventType, TrackEventDto } from "../../types/analytics";
 
 export function useAnalyticsTracking() {
   const analytics = useAnalytics();
@@ -15,7 +11,7 @@ export function useAnalyticsTracking() {
       analytics.trackEvent({
         eventType: AnalyticsEventType.ENDPOINT_CALL,
         metadata: {
-          action: 'button_click',
+          action: "button_click",
           buttonName,
           ...metadata,
         },
@@ -29,7 +25,7 @@ export function useAnalyticsTracking() {
       analytics.trackEvent({
         eventType: AnalyticsEventType.ENDPOINT_CALL,
         metadata: {
-          action: 'form_submit',
+          action: "form_submit",
           formName,
           formData,
         },
@@ -43,7 +39,7 @@ export function useAnalyticsTracking() {
       analytics.trackEvent({
         eventType: AnalyticsEventType.USER_SESSION,
         metadata: {
-          action: 'wallet_connect',
+          action: "wallet_connect",
           walletAddress,
           walletType,
         },
@@ -56,7 +52,7 @@ export function useAnalyticsTracking() {
     analytics.trackEvent({
       eventType: AnalyticsEventType.USER_SESSION,
       metadata: {
-        action: 'wallet_disconnect',
+        action: "wallet_disconnect",
       },
     });
   }, [analytics]);
@@ -71,7 +67,7 @@ export function useAnalyticsTracking() {
       metadata?: Record<string, any>;
     }) => {
       analytics.trackTransaction({
-        transactionType: 'gift',
+        transactionType: "gift",
         token: transaction.token,
         amount: transaction.amount,
         senderAddress: transaction.senderAddress,
@@ -92,7 +88,7 @@ export function useAnalyticsTracking() {
       metadata?: Record<string, any>;
     }) => {
       analytics.trackTransaction({
-        transactionType: 'group_payment',
+        transactionType: "group_payment",
         token: transaction.token,
         amount: transaction.amount,
         senderAddress: transaction.senderAddress,
@@ -113,7 +109,7 @@ export function useAnalyticsTracking() {
       metadata?: Record<string, any>;
     }) => {
       analytics.trackTransaction({
-        transactionType: 'request_payment',
+        transactionType: "request_payment",
         token: transaction.token,
         amount: transaction.amount,
         senderAddress: transaction.senderAddress,
@@ -130,7 +126,7 @@ export function useAnalyticsTracking() {
       analytics.trackEvent({
         eventType: AnalyticsEventType.ENDPOINT_CALL,
         metadata: {
-          action: 'error',
+          action: "error",
           errorMessage: error.message,
           errorStack: error.stack,
           context,
@@ -154,11 +150,7 @@ export function useAnalyticsTracking() {
 }
 
 // Hook for dashboard data with automatic refresh
-export function useAnalyticsDashboard(
-  startDate?: string,
-  endDate?: string,
-  refreshInterval?: number,
-) {
+export function useAnalyticsDashboard(startDate?: string, endDate?: string, refreshInterval?: number) {
   const analytics = useAnalytics();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -171,9 +163,7 @@ export function useAnalyticsDashboard(
       const data = await analytics.fetchDashboardData(startDate, endDate);
       setDashboardData(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to fetch dashboard data',
-      );
+      setError(err instanceof Error ? err.message : "Failed to fetch dashboard data");
     } finally {
       setLoading(false);
     }
@@ -199,10 +189,7 @@ export function useAnalyticsDashboard(
 }
 
 // Hook for real-time active sessions
-export function useActiveSessions(
-  userAddress?: string,
-  refreshInterval: number = 30000,
-) {
+export function useActiveSessions(userAddress?: string, refreshInterval: number = 30000) {
   const analytics = useAnalytics();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,9 +202,7 @@ export function useActiveSessions(
       const data = await analytics.fetchActiveSessions(userAddress);
       setSessions(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to fetch active sessions',
-      );
+      setError(err instanceof Error ? err.message : "Failed to fetch active sessions");
     } finally {
       setLoading(false);
     }
@@ -282,18 +267,18 @@ export function usePagePerformance() {
       analytics.trackEvent({
         eventType: AnalyticsEventType.PAGE_VIEW,
         metadata: {
-          action: 'page_load',
+          action: "page_load",
           loadTime: loadTime,
           page: window.location.pathname,
         },
       });
     };
 
-    if (document.readyState === 'complete') {
+    if (document.readyState === "complete") {
       handleLoad();
     } else {
-      window.addEventListener('load', handleLoad);
-      return () => window.removeEventListener('load', handleLoad);
+      window.addEventListener("load", handleLoad);
+      return () => window.removeEventListener("load", handleLoad);
     }
   }, [analytics]);
 
@@ -312,12 +297,12 @@ export function useOfflineAnalytics() {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -329,7 +314,7 @@ export function useOfflineAnalytics() {
           try {
             await analytics.trackEvent(event);
           } catch (error) {
-            console.error('Failed to process pending event:', error);
+            console.error("Failed to process pending event:", error);
           }
         }
         setPendingEvents([]);
@@ -344,7 +329,7 @@ export function useOfflineAnalytics() {
       if (isOnline) {
         return analytics.trackEvent(event);
       } else {
-        setPendingEvents((prev) => [...prev, event]);
+        setPendingEvents(prev => [...prev, event]);
       }
     },
     [isOnline, analytics],

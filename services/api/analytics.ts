@@ -10,7 +10,7 @@ import {
   AnalyticsReport,
   AnalyticsEvent,
   AnalyticsSession,
-} from './analytics-types';
+} from "../../types/analytics";
 
 export class AnalyticsService {
   private config: AnalyticsConfig;
@@ -19,20 +19,12 @@ export class AnalyticsService {
     this.config = config;
   }
 
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
+  private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.config.baseUrl}${endpoint}`;
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     };
-
-    // Add API key if available
-    if (this.config.apiKey) {
-      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-    }
 
     const response = await fetch(url, {
       ...options,
@@ -40,17 +32,13 @@ export class AnalyticsService {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Analytics API error: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`Analytics API error: ${response.status} ${response.statusText}`);
     }
 
     // Handle blob responses (for file downloads)
     if (
-      response.headers.get('content-type')?.includes('text/csv') ||
-      response.headers
-        .get('content-type')
-        ?.includes('application/vnd.openxmlformats')
+      response.headers.get("content-type")?.includes("text/csv") ||
+      response.headers.get("content-type")?.includes("application/vnd.openxmlformats")
     ) {
       return response.blob() as Promise<T>;
     }
@@ -59,36 +47,36 @@ export class AnalyticsService {
   }
 
   async trackEvent(event: TrackEventDto): Promise<void> {
-    await this.makeRequest('/analytics/track/event', {
-      method: 'POST',
+    await this.makeRequest("/analytics/track/event", {
+      method: "POST",
       body: JSON.stringify(event),
     });
   }
 
   async trackPageView(pageView: TrackPageViewDto): Promise<void> {
-    await this.makeRequest('/analytics/track/page-view', {
-      method: 'POST',
+    await this.makeRequest("/analytics/track/page-view", {
+      method: "POST",
       body: JSON.stringify(pageView),
     });
   }
 
   async trackTransaction(transaction: TrackTransactionDto): Promise<void> {
-    await this.makeRequest('/analytics/track/transaction', {
-      method: 'POST',
+    await this.makeRequest("/analytics/track/transaction", {
+      method: "POST",
       body: JSON.stringify(transaction),
     });
   }
 
   async startSession(session: StartSessionDto): Promise<{ sessionId: string }> {
-    return this.makeRequest('/analytics/session/start', {
-      method: 'POST',
+    return this.makeRequest("/analytics/session/start", {
+      method: "POST",
       body: JSON.stringify(session),
     });
   }
 
   async endSession(session: EndSessionDto): Promise<void> {
-    await this.makeRequest('/analytics/session/end', {
-      method: 'POST',
+    await this.makeRequest("/analytics/session/end", {
+      method: "POST",
       body: JSON.stringify(session),
     });
   }
@@ -103,38 +91,33 @@ export class AnalyticsService {
       });
     }
 
-    const endpoint = `/analytics/events${params.toString() ? `?${params.toString()}` : ''}`;
+    const endpoint = `/analytics/events${params.toString() ? `?${params.toString()}` : ""}`;
     return this.makeRequest(endpoint);
   }
 
   async getActiveSessions(userAddress?: string): Promise<AnalyticsSession[]> {
     const params = new URLSearchParams();
     if (userAddress) {
-      params.append('userAddress', userAddress);
+      params.append("userAddress", userAddress);
     }
 
-    const endpoint = `/analytics/sessions/active${params.toString() ? `?${params.toString()}` : ''}`;
+    const endpoint = `/analytics/sessions/active${params.toString() ? `?${params.toString()}` : ""}`;
     return this.makeRequest(endpoint);
   }
 
-  async generateReport(
-    report: GenerateReportDto,
-  ): Promise<AnalyticsReport | Blob> {
-    return this.makeRequest('/analytics/report/generate', {
-      method: 'POST',
+  async generateReport(report: GenerateReportDto): Promise<AnalyticsReport | Blob> {
+    return this.makeRequest("/analytics/report/generate", {
+      method: "POST",
       body: JSON.stringify(report),
     });
   }
 
-  async getDashboardData(
-    startDate?: string,
-    endDate?: string,
-  ): Promise<AnalyticsReport> {
+  async getDashboardData(startDate?: string, endDate?: string): Promise<AnalyticsReport> {
     const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
 
-    const endpoint = `/analytics/dashboard${params.toString() ? `?${params.toString()}` : ''}`;
+    const endpoint = `/analytics/dashboard${params.toString() ? `?${params.toString()}` : ""}`;
     return this.makeRequest(endpoint);
   }
 
@@ -143,7 +126,7 @@ export class AnalyticsService {
     timestamp: string;
     service: string;
   }> {
-    return this.makeRequest('/analytics/health');
+    return this.makeRequest("/analytics/health");
   }
 }
 
@@ -154,7 +137,7 @@ export function generateSessionId(): string {
 
 // Helper function to get browser information
 export function getBrowserInfo() {
-  if (typeof window === 'undefined') return { userAgent: '', referer: '' };
+  if (typeof window === "undefined") return { userAgent: "", referer: "" };
 
   return {
     userAgent: navigator.userAgent,
