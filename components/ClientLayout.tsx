@@ -4,7 +4,7 @@ import { ReactNode, useMemo } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
-import toast, { Toaster } from "react-hot-toast";
+import toast, { resolveValue, ToastBar, Toaster } from "react-hot-toast";
 import { WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import ConnectWalletButton from "./ConnectWallet/ConnectWalletButton";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
@@ -45,7 +45,40 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <QueryClientProvider client={queryClient}>
       <WalletProvider wallets={wallets} autoConnect onError={handleError}>
         <WalletModalProvider>
-          <Toaster />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                padding: "0px",
+                background: "#2B2B2B",
+              },
+              success: {
+                icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
+                style: {
+                  color: "#7CFF96",
+                },
+              },
+            }}
+            children={t => (
+              <ToastBar
+                toast={t}
+                style={{
+                  width: "360px",
+                  maxWidth: "900px",
+                  ...t.style,
+                }}
+              >
+                {({ icon, message }) => (
+                  <div className="flex gap-0.5 items-center rounded-[13px]">
+                    {icon}
+                    <span className="text-sm">{message}</span>
+                    <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
+                    <span className="text-[#929292] text-xs p-2 pr-0">Close</span>
+                  </div>
+                )}
+              </ToastBar>
+            )}
+          />
           <ModalProvider>
             {/* <ConnectWalletButton /> */}
             <ModalManager />

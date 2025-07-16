@@ -3,6 +3,7 @@ import * as React from "react";
 import { ActionButton } from "../Common/ActionButton";
 import { SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
+import { ModalHeader } from "../Common/ModalHeader";
 
 interface AddressItemProps {
   name: string;
@@ -100,17 +101,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="flex flex-col items-center rounded-2xl border border-solid bg-[#1E1E1E] border-zinc-800 h-[490px] w-[500px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[490px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:min-h-[400px] max-sm:w-[95%]">
         {/* Header */}
-        <header className="flex justify-between items-center self-stretch pt-2.5 pr-2.5 pb-2 pl-4 border-b border-solid bg-zinc-800 rounded-t-2xl border-b-neutral-900 max-sm:py-2 max-sm:pr-2 max-sm:pl-3">
-          <div className="flex gap-1.5 items-center">
-            <div className="flex justify-center items-center p-0.5 w-5 h-5 rounded-md bg-neutral-900">
-              <img src="/modal/choose-address-icon.gif" alt="" className="shrink-0 w-4 h-4" />
-            </div>
-            <h1 className="text-base font-medium tracking-tight leading-4 text-white max-md:text-base max-sm:text-sm">
-              Choose address
-            </h1>
-          </div>
-          <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />
-        </header>
+        <ModalHeader title="Choose address" onClose={onClose} icon="/modal/choose-address-icon.gif" />
 
         {/* Main */}
         <main className="flex flex-col gap-3 items-start self-stretch p-1.5 flex-[1_0_0]">

@@ -1,26 +1,16 @@
 "use client";
-import * as React from "react";
+import React, { useState } from "react";
 import { ToggleSwitch } from "../Common/ToggleSwitch";
 import { ActionButton } from "../Common/ActionButton";
+import { ModalHeader } from "../Common/ModalHeader";
+import { ModalProp } from "@/contexts/ModalManagerProvider";
+import { ModulesSetupProps } from "@/types/modal";
 
 interface Signer {
   id: number;
   name: string;
   address: string;
 }
-
-interface ModulesSetupProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-  signers?: Signer[];
-  whitelistingEnabled?: boolean;
-  onWhitelistingChange?: (enabled: boolean) => void;
-  onRemoveSigner?: (id: number) => void;
-  onAddNewAddress?: () => void;
-  onCancel?: () => void;
-  onSave?: () => void;
-}
-
 interface SignerRowProps {
   number: number;
   name: string;
@@ -88,17 +78,15 @@ const signers = [
   { id: 3, name: "John Smith", address: "0xda5541C4Aa25B300aa1f12473b8c4341297d3sd2" },
 ];
 
-export const SetupModulesModal: React.FC<ModulesSetupProps> = ({
-  isOpen = true,
+export const SetupModulesModal = ({
+  isOpen,
   onClose,
-  whitelistingEnabled = false,
-  onWhitelistingChange,
   onRemoveSigner,
   onAddNewAddress,
   onCancel,
   onSave,
-}) => {
-  const [whitelisting, setWhitelisting] = React.useState(whitelistingEnabled);
+}: ModalProp<ModulesSetupProps>) => {
+  const [whitelisting, setWhitelisting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -106,20 +94,7 @@ export const SetupModulesModal: React.FC<ModulesSetupProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className="flex flex-col items-center mx-auto my-0 rounded-xl  bg-[#1E1E1E] h-[553px] w-[950px] max-md:h-auto max-md:max-w-[600px] max-md:w-[90%] max-sm:mx-auto max-sm:my-2.5 max-sm:w-[95%]">
         {/* Header */}
-        <header className="flex justify-between items-center pt-2.5 pr-2.5 pb-2 pl-4 w-full rounded-t-xl bg-[#292929] border-b border-solid border-b-neutral-900 max-sm:py-2 max-sm:pr-2 max-sm:pl-3">
-          <div className="flex gap-1.5 items-center">
-            <div className="flex justify-center items-center p-0.5 w-5 h-5 rounded-md bg-neutral-900">
-              <img
-                src="/sidebar/account-management.gif"
-                alt="account-management"
-                className="shrink-0 h-[17px] w-[17px]"
-                style={{ filter: "grayscale(100%)" }}
-              />
-            </div>
-            <h1 className="text-base font-medium tracking-tight leading-4 text-white max-sm:text-sm">Modules setup</h1>
-          </div>
-          <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />
-        </header>
+        <ModalHeader title="Modules setup" onClose={onClose} icon="/sidebar/account-management.gif" />
 
         <div className="flex flex-1 gap-1.5 items-center p-1.5 w-full max-md:flex-col max-md:gap-3">
           {/* Sidebar */}
