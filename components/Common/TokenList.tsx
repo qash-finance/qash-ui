@@ -30,7 +30,7 @@ export function TokenList() {
   return (
     <section className="flex flex-col gap-2.5 items-start self-stretch">
       <h2 className="self-stretch text-base tracking-tighter leading-5 text-white max-sm:px-1 max-sm:py-0 max-sm:text-sm">
-        Your token (3)
+        Your token ({tokens.length})
       </h2>
       <div className="flex flex-col gap-0.5 items-start self-stretch">
         {tokens.map((token, index) => (
