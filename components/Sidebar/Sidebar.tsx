@@ -4,6 +4,8 @@ import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import Account from "./Account";
 import { useRouter, usePathname } from "next/navigation";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 interface NavProps {
   onActionItemClick?: (sectionIndex: number, itemIndex: number) => void;
@@ -49,11 +51,12 @@ const actionItems = [
   },
 ];
 
-export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, onTeamItemClick, onConnectWallet }) => {
-  const [isConnected, setIsConnected] = useState(false);
+export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
+  const { connected } = useWallet();
   const [action, setActions] = useState(actionItems);
   const router = useRouter();
   const pathname = usePathname();
+  const { isAuthenticated } = useWalletAuth();
 
   useEffect(() => {
     setActions(prev =>
@@ -82,11 +85,6 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, onTeamItemClick
     onActionItemClick?.(sectionIndex, itemIndex);
   };
 
-  const handleConnectWallet = () => {
-    setIsConnected(true);
-    onConnectWallet?.();
-  };
-
   return (
     <nav className="overflow-hidden pt-3.5 rounded-lg bg-neutral-900 max-w-[400px] h-screen">
       <div className="flex flex-col justify-between h-full">
@@ -107,9 +105,8 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, onTeamItemClick
           {/* Action */}
           <NavSections sections={action} onItemClick={handleActionItemClick} />
         </div>
-
-        {/* Account */}
-        {isConnected ? <Account /> : <Connect onConnectWallet={handleConnectWallet} />}
+        {/* Connect/Account section */}
+        {connected && isAuthenticated ? <Account /> : <Connect />}
       </div>
     </nav>
   );

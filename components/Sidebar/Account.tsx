@@ -1,11 +1,15 @@
 "use client";
+import { formatAddress } from "@/services/utils/address";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import * as React from "react";
 
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
+  const { disconnect, publicKey } = useWallet();
+
   return (
-    <article className="overflow-hidden bg-white rounded-xl h-[130px] flex flex-col">
+    <article className="overflow-hidden w-full font-medium bg-white rounded-xl h-[130px] ">
       {/* Account Info */}
       <section className="flex flex-col justify-center px-3 w-full text-blue-600 whitespace-nowrap h-4/6">
         <header className="flex items-center w-full text-sm font-medium tracking-tight">
@@ -15,7 +19,7 @@ export const Account: React.FC<AccountProps> = () => {
               className="object-contain shrink-0 self-stretch my-auto w-7 aspect-square"
               alt="miden logo icon"
             />
-            <span className="self-stretch my-auto text-blue-600">0xBB...37e</span>
+            <span className="self-stretch my-auto text-blue-600">{formatAddress(publicKey?.toString() || "0x")}</span>
             <img
               src="/copy-icon.svg"
               className="object-contain shrink-0 self-stretch my-auto w-4 aspect-square"
@@ -23,6 +27,7 @@ export const Account: React.FC<AccountProps> = () => {
             />
           </div>
           <img
+            onClick={() => disconnect()}
             src="/power-button.svg"
             className="object-contain shrink-0 self-stretch my-auto w-5 aspect-square"
             alt="power button icon"
