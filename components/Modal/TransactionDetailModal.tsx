@@ -8,6 +8,7 @@ import { ShareSection } from "../Common/ShareSection";
 import { TransactionDetailModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { BatchTransaction } from "../Common/BatchTransaction";
+import BaseModal from "./BaseModal";
 
 const signers: any[] = [
   { id: 1, name: "Maxie", address: "0xda5541C4Aa25B300aa1f12473b8c4341297d3sd2", status: "succeed" },
@@ -26,10 +27,8 @@ export function TransactionDetailModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="flex flex-col items-center rounded-2xl border border-solid bg-stone-900 border-zinc-800 max-h-[800px] overflow-y-auto">
-        <ModalHeader title="Send transaction" onClose={onClose} icon="/modal/coin-icon.gif" />
-
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Send transaction" icon="/modal/coin-icon.gif">
+      <div className="flex flex-col items-center rounded-b-2xl border border-solid bg-stone-900 border-zinc-800 max-h-[800px] overflow-y-auto">
         <main className="flex flex-col gap-1.5 items-start self-stretch px-1.5 pt-1.5 pb-5 flex-[1_0_0] max-md:gap-2.5 max-md:px-1.5 max-md:pt-1.5 max-md:pb-5 max-sm:gap-2 max-sm:px-1 max-sm:pt-1 max-sm:pb-4">
           <TransactionSummary />
 
@@ -84,7 +83,7 @@ export function TransactionDetailModal({
         {/* Share */}
         <ShareSection onDeny={onDeny} onAccept={onAccept} onCopyLink={onCopyLink} />
       </div>
-    </div>
+    </BaseModal>
   );
 }
 

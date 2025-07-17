@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Barlow } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "../components/ClientLayout";
+import localFont from "next/font/local";
+
+const repetitionScrolling = localFont({
+  src: "../public/fonts/repet___.ttf",
+  variable: "--font-repetition-scrolling",
+  display: "swap",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,19 +18,24 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
+const barlow = Barlow({
+  weight: "500",
+  subsets: ["latin"],
+});
 export const metadata: Metadata = {
-  title: "Q3x Miden",
-  description: "Q3x Miden",
+  title: "Q3x",
+  description: "Q3x",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/q3x-icon.svg",
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${barlow.className} ${repetitionScrolling.variable} antialiased`}
+      >
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

@@ -55,7 +55,40 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <QueryClientProvider client={queryClient}>
       <WalletProvider wallets={wallets} autoConnect onError={handleError}>
         <WalletModalProvider>
-          <Toaster />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                padding: "0px",
+                background: "#2B2B2B",
+              },
+              success: {
+                icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
+                style: {
+                  color: "#7CFF96",
+                },
+              },
+            }}
+            children={t => (
+              <ToastBar
+                toast={t}
+                style={{
+                  width: "full",
+                  maxWidth: "900px",
+                  ...t.style,
+                }}
+              >
+                {({ icon, message }) => (
+                  <div className="flex gap-0.5 items-center rounded-[13px]">
+                    {icon}
+                    <span className="text-sm">{message}</span>
+                    <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
+                    <span className="text-[#929292] text-xs p-2">Close</span>
+                  </div>
+                )}
+              </ToastBar>
+            )}
+          />
           <AnalyticsProvider config={analyticsConfig}>
             <AuthProvider
               apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}

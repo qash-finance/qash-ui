@@ -5,6 +5,7 @@ import { ActionButton } from "../Common/ActionButton";
 import { ModalHeader } from "../Common/ModalHeader";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { ModulesSetupProps } from "@/types/modal";
+import BaseModal from "./BaseModal";
 
 interface Signer {
   id: number;
@@ -91,11 +92,8 @@ export const SetupModulesModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="flex flex-col items-center mx-auto my-0 rounded-xl  bg-[#1E1E1E] h-[553px] w-[950px] max-md:h-auto max-md:max-w-[600px] max-md:w-[90%] max-sm:mx-auto max-sm:my-2.5 max-sm:w-[95%]">
-        {/* Header */}
-        <ModalHeader title="Modules setup" onClose={onClose} icon="/sidebar/account-management.gif" />
-
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Modules setup" icon="/sidebar/account-management.gif">
+      <div className="flex flex-col items-center mx-auto my-0 rounded-b-2xl  bg-[#1E1E1E] h-[553px] w-[950px] max-md:h-auto max-md:max-w-[600px] max-md:w-[90%] max-sm:mx-auto max-sm:my-2.5 max-sm:w-[95%]">
         <div className="flex flex-1 gap-1.5 items-center p-1.5 w-full max-md:flex-col max-md:gap-3">
           {/* Sidebar */}
           <aside className="flex flex-col items-start h-full rounded-md bg-[#292929] w-[350px] max-md:order-2 max-md:w-full">
@@ -207,7 +205,7 @@ export const SetupModulesModal = ({
           </main>
         </div>
       </div>
-    </div>
+    </BaseModal>
   );
 };
 

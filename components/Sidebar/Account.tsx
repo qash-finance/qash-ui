@@ -29,7 +29,7 @@ export const Account: React.FC<AccountProps> = () => {
           <img
             onClick={() => disconnect()}
             src="/power-button.svg"
-            className="object-contain shrink-0 self-stretch my-auto w-5 aspect-square"
+            className="object-contain shrink-0 self-stretch my-auto w-5 aspect-square cursor-pointer"
             alt="power button icon"
           />
         </header>
@@ -41,8 +41,11 @@ export const Account: React.FC<AccountProps> = () => {
             <span className="self-stretch my-auto text-sm font-medium tracking-tight text-blue-600">0xd...s78</span>
             <img
               src="/copy-icon.svg"
-              className="object-contain shrink-0 self-stretch my-auto w-3.5 aspect-square"
+              className="object-contain shrink-0 self-stretch my-auto w-3.5 aspect-square filter-blue"
               alt="copy icon"
+              style={{
+                filter: "invert(32%) sepia(99%) saturate(749%) hue-rotate(186deg) brightness(98%) contrast(101%)",
+              }}
             />
           </div>
           <img

@@ -3,14 +3,15 @@ import React from "react";
 import { SelectTokenModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import SendTransactionForm from "../Send/SendTransactionForm";
+import BaseModal from "./BaseModal";
 
 export function SendModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Send transaction" icon="/modal/coin-icon.gif">
       <SendTransactionForm />
-    </div>
+    </BaseModal>
   );
 }
 

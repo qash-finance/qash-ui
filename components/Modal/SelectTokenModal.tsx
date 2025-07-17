@@ -4,6 +4,7 @@ import { TokenList } from "../Common/TokenList";
 import { SelectTokenModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { ModalHeader } from "../Common/ModalHeader";
+import BaseModal from "./BaseModal";
 
 export function SelectTokenModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,11 +16,8 @@ export function SelectTokenModal({ isOpen, onClose }: ModalProp<SelectTokenModal
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Select token" icon="/modal/coin-icon.gif">
       <div className="flex flex-col items-center rounded-2xl border border-solid bg-stone-900 border-zinc-800 h-[472px] w-[500px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[472px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:w-[95%]">
-        {/* Header */}
-        <ModalHeader title="Select token" onClose={onClose} icon="/modal/coin-icon.gif" />
-
         <main className="flex flex-col gap-3 items-start self-stretch px-1.5 pt-1.5 pb-5">
           {/* Token search input */}
           <div className="flex flex-col gap-1.5 items-start self-stretch px-1 py-0 rounded-xl bg-zinc-800">
@@ -35,7 +33,7 @@ export function SelectTokenModal({ isOpen, onClose }: ModalProp<SelectTokenModal
           <TokenList />
         </main>
       </div>
-    </div>
+    </BaseModal>
   );
 }
 

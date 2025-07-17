@@ -41,7 +41,7 @@ export const SendTransactionForm: React.FC = () => {
   };
 
   return (
-    <main className="p-2 rounded-xl bg-zinc-900 w-[600px]">
+    <main className="p-2 rounded-b-2xl bg-zinc-900 w-[600px]">
       <AmountInput amount={amount} onAmountChange={setAmount} selectedToken={selectedToken} />
 
       <RecipientInput

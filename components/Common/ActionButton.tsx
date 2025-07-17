@@ -50,6 +50,9 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   };
 
   const getBoxShadow = () => {
+    if (disabled)
+      return "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset";
+
     switch (type) {
       case "accept":
         return "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset";
@@ -65,7 +68,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   return (
     <button
       className={`font-barlow font-medium text-white transition-colors cursor-pointer ${className} ${
-        disabled ? "bg-blue-900 cursor-not-allowed" : getButtonStyles()
+        disabled ? "bg-[#1E578E] cursor-not-allowed text-[#8E8E8E]" : getButtonStyles()
       }`}
       style={{
         padding: "6px 10px 8px 10px",
