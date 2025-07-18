@@ -10,6 +10,12 @@ const repetitionScrolling = localFont({
   display: "swap",
 });
 
+const DFVN = localFont({
+  src: "../public/fonts/DFVN_36daysoftype.ttf",
+  variable: "--font-dfvn",
+  display: "swap",
+});
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

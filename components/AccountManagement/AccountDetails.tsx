@@ -39,7 +39,7 @@ export function AccountDetails() {
       <section className="flex flex-col gap-2.5 items-start self-stretch">
         <div className="flex gap-2.5 items-center self-stretch">
           <div className="flex flex-col gap-1 justify-center items-start flex-[1_0_0]">
-            <h3 className="text-base font-medium leading-4 text-center text-white">Account modules</h3>
+            <h3 className="text-base font-medium leading-4 text-center text-white">Account features</h3>
             <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500">Description</p>
           </div>
           <button
@@ -58,7 +58,7 @@ export function AccountDetails() {
               openModal(MODAL_IDS.MODULES_SETUP);
             }}
           >
-            Setup modules
+            Account features
           </button>
         </div>
         <ModulesList />
@@ -66,7 +66,7 @@ export function AccountDetails() {
 
       <section className="flex flex-col gap-2.5 items-start self-stretch">
         <div className="flex flex-col gap-1 justify-center items-start self-stretch">
-          <h3 className="text-base font-medium leading-4 text-center text-white">Signers list</h3>
+          <h3 className="text-base font-medium leading-4 text-center text-white">Co-owners list</h3>
           <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500">
             Set the signer and how many need to confirm to execute a valid transaction
           </p>

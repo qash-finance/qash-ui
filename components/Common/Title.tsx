@@ -36,6 +36,9 @@ export const Title = () => {
     case "/gift":
       title = "Gift";
       break;
+    case "/gift/open-gift":
+      title = "Open Gift";
+      break;
     case "/address-book":
       title = "Address Book";
       break;

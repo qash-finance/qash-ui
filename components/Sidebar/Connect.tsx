@@ -134,15 +134,15 @@ export const Connect = () => {
         }
       `}</style>
 
-      <section className="overflow-hidden w-full font-medium bg-white rounded-xl h-[130px] flex items-center justify-center">
-        <div className="flex flex-col justify-center py-2.5 w-full">
+      <section className="overflow-hidden w-full font-medium bg-white rounded-xl h-[140px] flex items-center justify-center">
+        <div className="flex flex-col justify-center w-full h-full">
           {!connected ? (
             <>
               <div className="flex flex-col items-center w-full text-sm tracking-tight leading-none text-blue-600">
                 <img src="/q3x-icon.svg" alt="Q3x" className="w-6 h-6 mb-2" />
                 <p className="text-blue-600">Welcome to Q3x</p>
               </div>
-              <div className="mt-1.5 w-full">
+              <div className="mt-1.5 w-full p-2">
                 <SafeWalletButton
                   connected={connected}
                   style={{
@@ -154,9 +154,7 @@ export const Connect = () => {
             </>
           ) : (
             <>
-              <div className="flex flex-col items-center w-full text-sm tracking-tight leading-none text-green-600">
-                <Account />
-              </div>
+              <Account />
               {/* <div className="mt-1.5 w-full">
                 <SafeWalletButton 
                   connected={connected}

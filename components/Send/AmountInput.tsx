@@ -1,6 +1,4 @@
 "use client";
-import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS } from "@/types/modal";
 import * as React from "react";
 
 interface AmountInputProps {
@@ -8,10 +6,6 @@ interface AmountInputProps {
   onAmountChange: (amount: string) => void;
   selectedToken: string;
   availableBalance?: number; // add this prop
-}
-
-interface PercentageButtonsProps {
-  onPercentageSelect: (percentage: number | "MAX") => void;
 }
 
 const percentages = [25, 50, 75] as const;
@@ -22,8 +16,6 @@ export const AmountInput: React.FC<AmountInputProps> = ({
   selectedToken,
   availableBalance = 0,
 }) => {
-  const { openModal } = useModal();
-
   const handlePercentageSelect = (percentage: number | "MAX") => {
     let newAmount: string;
     if (percentage === "MAX") {
@@ -35,40 +27,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
   };
 
   return (
-    <section className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-xl bg-[#292929]">
-      {/* Title */}
-      <header className="flex flex-wrap gap-5 justify-between self-stretch px-3 py-2 w-full bg-[#2D2D2D] row-span-1">
-        <h2 className="text-white mt-0.5">Sending</h2>
-        <div className="flex gap-2 items-center text-sm font-medium leading-none">
-          <div className="flex gap-5 justify-between py-0.5 pr-0.5 pl-2 rounded-[10px] bg-neutral-900">
-            <input
-              type="text"
-              readOnly
-              value={amount}
-              onChange={e => onAmountChange(e.target.value)}
-              placeholder="0.00"
-              className="bg-transparent text-white outline-none w-20"
-            />
-            <button className="flex flex-col justify-center py-1 px-2 rounded-[10px] bg-zinc-800 hover:bg-zinc-700 transition-colors outline-none">
-              <div
-                className="flex gap-1 items-center cursor-pointer"
-                onClick={() => {
-                  openModal(MODAL_IDS.SELECT_TOKEN);
-                }}
-              >
-                <img src="/token/usdt.svg" alt="Token" className="w-5 h-5" />
-                <span className="text-white">{selectedToken}</span>
-                <img
-                  src="/arrow/filled-arrow-down.svg"
-                  alt="Dropdown arrow"
-                  className="object-contain shrink-0 aspect-[1.75] fill-white w-[7px]"
-                />
-              </div>
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <>
       {/* Amount */}
       <div className="flex flex-col text-5xl font-medium leading-none text-center align-middle row-span-5">
         <input
@@ -109,6 +68,6 @@ export const AmountInput: React.FC<AmountInputProps> = ({
           <span className="text-white">MAX</span>
         </button>
       </section>
-    </section>
+    </>
   );
 };

@@ -15,10 +15,11 @@ interface NavProps {
 
 // Enum for sidebar links
 export enum SidebarLink {
-  Dashboard = "dashboard/pending-recieve",
+  Dashboard = "dashboard",
   Send = "send",
   Batch = "batch",
   Gift = "gift",
+  AIAssistant = "ai-assistant",
   GroupPayment = "group-payment",
   AddressBook = "address-book",
   AccountManagement = "account-management",
@@ -32,6 +33,7 @@ const actionItems = [
       { icon: "/sidebar/dashboard.gif", label: "Dashboard", isActive: true, link: SidebarLink.Dashboard },
       { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send },
       { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift },
+      { icon: "/sidebar/ai-assistant.gif", label: "AI Assistant", isActive: false, link: SidebarLink.AIAssistant },
       { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch },
       { icon: "/sidebar/group-payment.gif", label: "Group Payment", isActive: false, link: SidebarLink.GroupPayment },
       { icon: "/sidebar/address-book.gif", label: "Address Book", isActive: false, link: SidebarLink.AddressBook },
@@ -64,7 +66,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
         ...section,
         items: section.items.map(item => ({
           ...item,
-          isActive: item.label === "Dashboard" ? pathname?.startsWith("/dashboard") : pathname?.includes(item.link),
+          isActive: pathname?.startsWith(`/${item.link}`),
         })),
       })),
     );

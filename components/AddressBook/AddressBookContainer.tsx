@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AddressCard } from "./AddressCard";
+import { CreateAddressCard } from "./CreateAddressCard";
 
 export function AddressBookContainer() {
   const [reveal, setReveal] = useState(false);
@@ -22,7 +23,17 @@ export function AddressBookContainer() {
             height: reveal ? "100%" : "0px",
           }}
         >
-          <img
+          <div
+            style={{
+              position: "absolute",
+              top: "45%",
+              left: "47.5%",
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <CreateAddressCard />
+          </div>
+          {/* <img
             src="/address-book/no-address.gif"
             alt="no-address"
             className="w-20 h-20"
@@ -43,7 +54,7 @@ export function AddressBookContainer() {
             }}
           >
             No address
-          </span>
+          </span> */}
           <img src="/address-book/funnel.svg" alt="funnel" className="w-full" />
         </div>
       </div>
