@@ -16,9 +16,9 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
   return (
     <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
       <img
-        src="/default-avatar-icon.svg"
+        src="/default-avatar-icon.png"
         alt="Recipient avatar"
-        className="object-contain shrink-0 aspect-square w-[33px]"
+        className="object-contain shrink-0 aspect-square w-[40px]"
       />
       <div className="flex flex-col flex-1 shrink justify-center basis-5 min-w-60">
         <div className="flex gap-2 items-center self-start whitespace-nowrap">

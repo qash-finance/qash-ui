@@ -111,6 +111,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         <AmountInput amount={amount} onAmountChange={setAmount} selectedToken={selectedToken} />
       </section>
 
+      <RecipientInput
+        recipientAddress={recipientAddress}
+        onRecipientChange={setRecipientAddress}
+        onChooseRecipient={handleChooseRecipient}
+      />
+
       <TransactionOptions
         sendAsGift={sendAsGift}
         privateTransaction={privateTransaction}
