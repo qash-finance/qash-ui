@@ -14,8 +14,8 @@ export enum AmountInputTab {
 }
 
 interface SendTransactionFormProps {
-  activeTab: AmountInputTab;
-  onTabChange: (tab: AmountInputTab) => void;
+  activeTab?: AmountInputTab;
+  onTabChange?: (tab: AmountInputTab) => void;
 }
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
@@ -77,7 +77,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                 activeTab === "send" ? "bg-zinc-800" : ""
               } cursor-pointer`}
               onClick={() => {
-                onTabChange(AmountInputTab.SEND);
+                onTabChange?.(AmountInputTab.SEND);
               }}
             >
               <span
@@ -94,7 +94,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                   activeTab === AmountInputTab.STREAM ? "bg-zinc-800" : ""
                 } cursor-pointer`}
                 onClick={() => {
-                  onTabChange(AmountInputTab.STREAM);
+                  onTabChange?.(AmountInputTab.STREAM);
                 }}
               >
                 <span

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { CopyLinkButton } from "./CopyLinkButton";
 
 interface TransactionRowProps {
   id: string;
