@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import ReceiveAddress from "./ReceiveAddress";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { ToggleSwitch } from "@/components/Common/ToggleSwitch";
+import { MODAL_IDS } from "@/types/modal";
+import { useModal } from "@/contexts/ModalManagerProvider";
 
 const mockData = [
   {
@@ -90,6 +92,7 @@ const TableRow = ({
 
 export const PendingRecieveContainer: React.FC = () => {
   const [autoClaim, setAutoClaim] = useState(false);
+  const { openModal } = useModal();
   return (
     <div className="flex w-full h-full bg-black rounded-xl text-white p-6 space-y-6 gap-4">
       <div className="flex-3">
@@ -157,7 +160,13 @@ export const PendingRecieveContainer: React.FC = () => {
       </div>
 
       <div className="flex-1">
-        <ReceiveAddress />
+        <ReceiveAddress
+          onEnterAmount={() => {
+            openModal(MODAL_IDS.CREATE_CUSTOM_QR);
+          }}
+          onSaveQR={() => {}}
+          onCopyAddress={() => {}}
+        />
       </div>
     </div>
   );

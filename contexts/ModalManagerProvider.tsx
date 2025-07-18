@@ -36,19 +36,12 @@ const ModalContext = createContext<ModalContextType>({
 });
 
 export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
-  const initialModalStates = useMemo(
-    () =>
-      Object.keys(MODAL_IDS).reduce(
-        (acc, key) => {
-          acc[key as ModalId] = {
-            isOpen: false,
-            props: { onClose: () => {} } as ModalProps,
-          };
-          return acc;
-        },
-        {} as Record<ModalId, ModalState>,
-      ),
-    [],
+  const initialModalStates: Record<ModalId, ModalState> = Object.keys(MODAL_IDS).reduce(
+    (acc, key) => {
+      acc[key as ModalId] = { isOpen: false, props: { onClose: () => {} } };
+      return acc;
+    },
+    {} as Record<ModalId, ModalState>,
   );
 
   const [modalStates, setModalStates] = useState<Record<ModalId, ModalState>>(initialModalStates);

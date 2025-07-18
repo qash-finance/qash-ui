@@ -4,6 +4,7 @@ import { ActionButton } from "../Common/ActionButton";
 import { CreateNewGroupModalProps, SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { ModalHeader } from "../Common/ModalHeader";
+import BaseModal from "./BaseModal";
 
 interface AddressItemProps {
   name: string;
@@ -146,11 +147,8 @@ export function CreateNewGroupModal({ isOpen, onClose, onSave }: ModalProp<Creat
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="flex flex-col items-center rounded-2xl border border-solid bg-[#1E1E1E] border-zinc-800 max-h-[600px] w-[600px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[490px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:min-h-[400px] max-sm:w-[95%] overflow-y-auto">
-        {/* Header */}
-        <ModalHeader title="Create new group" onClose={onClose} icon="/sidebar/group-payment.gif" />
-
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Create new group" icon="/sidebar/group-payment.gif">
+      <div className="flex flex-col items-center rounded-b-2xl border border-solid bg-[#1E1E1E] border-zinc-800 max-h-[600px] w-[600px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[490px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:min-h-[400px] max-sm:w-[95%] overflow-y-auto">
         {/* Main */}
         <main className="flex flex-col gap-3 items-start self-stretch p-1.5 flex-[1_0_0]">
           <input
@@ -222,7 +220,7 @@ export function CreateNewGroupModal({ isOpen, onClose, onSave }: ModalProp<Creat
           </footer>
         </main>
       </div>
-    </div>
+    </BaseModal>
   );
 }
 

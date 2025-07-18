@@ -4,6 +4,7 @@ import { ActionButton } from "../Common/ActionButton";
 import { SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { ModalHeader } from "../Common/ModalHeader";
+import BaseModal from "./BaseModal";
 
 interface AddressItemProps {
   name: string;
@@ -98,11 +99,8 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="flex flex-col items-center rounded-2xl border border-solid bg-[#1E1E1E] border-zinc-800 h-[490px] w-[500px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[490px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:min-h-[400px] max-sm:w-[95%]">
-        {/* Header */}
-        <ModalHeader title="Choose address" onClose={onClose} icon="/modal/choose-address-icon.gif" />
-
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Choose address" icon="/modal/choose-address-icon.gif">
+      <div className="flex flex-col items-center rounded-b-2xl border border-solid bg-[#1E1E1E] border-zinc-800 h-[490px] w-[500px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[490px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:min-h-[400px] max-sm:w-[95%]">
         {/* Main */}
         <main className="flex flex-col gap-3 items-start self-stretch p-1.5 flex-[1_0_0]">
           {/* Address Input */}
@@ -157,7 +155,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
           </footer>
         </main>
       </div>
-    </div>
+    </BaseModal>
   );
 }
 

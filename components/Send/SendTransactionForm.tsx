@@ -5,8 +5,20 @@ import { RecipientInput } from "./RecipientInput";
 import { TransactionOptions } from "./TransactionOptions";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
+import { SelectTokenInput } from "../Common/SelectTokenInput";
+import { ActionButton } from "../Common/ActionButton";
 
-export const SendTransactionForm: React.FC = () => {
+export enum AmountInputTab {
+  SEND = "send",
+  STREAM = "stream",
+}
+
+interface SendTransactionFormProps {
+  activeTab?: AmountInputTab;
+  onTabChange?: (tab: AmountInputTab) => void;
+}
+
+export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
   const [amount, setAmount] = useState("0.00");
   const [selectedToken, setSelectedToken] = useState("USDT");
   const [recipientAddress, setRecipientAddress] = useState("");
@@ -14,7 +26,8 @@ export const SendTransactionForm: React.FC = () => {
   const [privateTransaction, setPrivateTransaction] = useState(false);
   const [recallableTime, setRecallableTime] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const { openModal } = useModal();
+  const { openModal, isModalOpen } = useModal();
+  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
   const handleTokenSelect = () => {
     // In a real app, this would open a token selection modal
@@ -41,8 +54,62 @@ export const SendTransactionForm: React.FC = () => {
   };
 
   return (
-    <main className="p-2 rounded-xl bg-zinc-900 w-[600px]">
-      <AmountInput amount={amount} onAmountChange={setAmount} selectedToken={selectedToken} />
+    <main className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`}>
+      <section
+        className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-lg bg-[#292929] mb-1"
+        style={{
+          backgroundImage: "url('/modal/request-background.svg')",
+          backgroundPosition: "bottom",
+          width: "100%",
+          backgroundRepeat: "repeat-x",
+        }}
+      >
+        {/* Title */}
+        <header className="flex flex-wrap gap-5 justify-between self-stretch px-3 py-2 w-full bg-[#2D2D2D] row-span-1">
+          {/* Tab Navigation */}
+          <nav
+            className={`flex gap-1.5 justify-center items-center self-stretch p-1 rounded-xl bg-neutral-950 h-[34px] row-span-1 ${
+              !isSendModalOpen ? "w-[280px]" : "w-[150px]"
+            }`}
+          >
+            <button
+              className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
+                activeTab === "send" ? "bg-zinc-800" : ""
+              } cursor-pointer`}
+              onClick={() => {
+                onTabChange?.(AmountInputTab.SEND);
+              }}
+            >
+              <span
+                className={`text-base font-medium tracking-tight leading-5 text-white ${
+                  activeTab === AmountInputTab.SEND ? "" : "opacity-50"
+                }`}
+              >
+                Send
+              </span>
+            </button>
+            {!isSendModalOpen && (
+              <button
+                className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
+                  activeTab === AmountInputTab.STREAM ? "bg-zinc-800" : ""
+                } cursor-pointer`}
+                onClick={() => {
+                  onTabChange?.(AmountInputTab.STREAM);
+                }}
+              >
+                <span
+                  className={`text-base tracking-tight leading-5 text-white ${activeTab === "stream" ? "" : "opacity-50"}`}
+                >
+                  Stream Send
+                </span>
+              </button>
+            )}
+          </nav>
+          <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
+        </header>
+
+        <AmountInput amount={amount} onAmountChange={setAmount} selectedToken={selectedToken} />
+      </section>
 
       <RecipientInput
         recipientAddress={recipientAddress}
@@ -61,14 +128,7 @@ export const SendTransactionForm: React.FC = () => {
       />
 
       {/* Send button */}
-      <footer className="flex gap-2 items-start pt-2 mt-1 w-full text-base font-medium tracking-normal leading-none text-white max-md:max-w-full">
-        <button
-          onClick={handleConnectWallet}
-          className="flex overflow-hidden flex-1 shrink gap-1.5 justify-center items-center px-4 pt-3 pb-3.5 w-full bg-blue-500 rounded-xl shadow hover:bg-blue-600 transition-colors basis-0 min-w-60 max-md:max-w-full"
-        >
-          {isWalletConnected ? "Send Transaction" : "Connect wallet"}
-        </button>
-      </footer>
+      <ActionButton text="Send Transaction" onClick={handleConnectWallet} className="w-full h-10 mt-2" />
     </main>
   );
 };

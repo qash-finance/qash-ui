@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { TransactionItem } from "./TransactionItem";
+import { EmptyBatch } from "./EmptyBatch";
 
 interface Transaction {
   id: string;
@@ -83,8 +84,8 @@ export function BatchTransactionContainer({
         {/* Header */}
         <header className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#3D3D3D] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-t-2xl">
           <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
-          <div className="flex gap-1 justify-center items-center py-1.5 pr-3 pl-1.5 bg-blue-600 rounded-xl max-md:self-center">
-            <div className="flex gap-1 justify-center items-center px-2 py-1.5 rounded-xl bg-neutral-950">
+          <div className="flex gap-1 justify-center items-center py-1.5 pr-3 pl-1.5 bg-[#7C7C7C] rounded-xl max-md:self-center">
+            <div className="flex gap-1 justify-center items-center px-2  rounded-xl bg-neutral-950">
               <span className="text-xs tracking-tight leading-5 text-white">
                 {transactions.length.toString().padStart(2, "0")}
               </span>
@@ -94,7 +95,7 @@ export function BatchTransactionContainer({
         </header>
 
         {/* Transaction list */}
-        <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0">
+        {/* <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0">
           {transactions.map(transaction => (
             <TransactionItem
               key={transaction.id}
@@ -108,7 +109,8 @@ export function BatchTransactionContainer({
               onRemove={() => onRemoveTransaction?.(transaction.id)}
             />
           ))}
-        </section>
+        </section> */}
+        <EmptyBatch />
       </div>
 
       {/* Footer */}

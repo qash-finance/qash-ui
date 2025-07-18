@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { ReactNode } from 'react';
-import { useAuth } from '@/lib/auth/context';
-import { WalletConnector } from './WalletConnector';
+import React, { ReactNode } from "react";
+import { useAuth } from "@/services/auth/context";
+import { WalletConnector } from "./WalletConnector";
 
 export interface AuthGuardProps {
   children: ReactNode;
@@ -25,11 +25,7 @@ export function AuthGuard({
 
   // Show loading component while checking authentication
   if (isLoading) {
-    return (
-      <div className="auth-guard-loading">
-        {loadingComponent || <DefaultLoadingComponent />}
-      </div>
-    );
+    return <div className="auth-guard-loading">{loadingComponent || <DefaultLoadingComponent />}</div>;
   }
 
   // If authentication is required and user is not authenticated
@@ -187,8 +183,8 @@ const styles = `
 `;
 
 // Inject styles
-if (typeof window !== 'undefined') {
-  const styleSheet = document.createElement('style');
+if (typeof window !== "undefined") {
+  const styleSheet = document.createElement("style");
   styleSheet.textContent = styles;
   document.head.appendChild(styleSheet);
 }
