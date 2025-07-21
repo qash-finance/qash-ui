@@ -1,20 +1,23 @@
 "use client";
-import * as React from "react";
+import React from "react";
+import { FieldErrors, UseFormRegister, UseFormSetValue, useForm } from "react-hook-form";
 
 interface AmountInputProps {
-  amount: string;
-  onAmountChange: (amount: string) => void;
   selectedToken: string;
   availableBalance?: number; // add this prop
+  register: UseFormRegister<any>;
+  errors: FieldErrors<any>;
+  setValue: UseFormSetValue<any>;
 }
 
 const percentages = [25, 50, 75] as const;
 
 export const AmountInput: React.FC<AmountInputProps> = ({
-  amount,
-  onAmountChange,
   selectedToken,
   availableBalance = 0,
+  register,
+  errors,
+  setValue,
 }) => {
   const handlePercentageSelect = (percentage: number | "MAX") => {
     let newAmount: string;
@@ -23,7 +26,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
     } else {
       newAmount = ((availableBalance * percentage) / 100).toFixed(2);
     }
-    onAmountChange(newAmount);
+    setValue("amount", newAmount);
   };
 
   return (
@@ -31,13 +34,14 @@ export const AmountInput: React.FC<AmountInputProps> = ({
       {/* Amount */}
       <div className="flex flex-col text-5xl font-medium leading-none text-center align-middle row-span-5">
         <input
+          {...register("amount", {
+            required: "Amount is required",
+            min: { value: 0, message: "Amount must be greater than 0" },
+            pattern: { value: /^[0-9]*\.?[0-9]{0,2}$/, message: "Invalid amount format" },
+          })}
           className="text-white opacity-20 text-center outline-none"
-          value={amount}
-          onChange={e => onAmountChange(e.target.value)}
           placeholder="0.00"
           type="number"
-          min="0"
-          step="0.01"
           inputMode="decimal"
           pattern="^[0-9]*\.?[0-9]{0,2}$"
           onKeyDown={e => {

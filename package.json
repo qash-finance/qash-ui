@@ -24,6 +24,7 @@
     "qr-code-styling": "^1.9.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.60.0",
     "react-hot-toast": "^2.5.2",
     "zustand": "^5.0.6"
   },

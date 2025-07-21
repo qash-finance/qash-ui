@@ -1,15 +1,30 @@
 import { AccountId, NoteType } from "@demox-labs/miden-sdk";
 import { useClient } from "../../hooks/web3/useClient";
 
+async function randomSerialNumbers() {
+  const { Felt } = await import("@demox-labs/miden-sdk");
+  const serialNumber1 = Math.floor(Math.random() * 1000000);
+  const serialNumber2 = Math.floor(Math.random() * 1000000);
+  const serialNumber3 = Math.floor(Math.random() * 1000000);
+  const serialNumber4 = Math.floor(Math.random() * 1000000);
+  return [
+    new Felt(BigInt(serialNumber1)),
+    new Felt(BigInt(serialNumber2)),
+    new Felt(BigInt(serialNumber3)),
+    new Felt(BigInt(serialNumber4)),
+  ];
+}
+
 export async function createP2IDNote(
   sender: AccountId,
   receiver: AccountId,
   faucet: AccountId,
   amount: number,
-  noteType: NoteType
+  noteType: NoteType,
 ) {
-  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } =
-    await import("@demox-labs/miden-sdk");
+  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } = await import("@demox-labs/miden-sdk");
+
+  const serialNumbers = await randomSerialNumbers();
 
   return OutputNote.full(
     Note.createP2IDNote(
@@ -17,15 +32,9 @@ export async function createP2IDNote(
       receiver,
       new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
       noteType,
-      // @todo: replace hardcoded values with random values
-      Word.newFromFelts([
-        new Felt(BigInt(1)),
-        new Felt(BigInt(2)),
-        new Felt(BigInt(3)),
-        new Felt(BigInt(4)),
-      ]),
-      new Felt(BigInt(0))
-    )
+      Word.newFromFelts(serialNumbers),
+      new Felt(BigInt(0)),
+    ),
   );
 }
 
@@ -35,10 +44,11 @@ export async function createP2IDRNote(
   faucet: AccountId,
   amount: number,
   noteType: NoteType,
-  recallHeight: number
+  recallHeight: number,
 ) {
-  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } =
-    await import("@demox-labs/miden-sdk");
+  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } = await import("@demox-labs/miden-sdk");
+
+  const serialNumbers = await randomSerialNumbers();
 
   return OutputNote.full(
     Note.createP2IDRNote(
@@ -46,16 +56,10 @@ export async function createP2IDRNote(
       receiver,
       new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
       noteType,
-      // @todo: replace hardcoded values with random values
-      Word.newFromFelts([
-        new Felt(BigInt(1)),
-        new Felt(BigInt(2)),
-        new Felt(BigInt(3)),
-        new Felt(BigInt(4)),
-      ]),
+      Word.newFromFelts(serialNumbers),
       recallHeight,
-      new Felt(BigInt(0))
-    )
+      new Felt(BigInt(0)),
+    ),
   );
 }
 
@@ -65,10 +69,7 @@ export async function consumeAllNotes(accountId: string, noteIds: string[]) {
     const client = await getClient();
     const { AccountId } = await import("@demox-labs/miden-sdk");
     const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
-    const txResult = await client.newTransaction(
-      AccountId.fromHex(accountId),
-      consumeTxRequest
-    );
+    const txResult = await client.newTransaction(AccountId.fromHex(accountId), consumeTxRequest);
     await client.submitTransaction(txResult);
   } catch (err) {
     throw new Error("Failed to consume notes");

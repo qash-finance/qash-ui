@@ -79,7 +79,7 @@ export const Account: React.FC<AccountProps> = () => {
 
   return (
     <article
-      className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 cursor-pointer"
+      className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 cursor-pointer max-h-[140px]"
       onClick={handleAccountClick}
     >
       {/* Account Info */}

@@ -68,6 +68,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                   color: "#7CFF96",
                 },
               },
+              error: {
+                style: {
+                  color: "#FF7C7C",
+                },
+              },
             }}
             children={t => (
               <ToastBar
@@ -89,13 +94,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </ToastBar>
             )}
           />
-          <AnalyticsProvider config={analyticsConfig}>
-            <AuthProvider
-              apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-              autoRefresh={true}
-              refreshInterval={5 * 1000} // 5 minutes
-            >
-              <ModalProvider>
+          <ModalProvider>
+            <AnalyticsProvider config={analyticsConfig}>
+              <AuthProvider
+                apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                autoRefresh={true}
+                refreshInterval={5 * 1000} // 5 minutes
+              >
                 {/* <ConnectWalletButton /> */}
                 <ModalManager />
                 <div className="flex flex-row h-screen">
@@ -121,9 +126,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     </div>
                   </div>
                 </div>
-              </ModalProvider>
-            </AuthProvider>
-          </AnalyticsProvider>
+              </AuthProvider>
+            </AnalyticsProvider>
+          </ModalProvider>
         </WalletModalProvider>
       </WalletProvider>
     </QueryClientProvider>

@@ -7,6 +7,14 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
+import { useForm } from "react-hook-form";
+import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { useSendSingleTransaction } from "@/services/api/transaction";
+import { SendTransaction } from "@demox-labs/miden-wallet-adapter-base";
+import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
+import { NoteType } from "@/types/note";
+import { toast } from "react-hot-toast";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -18,16 +26,29 @@ interface SendTransactionFormProps {
   onTabChange?: (tab: AmountInputTab) => void;
 }
 
+interface SendTransactionFormValues {
+  amount: number;
+  recipientAddress: string;
+  recallableTime: number;
+}
+
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
-  const [amount, setAmount] = useState("0.00");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    getValues,
+    watch,
+    reset,
+  } = useForm<SendTransactionFormValues>();
+  const { connected, publicKey, wallet } = useWallet();
   const [selectedToken, setSelectedToken] = useState("USDT");
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [sendAsGift, setSendAsGift] = useState(false);
   const [privateTransaction, setPrivateTransaction] = useState(false);
   const [recallableTime, setRecallableTime] = useState(false);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
   const { openModal, isModalOpen } = useModal();
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
+  const { mutate: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
 
   const handleTokenSelect = () => {
     // In a real app, this would open a token selection modal
@@ -43,18 +64,55 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     console.log("Choose recallable time clicked");
   };
 
-  const handleConnectWallet = () => {
-    if (isWalletConnected) {
-      // Handle transaction submission
-      console.log("Submitting transaction...");
-    } else {
-      // Handle wallet connection
-      setIsWalletConnected(true);
+  const handleSendTransaction = async (data: SendTransactionFormValues) => {
+    if (!connected || !publicKey) {
+      return;
+    }
+
+    const { amount, recipientAddress, recallableTime } = data;
+
+    try {
+      const faucetId = "0x2f3da6aa8735e7200006e8d6e06a8c";
+
+      const midenTransaction = new SendTransaction(
+        publicKey,
+        recipientAddress,
+        faucetId,
+        privateTransaction ? "private" : "public",
+        amount!,
+      );
+
+      const txId = (await (wallet?.adapter as TridentWalletAdapter).requestSend(midenTransaction)) || "";
+      console.log("🚀 ~ handleSendTransaction ~ txId:", txId);
+
+      sendSingleTransaction(
+        {
+          recipient: recipientAddress,
+          assets: [{ faucetId, amount: amount.toString() }],
+          private: privateTransaction,
+          recallable: true,
+          serialNumber: Array.from({ length: 4 }, () => Math.floor(Math.random() * 10000)),
+          noteType: NoteType.P2ID,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Transaction sent successfully");
+          },
+          onError: () => {
+            toast.error("Transaction failed");
+          },
+          onSettled: () => {
+            reset();
+          },
+        },
+      );
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
-    <main className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`}>
+    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`}>
       <section
         className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-lg bg-[#292929] mb-1"
         style={{
@@ -108,28 +166,52 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
           <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
         </header>
 
-        <AmountInput amount={amount} onAmountChange={setAmount} selectedToken={selectedToken} />
+        <AmountInput selectedToken={selectedToken} register={register} errors={errors} setValue={setValue} />
       </section>
 
       <RecipientInput
-        recipientAddress={recipientAddress}
-        onRecipientChange={setRecipientAddress}
         onChooseRecipient={handleChooseRecipient}
+        register={register}
+        errors={errors}
+        setValue={setValue}
+        watch={watch}
       />
 
       <TransactionOptions
-        sendAsGift={sendAsGift}
         privateTransaction={privateTransaction}
         recallableTime={recallableTime}
-        onSendAsGiftChange={setSendAsGift}
         onPrivateTransactionChange={setPrivateTransaction}
         onRecallableTimeChange={setRecallableTime}
         onChooseRecallableTime={handleChooseRecallableTime}
+        register={register}
       />
 
+      {connected ? (
+        <ActionButton
+          text="Send Transaction"
+          onClick={handleSubmit(handleSendTransaction)}
+          className="w-full h-10 mt-2"
+        />
+      ) : (
+        <div className="relative">
+          <WalletMultiButton
+            className="wallet-button-custom cursor-pointer w-full h-10 mt-2"
+            style={{
+              color: "transparent",
+              fontSize: "0",
+              backgroundColor: "transparent",
+              border: "none",
+              outline: "none",
+            }}
+          />
+          <div className="absolute bottom-0 bg-[#1E8FFF] text-white text-[16px] font-medium pointer-events-none z-10 w-full text-center h-10 flex items-center justify-center rounded-lg">
+            Connect Wallet
+          </div>
+        </div>
+      )}
+
       {/* Send button */}
-      <ActionButton text="Send Transaction" onClick={handleConnectWallet} className="w-full h-10 mt-2" />
-    </main>
+    </form>
   );
 };
 
