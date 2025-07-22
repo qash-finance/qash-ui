@@ -7,6 +7,7 @@ import { AmountInput } from "../Send/AmountInput";
 import { RecipientInput } from "../Send/RecipientInput";
 import { ActionButton } from "../Common/ActionButton";
 import BaseModal from "./BaseModal";
+import { useForm } from "react-hook-form";
 
 export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
   const [amount, setAmount] = useState("0.00");
@@ -14,6 +15,12 @@ export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalP
   const [recipientAddress, setRecipientAddress] = useState("");
   const [message, setMessage] = useState("");
   const { openModal } = useModal();
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm();
 
   const handleAmountChange = (amount: string) => {
     setAmount(amount);
@@ -26,7 +33,7 @@ export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalP
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Create New Request" icon="/modal/coin-icon.gif" zIndex={20}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Create New Request" icon="/modal/coin-icon.gif">
       <div className="flex flex-col gap-0">
         <div className="flex flex-col rounded-b-2xl border border-solid bg-[#1E1E1E] border-zinc-800 max-h-[800px] overflow-y-auto w-[500px] p-2">
           {/* Amount */}
@@ -91,9 +98,11 @@ export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalP
           </div>
 
           <RecipientInput
-            recipientAddress={recipientAddress}
-            onRecipientChange={setRecipientAddress}
             onChooseRecipient={handleChooseRecipient}
+            register={register}
+            errors={errors}
+            setValue={setValue}
+            watch={watch}
           />
 
           {/* Message */}

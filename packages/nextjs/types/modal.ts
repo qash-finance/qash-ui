@@ -6,7 +6,7 @@ import TransactionDetailModal from "@/components/Modal/TransactionDetailModal";
 import CreateNewGroupModal from "@/components/Modal/CreateNewGroupModal";
 import NewRequestModal from "@/components/Modal/NewRequestModal";
 import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
-import PortfolioModal from "@/components/Portfolio/Portfolio";
+import Portfolio from "@/components/Portfolio/Portfolio";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -24,6 +24,7 @@ export type ModalId = keyof typeof MODAL_IDS;
 
 export interface BaseModalProps {
   onClose: () => void;
+  zIndex?: number;
 }
 
 export interface SelectTokenModalProps extends BaseModalProps {}
@@ -82,5 +83,5 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_NEW_GROUP]: CreateNewGroupModal,
   [MODAL_IDS.NEW_REQUEST]: NewRequestModal,
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModal,
-  [MODAL_IDS.PORTFOLIO]: PortfolioModal,
+  [MODAL_IDS.PORTFOLIO]: Portfolio,
 } as const;

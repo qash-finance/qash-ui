@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  devIndicators: false,
   webpack: config => {
     config.experiments = {
       ...config.experiments,
@@ -24,14 +24,6 @@ const nextConfig: NextConfig = {
             value: "same-origin",
           },
         ],
-      },
-    ];
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/docs/:path*",
-        destination: "http://localhost:3001/:path*",
       },
     ];
   },

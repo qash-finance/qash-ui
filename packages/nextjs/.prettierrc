@@ -3,6 +3,7 @@
   "printWidth": 120,
   "tabWidth": 2,
   "trailingComma": "all",
+  "proseWrap": "always",
   "importOrder": ["^react$", "^next/(.*)$", "<THIRD_PARTY_MODULES>", "^@heroicons/(.*)$", "^~~/(.*)$"],
   "importOrderSortSpecifiers": true
 }

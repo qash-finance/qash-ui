@@ -4,8 +4,6 @@ import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import Account from "./Account";
 import { useRouter, usePathname } from "next/navigation";
-import { useWalletAuth } from "@/hooks/server/useWalletAuth";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 interface NavProps {
   onActionItemClick?: (sectionIndex: number, itemIndex: number) => void;
@@ -54,11 +52,9 @@ const actionItems = [
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
-  const { connected } = useWallet();
   const [action, setActions] = useState(actionItems);
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated } = useWalletAuth();
 
   useEffect(() => {
     setActions(prev =>
@@ -108,7 +104,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           <NavSections sections={action} onItemClick={handleActionItemClick} />
         </div>
         {/* Connect/Account section */}
-        {connected && isAuthenticated ? <Account /> : <Connect />}
+        <Connect />
       </div>
     </nav>
   );

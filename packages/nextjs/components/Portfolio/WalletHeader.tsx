@@ -1,8 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
+import { getAccountById } from "@/services/utils/account";
+import { AccountId } from "@demox-labs/miden-sdk";
 
 export function WalletHeader() {
+  const { deployedAccountData } = useDeployedAccount();
+  const [balance, setBalance] = useState<string>("0");
+
+  useEffect(() => {
+    (async () => {
+      //@ts-ignore
+      const faucetId = AccountId.fromBech32("mtst1qppen8yngje35gr223jwe6ptjy7gedn9");
+      const account = await getAccountById(deployedAccountData?.accountId || "");
+      setBalance(account?.vault().getBalance(faucetId).toString() || "0");
+    })();
+  }, [deployedAccountData?.accountId]);
+
   return (
     <header
       className="flex relative flex-col gap-4 items-start w-full p-2 bg-blue-600 rounded-2xl max-sm:gap-4 max-sm:p-2"
@@ -24,7 +39,7 @@ export function WalletHeader() {
         <div className="flex gap-2 items-center self-stretch">
           <span className="text-4xl leading-9 text-white uppercase max-sm:text-3xl">$</span>
           <span className="text-4xl font-medium tracking-tighter leading-9 text-white uppercase max-sm:text-3xl">
-            4,217,05
+            {balance}
           </span>
         </div>
 

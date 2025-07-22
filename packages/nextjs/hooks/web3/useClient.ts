@@ -1,3 +1,4 @@
+"use client";
 import { nodeEndpoint } from "@/services/utils/constant";
 import { WebClient } from "@demox-labs/miden-sdk";
 

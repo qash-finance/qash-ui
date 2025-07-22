@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { formatAddress } from "@/services/utils/address";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { useAccount } from "@/contexts/AccountProvider";
+import toast from "react-hot-toast";
 
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
@@ -9,24 +11,14 @@ enum SelectedWallet {
   LOCAL_WALLET_2 = "local-wallet-2",
 }
 
-const wallets = [
-  {
-    name: "Jessie01",
-    address: "0xd...z23",
-  },
-  {
-    name: "Jessie02",
-    address: "0xd...s78",
-  },
-];
-
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
   const { disconnect, publicKey } = useWallet();
   const [isBlurred, setIsBlurred] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.MIDEN_WALLET);
+  const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.LOCAL_WALLET_1);
+  const { deployedAccountData } = useAccount();
 
   const getCurrentAccountInfo = () => {
     switch (selectedWallet) {
@@ -36,9 +28,15 @@ export const Account: React.FC<AccountProps> = () => {
           address: formatAddress(publicKey?.toString() || "0x"),
         };
       case SelectedWallet.LOCAL_WALLET_1:
-        return wallets[0];
+        return {
+          name: "Q3x",
+          address: deployedAccountData?.accountId,
+        };
       case SelectedWallet.LOCAL_WALLET_2:
-        return wallets[1];
+        return {
+          name: "Q3x",
+          address: deployedAccountData?.accountId,
+        };
       default:
         return {
           name: "Choose account",
@@ -78,10 +76,7 @@ export const Account: React.FC<AccountProps> = () => {
   };
 
   return (
-    <article
-      className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 cursor-pointer"
-      onClick={handleAccountClick}
-    >
+    <article className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 cursor-pointer max-h-[140px]">
       {/* Account Info */}
       <div
         id="account-info"
@@ -90,8 +85,16 @@ export const Account: React.FC<AccountProps> = () => {
         <header className="flex items-center w-full text-sm font-medium tracking-tight">
           <div className="flex flex-1 gap-1 items-center">
             <img src="/miden-logo.svg" className="w-7 aspect-square" alt="miden logo icon" />
-            <span className="text-base">{formatAddress(publicKey?.toString() || "0x")}</span>
-            <img src="/copy-icon.svg" className="w-4 aspect-square" alt="Copy icon" />
+            <span className="text-base truncate">{formatAddress(publicKey?.toString() || "0x")}</span>
+            <img
+              src="/copy-icon.svg"
+              className="w-4 aspect-square cursor-pointer"
+              alt="Copy icon"
+              onClick={() => {
+                navigator.clipboard.writeText(publicKey?.toString() || "");
+                toast.success("Copied to clipboard");
+              }}
+            />
           </div>
           <img
             onClick={() => disconnect()}
@@ -113,13 +116,19 @@ export const Account: React.FC<AccountProps> = () => {
             <span className="flex-1 text-base font-semibold tracking-tight">{currentAccount.name}</span>
             {selectedWallet !== SelectedWallet.MIDEN_WALLET && (
               <>
-                <span className="text-sm font-medium tracking-tight">{currentAccount.address}</span>
+                <span className="text-sm font-medium tracking-tight" onClick={handleAccountClick}>
+                  {formatAddress(currentAccount.address || "")}
+                </span>
                 <img
                   src="/copy-icon.svg"
                   className="w-3.5 aspect-square"
                   alt="copy icon"
                   style={{
                     filter: "invert(32%) sepia(99%) saturate(749%) hue-rotate(186deg) brightness(98%) contrast(101%)",
+                  }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(deployedAccountData?.accountId || "");
+                    toast.success("Copied to clipboard");
                   }}
                 />
               </>
@@ -175,13 +184,15 @@ export const Account: React.FC<AccountProps> = () => {
             onClick={() => setSelectedWallet(SelectedWallet.LOCAL_WALLET_1)}
           >
             <div className="flex justify-between flex-1 gap-0.5 items-center px-1.5 py-1 bg-[white] rounded-lg border border-[#066EFF] shadow-lg">
-              <span className="flex-1 text-base tracking-tight text-blue-600">{wallets[0].name}</span>
-              <span className="flex-1 text-base tracking-tight text-blue-600 text-right">{wallets[0].address}</span>
+              <span className="flex-1 text-base tracking-tight text-blue-600">Q3x</span>
+              <span className="flex-1 text-base tracking-tight text-blue-600 text-right">
+                {formatAddress(deployedAccountData?.accountId || "")}
+              </span>
             </div>
           </div>
 
           {/* Local wallet 2*/}
-          <div
+          {/* <div
             className={`flex absolute items-center leading-tight bottom-36 left-11 w-52 -rotate-4 ${
               isAnimatingOut
                 ? "animate-out slide-out-to-bottom-2 duration-200"
@@ -196,10 +207,12 @@ export const Account: React.FC<AccountProps> = () => {
             onClick={() => setSelectedWallet(SelectedWallet.LOCAL_WALLET_2)}
           >
             <div className="flex flex-1 gap-0.5 items-center px-1.5 py-1 bg-[white] rounded-lg border border-[#066EFF] shadow-lg">
-              <span className="flex-1 text-base tracking-tight text-blue-600">{wallets[1].name}</span>
-              <span className="flex-1 text-base tracking-tight text-blue-600 text-right">{wallets[1].address}</span>
+              <span className="flex-1 text-base tracking-tight text-blue-600">Q3x</span>
+              <span className="flex-1 text-base tracking-tight text-blue-600 text-right">
+                {deployedAccountData?.walletAddress}
+              </span>
             </div>
-          </div>
+          </div> */}
         </>
       )}
 

@@ -16,7 +16,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ title, value, hasTimer =
         <div
           className="absolute"
           style={{
-            backgroundImage: "url('/recall-background.svg')",
+            backgroundImage: "url('/cancel-card-background.svg')",
             backgroundSize: "cover",
             backgroundPosition: "left",
             width: "20%",
