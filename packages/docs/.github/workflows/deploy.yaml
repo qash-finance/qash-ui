@@ -1,0 +1,133 @@
+name: Deploy to Amazon ECR & ECS
+
+on:
+  pull_request:
+    types: [closed]
+    # paths:
+    #   - 'packages/nextjs/**' # TODO : add this depending on the app
+    branches:
+      - main
+      - stg
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECS_CLUSTER: prodCluster
+
+jobs:
+  check-commit:
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      SHOULD_RUN: ${{ steps.check_commit.outputs.SHOULD_RUN }}
+      ENVIRONMENT: ${{ steps.check_commit.outputs.ENVIRONMENT }}
+      REPO_NAME: ${{ steps.check_commit.outputs.REPO_NAME }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Determine Environment & Check Commit Message
+        id: check_commit
+        run: |
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          CURRENT_BRANCH=${GITHUB_REF#refs/heads/}
+          
+          # Set environment based on branch
+          if [[ "$CURRENT_BRANCH" == "main" ]]; then
+            echo "ENVIRONMENT=prod" >> "$GITHUB_ENV"
+            echo "ENVIRONMENT=prod" >> "$GITHUB_OUTPUT"
+          elif [[ "$CURRENT_BRANCH" == "stg" ]]; then
+            echo "ENVIRONMENT=stg" >> "$GITHUB_ENV"
+            echo "ENVIRONMENT=stg" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Workflow can only run on main or stg branches"
+            exit 1
+          fi
+          
+          # Set repository name
+          echo "REPO_NAME=${{ github.event.repository.name }}" >> "$GITHUB_ENV"
+          echo "REPO_NAME=${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
+          
+          # Check for [skip ci]
+          if [[ "$COMMIT_MESSAGE" == *"[skip ci]"* ]]; then
+            echo "SHOULD_RUN=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "SHOULD_RUN=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-deploy:
+    needs: check-commit
+    if: needs.check-commit.outputs.SHOULD_RUN == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Create ECR Repository if it doesn't exist
+        run: |
+          REPOSITORY="${{ needs.check-commit.outputs.REPO_NAME }}"
+          # Check if repository exists
+          if ! aws ecr describe-repositories --repository-names "$REPOSITORY" >/dev/null 2>&1; then
+            echo "Repository $REPOSITORY does not exist. Creating it..."
+            aws ecr create-repository --repository-name "$REPOSITORY" --image-scanning-configuration scanOnPush=true
+            echo "Repository $REPOSITORY created successfully."
+          else
+            echo "Repository $REPOSITORY already exists."
+          fi
+
+      - name: Download Environment Variables from S3
+        run: |
+          aws s3 cp s3://quantum3labs/${{ needs.check-commit.outputs.REPO_NAME }}.${{ needs.check-commit.outputs.ENVIRONMENT }}.env .env
+          echo "Successfully downloaded environment variables from S3"
+
+      - name: Build, Tag, and Push Docker Image to Amazon ECR
+        id: build-image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ needs.check-commit.outputs.REPO_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
+          docker push $REGISTRY/$REPOSITORY:latest
+          
+          # Save full image URI to environment for use in next step
+          echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+          
+          # For security, remove the .env file
+          rm -f .env
+
+      - name: Download Task Definition
+        run: |
+          aws ecs describe-task-definition --task-definition def-${{ needs.check-commit.outputs.ENVIRONMENT }}-${{ needs.check-commit.outputs.REPO_NAME }} --query taskDefinition > task-definition.json
+          
+          # Output the content for debugging
+          cat task-definition.json
+
+      - name: Update ECS Task Definition with New Image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ needs.check-commit.outputs.REPO_NAME }}
+          image: ${{ env.IMAGE_URI }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: service-${{ needs.check-commit.outputs.ENVIRONMENT }}-${{ needs.check-commit.outputs.REPO_NAME }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
