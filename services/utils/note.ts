@@ -51,7 +51,7 @@ export async function createP2IDRNote(
   const serialNumbers = await randomSerialNumbers();
 
   return OutputNote.full(
-    Note.createP2IDRNote(
+    Note.createP2IDENote(
       sender,
       receiver,
       new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
