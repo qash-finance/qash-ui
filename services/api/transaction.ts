@@ -1,4 +1,4 @@
-import { ConsumableNote, SendTransactionDto } from "@/types/note";
+import { ConsumableNote, SendTransactionDto } from "@/types/transaction";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthenticatedApiClient } from "./index";
 import { AuthStorage } from "../auth/storage";

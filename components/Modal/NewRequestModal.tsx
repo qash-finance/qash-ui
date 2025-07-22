@@ -7,6 +7,7 @@ import { AmountInput } from "../Send/AmountInput";
 import { RecipientInput } from "../Send/RecipientInput";
 import { ActionButton } from "../Common/ActionButton";
 import BaseModal from "./BaseModal";
+import { useForm } from "react-hook-form";
 
 export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
   const [amount, setAmount] = useState("0.00");
@@ -14,6 +15,12 @@ export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalP
   const [recipientAddress, setRecipientAddress] = useState("");
   const [message, setMessage] = useState("");
   const { openModal } = useModal();
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm();
 
   const handleAmountChange = (amount: string) => {
     setAmount(amount);
@@ -91,9 +98,11 @@ export function NewRequestModal({ isOpen, onClose }: ModalProp<SelectTokenModalP
           </div>
 
           <RecipientInput
-            recipientAddress={recipientAddress}
-            onRecipientChange={setRecipientAddress}
             onChooseRecipient={handleChooseRecipient}
+            register={register}
+            errors={errors}
+            setValue={setValue}
+            watch={watch}
           />
 
           {/* Message */}

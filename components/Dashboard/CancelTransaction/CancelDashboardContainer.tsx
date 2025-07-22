@@ -3,174 +3,215 @@ import * as React from "react";
 import { StatusCard } from "./StatusCard";
 import { Table } from "../../Common/Table";
 import { ActionButton } from "../../Common/ActionButton";
+import { useGetRecallable } from "@/services/api/transaction";
+
+const TableSection = ({
+  title,
+  subtitle,
+  headers,
+  data,
+  actionRenderer,
+}: {
+  title: string;
+  subtitle: string;
+  headers: string[];
+  data: any[];
+  actionRenderer: (rowData: any, index: number) => React.ReactNode;
+}) => (
+  <section className="mt-2.5 w-full max-md:max-w-full">
+    <div className="w-full max-md:max-w-full">
+      <div className="flex gap-2.5 items-start w-full max-md:max-w-full">
+        <div className="flex flex-col flex-1 shrink justify-center w-full basis-0 min-w-60 max-md:max-w-full">
+          <h1 className="text-white text-xl font-bold">{title}</h1>
+          <p className="mt-2 text-base tracking-tight leading-none text-neutral-500 max-md:max-w-full">{subtitle}</p>
+        </div>
+      </div>
+      <div className="mt-2.5">
+        <Table
+          headers={headers}
+          data={data}
+          actionColumn={true}
+          actionRenderer={actionRenderer}
+          className="w-full"
+          columnWidths={{
+            1: "600px",
+          }}
+        />
+      </div>
+    </div>
+  </section>
+);
+
+const pendingRecallData = [
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-red-600 rounded-full">
+          <span className="text-white">Gift</span>
+        </div>
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">120,000</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    actionDisabled: false,
+  },
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">1.02</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    actionDisabled: false,
+  },
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">260.01</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    actionDisabled: false,
+  },
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">100.05</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    actionDisabled: false,
+  },
+];
+
+const waitingRecallData = [
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">120,000</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    "Recall in": <span className="text-stone-300 text-sm">01H:19M:16S</span>,
+    actionDisabled: true,
+  },
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">1.02</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    "Recall in": <span className="text-stone-300 text-sm">02H:59M:45S</span>,
+    actionDisabled: true,
+  },
+  {
+    Type: (
+      <div className="flex gap-1.5 justify-center">
+        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
+          <span className="text-white">P2ID-R</span>
+        </div>
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
+        <img src="/token/usdt.svg" alt="USDT" />
+        <span className="text-white">260.01</span>
+      </div>
+    ),
+    From: (
+      <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
+        <span className="text-white">0xd...s78</span>
+      </div>
+    ),
+    "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
+    "Recall in": <span className="text-stone-300 text-sm">03H:01M:07S</span>,
+    actionDisabled: true,
+  },
+];
 
 export const CancelDashboardContainer: React.FC = () => {
-  const pendingRecallData = [
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-red-600 rounded-full">
-            <span className="text-white">Gift</span>
-          </div>
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">120,000</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      actionDisabled: false,
-    },
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">1.02</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      actionDisabled: false,
-    },
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">260.01</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      actionDisabled: false,
-    },
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">100.05</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      actionDisabled: false,
-    },
-  ];
-
-  const waitingRecallData = [
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">120,000</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      "Recall in": <span className="text-stone-300 text-sm">01H:19M:16S</span>,
-      actionDisabled: true,
-    },
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">1.02</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      "Recall in": <span className="text-stone-300 text-sm">02H:59M:45S</span>,
-      actionDisabled: true,
-    },
-    {
-      Type: (
-        <div className="flex gap-1.5 justify-center">
-          <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-            <span className="text-white">P2ID-R</span>
-          </div>
-        </div>
-      ),
-      Amount: (
-        <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
-          <img src="/token/usdt.svg" alt="USDT" />
-          <span className="text-white">260.01</span>
-        </div>
-      ),
-      From: (
-        <div className="items-center py-1 bg-[#363636] bg-opacity-10 rounded-[34px] flex justify-center">
-          <span className="text-white">0xd...s78</span>
-        </div>
-      ),
-      "Date/Time": <span className="text-stone-300 text-sm">25/11/2024, 07:15</span>,
-      "Recall in": <span className="text-stone-300 text-sm">03H:01M:07S</span>,
-      actionDisabled: true,
-    },
-  ];
-
+  const { data: recallable } = useGetRecallable();
+  const { nextRecallTime } = recallable || {};
+  console.log("🚀 ~ CancelDashboardContainer ~ recallable:", recallable);
   const pendingHeaders = ["Type", "Amount", "From", "Date/Time"];
   const waitingHeaders = ["Type", "Amount", "From", "Date/Time", "Recall in"];
 
@@ -178,43 +219,6 @@ export const CancelDashboardContainer: React.FC = () => {
     <div className="flex justify-center items-center">
       <ActionButton text="Cancel" disabled={rowData.actionDisabled} />
     </div>
-  );
-
-  const TableSection = ({
-    title,
-    subtitle,
-    headers,
-    data,
-    actionRenderer,
-  }: {
-    title: string;
-    subtitle: string;
-    headers: string[];
-    data: any[];
-    actionRenderer: (rowData: any, index: number) => React.ReactNode;
-  }) => (
-    <section className="mt-2.5 w-full max-md:max-w-full">
-      <div className="w-full max-md:max-w-full">
-        <div className="flex gap-2.5 items-start w-full max-md:max-w-full">
-          <div className="flex flex-col flex-1 shrink justify-center w-full basis-0 min-w-60 max-md:max-w-full">
-            <h1 className="text-white text-xl font-bold">{title}</h1>
-            <p className="mt-2 text-base tracking-tight leading-none text-neutral-500 max-md:max-w-full">{subtitle}</p>
-          </div>
-        </div>
-        <div className="mt-2.5">
-          <Table
-            headers={headers}
-            data={data}
-            actionColumn={true}
-            actionRenderer={actionRenderer}
-            className="w-full"
-            columnWidths={{
-              1: "600px",
-            }}
-          />
-        </div>
-      </div>
-    </section>
   );
 
   return (
@@ -242,7 +246,19 @@ export const CancelDashboardContainer: React.FC = () => {
                   <span className="text-white text-lg font-normal font-['Barlow']">Next cancel payment</span>
                 </div>
                 <div className="font-bold text-4xl text-white relative top-[-25px] z-10 font-repetition-scrolling">
-                  01H:19M:16S
+                  {nextRecallTime
+                    ? (() => {
+                        const date = new Date(nextRecallTime);
+                        const now = new Date();
+                        let diff = Math.max(0, date.getTime() - now.getTime());
+                        const hours = String(Math.floor(diff / 3600000)).padStart(2, "0");
+                        diff %= 3600000;
+                        const minutes = String(Math.floor(diff / 60000)).padStart(2, "0");
+                        diff %= 60000;
+                        const seconds = String(Math.floor(diff / 1000)).padStart(2, "0");
+                        return `${hours}H:${minutes}M:${seconds}S`;
+                      })()
+                    : "00H:00M:00S"}
                 </div>
               </div>
             </div>

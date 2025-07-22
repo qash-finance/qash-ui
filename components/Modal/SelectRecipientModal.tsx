@@ -1,10 +1,12 @@
 "use client";
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 import { ActionButton } from "../Common/ActionButton";
 import { SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { ModalHeader } from "../Common/ModalHeader";
 import BaseModal from "./BaseModal";
+import { useGetAddressBooks } from "@/services/api/address-book";
+import { AddressBook } from "@/types/address-book";
 
 interface AddressItemProps {
   name: string;
@@ -67,9 +69,12 @@ function AddressItem({ name, address, isSelected = true, onToggle }: AddressItem
 }
 
 export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<SelectRecipientModalProps>) {
-  const [addressInput, setAddressInput] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState("all");
-  const [addresses, setAddresses] = React.useState([
+  const { data: addressBooks } = useGetAddressBooks();
+  const [tabs, setTabs] = useState<string[]>([]);
+  const [addressesByTab, setAddressesByTab] = useState<Record<string, AddressBook[]>>({});
+  const [addressInput, setAddressInput] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [addresses, setAddresses] = useState([
     {
       id: "1",
       name: "Danny Kang",
@@ -83,6 +88,23 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
       isSelected: true,
     },
   ]);
+
+  useEffect(() => {
+    if (addressBooks && addressBooks.length > 0) {
+      setTabs(addressBooks.map(book => book.category));
+      setActiveTab(addressBooks[0].category);
+
+      setAddressesByTab(
+        addressBooks.reduce(
+          (acc, book) => {
+            acc[book.category] = [...(acc[book.category] || []), book];
+            return acc;
+          },
+          {} as Record<string, AddressBook[]>,
+        ),
+      );
+    }
+  }, [addressBooks]);
 
   const handleAddAddress = () => {
     if (addressInput.trim()) {
@@ -119,17 +141,22 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
 
           {/* Address List */}
           <section className="flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0]">
-            <h2 className="text-base tracking-tighter leading-5 text-white">Your address book (30)</h2>
+            <h2 className="text-base tracking-tighter leading-5 text-white">
+              Your address book ({addressesByTab[activeTab]?.length || 0})
+            </h2>
 
             {/* Filter Tabs */}
             <nav className="flex gap-1.5 items-start self-stretch max-md:flex-wrap max-sm:flex-wrap max-sm:gap-1">
-              {tabs.map((tab, index) => (
+              {tabs?.map((label, index) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="flex gap-2.5 items-center px-4 py-2.5 rounded-3xl bg-zinc-800 max-sm:px-3 max-sm:py-2"
+                  type="button"
+                  key={index}
+                  onClick={() => setActiveTab(label)}
+                  className={`flex gap-2.5 items-center px-4 py-2.5 rounded-3xl max-sm:px-3 max-sm:py-2 cursor-pointer ${
+                    activeTab === label ? "bg-[#066EFF] text-black" : "bg-zinc-800 text-white"
+                  }`}
                 >
-                  <span className="text-sm leading-4 text-white max-sm:text-sm">{tab.label}</span>
+                  <span className="text-sm leading-4 text-white max-sm:text-sm">{label}</span>
                 </button>
               ))}
             </nav>

@@ -1,4 +1,5 @@
-import { AccountId, NoteType } from "@demox-labs/miden-sdk";
+"use client";
+import { AccountId, Note, NoteType } from "@demox-labs/miden-sdk";
 import { useClient } from "../../hooks/web3/useClient";
 
 async function randomSerialNumbers() {
@@ -81,10 +82,49 @@ export async function getConsumableNotes(accountId: string) {
 
   try {
     const client = await getClient();
+    await client.syncState();
 
-    const notes = await client.getConsumableNotes(AccountId.fromHex(accountId));
+    let id: AccountId;
+
+    if (accountId.startsWith("0x")) {
+      id = AccountId.fromHex(accountId);
+    } else {
+      //@ts-ignore
+      id = AccountId.fromBech32(accountId);
+    }
+
+    const notes = await client.getConsumableNotes(id);
     return notes;
   } catch (error) {
     throw new Error("Failed to fetch consumable notes");
+  }
+}
+
+export async function createNoteAndSubmit(
+  sender: AccountId,
+  receiver: AccountId,
+  faucetId: AccountId,
+  amount: number,
+  noteType: NoteType,
+) {
+  const { getClient } = useClient();
+
+  console.log("🚀 ~ createNoteAndSubmit ~ sender:", sender.toString());
+  console.log("🚀 ~ createNoteAndSubmit ~ receiver:", receiver.toString());
+  console.log("🚀 ~ createNoteAndSubmit ~ faucetId:", faucetId.toString());
+  console.log("🚀 ~ createNoteAndSubmit ~ amount:", amount);
+  console.log("🚀 ~ createNoteAndSubmit ~ noteType:", noteType);
+
+  try {
+    const client = await getClient();
+    await client.syncState();
+
+    const transactionRequest = client.newSendTransactionRequest(sender, receiver, faucetId, noteType, BigInt(amount));
+    const txResult = await client.newTransaction(sender, transactionRequest);
+    await client.submitTransaction(txResult);
+
+    await client.syncState();
+  } catch (error) {
+    throw new Error("Failed to submit note");
   }
 }

@@ -67,6 +67,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
   return (
     <button
+      type="button"
       className={`font-barlow font-medium text-white transition-colors cursor-pointer ${className} ${
         disabled ? "bg-[#1E578E] cursor-not-allowed text-[#8E8E8E]" : getButtonStyles()
       }`}

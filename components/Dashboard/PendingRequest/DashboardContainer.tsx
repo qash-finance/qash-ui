@@ -5,15 +5,6 @@ import { PendingRequestSection } from "./PendingRequestSection";
 import { Table } from "../../Common/Table";
 import { StatusBadge } from "../../Common/StatusBadge";
 
-const EmptyRequest = () => {
-  return (
-    <div className="flex flex-col gap-1 justify-center items-center self-stretch rounded-xl bg-zinc-800 h-[100px] max-sm:h-20">
-      <img src="/no-request-icon.svg" alt="No request" className="shrink-0 w-6 h-6 opacity-50" />
-      <p className="text-sm tracking-tight leading-4 text-neutral-500">No request</p>
-    </div>
-  );
-};
-
 const mockData = [
   {
     amount: "120,000",

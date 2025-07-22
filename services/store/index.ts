@@ -5,7 +5,7 @@ type GlobalState = {
   setCounter: (newCounter: number) => void;
 };
 
-export const useGlobalState = create<GlobalState>((set) => ({
+export const useGlobalState = create<GlobalState>(set => ({
   counter: 0,
   setCounter: (newValue: number): void => set(() => ({ counter: newValue })),
 }));

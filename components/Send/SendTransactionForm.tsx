@@ -13,8 +13,12 @@ import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useSendSingleTransaction } from "@/services/api/transaction";
 import { SendTransaction } from "@demox-labs/miden-wallet-adapter-base";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
-import { NoteType } from "@/types/note";
+import { NoteType } from "@/types/transaction";
+import { NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
+import { AccountId } from "@demox-labs/miden-sdk";
+import { createNoteAndSubmit } from "@/services/utils/note";
+import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -46,9 +50,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const [selectedToken, setSelectedToken] = useState("USDT");
   const [privateTransaction, setPrivateTransaction] = useState(false);
   const [recallableTime, setRecallableTime] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const { openModal, isModalOpen } = useModal();
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
   const { mutate: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
+  const { deployedAccountData } = useDeployedAccount();
 
   const handleTokenSelect = () => {
     // In a real app, this would open a token selection modal
@@ -72,42 +78,67 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     const { amount, recipientAddress, recallableTime } = data;
 
     try {
-      const faucetId = "0x2f3da6aa8735e7200006e8d6e06a8c";
+      // const faucetId = "0x2f3da6aa8735e7200006e8d6e06a8c";
 
-      const midenTransaction = new SendTransaction(
-        publicKey,
-        recipientAddress,
-        faucetId,
-        privateTransaction ? "private" : "public",
-        amount!,
-      );
+      // const midenTransaction = new SendTransaction(
+      //   publicKey,
+      //   recipientAddress,
+      //   faucetId,
+      //   privateTransaction ? "private" : "public",
+      //   amount!,
+      // );
 
-      const txId = (await (wallet?.adapter as TridentWalletAdapter).requestSend(midenTransaction)) || "";
-      console.log("🚀 ~ handleSendTransaction ~ txId:", txId);
+      // const txId = (await (wallet?.adapter as TridentWalletAdapter).requestSend(midenTransaction)) || "";
 
-      sendSingleTransaction(
-        {
-          recipient: recipientAddress,
-          assets: [{ faucetId, amount: amount.toString() }],
-          private: privateTransaction,
-          recallable: true,
-          serialNumber: Array.from({ length: 4 }, () => Math.floor(Math.random() * 10000)),
-          noteType: NoteType.P2ID,
-        },
-        {
-          onSuccess: () => {
-            toast.success("Transaction sent successfully");
-          },
-          onError: () => {
-            toast.error("Transaction failed");
-          },
-          onSettled: () => {
-            reset();
-          },
-        },
-      );
+      // sendSingleTransaction(
+      //   {
+      //     recipient: recipientAddress,
+      //     assets: [{ faucetId, amount: amount.toString() }],
+      //     private: privateTransaction,
+      //     recallable: true,
+      //     serialNumber: Array.from({ length: 4 }, () => Math.floor(Math.random() * 10000)),
+      //     noteType: NoteType.P2ID,
+      //   },
+      //   {
+      //     onSuccess: () => {
+      //       toast.success("Transaction sent successfully");
+      //     },
+      //     onError: () => {
+      //       toast.error("Transaction failed");
+      //     },
+      //     onSettled: () => {
+      //       reset();
+      //     },
+      //   },
+      // );
+
+      //@ts-ignore
+      const faucetId = AccountId.fromBech32("mtst1qppen8yngje35gr223jwe6ptjy7gedn9");
+      const sender = AccountId.fromHex(deployedAccountData?.accountId || "");
+
+      let recipient;
+      if (recipientAddress.startsWith("0x")) {
+        recipient = AccountId.fromHex(recipientAddress);
+      } else {
+        //@ts-ignore
+        recipient = AccountId.fromBech32(recipientAddress);
+      }
+
+      setIsSending(true);
+
+      await createNoteAndSubmit(sender, recipient, faucetId, amount, MidenNoteType.Public)
+        .then(() => {
+          toast.success("Transaction sent successfully");
+        })
+        .catch(error => {
+          console.error(error);
+          toast.error("Transaction failed");
+        });
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsSending(false);
+      reset();
     }
   };
 
@@ -131,6 +162,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             }`}
           >
             <button
+              type="button"
               className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
                 activeTab === "send" ? "bg-zinc-800" : ""
               } cursor-pointer`}
@@ -148,6 +180,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             </button>
             {!isSendModalOpen && (
               <button
+                type="button"
                 className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
                   activeTab === AmountInputTab.STREAM ? "bg-zinc-800" : ""
                 } cursor-pointer`}
@@ -191,6 +224,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
           text="Send Transaction"
           onClick={handleSubmit(handleSendTransaction)}
           className="w-full h-10 mt-2"
+          disabled={isSending}
         />
       ) : (
         <div className="relative">

@@ -1,10 +1,7 @@
+"use client";
 import { useState, useEffect } from "react";
 import { useClient } from "./useClient";
-import {
-  AccountId,
-  ConsumableNoteRecord,
-  FungibleAsset,
-} from "@demox-labs/miden-sdk";
+import { AccountId, ConsumableNoteRecord, FungibleAsset } from "@demox-labs/miden-sdk";
 import { getConsumableNotes } from "../../services/utils/note";
 
 export interface Asset {
@@ -14,9 +11,7 @@ export interface Asset {
 
 export function useAccount(publicKey: string) {
   const [assets, setAssets] = useState<Asset[] | null>(null);
-  const [consumableNotes, setConsumableNotes] = useState<
-    ConsumableNoteRecord[] | null
-  >(null);
+  const [consumableNotes, setConsumableNotes] = useState<ConsumableNoteRecord[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isAccountDeployed, setIsAccountDeployed] = useState(true);
@@ -53,7 +48,7 @@ export function useAccount(publicKey: string) {
           accountAssets.map((asset: FungibleAsset) => ({
             tokenAddress: asset.faucetId().toString(),
             amount: asset.amount().toString(),
-          }))
+          })),
         );
 
         // read account consumable notes
