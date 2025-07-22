@@ -5,6 +5,10 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import { ToggleSwitch } from "@/components/Common/ToggleSwitch";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
+import { createGiftNote } from "@/services/utils/note";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { AccountId, Felt, FungibleAsset } from "@demox-labs/miden-sdk";
+import { deployFaucet } from "@/services/utils/faucet";
 
 const mockData = [
   {
@@ -93,6 +97,7 @@ const TableRow = ({
 export const PendingRecieveContainer: React.FC = () => {
   const [autoClaim, setAutoClaim] = useState(false);
   const { openModal } = useModal();
+
   return (
     <div className="flex w-full h-full bg-black rounded-xl text-white p-6 space-y-6 gap-4">
       <div className="flex-3">
