@@ -1,3 +1,5 @@
+import { AssetWithMetadata } from "./faucet";
+
 export enum NoteType {
   P2ID = "p2id",
   P2IDR = "p2idr",
@@ -20,18 +22,10 @@ export interface SendTransactionDto {
 }
 
 export interface ConsumableNote {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
+  id: string;
   sender: string;
   recipient: string;
-  assets: AssetDto[];
-  private: boolean;
-  recallable: boolean;
-  recallableTime: string | null;
-  serialNumber: number[];
-  noteType: NoteType;
-  status: string;
+  assets: AssetWithMetadata[];
 }
 
 export interface RecallItem {

@@ -28,7 +28,7 @@ export const Title = () => {
       title = "Group Payment";
       break;
     case "/account-management":
-      title = "Account Management";
+      title = "Manage Accounts";
       break;
     case "/transactions":
       title = "Transactions";
@@ -47,9 +47,9 @@ export const Title = () => {
   }
 
   const dashboardTabs = [
-    { id: "pending-recieve", label: "Pending Recieve", href: "/dashboard/pending-recieve" },
-    { id: "pending-request", label: "Pending Request", href: "/dashboard/pending-request" },
-    { id: "cancel-transaction", label: "Cancel transaction", href: "/dashboard/cancel-transaction" },
+    { id: "pending-recieve", label: "Recieve", href: "/dashboard/pending-recieve" },
+    { id: "pending-request", label: "Payment Request", href: "/dashboard/pending-request" },
+    { id: "cancel-transaction", label: "Cancel Payment", href: "/dashboard/cancel-transaction" },
   ];
 
   return (

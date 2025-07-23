@@ -39,10 +39,6 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
             <input
               {...register("recipientAddress", {
                 required: "Recipient address is required",
-                pattern: {
-                  value: /^0x[a-fA-F0-9]{30}$/,
-                  message: "Invalid Miden address",
-                },
               })}
               type="text"
               placeholder="Enter address or choose from your contacts book"

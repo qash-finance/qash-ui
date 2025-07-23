@@ -7,6 +7,7 @@ import CreateNewGroupModal from "@/components/Modal/CreateNewGroupModal";
 import NewRequestModal from "@/components/Modal/NewRequestModal";
 import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
 import Portfolio from "@/components/Portfolio/Portfolio";
+import { AssetWithMetadata } from "./faucet";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -27,7 +28,9 @@ export interface BaseModalProps {
   zIndex?: number;
 }
 
-export interface SelectTokenModalProps extends BaseModalProps {}
+export interface SelectTokenModalProps extends BaseModalProps {
+  onTokenSelect?: (token: AssetWithMetadata) => void;
+}
 
 export interface SendModalProps extends BaseModalProps {}
 

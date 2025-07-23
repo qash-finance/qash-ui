@@ -1,9 +1,10 @@
 "use client";
+import { AssetWithMetadata } from "@/types/faucet";
 import React from "react";
 import { FieldErrors, UseFormRegister, UseFormSetValue, useForm } from "react-hook-form";
 
 interface AmountInputProps {
-  selectedToken: string;
+  selectedToken: AssetWithMetadata;
   availableBalance?: number; // add this prop
   register: UseFormRegister<any>;
   errors: FieldErrors<any>;
@@ -20,13 +21,20 @@ export const AmountInput: React.FC<AmountInputProps> = ({
   setValue,
 }) => {
   const handlePercentageSelect = (percentage: number | "MAX") => {
-    let newAmount: string;
+    console.log("Percentage button clicked:", percentage, "Available balance:", availableBalance);
+
+    let newAmount: number;
     if (percentage === "MAX") {
-      newAmount = availableBalance.toFixed(2);
+      newAmount = availableBalance;
     } else {
-      newAmount = ((availableBalance * percentage) / 100).toFixed(2);
+      newAmount = (availableBalance * percentage) / 100;
     }
-    setValue("amount", newAmount);
+
+    // Round to 6 decimal places to avoid floating point precision issues
+    const roundedAmount = Math.round(newAmount * 1000000) / 1000000;
+
+    console.log("Setting amount to:", roundedAmount);
+    setValue("amount", roundedAmount);
   };
 
   return (
@@ -57,7 +65,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
           <button
             key={percentage}
             onClick={() => handlePercentageSelect(percentage)}
-            className="flex flex-1 shrink gap-1 justify-center items-center px-6 py-2 rounded-md bg-[#3D3D3D] hover:bg-neutral-600 transition-colors max-md:px-5"
+            className="cursor-pointer flex flex-1 shrink gap-1 justify-center items-center px-6 py-2 rounded-md bg-[#3D3D3D] hover:bg-neutral-600 transition-colors max-md:px-5"
             type="button"
           >
             <span className="text-white">{percentage}</span>

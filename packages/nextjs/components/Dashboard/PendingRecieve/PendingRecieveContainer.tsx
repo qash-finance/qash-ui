@@ -1,34 +1,38 @@
 "use client";
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import ReceiveAddress from "./ReceiveAddress";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { ToggleSwitch } from "@/components/Common/ToggleSwitch";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { useConsumeTransactions, useGetConsumable } from "@/services/api/transaction";
+import { useGetConsumable } from "@/services/api/transaction";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import { getConsumableNotes } from "@/services/utils/note";
+import { consumeAllNotes, getConsumableNotes } from "@/services/utils/note";
 import { AccountId, ConsumableNoteRecord, NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
 import { ConsumableNote, NoteType } from "@/types/transaction";
 import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { getFaucetMetadata } from "@/services/utils/faucet";
+import { AssetWithMetadata } from "@/types/faucet";
+import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 
 const mockData = [
   {
-    amount: "120,000",
+    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
   },
   {
-    amount: "120,000",
+    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
   },
   {
-    amount: "120,000",
+    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
@@ -68,7 +72,7 @@ const TableHeader = ({
 };
 
 const TableRow = ({
-  amount,
+  assets,
   from,
   dateTime,
   action,
@@ -77,7 +81,7 @@ const TableRow = ({
   onClaim,
   disabled,
 }: {
-  amount: string;
+  assets: AssetWithMetadata[];
   from: string;
   dateTime: string;
   action: string;
@@ -93,8 +97,21 @@ const TableRow = ({
       </td>
       <td className="px-2 py-2 border-r border-zinc-800 min-w-[300px]">
         <div className="flex justify-center items-center gap-2">
-          <img src="/token/usdt.svg" alt="Token" className="w-4 h-4 flex-shrink-0" />
-          <p className="text-stone-300  truncate">{amount}</p>
+          {assets.map((asset, index) => (
+            <div key={index} className="flex items-center gap-1 relative group">
+              <img
+                src={generateTokenAvatar(asset.tokenAddress, asset.metadata?.symbol)}
+                alt={asset.metadata?.symbol || "Token"}
+                className="w-4 h-4 flex-shrink-0 rounded-full"
+              />
+              <p className="text-stone-300 truncate">{asset.amount}</p>
+
+              {/* Tooltip on hover */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                {asset.metadata?.symbol || "Unknown Token"}
+              </div>
+            </div>
+          ))}
         </div>
       </td>
       <td className="px-2 py-2 border-r border-zinc-800 text-center">
@@ -115,7 +132,7 @@ const TableRow = ({
       </td>
       <td className="px-2 py-2 text-center">
         <div className="flex items-center justify-center gap-2">
-          <ActionButton text="Claim" onClick={onClaim} disabled={disabled} />
+          <ActionButton text="Receive" onClick={() => onClaim()} disabled={disabled} />
         </div>
       </td>
     </tr>
@@ -123,70 +140,72 @@ const TableRow = ({
 };
 
 export const PendingRecieveContainer: React.FC = () => {
+  // **************** Custom Hooks *******************
+  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
   const { publicKey } = useWallet();
-  const [autoClaim, setAutoClaim] = useState(false);
   const { openModal } = useModal();
-  const [consumableNotes, setConsumableNotes] = useState<ConsumableNote[]>([]);
-  const { getConsumableNotes, consumeAllNotes, isReady } = useDeployedAccount();
+  const { isReady } = useDeployedAccount();
+
+  // **************** Server Hooks *******************
   const { data: consumable } = useGetConsumable(publicKey || "");
+  // const { mutate: consumeTransactions } = useConsumeTransactions(publicKey || "");
+
+  // **************** Local State *******************
+  const [autoClaim, setAutoClaim] = useState(false);
+  const [consumableNotes, setConsumableNotes] = useState<ConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  // const { mutate: consumeTransactions } = useConsumeTransactions(publicKey || "");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
-      if (isReady && publicKey) {
-        //@ts-ignore
-        const notes: ConsumableNoteRecord[] = await getConsumableNotes();
+      if (walletAddress && isConnected) {
+        setLoading(true);
+        try {
+          const notes: ConsumableNoteRecord[] = await getConsumableNotes(walletAddress);
+          const consumableNotes: ConsumableNote[] = await Promise.all(
+            notes.map(async note => {
+              const id = note.inputNoteRecord().id().toString();
+              const inputNoteRecord = note.inputNoteRecord();
+              const noteMetadata = inputNoteRecord.metadata();
+              const noteDetails = inputNoteRecord.details();
+              const assetPromises = noteDetails
+                .assets()
+                .fungibleAssets()
+                .map(async asset => {
+                  const metadata = await getFaucetMetadata(asset.faucetId());
+                  return {
+                    tokenAddress: asset.faucetId().toString(),
+                    amount: asset.amount().toString(),
+                    metadata: metadata,
+                  } as AssetWithMetadata;
+                });
+              const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
+              const sender = noteMetadata?.sender().toBech32();
 
-        //@ts-ignore
-        const consumableNotes: ConsumableNote[] = notes.map(note => {
-          const id = note.inputNoteRecord().id().toString();
-          const inputNoteRecord = note.inputNoteRecord();
-          const metadata = inputNoteRecord.metadata();
-          const details = inputNoteRecord.details();
-          const assets = details
-            .assets()
-            .fungibleAssets()
-            .map(asset => ({
-              faucetId: asset.faucetId().toString(),
-              amount: asset.amount().toString(),
-            }));
-          const sender = metadata?.sender().toString();
-          const isPrivate = metadata?.noteType() === MidenNoteType.Private;
+              return {
+                id: id,
+                sender: sender!,
+                recipient: walletAddress!,
+                assets: assets,
+              };
+            }),
+          );
 
-          //no updatedAt because it's not included in the note
-          //no recallableTime because it's not included in the note
-          //no serialNumber because it's not included in the note
-          //no decimal because it's not included in the note
-
-          return {
-            id: id,
-            sender: sender!,
-            recipient: publicKey,
-            assets: assets,
-            private: isPrivate,
-            recallable: false,
-            recallableTime: null,
-            serialNumber: [],
-            noteType: NoteType.P2IDR,
-            status: "pending",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-        });
-
-        setConsumableNotes(consumableNotes);
+          setConsumableNotes(consumableNotes);
+        } catch (error) {
+          console.error("Error fetching consumable notes:", error);
+          setConsumableNotes([]);
+        } finally {
+          setLoading(false);
+        }
       }
     })();
-  }, [publicKey, isReady]);
+  }, [walletAddress, isConnected]);
 
-  // const isAllChecked = consumable && consumable.length > 0 && checkedRows.length === consumable.length;
-  // const handleCheckAll = useCallback(() => {
-  //   if (isAllChecked) setCheckedRows([]);
-  //   else setCheckedRows(consumable?.map((_, idx) => idx) || []);
-  // }, [isAllChecked, consumable]);
   const isAllChecked = consumableNotes.length > 0 && checkedRows.length === consumableNotes.length;
+
+  // **************** Local State *******************
   const handleCheckAll = useCallback(() => {
     if (isAllChecked) setCheckedRows([]);
     else setCheckedRows(consumableNotes.map((_, idx) => idx));
@@ -196,103 +215,93 @@ export const PendingRecieveContainer: React.FC = () => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   }, []);
 
-  const handleClaim = (index: number) => {
-    let indicesToClaim: number[] = [];
-    if (index === -1) {
-      // Claim all
-      indicesToClaim = consumableNotes.map((_, idx) => idx);
-    } else if (checkedRows.length > 0) {
-      indicesToClaim = checkedRows;
-    } else {
-      indicesToClaim = [index];
+  const handleClaim = async (note: ConsumableNote) => {
+    try {
+      if (!walletAddress) {
+        return toast.error("Please connect your wallet");
+      }
+      toast.loading("Receiving payment...");
+      setClaiming(true);
+      await consumeAllNotes(AccountId.fromBech32(walletAddress), [note.id]);
+      setClaiming(false);
+
+      toast.dismiss();
+      toast.success("Payment received successfully");
+
+      // Remove the consumed note from the list
+      setConsumableNotes(prev => prev.filter(n => n.id !== note.id));
+      // Also update checked rows if this note was checked
+      setCheckedRows(prev => prev.filter(index => consumableNotes[index]?.id !== note.id));
+    } catch (error) {
+      console.error("Error consuming note:", error);
+      toast.dismiss();
+      toast.error("Failed to receive payment: " + String(error));
+      setClaiming(false);
     }
+  };
 
-    //@ts-ignore
-    const noteIds = consumableNotes?.filter((_, idx) => indicesToClaim.includes(idx)).map(note => note.id) as string[];
+  const handleClaimAll = async () => {
+    try {
+      if (!walletAddress) {
+        return toast.error("Please connect your wallet");
+      }
+      toast.loading("Receiving payments...");
 
-    setClaiming(true);
-    consumeAllNotes(noteIds)
-      .then(() => {
-        toast.success("Transactions consumed successfully");
-        //remove the consumed notes from the list
-        //@ts-ignore
-        setConsumableNotes(prev => prev.filter(note => !noteIds.includes(note.id)));
-        setClaiming(false);
-      })
-      .catch((error: any) => {
-        console.log("🚀 ~ onError ~ error:", error);
-        toast.error("Failed to consume transactions");
-        setClaiming(false);
-      });
+      setClaiming(true);
+      await consumeAllNotes(
+        AccountId.fromBech32(walletAddress),
+        checkedRows.map(idx => consumableNotes[idx].id),
+      );
+      setClaiming(false);
 
-    // const rowsToClaim = consumable?.filter((_, idx) => indicesToClaim.includes(idx));
+      toast.dismiss();
+      toast.success("Payments received successfully");
 
-    // const notes = rowsToClaim?.map(row => {
-    //   const sender = AccountId.fromHex(row.sender);
-    //   const faucet = AccountId.fromHex(row.assets[0].faucetId);
-    //   const target = AccountId.fromHex(row.recipient);
-    //   const isPrivate = row.private;
-
-    //   const noteMetadata = new NoteMetadata(
-    //     sender,
-    //     isPrivate ? NoteType.Private : NoteType.Public,
-    //     NoteTag.fromAccountId(target, NoteExecutionMode.newLocal()),
-    //     NoteExecutionHint.always(),
-    //   );
-
-    //   const noteAsset = new NoteAssets(
-    //     row.assets.map(asset => new FungibleAsset(AccountId.fromHex(asset.faucetId), BigInt(asset.amount))),
-    //   );
-
-    //   const noteRecipient = new NoteRecipient(
-    //     Word.newFromFelts(row.serialNumber.map(num => new Felt(BigInt(num)))),
-    //     NoteScript.p2id(),
-    //     new NoteInputs(new FeltArray([target.suffix(), target.prefix()])),
-    //   );
-
-    //   return new Note(noteAsset, noteMetadata, noteRecipient);
-    // });
-
-    // const noteIds = notes?.map(note => note.id().toString());
-
-    // const noteIds = rowsToClaim?.map(row => row.id.toString());
-
-    if (!noteIds || noteIds.length === 0) {
-      return;
+      // Remove the claimed notes from the list
+      const claimedNoteIds = checkedRows.map(idx => consumableNotes[idx].id);
+      setConsumableNotes(prev => prev.filter(note => !claimedNoteIds.includes(note.id)));
+      // Clear the checked rows
+      setCheckedRows([]);
+    } catch (error) {
+      console.error("Error consuming notes:", error);
+      toast.dismiss();
+      toast.error("Failed to receive payments: " + String(error));
+      setClaiming(false);
     }
-
-    // consumeTransactions(noteIds, {
-    //   onSuccess: () => {
-    //     toast.success("Transactions consumed successfully");
-    //   },
-    //   onError: (error: any) => {
-    //     console.log("🚀 ~ onError ~ error:", error);
-    //     toast.error("Failed to consume transactions");
-    //   },
-    // });
   };
 
   return (
-    <div className="flex w-full h-full bg-black rounded-xl text-white p-6 space-y-6 gap-4">
+    <div className="flex w-full h-full bg-neutral-900  rounded-xl text-white p-6 space-y-6 gap-4">
       <div className="flex-3">
         {/* Pending Section */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold ">Pending to receive</h2>
-            <p className="text-sm text-gray-400 mb-2">
-              Once you accept, you're committing to send the amount to the request address
-            </p>
+            <header className="flex flex-col gap-2 justify-center items-start w-full">
+              <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+                Pending to receive
+              </h2>
+              <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+                Payments sent to you that are ready to be added to your wallet
+              </p>
+            </header>
           </div>
 
-          <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1">
+          <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
             <span className="text-lg text-black">Auto Claim</span>
-            <ToggleSwitch enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
+            <ToggleSwitch disabled={true} enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
           </div>
         </div>
 
         {/* Pending Table */}
-        <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          {consumableNotes?.length === 0 || !consumableNotes ? (
+        <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                <span className="text-white">Loading consumable notes...</span>
+              </div>
+            </div>
+          ) : consumableNotes?.length === 0 || !consumableNotes ? (
             <Empty title="No pending receive" />
           ) : (
             <table className="w-full min-w-[800px]">
@@ -301,13 +310,13 @@ export const PendingRecieveContainer: React.FC = () => {
                 {consumableNotes?.map((row, index) => (
                   <TableRow
                     key={`pending-${index}`}
-                    amount={row.assets[0].amount}
+                    assets={row.assets}
                     from={row.sender}
-                    dateTime={row.createdAt}
-                    action={row.status}
+                    dateTime={new Date().toISOString()}
+                    action={"Claim"}
                     checked={checkedRows.includes(index)}
                     onCheck={() => handleCheckRow(index)}
-                    onClaim={() => handleClaim(index)}
+                    onClaim={() => handleClaim(row)}
                     disabled={claiming}
                   />
                 ))}
@@ -316,37 +325,49 @@ export const PendingRecieveContainer: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center justify-end mt-2 gap-2">
-          <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
-          <ActionButton text="Claim all" onClick={() => handleClaim(-1)} disabled={claiming} />
-        </div>
+        {checkedRows.length > 0 && (
+          <div className="flex items-center justify-end mt-2 gap-2">
+            <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
+            <ActionButton text="Receive all" onClick={() => handleClaimAll()} disabled={claiming} />
+          </div>
+        )}
 
         {/* Unverified Section */}
-        <div>
-          <h2 className="text-xl font-semibold">Unverified request</h2>
-          <p className="text-sm text-gray-400  mb-2">
-            Once you accept, you're committing to send the amount to the request address
-          </p>
+        <div className="mt-10">
+          <div>
+            <header className="flex flex-col gap-2 justify-center items-start w-full">
+              <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+                Unverified request
+              </h2>
+              <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+                Payments that need additional confirmation before you can receive them
+              </p>
+            </header>
+          </div>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          <table className="w-full min-w-[800px]">
-            <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-            <tbody>
-              {mockData.map((row, index) => (
-                <TableRow
-                  key={`pending-${index}`}
-                  amount={row.amount}
-                  from={row.from}
-                  dateTime={row.dateTime}
-                  action={row.action}
-                  checked={false}
-                  onCheck={() => {}}
-                  onClaim={() => {}}
-                  disabled={claiming}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
+          {true ? (
+            <Empty title="No pending receive" />
+          ) : (
+            <table className="w-full min-w-[800px]">
+              <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
+              <tbody>
+                {mockData.map((row, index) => (
+                  <TableRow
+                    key={`pending-${index}`}
+                    assets={row.assets}
+                    from={row.from}
+                    dateTime={row.dateTime}
+                    action={row.action}
+                    checked={false}
+                    onCheck={() => {}}
+                    onClaim={() => {}}
+                    disabled={claiming}
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

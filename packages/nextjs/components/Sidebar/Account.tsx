@@ -4,6 +4,8 @@ import { formatAddress } from "@/services/utils/address";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useAccount } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
+import { useWalletState } from "@/services/store";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
@@ -14,18 +16,30 @@ enum SelectedWallet {
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
-  const { disconnect, publicKey } = useWallet();
+  const { walletAddress, setIsConnected, disconnect } = useWalletState(state => state);
+  const { disconnectWallet } = useWalletAuth();
+
   const [isBlurred, setIsBlurred] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.LOCAL_WALLET_1);
+  const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.MIDEN_WALLET);
   const { deployedAccountData } = useAccount();
+
+  const handleDisconnect = async () => {
+    try {
+      setIsConnected(false);
+      await disconnectWallet();
+      toast.success("Wallet disconnected");
+    } catch (error) {
+      toast.error("Failed to disconnect wallet");
+    }
+  };
 
   const getCurrentAccountInfo = () => {
     switch (selectedWallet) {
       case SelectedWallet.MIDEN_WALLET:
         return {
           name: "Choose account",
-          address: formatAddress(publicKey?.toString() || "0x"),
+          address: formatAddress(walletAddress || "0x"),
         };
       case SelectedWallet.LOCAL_WALLET_1:
         return {
@@ -40,7 +54,7 @@ export const Account: React.FC<AccountProps> = () => {
       default:
         return {
           name: "Choose account",
-          address: formatAddress(publicKey?.toString() || "0x"),
+          address: formatAddress(walletAddress?.toString() || "0x"),
         };
     }
   };
@@ -76,7 +90,7 @@ export const Account: React.FC<AccountProps> = () => {
   };
 
   return (
-    <article className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 cursor-pointer max-h-[140px]">
+    <article className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 max-h-[140px]">
       {/* Account Info */}
       <div
         id="account-info"
@@ -85,19 +99,19 @@ export const Account: React.FC<AccountProps> = () => {
         <header className="flex items-center w-full text-sm font-medium tracking-tight">
           <div className="flex flex-1 gap-1 items-center">
             <img src="/miden-logo.svg" className="w-7 aspect-square" alt="miden logo icon" />
-            <span className="text-base truncate">{formatAddress(publicKey?.toString() || "0x")}</span>
+            <span className="text-base truncate">{formatAddress(walletAddress?.toString() || "0x")}</span>
             <img
               src="/copy-icon.svg"
               className="w-4 aspect-square cursor-pointer"
               alt="Copy icon"
               onClick={() => {
-                navigator.clipboard.writeText(publicKey?.toString() || "");
+                navigator.clipboard.writeText(walletAddress?.toString() || "");
                 toast.success("Copied to clipboard");
               }}
             />
           </div>
           <img
-            onClick={() => disconnect()}
+            onClick={handleDisconnect}
             src="/power-button.svg"
             className="w-5 aspect-square cursor-pointer"
             alt="power button icon"
@@ -113,7 +127,9 @@ export const Account: React.FC<AccountProps> = () => {
               selectedWallet === SelectedWallet.MIDEN_WALLET ? "text-center" : ""
             }`}
           >
-            <span className="flex-1 text-base font-semibold tracking-tight">{currentAccount.name}</span>
+            <span className="cursor-not-allowed flex-1 text-base font-semibold tracking-tight">
+              {currentAccount.name}
+            </span>
             {selectedWallet !== SelectedWallet.MIDEN_WALLET && (
               <>
                 <span className="text-sm font-medium tracking-tight" onClick={handleAccountClick}>
