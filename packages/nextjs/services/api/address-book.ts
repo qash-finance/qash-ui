@@ -47,7 +47,7 @@ const useCheckCategoryExists = (category: string) => {
   return useQuery({
     queryKey: ["address-book", "check-category-exists", category],
     queryFn: async () => {
-      return apiClient.getData(`/address-book/check-category-exists?category=${category}`);
+      return apiClient.getData<boolean>(`/address-book/check-category-exists?category=${category}`);
     },
     enabled: !!category,
   });
@@ -64,7 +64,8 @@ const useCreateAddressBook = () => {
     mutationFn: async (data: AddressBookDto) => {
       return apiClient.postData<AddressBook>("/address-book", data);
     },
-    onSuccess: () => {
+    onSuccess: (newAddressBook: AddressBook) => {
+      queryClient.setQueryData(["address-book"], (old: AddressBook[]) => [...old, newAddressBook]);
       queryClient.invalidateQueries({ queryKey: ["address-book"] });
     },
   });

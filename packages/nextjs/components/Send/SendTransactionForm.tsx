@@ -39,6 +39,7 @@ const buttonStyle = {
   justifyContent: "center",
   backgroundColor: "#3b82f6",
 };
+import { useSearchParams } from "next/navigation";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -58,6 +59,9 @@ interface SendTransactionFormValues {
 }
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
+  const searchParams = useSearchParams();
+  const recipientParam = searchParams?.get("recipient") || "";
+  const recipientNameParam = searchParams?.get("name") || "";
   const {
     register,
     handleSubmit,
@@ -69,7 +73,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   } = useForm<SendTransactionFormValues>({
     defaultValues: {
       amount: 0,
-      recipientAddress: "",
+      recipientAddress: recipientParam,
       recallableTime: 1 * 60 * 60, // 1 hour in seconds
       isPrivateTransaction: false,
     },
@@ -79,6 +83,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const { deployedAccountData } = useDeployedAccount();
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
   const { assets } = useAccount(walletAddress || "");
+  const [recipientName, setRecipientName] = useState(recipientNameParam);
 
   const { mutate: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
 
@@ -125,7 +130,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   };
 
   const handleChooseRecipient = () => {
-    openModal(MODAL_IDS.SELECT_RECIPIENT);
+    openModal(MODAL_IDS.SELECT_RECIPIENT, {
+      onSave: (address: string, name: string) => {
+        setValue("recipientAddress", address, { shouldValidate: true });
+        setRecipientName(name);
+      },
+    });
   };
 
   const handleSendTransaction = async (data: SendTransactionFormValues) => {
@@ -245,6 +255,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         errors={errors}
         setValue={setValue}
         watch={watch}
+        recipientName={recipientName}
       />
 
       <TransactionOptions register={register} watch={watch} setValue={setValue} />

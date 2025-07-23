@@ -7,6 +7,7 @@ import { ModalHeader } from "../Common/ModalHeader";
 import BaseModal from "./BaseModal";
 import { useGetAddressBooks } from "@/services/api/address-book";
 import { AddressBook } from "@/types/address-book";
+import { formatAddress } from "@/services/utils/address";
 
 interface AddressItemProps {
   name: string;
@@ -15,54 +16,44 @@ interface AddressItemProps {
   onToggle?: () => void;
 }
 
-const tabs = [
-  { id: "all", label: "All" },
-  { id: "company", label: "My Company" },
-  { id: "friends", label: "Friends" },
-  { id: "shanghai", label: "Shanghai_Travel" },
-];
-
-function AddressItem({ name, address, isSelected = true, onToggle }: AddressItemProps) {
+function AddressItem({ name, address, isSelected = false, onToggle }: AddressItemProps) {
   return (
     <div
-      className="flex gap-2.5 items-center self-stretch px-3.5 py-3.5 max-md:p-3 max-sm:gap-2 max-sm:px-3 max-sm:py-2.5 cursor-pointer"
+      className="flex gap-2.5 items-center self-stretch px-3.5 py-3.5 max-md:p-3 max-sm:gap-2 max-sm:px-3 max-sm:py-2.5 cursor-pointer border-b last:border-b-0 border-[black]"
       onClick={onToggle}
     >
-      <span className="relative flex justify-center items-center p-0.5 w-5 h-5 rounded-md border-solid bg-blend-luminosity bg-stone-50 bg-opacity-30 border-[0.42px] border-white border-opacity-40 cursor-pointer">
+      {/* Improved Checkbox */}
+      <div className="relative flex-shrink-0">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={e => e.stopPropagation()}
-          className="appearance-none w-full h-full absolute left-0 top-0 z-10 cursor-pointer rounded-md"
+          className="sr-only"
           aria-label={`${isSelected ? "Unselect" : "Select"} ${name}`}
-          style={{ margin: 0 }}
         />
-        {isSelected && (
-          <span className="absolute left-0 top-0 w-full h-full flex items-center justify-center pointer-events-none">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="checkbox-icon"
-              style={{ width: "15px", height: "15px", flexShrink: 0 }}
-            >
+        <div
+          className={`w-5 h-5 rounded-md border transition-all duration-200 flex items-center justify-center ${
+            isSelected ? "bg-[#066EFF] border-[#066EFF]" : "border-white border-opacity-40 bg-stone-50 bg-opacity-30"
+          }`}
+        >
+          {isSelected && (
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M13 4.81445L6.34597 11.4685C6.22393 11.5905 6.02607 11.5905 5.90403 11.4685L3 8.56445"
                 stroke="white"
                 strokeWidth="1.25"
                 strokeLinecap="round"
-              ></path>
+              />
             </svg>
-          </span>
-        )}
-      </span>
+          )}
+        </div>
+      </div>
+
       <p className="overflow-hidden text-base leading-5 text-white flex-[1_0_0] text-ellipsis max-md:text-base max-sm:text-sm">
         {name}
       </p>
       <div className="flex gap-1 justify-center items-center px-2 py-1.5 rounded-xl bg-neutral-700">
-        <span className="text-sm tracking-tight leading-5 text-white max-sm:text-xs">{address}</span>
+        <span className="text-sm tracking-tight leading-5 text-white max-sm:text-xs">{formatAddress(address)}</span>
       </div>
     </div>
   );
@@ -70,52 +61,55 @@ function AddressItem({ name, address, isSelected = true, onToggle }: AddressItem
 
 export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<SelectRecipientModalProps>) {
   const { data: addressBooks } = useGetAddressBooks();
-  const [tabs, setTabs] = useState<string[]>([]);
-  const [addressesByTab, setAddressesByTab] = useState<Record<string, AddressBook[]>>({});
+  const [activeTab, setActiveTab] = useState<string>("");
   const [addressInput, setAddressInput] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [addresses, setAddresses] = useState([
-    {
-      id: "1",
-      name: "Danny Kang",
-      address: "0xd3...sd09",
-      isSelected: true,
-    },
-    {
-      id: "2",
-      name: "Hwang Suk",
-      address: "0xDD...e23f",
-      isSelected: true,
-    },
-  ]);
+  const [selectedAddress, setSelectedAddress] = useState<string>("");
+  const [selectedName, setSelectedName] = useState<string>("");
 
-  useEffect(() => {
-    if (addressBooks && addressBooks.length > 0) {
-      setTabs(addressBooks.map(book => book.category));
-      setActiveTab(addressBooks[0].category);
-
-      setAddressesByTab(
-        addressBooks.reduce(
-          (acc, book) => {
-            acc[book.category] = [...(acc[book.category] || []), book];
-            return acc;
-          },
-          {} as Record<string, AddressBook[]>,
-        ),
-      );
-    }
+  // Group address books by category
+  const groupedAddressBooks = React.useMemo(() => {
+    if (!addressBooks) return {};
+    return addressBooks.reduce((groups: Record<string, AddressBook[]>, ab: AddressBook) => {
+      const category = ab.category;
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(ab);
+      return groups;
+    }, {});
   }, [addressBooks]);
 
-  const handleAddAddress = () => {
-    if (addressInput.trim()) {
-      // Handle adding new address
-      console.log("Adding address:", addressInput);
-      setAddressInput("");
+  // Tabs = categories
+  const categories = React.useMemo(() => Object.keys(groupedAddressBooks), [groupedAddressBooks]);
+
+  // Set default active tab
+  React.useEffect(() => {
+    if (categories.length > 0 && !activeTab) setActiveTab(categories[0]);
+  }, [categories, activeTab]);
+
+  // Handle select toggle (single select)
+  const handleToggleAddress = (address: string, name: string) => {
+    if (address === selectedAddress) {
+      setSelectedAddress("");
+      setSelectedName("");
+    } else {
+      setSelectedAddress(address);
+      setSelectedName(name);
     }
   };
 
-  const handleToggleAddress = (id: string) => {
-    setAddresses(prev => prev.map(addr => (addr.id === id ? { ...addr, isSelected: !addr.isSelected } : addr)));
+  // Handle manual address add/select
+  const handleAddManualAddress = () => {
+    if (addressInput) {
+      setSelectedAddress(addressInput);
+      setSelectedName("");
+    }
+  };
+
+  // Save handler
+  const handleSave = () => {
+    if (onSave && selectedAddress) {
+      onSave(selectedAddress, selectedName);
+      onClose && onClose();
+    }
   };
 
   if (!isOpen) return null;
@@ -135,41 +129,45 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
                 onChange={e => setAddressInput(e.target.value)}
                 className="text-base tracking-tight leading-5 flex-[1_0_0] text-neutral-600 max-md:text-base bg-transparent border-none outline-none placeholder-neutral-600"
               />
-              <ActionButton text="Add" onClick={handleAddAddress} />
+              <ActionButton text="Add" onClick={handleAddManualAddress} />
             </div>
           </section>
 
           {/* Address List */}
           <section className="flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0]">
             <h2 className="text-base tracking-tighter leading-5 text-white">
-              Your address book ({addressesByTab[activeTab]?.length || 0})
+              Your address book ({groupedAddressBooks[activeTab]?.length || 0})
             </h2>
 
             {/* Filter Tabs */}
-            <nav className="flex gap-1.5 items-start self-stretch max-md:flex-wrap max-sm:flex-wrap max-sm:gap-1">
-              {tabs?.map((label, index) => (
+            <nav className="flex gap-1.5 items-start self-stretch max-md:flex-wrap max-sm:flex-wrap max-sm:gap-1 overflow-x-auto">
+              {categories.map((cat, idx) => (
                 <button
                   type="button"
-                  key={index}
-                  onClick={() => setActiveTab(label)}
+                  key={cat}
+                  onClick={() => {
+                    setActiveTab(cat);
+                    setSelectedAddress(""); // clear selection on tab change (optional)
+                    setSelectedName("");
+                  }}
                   className={`flex gap-2.5 items-center px-4 py-2.5 rounded-3xl max-sm:px-3 max-sm:py-2 cursor-pointer ${
-                    activeTab === label ? "bg-[#066EFF] text-black" : "bg-zinc-800 text-white"
+                    activeTab === cat ? "bg-[#066EFF] text-black" : "bg-zinc-800 text-white"
                   }`}
                 >
-                  <span className="text-sm leading-4 text-white max-sm:text-sm">{label}</span>
+                  <span className="text-sm leading-4 text-white max-sm:text-sm">{cat}</span>
                 </button>
               ))}
             </nav>
 
             <div className="flex flex-col gap-1.5 items-start self-stretch">
               <div className="flex flex-col gap-1.5 items-start self-stretch p-1 rounded-xl bg-[#313131]">
-                {addresses.map(address => (
+                {groupedAddressBooks[activeTab]?.map((ab, idx) => (
                   <AddressItem
-                    key={address.id}
-                    name={address.name}
-                    address={address.address}
-                    isSelected={address.isSelected}
-                    onToggle={() => handleToggleAddress(address.id)}
+                    key={ab.address + ab.name}
+                    name={ab.name}
+                    address={ab.address}
+                    isSelected={selectedAddress === ab.address}
+                    onToggle={() => handleToggleAddress(ab.address, ab.name)}
                   />
                 ))}
               </div>
@@ -178,7 +176,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
 
           {/* Footer */}
           <footer className="flex gap-2 items-start self-stretch">
-            <ActionButton text="Save" onClick={onSave} className="w-full h-10" />
+            <ActionButton text="Save" onClick={handleSave} className="w-full h-10" disabled={!selectedAddress} />
           </footer>
         </main>
       </div>

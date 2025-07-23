@@ -1,4 +1,6 @@
 "use client";
+import { useAccount } from "@/hooks/web3/useAccount";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import * as React from "react";
 import { TokenItem } from "./TokenItem";
 import { AssetWithMetadata } from "@/types/faucet";
@@ -19,7 +21,6 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
       maximumFractionDigits: 6,
     });
   };
-
   return (
     <section className="flex flex-col gap-2.5 items-start self-stretch">
       <h2 className="self-stretch text-base tracking-tighter leading-5 text-white max-sm:px-1 max-sm:py-0 max-sm:text-sm">
