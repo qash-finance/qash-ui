@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
-import { getAccountById } from "@/services/utils/account";
+import { getAccountById } from "@/services/utils/miden/account";
 import { AccountId } from "@demox-labs/miden-sdk";
 
 export function WalletHeader() {

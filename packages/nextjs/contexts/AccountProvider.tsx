@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Account } from "@demox-labs/miden-sdk";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { deployAccount } from "@/services/utils/account";
+import { deployAccount } from "@/services/utils/miden/account";
 
 interface DeployedAccountData {
   accountId: string;
@@ -112,7 +112,6 @@ export const AccountProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const deployAccountForWallet = async (walletAddress: string, isPublic: boolean = true): Promise<Account> => {
-    console.log("deployAccountForWallet called for wallet:", walletAddress);
     setIsDeploying(true);
     setError(null);
 
@@ -121,8 +120,6 @@ export const AccountProvider: React.FC<{ children: ReactNode }> = ({ children })
       const existingAccountData = getStoredAccountForWallet(walletAddress);
 
       if (existingAccountData) {
-        console.log("Found existing deployed account for wallet:", walletAddress, "- returning early");
-        console.log("Existing account data:", existingAccountData);
         setDeployedAccountData(existingAccountData);
 
         // TODO: In the future, we should recreate the Account object from stored data

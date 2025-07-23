@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { formatAddress } from "@/services/utils/address";
+import { formatAddress } from "@/services/utils/miden/address";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useAccount } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
@@ -129,7 +129,7 @@ export const Account: React.FC<AccountProps> = () => {
           >
             <span
               className="cursor-not-allowed flex-1 text-base font-semibold tracking-tight"
-              onClick={handleAccountClick}
+              // onClick={handleAccountClick}
             >
               {currentAccount.name}
             </span>

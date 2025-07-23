@@ -9,8 +9,8 @@ export function useClient() {
     if (!client) {
       const { WebClient } = await import("@demox-labs/miden-sdk");
       client = await WebClient.createClient(nodeEndpoint);
-      await client.syncState();
     }
+    await client.syncState();
     return client;
   }
 

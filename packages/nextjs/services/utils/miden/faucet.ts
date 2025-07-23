@@ -1,6 +1,6 @@
 "use client";
 import { Account, AccountId, TransactionResult } from "@demox-labs/miden-sdk";
-import { useClient } from "../../hooks/web3/useClient";
+import { useClient } from "../../../hooks/web3/useClient";
 import { getAccountById, importAndGetAccount } from "./account";
 import { FaucetMetadata } from "@/types/faucet";
 

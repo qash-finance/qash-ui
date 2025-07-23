@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useClient } from "./useClient";
 import { AccountId, ConsumableNoteRecord, FungibleAsset } from "@demox-labs/miden-sdk";
-import { getConsumableNotes } from "../../services/utils/note";
-import { getAccountAssets, importAndGetAccount } from "@/services/utils/account";
+import { getConsumableNotes } from "../../services/utils/miden/note";
+import { getAccountAssets, importAndGetAccount } from "@/services/utils/miden/account";
 import { AssetWithMetadata, FaucetMetadata } from "@/types/faucet";
 
 // Retry utility function with exponential backoff

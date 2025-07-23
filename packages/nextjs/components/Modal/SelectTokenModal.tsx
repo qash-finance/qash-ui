@@ -7,13 +7,13 @@ import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useAccount } from "@/hooks/web3/useAccount";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { qashTokenAddress, qashTokenDecimals, qashTokenMaxSupply, qashTokenSymbol } from "@/services/utils/constant";
 import { AssetWithMetadata } from "@/types/faucet";
 
 export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<SelectTokenModalProps>) {
   // **************** Custom Hooks *******************
   const { walletAddress } = useWalletConnect();
-  const { assets } = useAccount(walletAddress || "");
+  const { assets, isError } = useAccount(walletAddress || "");
 
   // **************** Local State *******************
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,6 +21,7 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
 
   // **************** Local Functions *******************
   const handleTokenSelect = (token: AssetWithMetadata) => {
+    console.log("SELECTED TOKEN", token);
     onTokenSelect?.(token);
     onClose();
   };
@@ -34,31 +35,33 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
     tokenAddress: qashTokenAddress,
     amount: "0", // Default amount if user doesn't have any
     metadata: {
-      symbol: "QASH",
-      decimals: 8,
-      maxSupply: 1000000,
+      symbol: qashTokenSymbol,
+      decimals: qashTokenDecimals,
+      maxSupply: qashTokenMaxSupply,
     },
   };
 
-  useEffect(() => {
-    // Merge user assets with Qash token, avoiding duplicates
-    const allAssets = [qashToken, ...assets.filter(asset => asset.tokenAddress !== qashTokenAddress)];
-
-    // Filter assets based on search query
-    const filteredAssets = allAssets.filter(asset => {
-      const query = searchQuery.toLowerCase().trim();
-      if (!query) return true; // Show all if no search query
-
-      const symbol = asset.metadata.symbol.toLowerCase();
-      const tokenAddress = asset.tokenAddress.toLowerCase();
-
-      return symbol.includes(query) || tokenAddress.includes(query);
-    });
-
-    setFilteredAssets(filteredAssets);
-  }, [assets]);
-
   // **************** Effect  *******************
+  useEffect(() => {
+    console.log("All assets", assets);
+
+    if (assets.length > 0) {
+      const allAssets = [qashToken, ...assets.filter(asset => asset.tokenAddress !== qashTokenAddress)];
+      const filteredAssets = allAssets.filter(asset => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) return true;
+
+        const symbol = asset.metadata.symbol.toLowerCase();
+        const tokenAddress = asset.tokenAddress.toLowerCase();
+
+        return symbol.includes(query) || tokenAddress.includes(query);
+      });
+
+      setFilteredAssets(filteredAssets);
+    } else {
+      setFilteredAssets([qashToken]);
+    }
+  }, [assets, isError]);
 
   if (!isOpen) return null;
 

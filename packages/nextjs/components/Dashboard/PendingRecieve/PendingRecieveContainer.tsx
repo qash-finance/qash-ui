@@ -9,12 +9,12 @@ import { useGetConsumable } from "@/services/api/transaction";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import { consumeAllNotes, getConsumableNotes } from "@/services/utils/note";
+import { consumeAllNotes, getConsumableNotes } from "@/services/utils/miden/note";
 import { AccountId, ConsumableNoteRecord, NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
 import { ConsumableNote, NoteType } from "@/types/transaction";
 import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { getFaucetMetadata } from "@/services/utils/faucet";
+import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata } from "@/types/faucet";
 import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 

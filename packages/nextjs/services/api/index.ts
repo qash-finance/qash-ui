@@ -1,10 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AuthStorage } from "../auth/storage";
 
-const apiServer = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_SERVER_URL,
-});
-
-// Authenticated API client class
 export class AuthenticatedApiClient {
   private axiosInstance: AxiosInstance;
   private getToken: () => string | null;
@@ -113,4 +109,22 @@ export class AuthenticatedApiClient {
   }
 }
 
-export { apiServer };
+const apiServer = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_SERVER_URL,
+});
+
+// Create a single shared API client instance
+const apiServerWithAuth = new AuthenticatedApiClient(
+  process.env.NEXT_PUBLIC_SERVER_URL || "",
+  () => {
+    const auth = AuthStorage.getAuth();
+    return auth?.sessionToken || null;
+  },
+  async () => {
+    // TODO: Implement token refresh logic
+    // For now, just clear auth and redirect to login
+  },
+  () => {},
+);
+
+export { apiServer, apiServerWithAuth };

@@ -1,109 +1,34 @@
 import { ConsumableNote, SendTransactionDto } from "@/types/transaction";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AuthenticatedApiClient } from "./index";
-import { AuthStorage } from "../auth/storage";
+import { apiServerWithAuth } from "./index";
 
-// *************************************************
-// **************** TANSTACK QUERY HOOKS ************
-// *************************************************
-
-// Create a single shared API client instance
-const apiClient = new AuthenticatedApiClient(
-  process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => {
-    const auth = AuthStorage.getAuth();
-    return auth?.sessionToken || null;
-  },
-  async () => {
-    // TODO: Implement token refresh logic
-    // For now, just clear auth and redirect to login
-  },
-  () => {},
-);
-
-// *************************************************
-// **************** GET METHODS *******************
-// *************************************************
-
-const useGetConsumable = (address: string) => {
-  return useQuery({
-    queryKey: ["consumable", address],
-    queryFn: async () => {
-      const response = await apiClient.getData(`/transactions/consumable?userAddress=${address}`);
-      return response as ConsumableNote[];
-    },
-    enabled: !!address,
-  });
+const getConsumable = async (address: string) => {
+  const response = await apiServerWithAuth.getData(`/transactions/consumable?userAddress=${address}`);
+  return response as ConsumableNote[];
 };
 
-const useGetRecallable = () => {
-  return useQuery({
-    queryKey: ["recallable"],
-    queryFn: async () => {
-      return apiClient.getData(`/transactions/recall-dashboard`);
-    },
-  });
+const getRecallable = async () => {
+  const response = await apiServerWithAuth.getData(`/transactions/recall-dashboard`);
+  return response;
 };
 
-// *************************************************
-// **************** POST METHODS *******************
-// *************************************************
-
-const useSendSingleTransaction = () => {
-  return useMutation({
-    mutationFn: async (transaction: SendTransactionDto) => {
-      return apiClient.postData("/transactions/send-single", transaction);
-    },
-  });
+const sendSingleTransaction = async (transaction: SendTransactionDto) => {
+  const response = await apiServerWithAuth.postData("/transactions/send-single", transaction);
+  return response;
 };
 
-const useSendBatchTransaction = () => {
-  return useMutation({
-    mutationFn: async (transaction: SendTransactionDto) => {
-      return apiClient.postData("/transactions/send-batch", transaction);
-    },
-  });
+const sendBatchTransaction = async (transaction: SendTransactionDto) => {
+  const response = await apiServerWithAuth.postData("/transactions/send-batch", transaction);
+  return response;
 };
 
-// *************************************************
-// **************** PUT METHODS *******************
-// *************************************************
-const useConsumeTransactions = (address: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (transactionIds: string[]) => {
-      return apiClient.putData("/transactions/consume", transactionIds);
-    },
-    onMutate: async (transactionIds: string[]) => {
-      await queryClient.cancelQueries({ queryKey: ["consumable", address] });
-      const previousConsumable = queryClient.getQueryData(["consumable", address]);
-      console.log("🚀 ~ onMutate: ~ previousConsumable:", previousConsumable);
-
-      queryClient.setQueryData(["consumable", address], (old: ConsumableNote[] | undefined) => {
-        if (!old) return old;
-        return old.filter(note => !transactionIds.includes(note.id.toString()));
-      });
-      return { previousConsumable };
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["consumable", address] });
-    },
-  });
+const consumeTransactions = async (transactionIds: string[]) => {
+  const response = await apiServerWithAuth.putData("/transactions/consume", transactionIds);
+  return response;
 };
 
-const useRecallBatch = () => {
-  return useMutation({
-    mutationFn: async (transactionIds: string[]) => {
-      return apiClient.putData("/transactions/recall", transactionIds);
-    },
-  });
+const recallBatch = async (transactionIds: string[]) => {
+  const response = await apiServerWithAuth.putData("/transactions/recall", transactionIds);
+  return response;
 };
 
-export {
-  useGetConsumable,
-  useSendSingleTransaction,
-  useSendBatchTransaction,
-  useGetRecallable,
-  useConsumeTransactions,
-  useRecallBatch,
-};
+export { getConsumable, getRecallable, sendSingleTransaction, sendBatchTransaction, consumeTransactions, recallBatch };

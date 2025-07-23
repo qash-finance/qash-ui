@@ -8,11 +8,10 @@ import { MODAL_IDS } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
-import { useSendSingleTransaction } from "@/services/api/transaction";
-import { NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
+import { NoteType as MidenNoteType, NoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
 import { AccountId } from "@demox-labs/miden-sdk";
-import { createNoteAndSubmit } from "@/services/utils/note";
+import { createNoteAndSubmit, createP2IDRNote } from "@/services/utils/miden/note";
 import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
 import { useWalletState } from "@/services/store";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
@@ -20,7 +19,13 @@ import { useAccount } from "@/hooks/web3/useAccount";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
 import { useEffect } from "react";
 import { AssetWithMetadata } from "@/types/faucet";
-import { qashTokenAddress, qashTokenSymbol, qashTokenDecimals, qashTokenMaxSupply } from "@/services/utils/constant";
+import {
+  qashTokenAddress,
+  qashTokenSymbol,
+  qashTokenDecimals,
+  qashTokenMaxSupply,
+  blockTime,
+} from "@/services/utils/constant";
 
 const buttonStyle = {
   width: "100%",
@@ -40,6 +45,9 @@ const buttonStyle = {
   backgroundColor: "#3b82f6",
 };
 import { useSearchParams } from "next/navigation";
+import { submitTransaction } from "@/services/utils/miden/transactions";
+import useSendSingleTransaction from "@/hooks/server/useSendSingleTransaction";
+import { CustomNoteType } from "@/types/note";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -67,7 +75,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     handleSubmit,
     formState: { errors },
     setValue,
-    getValues,
     watch,
     reset,
   } = useForm<SendTransactionFormValues>({
@@ -80,11 +87,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   });
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
-  const { deployedAccountData } = useDeployedAccount();
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
   const { assets } = useAccount(walletAddress || "");
-  const [recipientName, setRecipientName] = useState(recipientNameParam);
-
   const { mutate: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
 
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
@@ -100,11 +104,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     },
   });
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
-  // Form values are now handled by react-hook-form
   const [isSending, setIsSending] = useState(false);
+  const [recipientName, setRecipientName] = useState(recipientNameParam);
 
   // **************** Effects *******************
-  // Update default selected token when assets change
   useEffect(() => {
     const defaultToken = getDefaultSelectedToken(assets);
     setSelectedToken(defaultToken);
@@ -146,11 +149,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
 
     try {
-      console.log("YOYOOY");
-      console.log({ amount, recipientAddress, recallableTime, isPrivateTransaction });
-
+      toast.loading("Sending transaction...");
+      setIsSending(true);
       // check if amount > balance
       if (amount > parseFloat(selectedToken.amount)) {
+        toast.dismiss();
         toast.error("Insufficient balance");
         return;
       }
@@ -159,19 +162,60 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       try {
         AccountId.fromBech32(recipientAddress);
       } catch (error) {
+        toast.dismiss();
         toast.error("Invalid recipient address");
         return;
       }
 
       // check if recallable time is valid
       if (recallableTime <= 0) {
+        toast.dismiss();
         toast.error("Recallable time must be greater than 0");
         return;
       }
 
       // check if amount > 0
+      if (amount <= 0) {
+        toast.dismiss();
+        toast.error("Amount must be greater than 0");
+        return;
+      }
+
+      // each block is 5 seconds, calculate recall height
+      const recallHeight = Math.floor(recallableTime / blockTime);
+
+      // send transaction
+      // create note
+      const [note, serialNumbers] = await createP2IDRNote(
+        AccountId.fromBech32(walletAddress),
+        AccountId.fromBech32(recipientAddress),
+        AccountId.fromBech32(selectedToken.tokenAddress),
+        amount,
+        isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+        recallHeight,
+      );
+
+      // submit transaction to blockchain
+      await submitTransaction(new OutputNotesArray([note]), AccountId.fromBech32(walletAddress));
+
+      // submit transaction to server
+      sendSingleTransaction({
+        assets: [{ faucetId: selectedToken.tokenAddress, amount: amount.toString() }],
+        private: isPrivateTransaction,
+        recipient: recipientAddress,
+        recallable: true,
+        recallableTime: recallableTime > 0 ? new Date(Date.now() + recallableTime * 1000) : undefined,
+        serialNumber: serialNumbers.map(felt => Number(felt.toString())),
+        noteType: CustomNoteType.P2IDR,
+      });
+
+      toast.dismiss();
+      toast.success("Transaction sent successfully");
+
       reset();
     } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to send transaction");
       console.error(error);
     } finally {
       setIsSending(false);

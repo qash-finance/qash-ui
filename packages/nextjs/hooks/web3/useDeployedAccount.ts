@@ -1,8 +1,8 @@
 "use client";
 import { useAccount } from "@/contexts/AccountProvider";
 import { AccountId, NoteType } from "@demox-labs/miden-sdk";
-import { createP2IDNote, createP2IDRNote, consumeAllNotes, getConsumableNotes } from "@/services/utils/note";
-import { mintToken } from "@/services/utils/faucet";
+import { createP2IDNote, createP2IDRNote, consumeAllNotes, getConsumableNotes } from "@/services/utils/miden/note";
+import { mintToken } from "@/services/utils/miden/faucet";
 
 export function useDeployedAccount() {
   const { deployedAccount, deployedAccountData, isDeploying, error, clearAllStoredAccounts } = useAccount();

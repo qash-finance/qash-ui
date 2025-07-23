@@ -1,7 +1,7 @@
 import React from "react";
 import { ActionButton } from "../Common/ActionButton";
 import { AddressBook } from "@/types/address-book";
-import { formatAddress } from "@/services/utils/address";
+import { formatAddress } from "@/services/utils/miden/address";
 import { useRouter } from "next/navigation";
 
 interface AddressCardProps {

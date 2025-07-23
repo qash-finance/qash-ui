@@ -33,7 +33,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const wallets = useMemo(
     () => [
       new TridentWalletAdapter({
-        appName: "App Name",
+        appName: "Qash",
       }),
     ],
     [],

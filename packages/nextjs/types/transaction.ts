@@ -1,4 +1,5 @@
 import { AssetWithMetadata } from "./faucet";
+import { CustomNoteType } from "./note";
 
 export enum NoteType {
   P2ID = "p2id",
@@ -12,13 +13,13 @@ export interface AssetDto {
 }
 
 export interface SendTransactionDto {
-  recipient: string;
   assets: AssetDto[];
   private: boolean;
+  recipient: string;
   recallable: boolean;
   recallableTime?: Date;
   serialNumber: number[];
-  noteType: NoteType;
+  noteType: CustomNoteType;
 }
 
 export interface ConsumableNote {

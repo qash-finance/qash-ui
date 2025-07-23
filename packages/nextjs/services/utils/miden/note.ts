@@ -15,8 +15,11 @@ import {
   OutputNote,
   NoteAssets,
   FungibleAsset,
+  TransactionRequestBuilder,
+  OutputNotesArray,
+  TransactionResult,
 } from "@demox-labs/miden-sdk";
-import { useClient } from "../../hooks/web3/useClient";
+import { useClient } from "../../../hooks/web3/useClient";
 
 async function randomSerialNumbers(): Promise<Felt[]> {
   const randomBytes = new Uint32Array(4);
@@ -55,22 +58,31 @@ export async function createP2IDRNote(
   amount: number,
   noteType: NoteType,
   recallHeight: number,
-) {
+): Promise<[OutputNote, Felt[]]> {
   const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } = await import("@demox-labs/miden-sdk");
 
+  const { getClient } = useClient();
+  const client = await getClient();
+  console.log("ISSUE WHERE");
   const serialNumbers = await randomSerialNumbers();
 
-  return OutputNote.full(
-    Note.createP2IDENote(
-      sender,
-      receiver,
-      new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
-      noteType,
-      Word.newFromFelts(serialNumbers),
-      recallHeight,
-      new Felt(BigInt(0)),
+  // get current height
+  const currentHeight = await client.getSyncHeight();
+  recallHeight = currentHeight + recallHeight;
+  return [
+    OutputNote.full(
+      Note.createP2IDENote(
+        sender,
+        receiver,
+        new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
+        noteType,
+        Word.newFromFelts(serialNumbers),
+        recallHeight,
+        new Felt(BigInt(0)),
+      ),
     ),
-  );
+    serialNumbers,
+  ];
 }
 
 export async function consumeAllNotes(accountId: AccountId, noteIds: string[]) {
