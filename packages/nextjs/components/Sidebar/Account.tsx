@@ -127,7 +127,10 @@ export const Account: React.FC<AccountProps> = () => {
               selectedWallet === SelectedWallet.MIDEN_WALLET ? "text-center" : ""
             }`}
           >
-            <span className="cursor-not-allowed flex-1 text-base font-semibold tracking-tight">
+            <span
+              className="cursor-not-allowed flex-1 text-base font-semibold tracking-tight"
+              onClick={handleAccountClick}
+            >
               {currentAccount.name}
             </span>
             {selectedWallet !== SelectedWallet.MIDEN_WALLET && (

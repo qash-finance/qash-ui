@@ -35,7 +35,7 @@ export interface SelectTokenModalProps extends BaseModalProps {
 export interface SendModalProps extends BaseModalProps {}
 
 export interface SelectRecipientModalProps extends BaseModalProps {
-  onSave?: () => void;
+  onSave?: (address: string, name: string) => void;
 }
 
 export interface ModulesSetupProps extends BaseModalProps {

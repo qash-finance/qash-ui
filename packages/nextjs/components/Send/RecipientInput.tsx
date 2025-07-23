@@ -9,6 +9,7 @@ interface RecipientInputProps {
   errors: FieldErrors<any>;
   setValue: UseFormSetValue<any>;
   watch: UseFormWatch<any>;
+  recipientName?: string;
 }
 
 export const RecipientInput: React.FC<RecipientInputProps> = ({
@@ -17,9 +18,8 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
   errors,
   setValue,
   watch,
+  recipientName,
 }) => {
-  const recipientAddress = watch("recipientAddress", "0x...");
-
   return (
     <>
       <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
@@ -32,13 +32,15 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
           <div className="flex flex-col flex-1 shrink justify-center basis-5 min-w-60">
             <div className="flex gap-2 items-center self-start whitespace-nowrap">
               <label className="text-base leading-none text-center text-white">To</label>
-              <span className="text-base tracking-tight leading-none text-neutral-600">
-                {recipientAddress || "0x..."}
-              </span>
+              <span className="text-base tracking-tight leading-none text-neutral-600">{recipientName}</span>
             </div>
             <input
               {...register("recipientAddress", {
                 required: "Recipient address is required",
+                pattern: {
+                  value: /^mt/i,
+                  message: "Address must start with 'mt'",
+                },
               })}
               type="text"
               placeholder="Enter address or choose from your contacts book"
