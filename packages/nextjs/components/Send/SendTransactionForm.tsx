@@ -11,9 +11,7 @@ import { useForm } from "react-hook-form";
 import { NoteType as MidenNoteType, NoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
 import { AccountId } from "@demox-labs/miden-sdk";
-import { createNoteAndSubmit, createP2IDRNote } from "@/services/utils/miden/note";
-import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
-import { useWalletState } from "@/services/store";
+import { createP2IDRNote } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
@@ -25,25 +23,8 @@ import {
   qashTokenDecimals,
   qashTokenMaxSupply,
   blockTime,
+  buttonStyle,
 } from "@/services/utils/constant";
-
-const buttonStyle = {
-  width: "100%",
-  padding: "12px 16px",
-  fontSize: "16px",
-  fontWeight: "500",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-  transition: "background-color 0.2s",
-  textAlign: "center" as const,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  backgroundColor: "#3b82f6",
-};
 import { useSearchParams } from "next/navigation";
 import { submitTransaction } from "@/services/utils/miden/transactions";
 import useSendSingleTransaction from "@/hooks/server/useSendSingleTransaction";
@@ -222,6 +203,54 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
   };
 
+  const handleAddToBatch = (data: SendTransactionFormValues) => {
+    const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
+
+    if (!isConnected || !walletAddress) {
+      return;
+    }
+
+    try {
+      // check if amount > balance
+      if (amount > parseFloat(selectedToken.amount)) {
+        toast.dismiss();
+        toast.error("Insufficient balance");
+        return;
+      }
+
+      // check if recipient address is valid bech32
+      try {
+        AccountId.fromBech32(recipientAddress);
+      } catch (error) {
+        toast.dismiss();
+        toast.error("Invalid recipient address");
+        return;
+      }
+
+      // check if recallable time is valid
+      if (recallableTime <= 0) {
+        toast.dismiss();
+        toast.error("Recallable time must be greater than 0");
+        return;
+      }
+
+      // check if amount > 0
+      if (amount <= 0) {
+        toast.dismiss();
+        toast.error("Amount must be greater than 0");
+        return;
+      }
+
+      toast.success("Transaction added to batch successfully");
+
+      reset();
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to add transaction to batch");
+      console.error(error);
+    }
+  };
+
   return (
     <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleSendTransaction)}>
       <section
@@ -305,13 +334,15 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
 
       {isConnected ? (
-        <ActionButton
-          text="Send Transaction"
-          buttonType="submit"
-          onClick={() => console.log("Send button clicked")}
-          className="w-full h-10 mt-2"
-          disabled={isSending}
-        />
+        <div className="flex items-center gap-2 mt-1">
+          <ActionButton text="Add To Batch" buttonType="submit" type="neutral" className="w-[30%] h-10 mt-2" />
+          <ActionButton
+            text="Send Transaction"
+            buttonType="submit"
+            className="w-[70%] h-10 mt-2"
+            disabled={isSending}
+          />
+        </div>
       ) : (
         <div className="relative">
           {/* <WalletMultiButton
@@ -332,7 +363,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               color: "transparent", // Hide original text
               fontSize: "0", // Hide text
             }}
-            className="mt-3 wallet-button-custom cursor-pointer h-[40px]"
+            className="mt-2 wallet-button-custom cursor-pointer h-[40px]"
           />
           <div className="absolute bottom-0 bg-[#1E8FFF] text-white text-[16px] font-medium pointer-events-none z-10 w-full text-center h-10 flex items-center justify-center rounded-lg">
             Connect Wallet

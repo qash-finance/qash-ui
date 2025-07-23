@@ -5,7 +5,6 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import { ToggleSwitch } from "@/components/Common/ToggleSwitch";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { useGetConsumable } from "@/services/api/transaction";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
@@ -142,13 +141,9 @@ const TableRow = ({
 export const PendingRecieveContainer: React.FC = () => {
   // **************** Custom Hooks *******************
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
-  const { publicKey } = useWallet();
   const { openModal } = useModal();
-  const { isReady } = useDeployedAccount();
 
   // **************** Server Hooks *******************
-  const { data: consumable } = useGetConsumable(publicKey || "");
-  // const { mutate: consumeTransactions } = useConsumeTransactions(publicKey || "");
 
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);

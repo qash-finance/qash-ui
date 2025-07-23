@@ -3,7 +3,6 @@ import * as React from "react";
 import { StatusCard } from "./StatusCard";
 import { Table } from "../../Common/Table";
 import { ActionButton } from "../../Common/ActionButton";
-import { useGetRecallable } from "@/services/api/transaction";
 
 const TableSection = ({
   title,
@@ -209,9 +208,6 @@ const waitingRecallData = [
 ];
 
 export const CancelDashboardContainer: React.FC = () => {
-  const { data: recallable } = useGetRecallable();
-  const { nextRecallTime } = recallable || {};
-  console.log("🚀 ~ CancelDashboardContainer ~ recallable:", recallable);
   const pendingHeaders = ["Type", "Amount", "From", "Date/Time"];
   const waitingHeaders = ["Type", "Amount", "From", "Date/Time", "Recall in"];
 
@@ -246,7 +242,7 @@ export const CancelDashboardContainer: React.FC = () => {
                   <span className="text-white text-lg font-normal font-['Barlow']">Next cancel payment</span>
                 </div>
                 <div className="font-bold text-4xl text-white relative top-[-25px] z-10 font-repetition-scrolling">
-                  {nextRecallTime
+                  {/* {nextRecallTime
                     ? (() => {
                         const date = new Date(nextRecallTime);
                         const now = new Date();
@@ -258,7 +254,7 @@ export const CancelDashboardContainer: React.FC = () => {
                         const seconds = String(Math.floor(diff / 1000)).padStart(2, "0");
                         return `${hours}H:${minutes}M:${seconds}S`;
                       })()
-                    : "00H:00M:00S"}
+                    : "00H:00M:00S"} */}
                 </div>
               </div>
             </div>

@@ -2,6 +2,9 @@
 import * as React from "react";
 import { TransactionItem } from "./TransactionItem";
 import { EmptyBatch } from "./EmptyBatch";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { buttonStyle } from "@/services/utils/constant";
+import { ActionButton } from "../Common/ActionButton";
 
 interface Transaction {
   id: string;
@@ -78,6 +81,8 @@ export function BatchTransactionContainer({
   onRemoveTransaction,
   onConfirm,
 }: BatchTransactionContainerProps) {
+  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
+
   return (
     <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-zinc-900 w-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
       <div className="flex flex-col gap-1.5 items-center self-stretch rounded-2xl bg-zinc-800">
@@ -114,15 +119,37 @@ export function BatchTransactionContainer({
       </div>
 
       {/* Footer */}
-      <footer className="flex gap-2 items-start self-stretch pt-2">
-        <button
-          className="flex gap-1.5 justify-center items-center px-4 pt-3 pb-3.5 bg-blue-500 rounded-xl shadow flex-[1_0_0] max-sm:px-4 max-sm:pt-3.5 max-sm:pb-4 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onConfirm}
-          disabled={false}
-        >
-          <span className="text-base font-medium tracking-normal leading-4 text-white">Confirm &amp; Sign</span>
-        </button>
-      </footer>
+      {isConnected ? (
+        <footer className="flex gap-2 items-start self-stretch pt-2">
+          <ActionButton
+            text="Confirm & Sign"
+            buttonType="submit"
+            className="w-full h-10 mt-0"
+            onClick={onConfirm}
+            disabled={false}
+          />
+        </footer>
+      ) : (
+        <div className="relative w-full">
+          {/* <WalletMultiButton
+          className="wallet-button-custom cursor-pointer w-full h-10 mt-2"
+          style={{
+            color: "transparent",
+            fontSize: "0",
+            backgroundColor: "transparent",
+            border: "none",
+            outline: "none",
+          }}
+        /> */}
+          <ActionButton
+            text="Connect Wallet"
+            buttonType="submit"
+            className="w-full h-10 mt-2"
+            onClick={handleConnect}
+            disabled={false}
+          />
+        </div>
+      )}
     </main>
   );
 }
