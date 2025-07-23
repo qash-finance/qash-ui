@@ -7,6 +7,7 @@ interface ActionButtonProps {
   disabled?: boolean;
   onClick?: () => void;
   className?: string;
+  buttonType?: "button" | "submit" | "reset";
 }
 
 /**
@@ -35,6 +36,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   disabled = false,
   onClick,
   className,
+  buttonType = "button",
 }) => {
   const getButtonStyles = () => {
     switch (type) {
@@ -67,7 +69,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
   return (
     <button
-      type="button"
+      type={buttonType}
       className={`font-barlow font-medium text-white transition-colors cursor-pointer ${className} ${
         disabled ? "bg-[#1E578E] cursor-not-allowed text-[#8E8E8E]" : getButtonStyles()
       }`}

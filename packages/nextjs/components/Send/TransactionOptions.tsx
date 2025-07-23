@@ -1,21 +1,18 @@
 "use client";
-import React from "react";
-import { useFormContext, UseFormRegister } from "react-hook-form";
+import React, { Dispatch, SetStateAction } from "react";
+import { useFormContext, UseFormRegister, UseFormWatch, UseFormSetValue } from "react-hook-form";
 import { ToggleSwitch } from "../Common/ToggleSwitch";
 
 interface TransactionOptionsProps {
-  privateTransaction: boolean;
-  recallableTime: boolean;
-  onPrivateTransactionChange: (enabled: boolean) => void;
-  onRecallableTimeChange: (enabled: boolean) => void;
-  onChooseRecallableTime: () => void;
   register: UseFormRegister<any>;
+  watch: UseFormWatch<any>;
+  setValue: UseFormSetValue<any>;
 }
 
 const options = [
   {
     label: "1 hour",
-    value: 1 * 60 * 60,
+    value: 1 * 60 * 60, // 1 hour in seconds
   },
   {
     label: "12 hours",
@@ -27,14 +24,10 @@ const options = [
   },
 ];
 
-export const TransactionOptions: React.FC<TransactionOptionsProps> = ({
-  privateTransaction,
-  recallableTime,
-  onPrivateTransactionChange,
-  onRecallableTimeChange,
-  onChooseRecallableTime,
-  register,
-}) => {
+export const TransactionOptions: React.FC<TransactionOptionsProps> = ({ register, watch, setValue }) => {
+  const recallableTime = watch("recallableTime", 1 * 60 * 60); // 1 hour in seconds
+  const isPrivateTransaction = watch("isPrivateTransaction", false);
+
   return (
     <div className="space-y-1">
       {/* <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 w-full rounded-lg bg-zinc-800 max-md:max-w-full">
@@ -54,7 +47,11 @@ export const TransactionOptions: React.FC<TransactionOptionsProps> = ({
             Only you and the receipient know about this transaction
           </p>
         </div>
-        <ToggleSwitch enabled={privateTransaction} onChange={onPrivateTransactionChange} />
+        <ToggleSwitch
+          disabled={false}
+          enabled={isPrivateTransaction}
+          onChange={enabled => setValue("isPrivateTransaction", enabled)}
+        />
       </section>
 
       <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 w-full rounded-lg bg-zinc-800 max-md:max-w-full">
@@ -65,7 +62,9 @@ export const TransactionOptions: React.FC<TransactionOptionsProps> = ({
           </p>
         </div>
         <select
-          {...register("recallableTime")}
+          {...register("recallableTime", {
+            onChange: e => setValue("recallableTime", Number(e.target.value)),
+          })}
           className="w-24 px-2 py-1 bg-[#464646] rounded-lg text-white text-sm font-normal font-['Barlow'] shadow-[0px_0px_14px_0px_rgba(0,0,0,0.25)] cursor-pointer"
           defaultValue="1 hour"
         >

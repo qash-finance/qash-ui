@@ -4,9 +4,8 @@ import { ReactNode, useMemo } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
-import toast, { resolveValue, ToastBar, Toaster } from "react-hot-toast";
+import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { WalletError } from "@demox-labs/miden-wallet-adapter-base";
-import ConnectWalletButton from "./ConnectWallet/ConnectWalletButton";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
@@ -72,6 +71,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               error: {
                 style: {
                   color: "#FF7C7C",
+                },
+              },
+              loading: {
+                style: {
+                  color: "#FFFFFF",
                 },
               },
             }}

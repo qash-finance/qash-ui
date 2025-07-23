@@ -1,25 +1,59 @@
 "use client";
 import * as React from "react";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useAccount } from "@/contexts/AccountProvider";
-import { useEffect, useState, useRef } from "react";
-import { DecryptPermission, WalletAdapterNetwork } from "@demox-labs/miden-wallet-adapter-base";
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
+import { useEffect } from "react";
 import Account from "./Account";
+import { useWalletState } from "@/services/store";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+
+const buttonStyle = {
+  width: "100%",
+  padding: "12px 16px",
+  fontSize: "16px",
+  fontWeight: "500",
+  color: "white",
+  border: "none",
+  borderRadius: "12px",
+  cursor: "pointer",
+  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+  transition: "background-color 0.2s",
+  textAlign: "center" as const,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
 
 // Custom hook to safely render WalletMultiButton
-const SafeWalletButton = ({ connected, style }: { connected: boolean; style: React.CSSProperties }) => {
+const SafeWalletButton = ({
+  connected,
+  style,
+  onClick,
+}: {
+  connected: boolean;
+  style: React.CSSProperties;
+  onClick: () => void;
+}) => {
   try {
     return (
       <div style={{ position: "relative", width: "100%" }}>
-        <WalletMultiButton
+        {/* <WalletMultiButton
+          onClick={onClick}
           style={{
             ...style,
             color: "transparent", // Hide original text
             fontSize: "0", // Hide text
           }}
           className="wallet-button-custom cursor-pointer"
+        /> */}
+        <button
+          onClick={onClick}
+          style={{
+            ...style,
+            color: "transparent", // Hide original text
+            fontSize: "0", // Hide text
+          }}
+          className="wallet-button-custom cursor-pointer h-[40px]"
         />
         <div
           style={{
@@ -35,8 +69,9 @@ const SafeWalletButton = ({ connected, style }: { connected: boolean; style: Rea
             width: "100%",
             textAlign: "center",
           }}
+          className="wallet-button-custom cursor-pointer"
         >
-          {connected ? "Disconnect" : "Connect Wallet"}
+          Connect Wallet
         </div>
       </div>
     );
@@ -57,95 +92,52 @@ const SafeWalletButton = ({ connected, style }: { connected: boolean; style: Rea
 };
 
 export const Connect = () => {
-  const { connected, connecting, publicKey } = useWallet();
-  const { connectWallet, isLoading, error, clearError, isAuthenticated } = useWalletAuth();
-  const {
-    deployAccountForWallet,
-    deployedAccountData,
-    isDeploying,
-    error: deployError,
-    switchToWalletAccount,
-  } = useAccount();
-  const [connectionStatus, setConnectionStatus] = useState<string>("");
-  const hasAttemptedAuth = useRef(false);
-  const hasAttemptedDeploy = useRef(false);
-  const lastWalletAddress = useRef<string | null>(null);
+  // **************** Global State *******************
+  const { isConnected, setIsConnected, setFirstTimeConnected, firstTimeConnected } = useWalletState(state => state);
+  const { handleConnect, walletAddress } = useWalletConnect();
 
-  // Auto-deploy account and authenticate when wallet connects
+  // **************** Custom Hooks *******************
+  const { connectWallet, isAuthenticated } = useWalletAuth();
+  const { deployAccountForWallet, switchToWalletAccount } = useAccount();
+
+  // **************** Local State *******************
+
+  // **************** Effects *******************
+  // Auto connect if wallet address exists in local storage
   useEffect(() => {
-    if (connected && publicKey) {
+    if (!isConnected && walletAddress && !firstTimeConnected) {
+      setIsConnected(true);
+      setFirstTimeConnected(true);
+    }
+  }, [isConnected, walletAddress]);
+
+  // Auto-deploy local authentication account and authenticate when wallet connects
+  useEffect(() => {
+    if (isConnected && walletAddress) {
       const deployAndAuthenticate = async () => {
         try {
-          const walletAddress = publicKey.toString();
-          console.log("🚀 ~ deployAndAuthenticate ~ walletAddress:", walletAddress);
-
-          // Check if this is a different wallet than before
-          if (lastWalletAddress.current && lastWalletAddress.current !== walletAddress) {
-            console.log("Different wallet detected, switching accounts");
-            setConnectionStatus("Switching accounts...");
-          }
-
-          lastWalletAddress.current = walletAddress;
-
-          // Switch to the account for this wallet (loads existing or prepares for new)
-          setConnectionStatus("Loading account...");
-          await switchToWalletAccount(walletAddress);
-
-          // Deploy account if needed (function handles existing account check internally)
-          setConnectionStatus("Setting up account...");
+          // server side authentication
+          // generate local keypair for signing message
           await deployAccountForWallet(walletAddress, true); // Deploy public account
 
           // Then authenticate
           if (!isAuthenticated) {
-            setConnectionStatus("Authenticating...");
             await connectWallet(walletAddress);
           }
-
-          setConnectionStatus("Successfully connected!");
-          setTimeout(() => setConnectionStatus(""), 3000);
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Connection failed";
-          setConnectionStatus(`Error: ${errorMessage}`);
-          setTimeout(() => setConnectionStatus(""), 8000);
-          hasAttemptedDeploy.current = false; // Reset to allow retry
-        }
+        } catch (error) {}
       };
 
       deployAndAuthenticate();
     }
-
-    // Reset the flags when wallet disconnects
-    if (!connected) {
-      hasAttemptedAuth.current = false;
-      hasAttemptedDeploy.current = false;
-      lastWalletAddress.current = null;
-    }
-  }, [connected, publicKey]);
-
-  const buttonStyle = {
-    width: "100%",
-    padding: "12px 16px",
-    fontSize: "16px",
-    fontWeight: "500",
-    color: "white",
-    border: "none",
-    borderRadius: "12px",
-    cursor: "pointer",
-    boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-    transition: "background-color 0.2s",
-    textAlign: "center" as const,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
+  }, [isConnected, walletAddress]);
 
   // If connected and authenticated, render Account component
-  if (connected && isAuthenticated) {
+  if (isConnected && isAuthenticated) {
     return <Account />;
   }
 
   return (
-    <>
+    <div>
       <style jsx global>{`
         .wallet-button-custom {
           display: flex !important;
@@ -178,7 +170,8 @@ export const Connect = () => {
           </div>
           <div className="mt-1.5 w-full p-2">
             <SafeWalletButton
-              connected={connected}
+              onClick={handleConnect}
+              connected={isConnected}
               style={{
                 ...buttonStyle,
                 backgroundColor: "#3b82f6",
@@ -187,6 +180,6 @@ export const Connect = () => {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 };

@@ -42,7 +42,7 @@ const actionItems = [
     items: [
       {
         icon: "/sidebar/account-management.gif",
-        label: "Account Management",
+        label: "Manage Accounts",
         isActive: false,
         link: SidebarLink.AccountManagement,
       },

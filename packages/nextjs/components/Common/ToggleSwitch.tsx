@@ -4,13 +4,17 @@ import * as React from "react";
 interface ToggleSwitchProps {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
+  disabled?: boolean;
 }
 
-export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange }) => {
+export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, disabled }) => {
   return (
     <button
-      onClick={() => onChange(!enabled)}
-      className={`flex flex-col items-start w-10 rounded-md border-2 border-solid shadow-sm transition-colors ${
+      type="button"
+      onClick={() => !disabled && onChange(!enabled)}
+      className={`${
+        disabled ? "cursor-not-allowed" : "cursor-pointer"
+      } flex flex-col items-start w-10 rounded-md border-2 border-solid shadow-sm transition-colors ${
         enabled ? "bg-blue-500 border-blue-400" : "bg-zinc-100 border-zinc-300"
       }`}
       aria-pressed={enabled}

@@ -3,29 +3,56 @@ import { useState, useEffect } from "react";
 import { useClient } from "./useClient";
 import { AccountId, ConsumableNoteRecord, FungibleAsset } from "@demox-labs/miden-sdk";
 import { getConsumableNotes } from "../../services/utils/note";
+import { getAccountAssets, importAndGetAccount } from "@/services/utils/account";
+import { AssetWithMetadata, FaucetMetadata } from "@/types/faucet";
 
-export interface Asset {
-  tokenAddress: string;
-  amount: string;
-}
+// Retry utility function with exponential backoff
+const retryWithBackoff = async <T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+): Promise<T> => {
+  let lastError: unknown;
 
-export function useAccount(publicKey: string) {
-  const [assets, setAssets] = useState<Asset[] | null>(null);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === maxRetries) {
+        throw error; // Final attempt failed, throw the error
+      }
+
+      await new Promise(resolve => setTimeout(resolve, baseDelay));
+    }
+  }
+
+  throw lastError;
+};
+
+export function useAccount(address: string) {
+  const [assets, setAssets] = useState<AssetWithMetadata[]>([]);
   const [consumableNotes, setConsumableNotes] = useState<ConsumableNoteRecord[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isAccountDeployed, setIsAccountDeployed] = useState(true);
-  const { getClient } = useClient();
-  /// @todo: use account from extension
-  // const { publicKey, connected } = useWallet();
 
   useEffect(() => {
+    if (!address || address.trim() === "") {
+      setAssets([]);
+      setConsumableNotes(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     const fetchAssets = async () => {
       let accountId;
       try {
-        accountId = AccountId.fromHex(publicKey);
+        accountId = AccountId.fromBech32(address);
       } catch (error) {
-        setAssets(null);
+        setAssets([]);
         setConsumableNotes(null);
         return;
       }
@@ -33,26 +60,18 @@ export function useAccount(publicKey: string) {
       setLoading(true);
       setError(null);
       try {
-        const client = await getClient();
-        let account = await client.getAccount(accountId);
-        if (!account) {
-          await client.importAccountById(accountId);
-          await client.syncState();
-          account = await client.getAccount(accountId);
-          if (!account) {
-            throw new Error(`Account not found after import: ${publicKey}`);
-          }
-        }
-        const accountAssets: FungibleAsset[] = account.vault().fungibleAssets();
-        setAssets(
-          accountAssets.map((asset: FungibleAsset) => ({
-            tokenAddress: asset.faucetId().toString(),
-            amount: asset.amount().toString(),
-          })),
-        );
+        // Retry mechanism for getting account assets
+        const accountAsset = await retryWithBackoff(async () => {
+          return await getAccountAssets(address);
+        });
 
-        // read account consumable notes
-        const consumableNotes = await getConsumableNotes(publicKey);
+        setAssets(accountAsset);
+
+        // Retry mechanism for getting consumable notes
+        const consumableNotes = await retryWithBackoff(async () => {
+          return await getConsumableNotes(address);
+        });
+
         setConsumableNotes(consumableNotes);
       } catch (err) {
         const error = String(err);
@@ -61,13 +80,14 @@ export function useAccount(publicKey: string) {
           setIsAccountDeployed(false);
         }
         setError(err);
+        console.error("Failed to fetch account data after 3 retries:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAssets();
-  }, [publicKey]);
+  }, [address]);
 
   return {
     assets,
@@ -75,7 +95,7 @@ export function useAccount(publicKey: string) {
     error,
     isAccountDeployed,
     consumableNotes,
-    accountId: publicKey,
+    accountId: address,
     isError: !!error,
   };
 }
