@@ -15,6 +15,7 @@ import { ModalManager } from "./Common/ModalManager";
 import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
+import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -29,6 +30,9 @@ const analyticsConfig = {
 };
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
+  //Mobile detection
+  useMobileDetection();
+
   const queryClient = new QueryClient();
   const wallets = useMemo(
     () => [
@@ -93,7 +97,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     {icon}
                     <span className="text-sm">{message}</span>
                     <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
-                    <span className="text-[#929292] text-xs p-2">Close</span>
+                    <span className="text-[#929292] text-xs p-2 cursor-pointer" onClick={() => toast.dismiss(t.id)}>
+                      Close
+                    </span>
                   </div>
                 )}
               </ToastBar>

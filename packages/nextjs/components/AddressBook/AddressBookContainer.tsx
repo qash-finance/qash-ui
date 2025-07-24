@@ -45,7 +45,7 @@ const NewFolder = ({
 }) => {
   const [category, setCategory] = useState("");
   return (
-    <div className="relative w-[150px] h-full">
+    <div className="relative w-[150px] h-full z-10">
       <div className="absolute z-20 left-1/2 bottom-10 translate-x-[-50%] cursor-pointer" onClick={toggleNewFolder}>
         <img
           src="/address-book/folder.svg"
@@ -141,7 +141,6 @@ export function AddressBookContainer() {
   const [folderStates, setFolderStates] = useState<boolean[]>([]);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const isAnyFolderOpen = folderStates.some(state => state) || newFolderOpen;
-  console.log("🚀 ~ AddressBookContainer ~ isAnyFolderOpen:", isAnyFolderOpen);
   // Group address books by category
   const groupedAddressBooks = useMemo(() => {
     if (!addressBooks) return {};
@@ -204,6 +203,13 @@ export function AddressBookContainer() {
     createAddressBook(data, {
       onSuccess: () => {
         toast.success("Address book created successfully");
+
+        // Auto open the folder for the new address book
+        const folderIndex = folders.findIndex(folder => folder.category === category);
+        if (folderIndex !== -1) {
+          setFolderStates(prev => prev.map((state, index) => (index === folderIndex ? true : false)));
+          setNewFolderOpen(false);
+        }
       },
       onError: () => {
         toast.error("Failed to create address book");
@@ -217,12 +223,12 @@ export function AddressBookContainer() {
       {folders.map((folder, folderIndex) => (
         <div
           key={folder.id}
-          className="absolute left-0 w-full flex flex-wrap gap-4 justify-center items-center p-2 z-100 transition-all"
+          className="absolute left-0 w-full flex flex-wrap gap-4 justify-center items-center p-2 z-20 transition-all"
           style={{
             transitionDuration: `${ANIMATION_DURATION}ms`,
             top: "150px",
             opacity: folderStates[folderIndex] ? 1 : 0,
-            transform: folderStates[folderIndex] ? "translateY(0)" : "translateY(-100%)",
+            transform: folderStates[folderIndex] ? "translateY(0)" : "translateY(100%)",
           }}
         >
           {folder.addressBooks.map((addressBook: any, index: number) => (

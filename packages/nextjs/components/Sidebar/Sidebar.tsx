@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
-import Account from "./Account";
 import { useRouter, usePathname } from "next/navigation";
 
 interface NavProps {
@@ -17,24 +16,48 @@ export enum SidebarLink {
   Send = "send",
   Batch = "batch",
   Gift = "gift",
-  // AIAssistant = "ai-assistant",
+  AIAssistant = "ai-assistant",
   GroupPayment = "group-payment",
   AddressBook = "address-book",
   AccountManagement = "account-management",
   Transactions = "transactions",
 }
 
-const actionItems = [
+export const actionItems = [
   {
     title: "Action",
     items: [
-      { icon: "/sidebar/dashboard.gif", label: "Dashboard", isActive: true, link: SidebarLink.Dashboard },
-      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send },
-      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift },
-      // { icon: "/sidebar/ai-assistant.gif", label: "AI Assistant", isActive: false, link: SidebarLink.AIAssistant },
-      { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch },
-      { icon: "/sidebar/group-payment.gif", label: "Group Payment", isActive: false, link: SidebarLink.GroupPayment },
-      { icon: "/sidebar/address-book.gif", label: "Address Book", isActive: false, link: SidebarLink.AddressBook },
+      {
+        icon: "/sidebar/dashboard.gif",
+        label: "Dashboard",
+        isActive: true,
+        link: SidebarLink.Dashboard,
+        disabled: false,
+      },
+      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send, disabled: false },
+      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: true },
+      // {
+      //   icon: "/sidebar/ai-assistant.gif",
+      //   label: "AI Assistant",
+      //   isActive: false,
+      //   link: SidebarLink.AIAssistant,
+      //   disabled: true,
+      // },
+      { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch, disabled: false },
+      {
+        icon: "/sidebar/group-payment.gif",
+        label: "Group Payment",
+        isActive: false,
+        link: SidebarLink.GroupPayment,
+        disabled: true,
+      },
+      {
+        icon: "/sidebar/address-book.gif",
+        label: "Address Book",
+        isActive: false,
+        link: SidebarLink.AddressBook,
+        disabled: false,
+      },
     ],
   },
   {
@@ -45,8 +68,15 @@ const actionItems = [
         label: "Manage Accounts",
         isActive: false,
         link: SidebarLink.AccountManagement,
+        disabled: true,
       },
-      { icon: "/sidebar/transactions.gif", label: "Transactions", isActive: false, link: SidebarLink.Transactions },
+      {
+        icon: "/sidebar/transactions.gif",
+        label: "Transactions",
+        isActive: false,
+        link: SidebarLink.Transactions,
+        disabled: false,
+      },
     ],
   },
 ];
@@ -69,7 +99,14 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   }, [pathname]);
 
   const handleActionItemClick = (sectionIndex: number, itemIndex: number) => {
-    const link = action[sectionIndex].items[itemIndex].link;
+    const item = action[sectionIndex].items[itemIndex];
+
+    // Don't navigate if item is disabled
+    if (item.disabled) {
+      return;
+    }
+
+    const link = item.link;
     setActions(prev =>
       prev.map((section, sIdx) => ({
         ...section,
