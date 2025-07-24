@@ -5,15 +5,12 @@ import { TokenList } from "../Common/TokenList";
 import { SelectTokenModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { useAccount } from "@/hooks/web3/useAccount";
-import { qashTokenAddress, qashTokenDecimals, qashTokenMaxSupply, qashTokenSymbol } from "@/services/utils/constant";
+import { useAccountContext } from "@/contexts/AccountProvider";
 import { AssetWithMetadata } from "@/types/faucet";
 
 export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<SelectTokenModalProps>) {
   // **************** Custom Hooks *******************
-  const { walletAddress } = useWalletConnect();
-  const { assets, isError } = useAccount(walletAddress || "");
+  const { assets, isError } = useAccountContext();
 
   // **************** Local State *******************
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,38 +27,22 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
     setSearchQuery("");
   };
 
-  // Always include Qash token
-  const qashToken: AssetWithMetadata = {
-    tokenAddress: qashTokenAddress,
-    amount: "0", // Default amount if user doesn't have any
-    metadata: {
-      symbol: qashTokenSymbol,
-      decimals: qashTokenDecimals,
-      maxSupply: qashTokenMaxSupply,
-    },
-  };
-
   // **************** Effect  *******************
   useEffect(() => {
     console.log("All assets", assets);
 
-    if (assets.length > 0) {
-      const allAssets = [qashToken, ...assets.filter(asset => asset.tokenAddress !== qashTokenAddress)];
-      const filteredAssets = allAssets.filter(asset => {
-        const query = searchQuery.toLowerCase().trim();
-        if (!query) return true;
+    const filteredAssets = assets.filter(asset => {
+      const query = searchQuery.toLowerCase().trim();
+      if (!query) return true;
 
-        const symbol = asset.metadata.symbol.toLowerCase();
-        const tokenAddress = asset.tokenAddress.toLowerCase();
+      const symbol = asset.metadata.symbol.toLowerCase();
+      const tokenAddress = asset.tokenAddress.toLowerCase();
 
-        return symbol.includes(query) || tokenAddress.includes(query);
-      });
+      return symbol.includes(query) || tokenAddress.includes(query);
+    });
 
-      setFilteredAssets(filteredAssets);
-    } else {
-      setFilteredAssets([qashToken]);
-    }
-  }, [assets, isError]);
+    setFilteredAssets(filteredAssets);
+  }, [assets, searchQuery, isError]);
 
   if (!isOpen) return null;
 

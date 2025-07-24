@@ -1,4 +1,4 @@
-import { AssetWithMetadata } from "./faucet";
+import { AssetWithMetadata, FaucetMetadata } from "./faucet";
 import { CustomNoteType } from "./note";
 
 export enum NoteType {
@@ -10,22 +10,35 @@ export enum NoteType {
 export interface AssetDto {
   faucetId: string;
   amount: string;
+  metadata: FaucetMetadata;
 }
 
 export interface SendTransactionDto {
+  recipient: string;
   assets: AssetDto[];
   private: boolean;
-  recipient: string;
   recallable: boolean;
-  recallableTime?: Date;
-  serialNumber: number[];
+  recallableTime: Date;
+  recallableHeight: number;
+  serialNumber: string[];
   noteType: CustomNoteType;
+  noteId: string;
 }
 
 export interface ConsumableNote {
   id: string;
-  sender: string;
+  noteId: string;
+  noteType: string;
+  private: boolean;
+  recallable: boolean;
+  recallableHeight: number;
+  recallableTime: string;
   recipient: string;
+  sender: string;
+  serialNumber: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
   assets: AssetWithMetadata[];
 }
 

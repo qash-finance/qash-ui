@@ -5,7 +5,7 @@ import { FieldErrors, UseFormRegister, UseFormSetValue, useForm } from "react-ho
 
 interface AmountInputProps {
   selectedToken: AssetWithMetadata;
-  availableBalance?: number; // add this prop
+  availableBalance?: number;
   register: UseFormRegister<any>;
   errors: FieldErrors<any>;
   setValue: UseFormSetValue<any>;
@@ -30,8 +30,8 @@ export const AmountInput: React.FC<AmountInputProps> = ({
       newAmount = (availableBalance * percentage) / 100;
     }
 
-    // Round to 6 decimal places to avoid floating point precision issues
-    const roundedAmount = Math.round(newAmount * 1000000) / 1000000;
+    // Round to the token's decimal places
+    const roundedAmount = Number(newAmount.toFixed(selectedToken.metadata.decimals));
 
     console.log("Setting amount to:", roundedAmount);
     setValue("amount", roundedAmount);
@@ -44,19 +44,66 @@ export const AmountInput: React.FC<AmountInputProps> = ({
         <input
           {...register("amount", {
             required: "Amount is required",
-            min: { value: 0, message: "Amount must be greater than 0" },
-            pattern: { value: /^[0-9]*\.?[0-9]{0,2}$/, message: "Invalid amount format" },
+            validate: {
+              isNumber: value => !isNaN(value) || "Please enter a valid number",
+              isPositive: value => parseFloat(value) > 0 || "Amount must be greater than 0",
+              hasValidDecimals: value => {
+                const decimals = value.toString().split(".")[1];
+                return (
+                  !decimals ||
+                  decimals.length <= selectedToken.metadata.decimals ||
+                  `Maximum ${selectedToken.metadata.decimals} decimal places allowed`
+                );
+              },
+              isInRange: value => {
+                const amount = parseFloat(value);
+                return amount <= availableBalance || "Amount exceeds available balance";
+              },
+            },
           })}
           className="text-white opacity-20 text-center outline-none"
           placeholder="0.00"
-          type="number"
+          type="text"
           inputMode="decimal"
-          pattern="^[0-9]*\.?[0-9]{0,2}$"
           onKeyDown={e => {
-            if (e.key === "-" || e.key === "+" || e.key === "=") e.preventDefault();
-            if (e.key === "e" || e.key === "E") e.preventDefault();
+            // Allow: backspace, delete, tab, escape, enter, decimal point
+            if (
+              e.key === "Backspace" ||
+              e.key === "Delete" ||
+              e.key === "Tab" ||
+              e.key === "Escape" ||
+              e.key === "Enter" ||
+              e.key === "." ||
+              e.key === "ArrowLeft" ||
+              e.key === "ArrowRight"
+            ) {
+              // Allow the key
+              return;
+            }
+
+            // Block any non-number keys
+            if (!/[0-9]/.test(e.key)) {
+              e.preventDefault();
+            }
+
+            // Block multiple decimal points
+            if (e.key === "." && (e.target as HTMLInputElement).value.includes(".")) {
+              e.preventDefault();
+            }
+          }}
+          onChange={e => {
+            // Remove any non-numeric characters except decimal point
+            const value = e.target.value.replace(/[^\d.]/g, "");
+            // Ensure only one decimal point
+            const parts = value.split(".");
+            const sanitizedValue = parts[0] + (parts.length > 1 ? "." + parts[1] : "");
+            e.target.value = sanitizedValue;
+
+            // Update form value
+            setValue("amount", sanitizedValue === "" ? "" : parseFloat(sanitizedValue));
           }}
         />
+        {errors.amount && <span className="text-sm text-red-500 mt-1">{errors.amount.message as string}</span>}
       </div>
 
       {/* Percentage Buttons */}

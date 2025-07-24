@@ -1,8 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { formatAddress } from "@/services/utils/miden/address";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { useAccount } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
 import { useWalletState } from "@/services/store";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
@@ -22,8 +20,6 @@ export const Account: React.FC<AccountProps> = () => {
   const [isBlurred, setIsBlurred] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.MIDEN_WALLET);
-  const { deployedAccountData } = useAccount();
-
   const handleDisconnect = async () => {
     try {
       setIsConnected(false);
@@ -44,12 +40,12 @@ export const Account: React.FC<AccountProps> = () => {
       case SelectedWallet.LOCAL_WALLET_1:
         return {
           name: "Q3x",
-          address: deployedAccountData?.accountId,
+          address: walletAddress,
         };
       case SelectedWallet.LOCAL_WALLET_2:
         return {
           name: "Q3x",
-          address: deployedAccountData?.accountId,
+          address: walletAddress,
         };
       default:
         return {
@@ -146,7 +142,7 @@ export const Account: React.FC<AccountProps> = () => {
                     filter: "invert(32%) sepia(99%) saturate(749%) hue-rotate(186deg) brightness(98%) contrast(101%)",
                   }}
                   onClick={() => {
-                    navigator.clipboard.writeText(deployedAccountData?.accountId || "");
+                    navigator.clipboard.writeText(walletAddress || "");
                     toast.success("Copied to clipboard");
                   }}
                 />
@@ -205,7 +201,7 @@ export const Account: React.FC<AccountProps> = () => {
             <div className="flex justify-between flex-1 gap-0.5 items-center px-1.5 py-1 bg-[white] rounded-lg border border-[#066EFF] shadow-lg">
               <span className="flex-1 text-base tracking-tight text-blue-600">Q3x</span>
               <span className="flex-1 text-base tracking-tight text-blue-600 text-right">
-                {formatAddress(deployedAccountData?.accountId || "")}
+                {formatAddress(walletAddress || "")}
               </span>
             </div>
           </div>

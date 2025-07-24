@@ -8,12 +8,12 @@ import { MODAL_IDS } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
-import { NoteType as MidenNoteType, NoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
+import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { createP2IDRNote } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { useAccount } from "@/hooks/web3/useAccount";
+import { useAccountContext } from "@/contexts/AccountProvider";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
 import { useEffect } from "react";
 import { AssetWithMetadata } from "@/types/faucet";
@@ -27,8 +27,11 @@ import {
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
 import { submitTransaction } from "@/services/utils/miden/transactions";
-import useSendSingleTransaction from "@/hooks/server/useSendSingleTransaction";
+import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType } from "@/types/note";
+import { useBatchTransactions } from "@/services/store/batchTransactions";
+import { formatUnits } from "viem";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -66,18 +69,20 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       isPrivateTransaction: false,
     },
   });
+
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
-  const { assets } = useAccount(walletAddress || "");
-  const { mutate: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
+  const { handleConnect, isConnected } = useWalletConnect();
+  const { assets, accountId: walletAddress } = useAccountContext();
+  const { mutateAsync: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
+  const { addTransaction } = useBatchTransactions(state => state);
 
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
     amount: "0",
-    tokenAddress: qashTokenAddress,
+    faucetId: qashTokenAddress,
     metadata: {
       symbol: qashTokenSymbol,
       decimals: qashTokenDecimals,
@@ -87,12 +92,13 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [recipientName, setRecipientName] = useState(recipientNameParam);
+  const [isSubmittingAsBatch, setIsSubmittingAsBatch] = useState(false);
 
   // **************** Effects *******************
   useEffect(() => {
     const defaultToken = getDefaultSelectedToken(assets);
     setSelectedToken(defaultToken);
-    setSelectedTokenAddress(defaultToken.tokenAddress);
+    setSelectedTokenAddress(defaultToken.faucetId);
   }, [assets]);
 
   const handleTokenSelect = (token: AssetWithMetadata) => {
@@ -108,7 +114,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     } else {
       const selectedAsset = assets.find(asset => asset.metadata.symbol === token.metadata.symbol);
       if (selectedAsset) {
-        setSelectedTokenAddress(selectedAsset.tokenAddress);
+        setSelectedTokenAddress(selectedAsset.faucetId);
       }
     }
   };
@@ -130,11 +136,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
 
     try {
-      toast.loading("Sending transaction...");
       setIsSending(true);
+      toast.loading("Sending transaction...");
+
       // check if amount > balance
       if (amount > parseFloat(selectedToken.amount)) {
-        toast.dismiss();
         toast.error("Insufficient balance");
         return;
       }
@@ -143,57 +149,54 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       try {
         AccountId.fromBech32(recipientAddress);
       } catch (error) {
-        toast.dismiss();
         toast.error("Invalid recipient address");
         return;
       }
 
       // check if recallable time is valid
       if (recallableTime <= 0) {
-        toast.dismiss();
         toast.error("Recallable time must be greater than 0");
         return;
       }
 
       // check if amount > 0
       if (amount <= 0) {
-        toast.dismiss();
         toast.error("Amount must be greater than 0");
         return;
       }
 
       // each block is 5 seconds, calculate recall height
       const recallHeight = Math.floor(recallableTime / blockTime);
-
-      // send transaction
       // create note
-      const [note, serialNumbers] = await createP2IDRNote(
+      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDRNote(
         AccountId.fromBech32(walletAddress),
         AccountId.fromBech32(recipientAddress),
-        AccountId.fromBech32(selectedToken.tokenAddress),
-        amount,
+        AccountId.fromBech32(selectedToken.faucetId),
+        amount * 10 ** selectedToken.metadata.decimals, // convert amount with decimals
         isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
         recallHeight,
       );
-
-      // submit transaction to blockchain
-      await submitTransaction(new OutputNotesArray([note]), AccountId.fromBech32(walletAddress));
+      // submit transaction to miden
 
       // submit transaction to server
-      sendSingleTransaction({
-        assets: [{ faucetId: selectedToken.tokenAddress, amount: amount.toString() }],
+      const response = await sendSingleTransaction({
+        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
         private: isPrivateTransaction,
         recipient: recipientAddress,
         recallable: true,
-        recallableTime: recallableTime > 0 ? new Date(Date.now() + recallableTime * 1000) : undefined,
-        serialNumber: serialNumbers.map(felt => Number(felt.toString())),
+        recallableTime: new Date(Date.now() + recallableTime * 1000),
+        recallableHeight: calculatedRecallHeight,
+        serialNumber: serialNumbers,
         noteType: CustomNoteType.P2IDR,
+        noteId: note.id().toString(),
       });
 
       toast.dismiss();
-      toast.success("Transaction sent successfully");
 
-      reset();
+      if (response) {
+        toast.success("Transaction sent successfully");
+        reset();
+      }
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to send transaction");
@@ -203,7 +206,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
   };
 
-  const handleAddToBatch = (data: SendTransactionFormValues) => {
+  const handleAddToBatch = async (data: SendTransactionFormValues) => {
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
 
     if (!isConnected || !walletAddress) {
@@ -241,8 +244,19 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         return;
       }
 
-      toast.success("Transaction added to batch successfully");
+      // add to batch storage
+      addTransaction(walletAddress, {
+        tokenAddress: selectedToken.faucetId,
+        tokenMetadata: selectedToken.metadata,
+        amount: amount.toString(),
+        recipient: recipientAddress,
+        isPrivate: isPrivateTransaction,
+        recallableHeight: Math.floor(recallableTime / blockTime),
+        recallableTime: recallableTime,
+        noteType: CustomNoteType.P2IDR,
+      });
 
+      toast.success("Transaction added to batch successfully");
       reset();
     } catch (error) {
       toast.dismiss();
@@ -251,8 +265,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
   };
 
+  const handleFormSubmit = async (data: SendTransactionFormValues) => {
+    if (isSubmittingAsBatch) {
+      handleAddToBatch(data);
+    } else {
+      await handleSendTransaction(data);
+    }
+  };
+
   return (
-    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleSendTransaction)}>
+    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleFormSubmit)}>
       <section
         className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-lg bg-[#292929] mb-1"
         style={{
@@ -315,7 +337,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
         <AmountInput
           selectedToken={selectedToken}
-          availableBalance={parseFloat(selectedToken.amount) || 0}
+          availableBalance={
+            parseFloat(
+              formatNumberWithCommas(formatUnits(BigInt(selectedToken.amount), selectedToken.metadata.decimals)),
+            ) || 0
+          }
           register={register}
           errors={errors}
           setValue={setValue}
@@ -335,12 +361,19 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
       {isConnected ? (
         <div className="flex items-center gap-2 mt-1">
-          <ActionButton text="Add To Batch" buttonType="submit" type="neutral" className="w-[30%] h-10 mt-2" />
+          <ActionButton
+            text="Add To Batch"
+            buttonType="submit"
+            type="neutral"
+            className="w-[30%] h-10 mt-2"
+            onClick={() => setIsSubmittingAsBatch(true)}
+          />
           <ActionButton
             text="Send Transaction"
             buttonType="submit"
             className="w-[70%] h-10 mt-2"
             disabled={isSending}
+            onClick={() => setIsSubmittingAsBatch(false)}
           />
         </div>
       ) : (

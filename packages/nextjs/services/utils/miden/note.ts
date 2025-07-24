@@ -58,16 +58,17 @@ export async function createP2IDRNote(
   amount: number,
   noteType: NoteType,
   recallHeight: number,
-): Promise<[OutputNote, Felt[]]> {
+): Promise<[OutputNote, string[], number]> {
   const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } = await import("@demox-labs/miden-sdk");
 
   const { getClient } = useClient();
   const client = await getClient();
-  console.log("ISSUE WHERE");
   const serialNumbers = await randomSerialNumbers();
+  const serialNumbersCopy = serialNumbers.map(felt => felt.toString());
 
   // get current height
   const currentHeight = await client.getSyncHeight();
+  console.log("currentHeight", currentHeight);
   recallHeight = currentHeight + recallHeight;
   return [
     OutputNote.full(
@@ -81,7 +82,8 @@ export async function createP2IDRNote(
         new Felt(BigInt(0)),
       ),
     ),
-    serialNumbers,
+    serialNumbersCopy,
+    recallHeight,
   ];
 }
 

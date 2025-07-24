@@ -1,5 +1,5 @@
 export interface Asset {
-  tokenAddress: string;
+  faucetId: string;
   amount: string;
 }
 

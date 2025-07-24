@@ -6,6 +6,8 @@ import { TokenItem } from "./TokenItem";
 import { AssetWithMetadata } from "@/types/faucet";
 import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 import { qashTokenAddress } from "@/services/utils/constant";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { formatUnits } from "viem";
 
 interface TokenListProps {
   assets: AssetWithMetadata[];
@@ -47,8 +49,12 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
               }
               address={asset.tokenAddress}
               name={asset.metadata.symbol}
-              usdValue={formatNumber(asset.amount)} // 1:1 ratio with token amount
-              tokenAmount={formatNumber(asset.amount)}
+              usdValue={formatNumber(
+                formatNumberWithCommas(formatUnits(BigInt(asset.amount), asset.metadata.decimals)),
+              )} // 1:1 ratio with token amount
+              tokenAmount={formatNumber(
+                formatNumberWithCommas(formatUnits(BigInt(asset.amount), asset.metadata.decimals)),
+              )}
               onClick={() => onTokenSelect?.(asset)}
             />
           ))

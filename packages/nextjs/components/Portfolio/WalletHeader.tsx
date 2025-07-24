@@ -1,22 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
 import { getAccountById } from "@/services/utils/miden/account";
 import { AccountId } from "@demox-labs/miden-sdk";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 
 export function WalletHeader() {
-  const { deployedAccountData } = useDeployedAccount();
+  const { walletAddress } = useWalletAuth();
   const [balance, setBalance] = useState<string>("0");
 
   useEffect(() => {
-    (async () => {
-      //@ts-ignore
-      const faucetId = AccountId.fromBech32("mtst1qppen8yngje35gr223jwe6ptjy7gedn9");
-      const account = await getAccountById(deployedAccountData?.accountId || "");
-      setBalance(account?.vault().getBalance(faucetId).toString() || "0");
-    })();
-  }, [deployedAccountData?.accountId]);
+    (async () => {})();
+  }, [walletAddress]);
 
   return (
     <header

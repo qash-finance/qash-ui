@@ -1,10 +1,8 @@
 "use client";
 import * as React from "react";
-import { TransactionTypeBadge } from "@/components/Common/TransactionTypeBadge";
 import { RecipientDetails } from "./RecipientDetails";
 
 interface TransactionItemProps {
-  badgeType: "P2ID-R" | "P2ID";
   amount: string;
   recipient: string;
   isPrivate?: boolean;
@@ -20,7 +18,6 @@ interface RemoveButtonProps {
 }
 
 export function TransactionItem({
-  badgeType,
   amount,
   recipient,
   isPrivate,
@@ -32,7 +29,7 @@ export function TransactionItem({
   const containerContent = (
     <div className="flex gap-2.5 items-center self-stretch py-2.5 pr-4 pl-3 rounded-lg bg-neutral-700 max-sm:flex-col max-sm:gap-2 max-sm:p-3">
       <div className="flex gap-2 items-center self-stretch flex-[1_0_0] max-sm:flex-col max-sm:gap-2 max-sm:items-start">
-        <TransactionTypeBadge type={badgeType} />
+        {/* <TransactionTypeBadge type={badgeType} /> */}
         <span className="overflow-hidden text-base leading-4 text-white underline decoration-dotted text-ellipsis">
           {amount}
         </span>
@@ -44,7 +41,7 @@ export function TransactionItem({
 
       {/* Remove button */}
       <button
-        className={`flex gap-1.5 justify-center items-center px-2.5 pt-1.5 pb-2 bg-red-600 rounded-xl shadow max-sm:self-stretch`}
+        className={`cursor-pointer flex gap-1.5 justify-center items-center px-2.5 pt-1.5 pb-2 bg-red-600 rounded-xl shadow max-sm:self-stretch`}
         onClick={onRemove}
       >
         <span className="text-sm font-medium tracking-normal leading-3 text-white">Remove</span>

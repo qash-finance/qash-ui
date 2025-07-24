@@ -5,33 +5,34 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import { ToggleSwitch } from "@/components/Common/ToggleSwitch";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
 import { consumeAllNotes, getConsumableNotes } from "@/services/utils/miden/note";
-import { AccountId, ConsumableNoteRecord, NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
-import { ConsumableNote, NoteType } from "@/types/transaction";
-import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
+import { AccountId, ConsumableNoteRecord } from "@demox-labs/miden-sdk";
+import { ConsumableNote } from "@/types/transaction";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata } from "@/types/faucet";
 import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { formatUnits } from "viem";
+import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 
 const mockData = [
   {
-    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
+    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
   },
   {
-    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
+    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
   },
   {
-    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
+    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
@@ -99,11 +100,13 @@ const TableRow = ({
           {assets.map((asset, index) => (
             <div key={index} className="flex items-center gap-1 relative group">
               <img
-                src={generateTokenAvatar(asset.tokenAddress, asset.metadata?.symbol)}
+                src={generateTokenAvatar(asset.faucetId, asset.metadata?.symbol)}
                 alt={asset.metadata?.symbol || "Token"}
                 className="w-4 h-4 flex-shrink-0 rounded-full"
               />
-              <p className="text-stone-300 truncate">{asset.amount}</p>
+              <p className="text-stone-300 truncate">
+                {formatNumberWithCommas(formatUnits(BigInt(asset.amount), asset.metadata?.decimals))}
+              </p>
 
               {/* Tooltip on hover */}
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -140,63 +143,39 @@ const TableRow = ({
 
 export const PendingRecieveContainer: React.FC = () => {
   // **************** Custom Hooks *******************
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
+  const { walletAddress, isConnected } = useWalletConnect();
   const { openModal } = useModal();
 
   // **************** Server Hooks *******************
+  const {
+    data: consumableNotesFromServer,
+    isLoading: isLoadingConsumableNotesFromServer,
+    error: errorConsumableNotesFromServer,
+  } = useConsumableNotes();
+
+  console.log("consumableNotesFromServer", consumableNotesFromServer);
 
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<ConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
-        setLoading(true);
-        try {
-          const notes: ConsumableNoteRecord[] = await getConsumableNotes(walletAddress);
-          const consumableNotes: ConsumableNote[] = await Promise.all(
-            notes.map(async note => {
-              const id = note.inputNoteRecord().id().toString();
-              const inputNoteRecord = note.inputNoteRecord();
-              const noteMetadata = inputNoteRecord.metadata();
-              const noteDetails = inputNoteRecord.details();
-              const assetPromises = noteDetails
-                .assets()
-                .fungibleAssets()
-                .map(async asset => {
-                  const metadata = await getFaucetMetadata(asset.faucetId());
-                  return {
-                    tokenAddress: asset.faucetId().toString(),
-                    amount: asset.amount().toString(),
-                    metadata: metadata,
-                  } as AssetWithMetadata;
-                });
-              const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-              const sender = noteMetadata?.sender().toBech32();
-
-              return {
-                id: id,
-                sender: sender!,
-                recipient: walletAddress!,
-                assets: assets,
-              };
-            }),
-          );
-
-          setConsumableNotes(consumableNotes);
-        } catch (error) {
-          console.error("Error fetching consumable notes:", error);
+        if (!errorConsumableNotesFromServer) {
+          if (consumableNotesFromServer) {
+            setConsumableNotes(consumableNotesFromServer);
+          } else {
+            setConsumableNotes([]);
+          }
+        } else {
           setConsumableNotes([]);
-        } finally {
-          setLoading(false);
         }
       }
     })();
-  }, [walletAddress, isConnected]);
+  }, [walletAddress, isConnected, consumableNotesFromServer]);
 
   const isAllChecked = consumableNotes.length > 0 && checkedRows.length === consumableNotes.length;
 
@@ -289,7 +268,7 @@ export const PendingRecieveContainer: React.FC = () => {
 
         {/* Pending Table */}
         <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
-          {loading ? (
+          {isLoadingConsumableNotesFromServer ? (
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>

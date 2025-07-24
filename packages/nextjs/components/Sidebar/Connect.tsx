@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
-import { useAccount } from "@/contexts/AccountProvider";
 import { useEffect } from "react";
 import Account from "./Account";
 import { useWalletState } from "@/services/store";
@@ -98,7 +97,6 @@ export const Connect = () => {
 
   // **************** Custom Hooks *******************
   const { connectWallet, isAuthenticated } = useWalletAuth();
-  const { deployAccountForWallet, switchToWalletAccount } = useAccount();
 
   // **************** Local State *******************
 
@@ -118,7 +116,6 @@ export const Connect = () => {
         try {
           // server side authentication
           // generate local keypair for signing message
-          await deployAccountForWallet(walletAddress, true); // Deploy public account
 
           // Then authenticate
           if (!isAuthenticated) {

@@ -1,8 +1,8 @@
 import { ConsumableNote, SendTransactionDto } from "@/types/transaction";
 import { apiServerWithAuth } from "./index";
 
-const getConsumable = async (address: string) => {
-  const response = await apiServerWithAuth.getData(`/transactions/consumable?userAddress=${address}`);
+const getConsumable = async () => {
+  const response = await apiServerWithAuth.getData(`/transactions/consumable`);
   return response as ConsumableNote[];
 };
 
@@ -16,7 +16,7 @@ const sendSingleTransaction = async (transaction: SendTransactionDto) => {
   return response;
 };
 
-const sendBatchTransaction = async (transaction: SendTransactionDto) => {
+const sendBatchTransaction = async (transaction: SendTransactionDto[]) => {
   const response = await apiServerWithAuth.postData("/transactions/send-batch", transaction);
   return response;
 };

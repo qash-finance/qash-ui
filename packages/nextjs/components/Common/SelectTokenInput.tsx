@@ -4,6 +4,8 @@ import React from "react";
 import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 import { qashTokenAddress } from "@/services/utils/constant";
 import { AssetWithMetadata } from "@/types/faucet";
+import { formatUnits } from "viem";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 
 interface SelectTokenInputProps {
   selectedToken: AssetWithMetadata;
@@ -21,7 +23,7 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
       <input
         type="text"
         readOnly
-        value={selectedToken.amount}
+        value={formatNumberWithCommas(formatUnits(BigInt(selectedToken.amount), selectedToken.metadata.decimals))}
         placeholder="0.00"
         className="bg-transparent text-white outline-none w-20"
       />

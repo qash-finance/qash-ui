@@ -3,89 +3,30 @@ import * as React from "react";
 import { TransactionItem } from "./TransactionItem";
 import { EmptyBatch } from "./EmptyBatch";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { buttonStyle } from "@/services/utils/constant";
 import { ActionButton } from "../Common/ActionButton";
-
-interface Transaction {
-  id: string;
-  badgeType: "P2ID-R" | "P2ID";
-  amount: string;
-  recipient: string;
-  isPrivate?: boolean;
-  isAddress?: boolean;
-  hasError?: boolean;
-  errorMessage?: string;
-}
+import { useBatchTransactions } from "@/services/store/batchTransactions";
 
 interface BatchTransactionContainerProps {
-  transactions?: Transaction[];
   onRemoveTransaction?: (id: string) => void;
   onConfirm?: () => void;
 }
 
-const defaultTransactions: Transaction[] = [
-  {
-    id: "1",
-    badgeType: "P2ID-R",
-    amount: "37,800.45 USDT",
-    recipient: "Danny Kang",
-    isPrivate: true,
-  },
-  {
-    id: "2",
-    badgeType: "P2ID-R",
-    amount: "0.57 BTC",
-    recipient: "Alex Dang",
-  },
-  {
-    id: "3",
-    badgeType: "P2ID",
-    amount: "0.57 BTC",
-    recipient: "0xd...s78",
-    isAddress: true,
-  },
-  {
-    id: "4",
-    badgeType: "P2ID",
-    amount: "37,800.45 USDT",
-    recipient: "Danny Kang",
-    isPrivate: true,
-  },
-  {
-    id: "5",
-    badgeType: "P2ID-R",
-    amount: "0.57 BTC",
-    recipient: "Jullie",
-  },
-  {
-    id: "6",
-    badgeType: "P2ID",
-    amount: "37,800.45 USDT",
-    recipient: "0xd...s78",
-    isAddress: true,
-    isPrivate: true,
-  },
-  {
-    id: "7",
-    badgeType: "P2ID-R",
-    amount: "37,800.45 ETH",
-    recipient: "Danny Kang",
-    isPrivate: true,
-    hasError: true,
-    errorMessage: "Insufficient Balance",
-  },
-];
-
-export function BatchTransactionContainer({
-  transactions = defaultTransactions,
-  onRemoveTransaction,
-  onConfirm,
-}: BatchTransactionContainerProps) {
+export function BatchTransactionContainer({ onRemoveTransaction, onConfirm }: BatchTransactionContainerProps) {
+  // **************** Custom Hooks *******************
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
+  const { getBatchTransactions, removeTransaction } = useBatchTransactions();
+
+  const transactions = walletAddress ? getBatchTransactions(walletAddress) : [];
+
+  const handleRemoveTransaction = (transactionId: string) => {
+    if (!walletAddress) return;
+    removeTransaction(walletAddress, transactionId);
+    onRemoveTransaction?.(transactionId);
+  };
 
   return (
-    <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-zinc-900 w-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
-      <div className="flex flex-col gap-1.5 items-center self-stretch rounded-2xl bg-zinc-800">
+    <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-zinc-900 w-[600px] h-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
+      <div className="flex flex-col gap-1.5 items-center self-stretch rounded-2xl bg-zinc-800 h-full">
         {/* Header */}
         <header className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#3D3D3D] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-t-2xl">
           <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
@@ -99,57 +40,51 @@ export function BatchTransactionContainer({
           </div>
         </header>
 
-        {/* Transaction list */}
-        {/* <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0">
-          {transactions.map(transaction => (
-            <TransactionItem
-              key={transaction.id}
-              badgeType={transaction.badgeType}
-              amount={transaction.amount}
-              recipient={transaction.recipient}
-              isPrivate={transaction.isPrivate}
-              isAddress={transaction.isAddress}
-              hasError={transaction.hasError}
-              errorMessage={transaction.errorMessage}
-              onRemove={() => onRemoveTransaction?.(transaction.id)}
-            />
-          ))}
-        </section> */}
-        <EmptyBatch />
-      </div>
-
-      {/* Footer */}
-      {isConnected ? (
-        <footer className="flex gap-2 items-start self-stretch pt-2">
-          <ActionButton
-            text="Confirm & Sign"
-            buttonType="submit"
-            className="w-full h-10 mt-0"
-            onClick={onConfirm}
-            disabled={false}
-          />
-        </footer>
-      ) : (
-        <div className="relative w-full">
-          {/* <WalletMultiButton
-          className="wallet-button-custom cursor-pointer w-full h-10 mt-2"
-          style={{
-            color: "transparent",
-            fontSize: "0",
-            backgroundColor: "transparent",
-            border: "none",
-            outline: "none",
-          }}
-        /> */}
-          <ActionButton
-            text="Connect Wallet"
-            buttonType="submit"
-            className="w-full h-10 mt-2"
-            onClick={handleConnect}
-            disabled={false}
-          />
+        {/* Transaction list - Now with fixed height and scrollable */}
+        <div className="flex-1 w-full overflow-hidden">
+          {transactions.length > 0 ? (
+            <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0 h-full overflow-y-auto">
+              {transactions.map(transaction => (
+                <TransactionItem
+                  key={transaction.id}
+                  amount={`${transaction.amount} ${transaction.tokenMetadata?.symbol}`}
+                  recipient={transaction.recipient}
+                  isPrivate={transaction.isPrivate}
+                  isAddress={true}
+                  onRemove={() => handleRemoveTransaction(transaction.id)}
+                />
+              ))}
+            </section>
+          ) : (
+            <div className="h-full">
+              <EmptyBatch />
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Footer */}
+        {isConnected ? (
+          <footer className="flex gap-2 items-start self-stretch p-2 bg-zinc-800 rounded-b-2xl">
+            <ActionButton
+              text="Confirm & Sign"
+              buttonType="submit"
+              className="w-full h-10"
+              onClick={onConfirm}
+              disabled={transactions.length === 0}
+            />
+          </footer>
+        ) : (
+          <div className="relative w-full p-2 bg-zinc-800 rounded-b-2xl">
+            <ActionButton
+              text="Connect Wallet"
+              buttonType="submit"
+              className="w-full h-10"
+              onClick={handleConnect}
+              disabled={false}
+            />
+          </div>
+        )}
+      </div>
     </main>
   );
 }

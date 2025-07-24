@@ -5,6 +5,19 @@ import { AccountId, ConsumableNoteRecord, FungibleAsset } from "@demox-labs/mide
 import { getConsumableNotes } from "../../services/utils/miden/note";
 import { getAccountAssets, importAndGetAccount } from "@/services/utils/miden/account";
 import { AssetWithMetadata, FaucetMetadata } from "@/types/faucet";
+import { qashTokenAddress, qashTokenDecimals, qashTokenMaxSupply, qashTokenSymbol } from "@/services/utils/constant";
+import { useWalletAuth } from "../server/useWalletAuth";
+
+// Default QASH token that should always be present
+const defaultQashToken: AssetWithMetadata = {
+  tokenAddress: qashTokenAddress,
+  amount: "0",
+  metadata: {
+    symbol: qashTokenSymbol,
+    decimals: qashTokenDecimals,
+    maxSupply: qashTokenMaxSupply,
+  },
+};
 
 // Retry utility function with exponential backoff
 const retryWithBackoff = async <T>(
@@ -31,16 +44,17 @@ const retryWithBackoff = async <T>(
   throw lastError;
 };
 
-export function useAccount(address: string) {
-  const [assets, setAssets] = useState<AssetWithMetadata[]>([]);
+export function useAccount() {
+  const { isAuthenticated, walletAddress } = useWalletAuth();
+  const [assets, setAssets] = useState<AssetWithMetadata[]>([defaultQashToken]);
   const [consumableNotes, setConsumableNotes] = useState<ConsumableNoteRecord[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isAccountDeployed, setIsAccountDeployed] = useState(true);
 
   useEffect(() => {
-    if (!address || address.trim() === "") {
-      setAssets([]);
+    if (!walletAddress || walletAddress.trim() === "") {
+      setAssets([defaultQashToken]);
       setConsumableNotes(null);
       setLoading(false);
       setError(null);
@@ -50,9 +64,9 @@ export function useAccount(address: string) {
     const fetchAssets = async () => {
       let accountId;
       try {
-        accountId = AccountId.fromBech32(address);
+        accountId = AccountId.fromBech32(walletAddress);
       } catch (error) {
-        setAssets([]);
+        setAssets([defaultQashToken]);
         setConsumableNotes(null);
         return;
       }
@@ -61,15 +75,30 @@ export function useAccount(address: string) {
       setError(null);
       try {
         // Retry mechanism for getting account assets
-        const accountAsset = await retryWithBackoff(async () => {
-          return await getAccountAssets(address);
+        const accountAssets = await retryWithBackoff(async () => {
+          return await getAccountAssets(walletAddress);
         });
 
-        setAssets(accountAsset);
+        // Merge QASH token with account assets, replacing if exists
+        const mergedAssets = [
+          defaultQashToken,
+          ...accountAssets.filter(asset => asset.tokenAddress !== qashTokenAddress),
+        ];
+
+        // If QASH exists in accountAssets, update its amount
+        const qashFromAccount = accountAssets.find(asset => asset.tokenAddress === qashTokenAddress);
+        if (qashFromAccount) {
+          mergedAssets[0] = {
+            ...defaultQashToken,
+            amount: qashFromAccount.amount,
+          };
+        }
+
+        setAssets(mergedAssets);
 
         // Retry mechanism for getting consumable notes
         const consumableNotes = await retryWithBackoff(async () => {
-          return await getConsumableNotes(address);
+          return await getConsumableNotes(walletAddress);
         });
 
         setConsumableNotes(consumableNotes);
@@ -87,7 +116,7 @@ export function useAccount(address: string) {
     };
 
     fetchAssets();
-  }, [address]);
+  }, [walletAddress, isAuthenticated]);
 
   return {
     assets,
@@ -95,7 +124,7 @@ export function useAccount(address: string) {
     error,
     isAccountDeployed,
     consumableNotes,
-    accountId: address,
+    accountId: walletAddress,
     isError: !!error,
   };
 }
