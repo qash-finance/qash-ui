@@ -69,12 +69,11 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
       <img
         src={`${icon}?key=${gifKey}`}
         alt=""
-        className={`object-contain shrink-0 self-stretch my-auto w-6 aspect-square transition-all
-          ${showActiveStyle ? "" : "grayscale opacity-60"}`}
+        className={`object-contain shrink-0 self-stretch my-auto w-6 aspect-square transition-all`}
       />
       <span
         className={`flex-1 shrink self-stretch my-auto basis-0 text-left ${
-          showActiveStyle ? "text-white" : disabled ? "text-neutral-600" : "text-neutral-500"
+          showActiveStyle ? "text-white" : "text-neutral-500"
         }`}
       >
         {label}

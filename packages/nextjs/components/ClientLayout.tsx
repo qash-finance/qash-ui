@@ -38,11 +38,19 @@ const steps: StepType[] = [
   },
 ];
 
+// Create QueryClient outside component to prevent recreation on every render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   //Mobile detection
   useMobileDetection();
-
-  const queryClient = new QueryClient();
   const wallets = useMemo(
     () => [
       new TridentWalletAdapter({
