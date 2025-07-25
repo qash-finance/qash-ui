@@ -7,6 +7,7 @@ import CreateNewGroupModal from "@/components/Modal/CreateNewGroupModal";
 import NewRequestModal from "@/components/Modal/NewRequestModal";
 import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
 import Portfolio from "@/components/Portfolio/Portfolio";
+import OnboardingModal from "@/components/Modal/OnboardingModal";
 import { AssetWithMetadata } from "./faucet";
 
 export const MODAL_IDS = {
@@ -19,6 +20,7 @@ export const MODAL_IDS = {
   NEW_REQUEST: "NEW_REQUEST",
   CREATE_CUSTOM_QR: "CREATE_CUSTOM_QR",
   PORTFOLIO: "PORTFOLIO",
+  ONBOARDING: "ONBOARDING",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -29,7 +31,7 @@ export interface BaseModalProps {
 }
 
 export interface SelectTokenModalProps extends BaseModalProps {
-  onTokenSelect?: (token: AssetWithMetadata) => void;
+  onTokenSelect?: (token: AssetWithMetadata | null) => void;
 }
 
 export interface SendModalProps extends BaseModalProps {}
@@ -63,6 +65,8 @@ export interface CreateCustomQRModalProps extends BaseModalProps {}
 
 export interface PortfolioModalProps extends BaseModalProps {}
 
+export interface OnboardingModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -73,6 +77,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.NEW_REQUEST]: NewRequestModalProps;
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModalProps;
   [MODAL_IDS.PORTFOLIO]: PortfolioModalProps;
+  [MODAL_IDS.ONBOARDING]: OnboardingModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -87,4 +92,5 @@ export const modalRegistry = {
   [MODAL_IDS.NEW_REQUEST]: NewRequestModal,
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModal,
   [MODAL_IDS.PORTFOLIO]: Portfolio,
+  [MODAL_IDS.ONBOARDING]: OnboardingModal,
 } as const;

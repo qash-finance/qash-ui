@@ -2,6 +2,7 @@
 import * as React from "react";
 import { TransactionTypeBadge } from "@/components/Common/TransactionTypeBadge";
 import { RecipientDetails } from "./RecipientDetails";
+import { ActionButton } from "../Common/ActionButton";
 
 interface TransactionItemProps {
   badgeType: "P2ID-R" | "P2ID";
@@ -43,12 +44,7 @@ export function TransactionItem({
       </div>
 
       {/* Remove button */}
-      <button
-        className={`flex gap-1.5 justify-center items-center px-2.5 pt-1.5 pb-2 bg-red-600 rounded-xl shadow max-sm:self-stretch`}
-        onClick={onRemove}
-      >
-        <span className="text-sm font-medium tracking-normal leading-3 text-white">Remove</span>
-      </button>
+      <ActionButton text="Remove" type="deny" onClick={onRemove} />
     </div>
   );
 

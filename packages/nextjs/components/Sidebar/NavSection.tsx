@@ -5,6 +5,7 @@ interface NavItemData {
   icon: string;
   label: string;
   isActive?: boolean;
+  disabled?: boolean;
 }
 
 interface NavSectionData {
@@ -21,28 +22,31 @@ interface NavItemProps {
   icon: string;
   label: string;
   isActive?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, onClick }) => {
-  const baseClasses =
-    "flex gap-1.5 items-center p-2.5 w-full whitespace-nowrap rounded-xl cursor-pointer transition-colors";
+const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabled = false, onClick }) => {
+  const baseClasses = "flex gap-1.5 items-center p-2.5 w-full whitespace-nowrap rounded-xl transition-colors";
   const activeClasses = "font-semibold text-white rounded-xl";
   const inactiveClasses = "text-neutral-500 hover:bg-neutral-800";
+  const cursorClasses = disabled ? "cursor-not-allowed" : "cursor-pointer";
 
   const [gifKey, setGifKey] = React.useState(0);
   const [hovered, setHovered] = React.useState(false);
 
   const handleClick = () => {
+    if (disabled) return;
+
     setGifKey(prev => prev + 1); // force reload
     onClick?.();
   };
 
-  const showActiveStyle = isActive || hovered;
+  const showActiveStyle = (isActive || hovered) && !disabled;
 
   return (
     <button
-      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses} focus:outline-none active:border-[#191919]`}
+      className={`${baseClasses} ${cursorClasses} ${isActive ? activeClasses : inactiveClasses} focus:outline-none active:border-[#191919]`}
       style={
         showActiveStyle
           ? {
@@ -51,19 +55,26 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, onClic
             }
           : undefined
       }
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        if (!disabled) {
+          setHovered(true);
+          setGifKey(prev => prev + 1); // force reload gif on hover
+        }
+      }}
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
       type="button"
+      disabled={disabled}
     >
       <img
         src={`${icon}?key=${gifKey}`}
         alt=""
-        className={`object-contain shrink-0 self-stretch my-auto w-6 aspect-square transition-all
-          ${showActiveStyle ? "" : "grayscale opacity-60"}`}
+        className={`object-contain shrink-0 self-stretch my-auto w-6 aspect-square transition-all`}
       />
       <span
-        className={`flex-1 shrink self-stretch my-auto basis-0 text-left ${showActiveStyle ? "text-white" : "text-neutral-500"}`}
+        className={`flex-1 shrink self-stretch my-auto basis-0 text-left ${
+          showActiveStyle ? "text-white" : "text-neutral-500"
+        }`}
       >
         {label}
       </span>
@@ -84,6 +95,7 @@ export const NavSections: React.FC<NavSectionsProps> = ({ sections, onItemClick 
                 icon={item.icon}
                 label={item.label}
                 isActive={item.isActive}
+                disabled={item.disabled}
                 onClick={() => onItemClick?.(sectionIdx, itemIdx)}
               />
             ))}

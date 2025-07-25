@@ -1,27 +1,25 @@
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import React from "react";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
-import { qashTokenAddress } from "@/services/utils/constant";
-import { AssetWithMetadata } from "@/types/faucet";
+import { getTokenAvatar } from "@/services/utils/tokenAvatar";
+import { AssetWithMetadata, AnyToken } from "@/types/faucet";
 
 interface SelectTokenInputProps {
-  selectedToken: AssetWithMetadata;
+  selectedToken: AssetWithMetadata | null;
   onTokenSelect: (token: AssetWithMetadata) => void;
   tokenAddress?: string; // Add token address to generate correct avatar
 }
 
 export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToken, onTokenSelect, tokenAddress }) => {
   const { openModal } = useModal();
+  const token = selectedToken || AnyToken;
 
-  // Use Qash token address as fallback if no token address provided
-  const displayTokenAddress = tokenAddress || qashTokenAddress;
   return (
     <div className="flex gap-5 justify-between py-0.5 pr-0.5 pl-2 rounded-[10px] bg-neutral-900 text-sm font-medium leading-none">
       <input
         type="text"
         readOnly
-        value={selectedToken.amount}
+        value={token.amount}
         placeholder="0.00"
         className="bg-transparent text-white outline-none w-20"
       />
@@ -35,16 +33,8 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
             openModal(MODAL_IDS.SELECT_TOKEN, { onTokenSelect });
           }}
         >
-          <img
-            src={
-              selectedToken.tokenAddress === qashTokenAddress
-                ? "/q3x-icon.svg"
-                : generateTokenAvatar(displayTokenAddress, selectedToken.metadata.symbol)
-            }
-            alt={selectedToken.metadata.symbol}
-            className="w-5 h-5 rounded-full"
-          />
-          <span className="text-white">{selectedToken.metadata.symbol}</span>
+          <img src={getTokenAvatar(token.tokenAddress)} alt={token.metadata.symbol} className="w-5 h-5 rounded-full" />
+          <span className="text-white">{token.metadata.symbol}</span>
           <img
             src="/arrow/filled-arrow-down.svg"
             alt="Dropdown arrow"

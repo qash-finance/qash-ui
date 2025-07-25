@@ -95,7 +95,7 @@ export function BatchTransactionContainer({
         </header>
 
         {/* Transaction list */}
-        {/* <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0">
+        <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0">
           {transactions.map(transaction => (
             <TransactionItem
               key={transaction.id}
@@ -109,8 +109,8 @@ export function BatchTransactionContainer({
               onRemove={() => onRemoveTransaction?.(transaction.id)}
             />
           ))}
-        </section> */}
-        <EmptyBatch />
+        </section>
+        {/* <EmptyBatch /> */}
       </div>
 
       {/* Footer */}

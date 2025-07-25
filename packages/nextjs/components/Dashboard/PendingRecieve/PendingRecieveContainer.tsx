@@ -17,6 +17,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { getFaucetMetadata } from "@/services/utils/faucet";
 import { AssetWithMetadata } from "@/types/faucet";
 import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { Skeleton } from "@/components/Common/Skeleton";
 
 const mockData = [
   {
@@ -293,14 +294,9 @@ export const PendingRecieveContainer: React.FC = () => {
         </div>
 
         {/* Pending Table */}
-        <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
+        <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                <span className="text-white">Loading consumable notes...</span>
-              </div>
-            </div>
+            <Skeleton />
           ) : consumableNotes?.length === 0 || !consumableNotes ? (
             <Empty title="No pending receive" />
           ) : (
@@ -333,42 +329,46 @@ export const PendingRecieveContainer: React.FC = () => {
         )}
 
         {/* Unverified Section */}
-        <div className="mt-10">
-          <div>
-            <header className="flex flex-col gap-2 justify-center items-start w-full">
-              <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
-                Unverified request
-              </h2>
-              <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
-                Payments that need additional confirmation before you can receive them
-              </p>
-            </header>
-          </div>
-        </div>
-        <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
-          {true ? (
-            <Empty title="No pending receive" />
-          ) : (
-            <table className="w-full min-w-[800px]">
-              <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-              <tbody>
-                {mockData.map((row, index) => (
-                  <TableRow
-                    key={`pending-${index}`}
-                    assets={row.assets}
-                    from={row.from}
-                    dateTime={row.dateTime}
-                    action={row.action}
-                    checked={false}
-                    onCheck={() => {}}
-                    onClaim={() => {}}
-                    disabled={claiming}
-                  />
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {isConnected && (
+          <React.Fragment>
+            <div className="mt-10">
+              <div>
+                <header className="flex flex-col gap-2 justify-center items-start w-full">
+                  <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+                    Unverified request
+                  </h2>
+                  <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+                    Payments that need additional confirmation before you can receive them
+                  </p>
+                </header>
+              </div>
+            </div>
+            <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
+              {true ? (
+                <Empty title="No pending receive" />
+              ) : (
+                <table className="w-full min-w-[800px]">
+                  <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
+                  <tbody>
+                    {mockData.map((row, index) => (
+                      <TableRow
+                        key={`pending-${index}`}
+                        assets={row.assets}
+                        from={row.from}
+                        dateTime={row.dateTime}
+                        action={row.action}
+                        checked={false}
+                        onCheck={() => {}}
+                        onClaim={() => {}}
+                        disabled={claiming}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </React.Fragment>
+        )}
       </div>
 
       <div className="flex-1">

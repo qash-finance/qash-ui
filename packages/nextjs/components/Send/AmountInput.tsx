@@ -45,13 +45,13 @@ export const AmountInput: React.FC<AmountInputProps> = ({
           {...register("amount", {
             required: "Amount is required",
             min: { value: 0, message: "Amount must be greater than 0" },
-            pattern: { value: /^[0-9]*\.?[0-9]{0,2}$/, message: "Invalid amount format" },
           })}
+          autoComplete="off"
           className="text-white opacity-20 text-center outline-none"
           placeholder="0.00"
           type="number"
           inputMode="decimal"
-          pattern="^[0-9]*\.?[0-9]{0,2}$"
+          step="0.000000000000000001" // 18 decimal places
           onKeyDown={e => {
             if (e.key === "-" || e.key === "+" || e.key === "=") e.preventDefault();
             if (e.key === "e" || e.key === "E") e.preventDefault();

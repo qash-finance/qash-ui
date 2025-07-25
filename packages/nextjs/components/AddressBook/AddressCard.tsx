@@ -3,14 +3,16 @@ import { ActionButton } from "../Common/ActionButton";
 import { AddressBook } from "@/types/address-book";
 import { formatAddress } from "@/services/utils/address";
 import { useRouter } from "next/navigation";
+import { getTokenAvatar } from "@/services/utils/tokenAvatar";
 
 interface AddressCardProps {
   addressBook: AddressBook;
 }
 
 export const AddressCard = ({ addressBook }: AddressCardProps) => {
-  const { name, address } = addressBook || {};
+  const { name, address, token: tokenAddress } = addressBook || {};
   const router = useRouter();
+
   return (
     <div className="flex flex-col gap-2 w-[250px] bg-[#292929] rounded-xl p-2 overflow-hidden">
       <div className="flex flex-row gap-2 items-center">
@@ -28,7 +30,7 @@ export const AddressCard = ({ addressBook }: AddressCardProps) => {
           className="w-full"
           onClick={() => router.push(`/send?recipient=${address}&name=${encodeURIComponent(name)}`)}
         />
-        <img src="/token/usdt.svg" alt="token" className="w-8 h-8" />
+        <img src={getTokenAvatar(tokenAddress)} alt="token" className="w-8 h-8 rounded-full cursor-pointer" />
       </div>
     </div>
   );

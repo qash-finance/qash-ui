@@ -2,8 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
-import Account from "./Account";
 import { useRouter, usePathname } from "next/navigation";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { STORAGE_KEY } from "@/contexts/AccountProvider";
+import { useWalletState } from "@/services/store";
+import { FloatingActionButton } from "../Common/FloatingActionButton";
 
 interface NavProps {
   onActionItemClick?: (sectionIndex: number, itemIndex: number) => void;
@@ -17,24 +20,48 @@ export enum SidebarLink {
   Send = "send",
   Batch = "batch",
   Gift = "gift",
-  // AIAssistant = "ai-assistant",
+  AIAssistant = "ai-assistant",
   GroupPayment = "group-payment",
   AddressBook = "address-book",
   AccountManagement = "account-management",
   Transactions = "transactions",
 }
 
-const actionItems = [
+export const actionItems = [
   {
     title: "Action",
     items: [
-      { icon: "/sidebar/dashboard.gif", label: "Dashboard", isActive: true, link: SidebarLink.Dashboard },
-      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send },
-      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift },
-      // { icon: "/sidebar/ai-assistant.gif", label: "AI Assistant", isActive: false, link: SidebarLink.AIAssistant },
-      { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch },
-      { icon: "/sidebar/group-payment.gif", label: "Group Payment", isActive: false, link: SidebarLink.GroupPayment },
-      { icon: "/sidebar/address-book.gif", label: "Address Book", isActive: false, link: SidebarLink.AddressBook },
+      {
+        icon: "/sidebar/dashboard.gif",
+        label: "Dashboard",
+        isActive: true,
+        link: SidebarLink.Dashboard,
+        disabled: false,
+      },
+      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send, disabled: false },
+      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: true },
+      // {
+      //   icon: "/sidebar/ai-assistant.gif",
+      //   label: "AI Assistant",
+      //   isActive: false,
+      //   link: SidebarLink.AIAssistant,
+      //   disabled: true,
+      // },
+      { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch, disabled: false },
+      {
+        icon: "/sidebar/group-payment.gif",
+        label: "Group Payment",
+        isActive: false,
+        link: SidebarLink.GroupPayment,
+        disabled: true,
+      },
+      {
+        icon: "/sidebar/address-book.gif",
+        label: "Address Book",
+        isActive: false,
+        link: SidebarLink.AddressBook,
+        disabled: false,
+      },
     ],
   },
   {
@@ -45,17 +72,29 @@ const actionItems = [
         label: "Manage Accounts",
         isActive: false,
         link: SidebarLink.AccountManagement,
+        disabled: true,
       },
-      { icon: "/sidebar/transactions.gif", label: "Transactions", isActive: false, link: SidebarLink.Transactions },
+      {
+        icon: "/sidebar/transactions.gif",
+        label: "Transactions",
+        isActive: false,
+        link: SidebarLink.Transactions,
+        disabled: false,
+      },
     ],
   },
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
+  const { openModal, isModalOpen } = useModal();
+  const { walletAddress } = useWalletState(state => state);
+  const [renderFab, setRenderFab] = useState(false);
+
   const [action, setActions] = useState(actionItems);
   const router = useRouter();
   const pathname = usePathname();
 
+  // **************** Effect ****************
   useEffect(() => {
     setActions(prev =>
       prev.map(section => ({
@@ -68,8 +107,37 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
     );
   }, [pathname]);
 
+  useEffect(() => {
+    if (!walletAddress) return;
+
+    // Check if user has deployed accounts and hasn't claimed QASH
+    const deployedAccounts = localStorage.getItem(STORAGE_KEY);
+    if (deployedAccounts) {
+      try {
+        const accounts = JSON.parse(deployedAccounts);
+        const account = Object.values(accounts)[0] as any;
+        const hasClaimQASH = account.hasClaimQASH;
+
+        //Only open toast if user hasn't claimed QASH
+        if (!hasClaimQASH) {
+          setRenderFab(true);
+        }
+      } catch (error) {
+        console.error("Error parsing deployed accounts:", error);
+      }
+    }
+  }, [walletAddress]);
+
+  // **************** Handlers ****************
   const handleActionItemClick = (sectionIndex: number, itemIndex: number) => {
-    const link = action[sectionIndex].items[itemIndex].link;
+    const item = action[sectionIndex].items[itemIndex];
+
+    // Don't navigate if item is disabled
+    if (item.disabled) {
+      return;
+    }
+
+    const link = item.link;
     setActions(prev =>
       prev.map((section, sIdx) => ({
         ...section,
@@ -84,18 +152,13 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   };
 
   return (
-    <nav className="overflow-hidden pt-3.5 rounded-lg bg-neutral-900 max-w-[400px] h-screen">
+    <nav className="sidebar overflow-hidden pt-3.5 rounded-lg bg-neutral-900 max-w-[400px] h-screen">
       <div className="flex flex-col justify-between h-full">
         <div className="px-3.5 w-full">
           {/* Logo */}
-          <header className={`flex gap-3.5 max-w-full leading-tight w-[140px]`}>
-            <div className="flex gap-2.5 items-center text-xl font-extrabold tracking-tight text-blue-600">
-              <img src="/q3x-icon.svg" alt="Q3x" className="w-10 h-10" />
-              <h1 className="self-stretch my-auto">
-                Q3<span style={{ color: "rgba(213,106,255,1)" }}>x</span>
-              </h1>
-            </div>
-            <div className="flex items-center justify-center px-3 border-gradient ml-10 ">
+          <header className={`flex max-w-full leading-tight justify-items-start gap-2`}>
+            <img src="/qash-logo.svg" alt="Qash Logo" className="w-20" />
+            <div className="flex items-center justify-start px-3 border-gradient ">
               <p className="text-[13px] font-semibold text-[#7C7C7C]">Beta</p>
             </div>
           </header>
@@ -106,6 +169,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
         {/* Connect/Account section */}
         <Connect />
       </div>
+      {renderFab && <FloatingActionButton imgSrc="/qash-icon.svg" />}
     </nav>
   );
 };
