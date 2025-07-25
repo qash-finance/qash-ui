@@ -10,7 +10,23 @@ import { useAccount } from "@/hooks/web3/useAccount";
 import { qashTokenAddress } from "@/services/utils/constant";
 import { AssetWithMetadata } from "@/types/faucet";
 
-export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<SelectTokenModalProps>) {
+// Always include Qash token
+const qashToken: AssetWithMetadata = {
+  tokenAddress: qashTokenAddress,
+  amount: "0", // Default amount if user doesn't have any
+  metadata: {
+    symbol: "QASH",
+    decimals: 8,
+    maxSupply: 1000000,
+  },
+};
+
+export function SelectTokenModal({
+  isOpen,
+  onClose,
+  onTokenSelect,
+  zIndex,
+}: ModalProp<SelectTokenModalProps> & { zIndex?: number }) {
   // **************** Custom Hooks *******************
   const { walletAddress } = useWalletConnect();
   const { assets } = useAccount(walletAddress || "");
@@ -19,8 +35,8 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredAssets, setFilteredAssets] = useState<AssetWithMetadata[]>([]);
 
-  // **************** Local Functions *******************
-  const handleTokenSelect = (token: AssetWithMetadata) => {
+  // **************** Handlers *******************
+  const handleTokenSelect = (token: AssetWithMetadata | null) => {
     onTokenSelect?.(token);
     onClose();
   };
@@ -29,16 +45,7 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
     setSearchQuery("");
   };
 
-  // Always include Qash token
-  const qashToken: AssetWithMetadata = {
-    tokenAddress: qashTokenAddress,
-    amount: "0", // Default amount if user doesn't have any
-    metadata: {
-      symbol: "QASH",
-      decimals: 8,
-      maxSupply: 1000000,
-    },
-  };
+  // **************** Effect  *******************
 
   useEffect(() => {
     // Merge user assets with Qash token, avoiding duplicates
@@ -58,12 +65,10 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
     setFilteredAssets(filteredAssets);
   }, [assets]);
 
-  // **************** Effect  *******************
-
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Select token" icon="/modal/coin-icon.gif">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Select token" icon="/modal/coin-icon.gif" zIndex={zIndex}>
       <div className="flex flex-col items-center rounded-b-2xl border border-solid bg-stone-900 border-zinc-800 h-[472px] w-[500px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[472px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:w-[95%]">
         <main className="flex flex-col gap-3 items-start self-stretch px-1.5 pt-1.5 pb-5">
           {/* Token search input */}

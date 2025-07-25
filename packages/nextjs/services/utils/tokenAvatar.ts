@@ -1,3 +1,6 @@
+import { AssetWithMetadata } from "@/types/faucet";
+import { qashTokenAddress } from "./constant";
+
 // Generate consistent random avatar for token based on address
 export const generateTokenAvatar = (tokenAddress: string, symbol?: string) => {
   // Create a simple hash from the token address
@@ -51,4 +54,20 @@ export const generateTokenAvatar = (tokenAddress: string, symbol?: string) => {
   ctx.fillText((symbol || tokenAddress.slice(0, 2)).toUpperCase(), size / 2, size / 2);
 
   return canvas.toDataURL();
+};
+
+export const getTokenAvatar = (tokenAddress?: string) => {
+  if (!tokenAddress) {
+    return "/token/any-token.svg";
+  }
+
+  if (tokenAddress === qashTokenAddress) {
+    return "/q3x-icon.svg";
+  }
+
+  if (tokenAddress) {
+    return generateTokenAvatar(tokenAddress);
+  }
+
+  return "/token/any-token.svg";
 };

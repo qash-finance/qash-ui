@@ -11,49 +11,81 @@ const TableSection = ({
   headers,
   data,
   actionRenderer,
+  checkedRows,
+  onCheckAll,
+  onCheckRow,
 }: {
   title: string;
   subtitle: string;
   headers: string[];
   data: any[];
   actionRenderer: (rowData: any, index: number) => React.ReactNode;
-}) => (
-  <section className="mt-2.5 w-full max-md:max-w-full">
-    <div className="w-full max-md:max-w-full">
-      <div className="flex gap-2.5 items-start w-full max-md:max-w-full">
-        <div className="flex flex-col flex-1 shrink justify-center w-full basis-0 min-w-60 max-md:max-w-full">
-          <h1 className="text-white text-xl font-bold">{title}</h1>
-          <p className="mt-2 text-base tracking-tight leading-none text-neutral-500 max-md:max-w-full">{subtitle}</p>
+  checkedRows: number[];
+  onCheckAll: () => void;
+  onCheckRow: (index: number) => void;
+}) => {
+  const isAllChecked = data.length > 0 && checkedRows.length === data.length;
+
+  return (
+    <section className="mt-2.5 w-full max-md:max-w-full">
+      <div className="w-full max-md:max-w-full">
+        <div className="flex gap-2.5 items-start w-full max-md:max-w-full">
+          <div className="flex flex-col flex-1 shrink justify-center w-full basis-0 min-w-60 max-md:max-w-full">
+            <h1 className="text-white text-xl font-bold">{title}</h1>
+            <p className="mt-2 text-base tracking-tight leading-none text-neutral-500 max-md:max-w-full">{subtitle}</p>
+          </div>
+        </div>
+        <div className="mt-2.5">
+          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+            <table className="w-full min-w-[800px]">
+              <thead>
+                <tr className="bg-[#181818]">
+                  <th className="text-center text-sm font-medium text-neutral-400 rounded-tl-lg py-2">
+                    <input type="checkbox" className="w-4 h-4 mt-1" checked={isAllChecked} onChange={onCheckAll} />
+                  </th>
+                  {headers.map((column, index) => (
+                    <th
+                      key={column}
+                      className={`text-center font-medium text-neutral-400 border-r border-[#292929] py-2 ${
+                        index === 0 ? "rounded-tl-lg" : ""
+                      } ${index === headers.length - 1 ? "rounded-tr-lg border-r-0" : ""}`}
+                    >
+                      {column}
+                    </th>
+                  ))}
+                  <th className="text-center font-medium text-neutral-400 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row, index) => (
+                  <tr key={index} className="bg-[#1E1E1E] border-b border-zinc-800 last:border-b-0 hover:bg-[#292929]">
+                    <td className="px-2 py-2 border-r border-zinc-800 text-center">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4"
+                        checked={checkedRows.includes(index)}
+                        onChange={() => onCheckRow(index)}
+                      />
+                    </td>
+                    {headers.map((header, headerIndex) => (
+                      <td key={header} className="px-2 py-2 border-r border-zinc-800 text-center">
+                        {row[header]}
+                      </td>
+                    ))}
+                    <td className="px-2 py-2 text-center">{actionRenderer(row, index)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <div className="mt-2.5">
-        <Table
-          headers={headers}
-          data={data}
-          actionColumn={true}
-          actionRenderer={actionRenderer}
-          className="w-full"
-          columnWidths={{
-            1: "600px",
-          }}
-        />
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const pendingRecallData = [
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-red-600 rounded-full">
-          <span className="text-white">Gift</span>
-        </div>
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -69,13 +101,6 @@ const pendingRecallData = [
     actionDisabled: false,
   },
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -91,13 +116,6 @@ const pendingRecallData = [
     actionDisabled: false,
   },
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -113,13 +131,6 @@ const pendingRecallData = [
     actionDisabled: false,
   },
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -138,13 +149,6 @@ const pendingRecallData = [
 
 const waitingRecallData = [
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -161,13 +165,6 @@ const waitingRecallData = [
     actionDisabled: true,
   },
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -184,13 +181,6 @@ const waitingRecallData = [
     actionDisabled: true,
   },
   {
-    Type: (
-      <div className="flex gap-1.5 justify-center">
-        <div className="overflow-hidden gap-0.5 justify-center items-center px-4 py-1 bg-[#363636] bg-opacity-10 rounded-full">
-          <span className="text-white">P2ID-R</span>
-        </div>
-      </div>
-    ),
     Amount: (
       <div className="flex flex-row flex-wrap gap-1 justify-center items-center">
         <img src="/token/usdt.svg" alt="USDT" />
@@ -211,15 +201,44 @@ const waitingRecallData = [
 export const CancelDashboardContainer: React.FC = () => {
   const { data: recallable } = useGetRecallable();
   const { nextRecallTime } = recallable || {};
-  console.log("🚀 ~ CancelDashboardContainer ~ recallable:", recallable);
-  const pendingHeaders = ["Type", "Amount", "From", "Date/Time"];
-  const waitingHeaders = ["Type", "Amount", "From", "Date/Time", "Recall in"];
+  const pendingHeaders = ["Amount", "From", "Date/Time"];
+  const waitingHeaders = ["Amount", "From", "Date/Time", "Recall in"];
+
+  // Add checkbox state
+  const [pendingCheckedRows, setPendingCheckedRows] = React.useState<number[]>([]);
+  const [waitingCheckedRows, setWaitingCheckedRows] = React.useState<number[]>([]);
 
   const renderCancelAction = (rowData: any, index: number) => (
     <div className="flex justify-center items-center">
       <ActionButton text="Cancel" disabled={rowData.actionDisabled} />
     </div>
   );
+
+  // Checkbox handlers for pending section
+  const handlePendingCheckAll = () => {
+    if (pendingCheckedRows.length === pendingRecallData.length) {
+      setPendingCheckedRows([]);
+    } else {
+      setPendingCheckedRows(pendingRecallData.map((_, idx) => idx));
+    }
+  };
+
+  const handlePendingCheckRow = (index: number) => {
+    setPendingCheckedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
+  };
+
+  // Checkbox handlers for waiting section
+  const handleWaitingCheckAll = () => {
+    if (waitingCheckedRows.length === waitingRecallData.length) {
+      setWaitingCheckedRows([]);
+    } else {
+      setWaitingCheckedRows(waitingRecallData.map((_, idx) => idx));
+    }
+  };
+
+  const handleWaitingCheckRow = (index: number) => {
+    setWaitingCheckedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
+  };
 
   return (
     <section className="rounded-2xl bg-neutral-900 w-full h-full px-[16px] py-[20px]">
@@ -275,6 +294,9 @@ export const CancelDashboardContainer: React.FC = () => {
           headers={pendingHeaders}
           data={pendingRecallData}
           actionRenderer={renderCancelAction}
+          checkedRows={pendingCheckedRows}
+          onCheckAll={handlePendingCheckAll}
+          onCheckRow={handlePendingCheckRow}
         />
 
         <TableSection
@@ -283,6 +305,9 @@ export const CancelDashboardContainer: React.FC = () => {
           headers={waitingHeaders}
           data={waitingRecallData}
           actionRenderer={renderCancelAction}
+          checkedRows={waitingCheckedRows}
+          onCheckAll={handleWaitingCheckAll}
+          onCheckRow={handleWaitingCheckRow}
         />
       </div>
     </section>

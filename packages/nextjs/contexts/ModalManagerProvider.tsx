@@ -152,17 +152,19 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         return 50; // Default z-index if modal not found or not open
       }
 
-      // Get all open modals sorted by timestamp (earliest first)
+      // Get all open modals sorted by timestamp (latest first)
       const openModals = Object.entries(modalStates)
         .filter(([, state]) => state.isOpen && state.timestamp)
-        .sort(([, stateA], [, stateB]) => stateA.timestamp! - stateB.timestamp!)
+        .sort(([, stateA], [, stateB]) => stateB.timestamp! - stateA.timestamp!)
         .map(([id, state]) => ({ id, timestamp: state.timestamp! }));
 
-      // Find the position of this modal in the opening order
+      // Find the position of this modal in the opening order (0 = most recent)
       const position = openModals.findIndex(modal => modal.timestamp === modalState.timestamp);
 
-      // Base z-index of 50, each subsequent modal gets +10
-      return 50 + position * 10;
+      // Base z-index of 50, most recent modal gets highest z-index
+      // Reverse the position so most recent (position 0) gets highest z-index
+      const zIndex = 50 + (openModals.length - 1 - position) * 10;
+      return zIndex;
     },
     [modalStates],
   );

@@ -78,8 +78,9 @@ const NewFolder = ({
           left: "55%",
           transform: reveal ? "translate(-50%, -500%)" : "translate(-50%, -200%)",
           opacity: reveal ? 1 : 0,
-          zIndex: 100,
+          zIndex: 50,
           transitionDuration: `${ANIMATION_DURATION}ms`,
+          pointerEvents: reveal ? "auto" : "none",
         }}
       >
         <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category })} />
@@ -88,8 +89,10 @@ const NewFolder = ({
       <img
         src="/address-book/funnel.svg"
         alt="funnel"
-        className={`absolute z-10 left-1/2 bottom-20 translate-x-[-46%] transition-all`}
+        className={`absolute left-1/2 bottom-20 translate-x-[-46%] transition-all`}
         style={{
+          zIndex: 10,
+          pointerEvents: "none",
           transitionDuration: `${ANIMATION_DURATION}ms`,
           opacity: reveal ? 1 : 0,
           width: "auto",
@@ -122,8 +125,10 @@ const Folder = ({ reveal, onClick, category }: { reveal: boolean; onClick: () =>
       <img
         src="/address-book/funnel.svg"
         alt="funnel"
-        className={`absolute z-10 left-1/2 bottom-20 translate-x-[-46%] transition-all`}
+        className={`absolute left-1/2 bottom-20 translate-x-[-46%] transition-all`}
         style={{
+          zIndex: 10,
+          pointerEvents: "none",
           transitionDuration: `${ANIMATION_DURATION}ms`,
           opacity: reveal ? 1 : 0,
           width: "auto",
@@ -191,7 +196,15 @@ export function AddressBookContainer() {
   };
 
   const handleCreateAddressBook = async (data: AddressBookDto) => {
-    const { category, name } = data;
+    const name = data.name.trim();
+    const category = data.category.trim();
+    const address = data.address.trim();
+    const token = data.token?.trim();
+
+    if (category === "") {
+      toast.error("Category is required");
+      return;
+    }
 
     // Prevent duplicate name in the same category
     const nameExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.name === name);
@@ -200,21 +213,32 @@ export function AddressBookContainer() {
       return;
     }
 
-    createAddressBook(data, {
-      onSuccess: () => {
-        toast.success("Address book created successfully");
+    // Prevent duplicate address in the same category
+    const addressExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.address === address);
+    if (addressExistsInCategory) {
+      toast.error("Address already exists in this category");
+      return;
+    }
 
-        // Auto open the folder for the new address book
-        const folderIndex = folders.findIndex(folder => folder.category === category);
-        if (folderIndex !== -1) {
-          setFolderStates(prev => prev.map((state, index) => (index === folderIndex ? true : false)));
-          setNewFolderOpen(false);
-        }
+    createAddressBook(
+      { name, category, address, token },
+      {
+        onSuccess: () => {
+          toast.success("Address book created successfully");
+
+          // Auto open the folder for the new address book
+          const folderIndex = folders.findIndex(folder => folder.category === category);
+          if (folderIndex !== -1) {
+            setFolderStates(prev => prev.map((state, index) => (index === folderIndex ? true : false)));
+            setNewFolderOpen(false);
+          }
+        },
+        onError: (error: any) => {
+          console.log(error);
+          toast.error("Failed to create address book");
+        },
       },
-      onError: () => {
-        toast.error("Failed to create address book");
-      },
-    });
+    );
   };
 
   return (
@@ -225,16 +249,22 @@ export function AddressBookContainer() {
           key={folder.id}
           className="absolute left-0 w-full flex flex-wrap gap-4 justify-center items-center p-2 z-20 transition-all"
           style={{
+            pointerEvents: folderStates[folderIndex] ? "auto" : "none",
             transitionDuration: `${ANIMATION_DURATION}ms`,
             top: "150px",
             opacity: folderStates[folderIndex] ? 1 : 0,
             transform: folderStates[folderIndex] ? "translateY(0)" : "translateY(100%)",
+            visibility: folderStates[folderIndex] ? "visible" : "hidden",
           }}
         >
-          {folder.addressBooks.map((addressBook: any, index: number) => (
-            <AddressCard key={addressBook.id || index} addressBook={addressBook} />
-          ))}
-          <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category: folder.category })} />
+          {folderStates[folderIndex] && (
+            <>
+              {folder.addressBooks.map((addressBook: any, index: number) => (
+                <AddressCard key={addressBook.id || index} addressBook={addressBook} />
+              ))}
+              <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category: folder.category })} />
+            </>
+          )}
         </div>
       ))}
 

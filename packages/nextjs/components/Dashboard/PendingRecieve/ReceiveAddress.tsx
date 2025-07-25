@@ -5,6 +5,9 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { getQRsFromLocalStorage, generateQRCode, deleteQRFromLocalStorage } from "@/services/utils/qrCode";
+import { getTokenAvatar } from "@/services/utils/tokenAvatar";
+import { CustomQRData } from "@/services/utils/qrCode";
 
 interface ReceiveAddressProps {
   address?: string;
@@ -24,7 +27,10 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
 
   const [qrCode, setQrCode] = useState<QRCodeStyling>();
   const [showQR, setShowQR] = useState(true);
+  const [savedQRs, setSavedQRs] = useState<CustomQRData[]>([]);
+  const [qrCodeInstances, setQrCodeInstances] = useState<Map<string, QRCodeStyling>>(new Map());
   const ref = useRef<HTMLDivElement>(null);
+  const savedQRRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const [options, setOptions] = useState<Options>({
     width: 350,
@@ -50,6 +56,49 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
     setQrCode(new QRCodeStyling(options));
   }, [options]);
 
+  // Load saved QR codes
+  useEffect(() => {
+    const loadSavedQRs = () => {
+      const qrs = getQRsFromLocalStorage();
+      setSavedQRs(qrs);
+    };
+
+    loadSavedQRs();
+
+    // Listen for storage changes to update when new QR codes are added
+    const handleStorageChange = () => {
+      loadSavedQRs();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // Create QR code instances for saved QRs
+  useEffect(() => {
+    const newInstances = new Map<string, QRCodeStyling>();
+
+    savedQRs.forEach(qr => {
+      const qrCodeInstance = generateQRCode(qr.qrData);
+      newInstances.set(qr.id, qrCodeInstance);
+    });
+
+    setQrCodeInstances(newInstances);
+  }, [savedQRs]);
+
+  // Append QR codes to their respective containers
+  useEffect(() => {
+    qrCodeInstances.forEach((qrCodeInstance, qrId) => {
+      const container = savedQRRefs.current.get(qrId);
+      if (container && container.children.length === 0) {
+        qrCodeInstance.append(container);
+      }
+    });
+  }, [qrCodeInstances]);
+
   useEffect(() => {
     if (ref.current) {
       qrCode?.append(ref.current);
@@ -70,6 +119,38 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
       }));
     }
   }, [isConnected, walletAddress]);
+
+  const setQRRef = (qrId: string, element: HTMLDivElement | null) => {
+    if (element) {
+      savedQRRefs.current.set(qrId, element);
+    } else {
+      savedQRRefs.current.delete(qrId);
+    }
+  };
+
+  // Refresh saved QR codes when component becomes visible
+  const refreshSavedQRs = () => {
+    const qrs = getQRsFromLocalStorage();
+    setSavedQRs(qrs);
+  };
+
+  // Enhance onEnterAmount to refresh QRs after modal closes
+  const handleEnterAmount = () => {
+    if (onEnterAmount) {
+      onEnterAmount();
+      // Small delay to allow modal to process
+      setTimeout(refreshSavedQRs, 100);
+    }
+  };
+
+  // Handle clicking on a saved QR code
+  const handleSavedQRClick = (qr: CustomQRData) => {
+    setOptions(prev => ({
+      ...prev,
+      data: qr.qrData,
+    }));
+    setShowQR(true);
+  };
 
   return (
     <main className="mx-auto rounded-2xl bg-neutral-700 w-full max-w-[380px] p-4 flex flex-col gap-4 h-full max-h-[800px]">
@@ -95,53 +176,58 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
             <div className="flex flex-col">
               <div ref={ref} className={`mx-auto ${showQR ? "block" : "hidden"}`} />
               <div
-                className={`flex flex-row w-[350px] h-[348px] bg-transparent ${showQR && "hidden"} flex flex-wrap content-start gap-1 overflow-y-auto`}
+                className={`flex flex-row w-[350px] h-[348px] bg-transparent ${showQR && "hidden"} flex flex-wrap content-start gap-1 overflow-y-auto relative`}
+                style={{
+                  maskImage: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)",
+                }}
               >
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
-                <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer">
-                  <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-35 h-35" />
-                </div>
+                {savedQRs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center w-full h-full">
+                    <div className="flex justify-center items-center rounded-3xl border-white border-solid bg-neutral-950 border-[1.52px] h-28 w-28 transform cursor-pointer mb-2">
+                      <img src="/q3x-qr-icon.svg" alt="No QR codes yet" className="w-16 h-16 opacity-50" />
+                    </div>
+                    <span className="text-white text-sm opacity-50">No saved QR codes</span>
+                  </div>
+                ) : (
+                  savedQRs.map(qr => (
+                    <div key={qr.id} className="flex flex-col items-center group relative">
+                      <div className="relative">
+                        <div
+                          ref={el => setQRRef(qr.id, el)}
+                          className="h-28 w-28 rounded-3xl overflow-hidden border-white border-solid border-[1.52px] bg-neutral-950 cursor-pointer hover:border-blue-500 transition-colors"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "15px",
+                          }}
+                          onClick={() => handleSavedQRClick(qr)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-white text-xs truncate max-w-[70px]" title={qr.name}>
+                          {qr.name}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {showQR ? (
                 <>
                   <div className="mt-4 ml-4">
-                    <ActionButton text="Enter an amount" type="neutral" onClick={onEnterAmount} className="h-10" />
+                    <ActionButton text="Enter an amount" type="neutral" onClick={handleEnterAmount} className="h-10" />
                   </div>
                   {/* Decorative QR Icons */}
-                  <div className="relative inset-0 cursor-pointer" onClick={() => setShowQR(false)}>
+                  <div
+                    className="relative inset-0 cursor-pointer"
+                    onClick={() => {
+                      setShowQR(false);
+                      refreshSavedQRs();
+                    }}
+                  >
                     <div className="absolute bottom-0 right-20 flex justify-center items-center rounded-lg border-white border-solid bg-neutral-950 border-[1.52px] h-10 w-10 transform -rotate-3 z-[1] cursor-pointer">
                       <img src="/q3x-qr-icon.svg" alt="Decorative QR code icon" className="w-10 h-10" />
                     </div>
@@ -176,7 +262,16 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-2 mt-auto w-full">
-            <ActionButton text="Save QR" type="neutral" onClick={onSaveQR} className="flex-1" />
+            <ActionButton
+              text="Save QR"
+              type="neutral"
+              onClick={() => {
+                if (qrCode) {
+                  qrCode.download({ name: `QASH-qr-${walletAddress?.slice(0, 8)}`, extension: "png" });
+                }
+              }}
+              className="flex-1"
+            />
             <ActionButton text="Copy Address" onClick={onCopyAddress} className="flex-1" />
           </div>
         </>

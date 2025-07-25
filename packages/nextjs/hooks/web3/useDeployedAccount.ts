@@ -66,7 +66,7 @@ export function useDeployedAccount() {
       throw new Error(`Account deployment failed: ${error}`);
     }
 
-    return consumeAllNotes(deployedAccountData?.accountId, noteIds);
+    // return consumeAllNotes(deployedAccountData?.accountId, noteIds);
   };
 
   const getConsumableNotesWithDeployedAccount = async () => {

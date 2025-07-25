@@ -30,7 +30,6 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
   const baseClasses = "flex gap-1.5 items-center p-2.5 w-full whitespace-nowrap rounded-xl transition-colors";
   const activeClasses = "font-semibold text-white rounded-xl";
   const inactiveClasses = "text-neutral-500 hover:bg-neutral-800";
-  const disabledClasses = "text-neutral-600 cursor-not-allowed opacity-50";
   const cursorClasses = disabled ? "cursor-not-allowed" : "cursor-pointer";
 
   const [gifKey, setGifKey] = React.useState(0);
@@ -47,9 +46,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
 
   return (
     <button
-      className={`${baseClasses} ${cursorClasses} ${
-        disabled ? disabledClasses : isActive ? activeClasses : inactiveClasses
-      } focus:outline-none active:border-[#191919]`}
+      className={`${baseClasses} ${cursorClasses} ${isActive ? activeClasses : inactiveClasses} focus:outline-none active:border-[#191919]`}
       style={
         showActiveStyle
           ? {
@@ -58,7 +55,12 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
             }
           : undefined
       }
-      onMouseEnter={() => !disabled && setHovered(true)}
+      onMouseEnter={() => {
+        if (!disabled) {
+          setHovered(true);
+          setGifKey(prev => prev + 1); // force reload gif on hover
+        }
+      }}
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
       type="button"

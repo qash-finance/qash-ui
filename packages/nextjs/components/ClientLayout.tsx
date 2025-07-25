@@ -16,6 +16,8 @@ import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
+import { StepType, TourProvider } from "@reactour/tour";
+import { FloatingActionButton } from "./Common/FloatingActionButton";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -28,6 +30,13 @@ const analyticsConfig = {
   enableErrorTracking: true,
   sessionTimeout: 30, // 30 minutes
 };
+
+const steps: StepType[] = [
+  {
+    selector: ".sidebar",
+    content: "This is the sidebar",
+  },
+];
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   //Mobile detection
@@ -105,43 +114,45 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </ToastBar>
             )}
           />
-          <ModalProvider>
-            <AnalyticsProvider config={analyticsConfig}>
-              <AccountProvider>
-                <AuthProvider
-                  apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                  autoRefresh={true}
-                  refreshInterval={5 * 1000} // 5 minutes
-                >
-                  {/* <ConnectWalletButton /> */}
-                  <ModalManager />
-                  <div className="flex flex-row h-screen">
-                    <div className="w-1/6">
-                      <Sidebar />
-                    </div>
-                    <div className="w-5/6">
-                      <div className="p-[24px]">
-                        <Title />
+          <TourProvider steps={steps}>
+            <ModalProvider>
+              <AnalyticsProvider config={analyticsConfig}>
+                <AccountProvider>
+                  <AuthProvider
+                    apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                    autoRefresh={true}
+                    refreshInterval={5 * 1000} // 5 minutes
+                  >
+                    {/* <ConnectWalletButton /> */}
+                    <ModalManager />
+                    <div className="flex flex-row h-screen">
+                      <div className="w-1/6">
+                        <Sidebar />
                       </div>
-                      <div
-                        style={{
-                          backgroundImage: 'url("/background.svg")',
-                          backgroundSize: "contain",
-                          height: "88%",
-                          backgroundClip: "content-box",
-                          backgroundColor: "#101111", // dark gray (tailwind zinc-900)
-                          // You can tweak the color as needed
-                        }}
-                        className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
-                      >
-                        {children}
+                      <div className="w-5/6">
+                        <div className="p-[24px]">
+                          <Title />
+                        </div>
+                        <div
+                          style={{
+                            backgroundImage: 'url("/background.svg")',
+                            backgroundSize: "contain",
+                            height: "88%",
+                            backgroundClip: "content-box",
+                            backgroundColor: "#101111", // dark gray (tailwind zinc-900)
+                            // You can tweak the color as needed
+                          }}
+                          className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
+                        >
+                          {children}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </AuthProvider>
-              </AccountProvider>
-            </AnalyticsProvider>
-          </ModalProvider>
+                  </AuthProvider>
+                </AccountProvider>
+              </AnalyticsProvider>
+            </ModalProvider>
+          </TourProvider>
         </WalletModalProvider>
       </WalletProvider>
     </QueryClientProvider>

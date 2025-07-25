@@ -2868,6 +2868,7 @@ __metadata:
     "@demox-labs/miden-wallet-adapter-react": ^0.1.0
     "@demox-labs/miden-wallet-adapter-reactui": ^0.1.3
     "@demox-labs/miden-wallet-adapter-trident": ^0.1.2
+    "@reactour/tour": ^3.8.0
     "@tailwindcss/postcss": ^4
     "@tanstack/react-query": ^5.81.5
     "@types/node": ^20
@@ -2889,6 +2890,62 @@ __metadata:
     zustand: ^5.0.6
   languageName: unknown
   linkType: soft
+
+"@reactour/mask@npm:*":
+  version: 1.2.0
+  resolution: "@reactour/mask@npm:1.2.0"
+  dependencies:
+    "@reactour/utils": "*"
+  peerDependencies:
+    react: 16.x || 17.x || 18.x || 19.x
+  checksum: 9435c0949514e03df55ac9035700b32c7ef84c5bfb647446ce8981256b0bf594a8fe68dffdaeee07ca3c698f9806def05caa06d65d57e10c2911a172e6ef197f
+  languageName: node
+  linkType: hard
+
+"@reactour/popover@npm:*":
+  version: 1.3.0
+  resolution: "@reactour/popover@npm:1.3.0"
+  dependencies:
+    "@reactour/utils": "*"
+  peerDependencies:
+    react: 16.x || 17.x || 18.x || 19.x
+  checksum: ba8cf0593b1b7943b19315d5447ad0825cb9ec3c6573abb8b8f765a5dd7e5c2de32de431b9ae9fda63d4053173bd29539f482f7c446a431ef899c9e9d0278e5f
+  languageName: node
+  linkType: hard
+
+"@reactour/tour@npm:^3.8.0":
+  version: 3.8.0
+  resolution: "@reactour/tour@npm:3.8.0"
+  dependencies:
+    "@reactour/mask": "*"
+    "@reactour/popover": "*"
+    "@reactour/utils": "*"
+  peerDependencies:
+    react: 16.x || 17.x || 18.x || 19.x
+  checksum: a4dfc1a75b2fb63b87381a38266afc702e99752a818a066338f00590e2bf2e264fc0ee532c39cdd7996fe2e7d3bf3f22b4654b60cdc0a4f69f685b97af8636da
+  languageName: node
+  linkType: hard
+
+"@reactour/utils@npm:*":
+  version: 0.6.0
+  resolution: "@reactour/utils@npm:0.6.0"
+  dependencies:
+    "@rooks/use-mutation-observer": ^4.11.2
+    resize-observer-polyfill: ^1.5.1
+  peerDependencies:
+    react: 16.x || 17.x || 18.x || 19.x
+  checksum: 6b1e9951f0225a43d311b43a019449f5d7085b1874ac43dc094039078cae21a2153d18f59406170113767342d277be0904d6d0a40cb510484b438a79259632cf
+  languageName: node
+  linkType: hard
+
+"@rooks/use-mutation-observer@npm:^4.11.2":
+  version: 4.11.2
+  resolution: "@rooks/use-mutation-observer@npm:4.11.2"
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 9f60f58f9c2dc49f65384edd98b838178f1e1a9981d13ca61f3a62b922518a57f2eefe98332b55c4dc03c6d15548702a1437cf90dbca003315d28ad60929da73
+  languageName: node
+  linkType: hard
 
 "@sideway/address@npm:^4.1.5":
   version: 4.1.5
@@ -11136,6 +11193,13 @@ __metadata:
   version: 1.0.0
   resolution: "requires-port@npm:1.0.0"
   checksum: eee0e303adffb69be55d1a214e415cf42b7441ae858c76dfc5353148644f6fd6e698926fc4643f510d5c126d12a705e7c8ed7e38061113bdf37547ab356797ff
+  languageName: node
+  linkType: hard
+
+"resize-observer-polyfill@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "resize-observer-polyfill@npm:1.5.1"
+  checksum: 57e7f79489867b00ba43c9c051524a5c8f162a61d5547e99333549afc23e15c44fd43f2f318ea0261ea98c0eb3158cca261e6f48d66e1ed1cd1f340a43977094
   languageName: node
   linkType: hard
 

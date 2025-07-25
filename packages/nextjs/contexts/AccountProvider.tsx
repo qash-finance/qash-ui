@@ -25,7 +25,7 @@ interface AccountContextType {
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
 // localStorage key for persisting wallet -> deployed account mappings
-const STORAGE_KEY = "miden_deployed_accounts";
+export const STORAGE_KEY = "miden_deployed_accounts";
 
 /**
  * AccountProvider manages deployed accounts for connected wallets.
@@ -59,6 +59,7 @@ export const AccountProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         const walletAddress = publicKey.toString();
         const accountData = getStoredAccountForWallet(walletAddress);
+        console.log("🚀 ~ loadStoredAccount ~ accountData:", accountData);
 
         if (accountData) {
           console.log("Loading stored account for wallet:", walletAddress, "accountId:", accountData.accountId);

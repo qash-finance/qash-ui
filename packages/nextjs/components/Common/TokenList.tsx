@@ -1,15 +1,13 @@
 "use client";
-import { useAccount } from "@/hooks/web3/useAccount";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import * as React from "react";
+import React from "react";
 import { TokenItem } from "./TokenItem";
-import { AssetWithMetadata } from "@/types/faucet";
+import { AnyToken, AssetWithMetadata } from "@/types/faucet";
 import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 import { qashTokenAddress } from "@/services/utils/constant";
 
 interface TokenListProps {
   assets: AssetWithMetadata[];
-  onTokenSelect?: (token: AssetWithMetadata) => void;
+  onTokenSelect?: (token: AssetWithMetadata | null) => void;
   searchQuery?: string;
 }
 
@@ -37,21 +35,34 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
             )}
           </div>
         ) : (
-          assets.map((asset, index) => (
+          <>
             <TokenItem
-              key={asset.tokenAddress}
-              icon={
-                asset.tokenAddress === qashTokenAddress
-                  ? "/q3x-icon.svg"
-                  : generateTokenAvatar(asset.tokenAddress, asset.metadata.symbol)
-              }
-              address={asset.tokenAddress}
-              name={asset.metadata.symbol}
-              usdValue={formatNumber(asset.amount)} // 1:1 ratio with token amount
-              tokenAmount={formatNumber(asset.amount)}
-              onClick={() => onTokenSelect?.(asset)}
+              key="any-token"
+              icon="/token/any-token.svg"
+              address=""
+              name={AnyToken.metadata.symbol}
+              usdValue="" // 1:1 ratio with token amount
+              tokenAmount=""
+              onClick={() => {
+                onTokenSelect?.(null);
+              }}
             />
-          ))
+            {assets.map((asset, index) => (
+              <TokenItem
+                key={asset.tokenAddress}
+                icon={
+                  asset.tokenAddress === qashTokenAddress
+                    ? "/q3x-icon.svg"
+                    : generateTokenAvatar(asset.tokenAddress, asset.metadata.symbol)
+                }
+                address={asset.tokenAddress}
+                name={asset.metadata.symbol}
+                usdValue={formatNumber(asset.amount)} // 1:1 ratio with token amount
+                tokenAmount={formatNumber(asset.amount)}
+                onClick={() => onTokenSelect?.(asset)}
+              />
+            ))}
+          </>
         )}
       </div>
     </section>

@@ -10,7 +10,7 @@ type BaseModalProps = {
   children: React.ReactNode;
 };
 
-const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, icon, zIndex = 50, children }) => {
+const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, icon, zIndex = 950, children }) => {
   return (
     <div style={{ zIndex }} className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="flex flex-col gap-0">

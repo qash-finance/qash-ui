@@ -30,6 +30,9 @@ const useGetAddressBooks = () => {
     queryFn: async () => {
       return apiClient.getData<AddressBook[]>(`/address-book`);
     },
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -65,7 +68,7 @@ const useCreateAddressBook = () => {
       return apiClient.postData<AddressBook>("/address-book", data);
     },
     onSuccess: (newAddressBook: AddressBook) => {
-      queryClient.setQueryData(["address-book"], (old: AddressBook[]) => [...old, newAddressBook]);
+      // Force refetch to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["address-book"] });
     },
   });

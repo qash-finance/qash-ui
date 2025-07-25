@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { AssetWithMetadata } from "@/types/faucet";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { generateTokenAvatar, getTokenAvatar } from "@/services/utils/tokenAvatar";
 import { qashTokenAddress } from "@/services/utils/constant";
 
 export const CreateAddressCard = ({
@@ -21,7 +21,6 @@ export const CreateAddressCard = ({
   } = useForm<{ name: string; address: string; token?: string }>();
   const { openModal } = useModal();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
-  const [tokenAvatar, setTokenAvatar] = useState<string>("/q3x-icon.svg");
 
   const onError = (formErrors: typeof errors) => {
     const firstError = Object.values(formErrors).find(err => err?.message);
@@ -72,22 +71,17 @@ export const CreateAddressCard = ({
           onClick={handleSubmit(handleSave, onError)}
         />
         <div
-          className="flex flex-2/6 flex-row gap-1 items-center bg-white rounded-full justify-between pr-2"
+          className="flex flex-2/6 flex-row gap-1 items-center bg-white rounded-full justify-between pr-2 cursor-pointer"
           onClick={() =>
             openModal(MODAL_IDS.SELECT_TOKEN, {
               onTokenSelect: (token: AssetWithMetadata) => {
+                console.log("🚀 ~ token:", token);
                 setSelectedToken(token);
-
-                const tokenAvatar =
-                  token.tokenAddress === qashTokenAddress
-                    ? "/q3x-icon.svg"
-                    : generateTokenAvatar(token.tokenAddress, token.metadata.symbol);
-                setTokenAvatar(tokenAvatar);
               },
             })
           }
         >
-          <img src={tokenAvatar} alt="token" className="w-8 h-8" />
+          <img src={getTokenAvatar(selectedToken?.tokenAddress)} alt="token" className="w-8 h-8" />
           <img src="/arrow/filled-arrow-down.svg" alt="token" className="w-4 h-4" style={{ filter: "brightness(0)" }} />
         </div>
       </div>
