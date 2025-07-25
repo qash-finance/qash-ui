@@ -7,7 +7,7 @@
  */
 export const formatNumberWithCommas = (
   num: number | string | null | undefined,
-  decimals: number = 2,
+  decimals: number = 4,
   showApproximateZero: boolean = false,
 ): string => {
   try {

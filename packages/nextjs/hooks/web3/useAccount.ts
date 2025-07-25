@@ -10,7 +10,7 @@ import { useWalletAuth } from "../server/useWalletAuth";
 
 // Default QASH token that should always be present
 const defaultQashToken: AssetWithMetadata = {
-  tokenAddress: qashTokenAddress,
+  faucetId: qashTokenAddress,
   amount: "0",
   metadata: {
     symbol: qashTokenSymbol,
@@ -61,65 +61,65 @@ export function useAccount() {
       return;
     }
 
-    const fetchAssets = async () => {
-      let accountId;
-      try {
-        accountId = AccountId.fromBech32(walletAddress);
-      } catch (error) {
-        setAssets([defaultQashToken]);
-        setConsumableNotes(null);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      try {
-        // Retry mechanism for getting account assets
-        const accountAssets = await retryWithBackoff(async () => {
-          return await getAccountAssets(walletAddress);
-        });
-
-        // Merge QASH token with account assets, replacing if exists
-        const mergedAssets = [
-          defaultQashToken,
-          ...accountAssets.filter(asset => asset.tokenAddress !== qashTokenAddress),
-        ];
-
-        // If QASH exists in accountAssets, update its amount
-        const qashFromAccount = accountAssets.find(asset => asset.tokenAddress === qashTokenAddress);
-        if (qashFromAccount) {
-          mergedAssets[0] = {
-            ...defaultQashToken,
-            amount: qashFromAccount.amount,
-          };
-        }
-
-        setAssets(mergedAssets);
-
-        // Retry mechanism for getting consumable notes
-        const consumableNotes = await retryWithBackoff(async () => {
-          return await getConsumableNotes(walletAddress);
-        });
-
-        setConsumableNotes(consumableNotes);
-      } catch (err) {
-        const error = String(err);
-        if (error.includes("status: NotFound")) {
-          // account didnt do any transaction
-          setIsAccountDeployed(false);
-        }
-        setError(err);
-        console.error("Failed to fetch account data after 3 retries:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAssets();
   }, [walletAddress, isAuthenticated]);
 
+  const fetchAssets = async () => {
+    if (!walletAddress) return;
+
+    let accountId;
+    try {
+      accountId = AccountId.fromBech32(walletAddress);
+    } catch (error) {
+      setAssets([defaultQashToken]);
+      setConsumableNotes(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      // retry mechanism for getting account assets
+      const accountAssets = await retryWithBackoff(async () => {
+        return await getAccountAssets(walletAddress);
+      });
+
+      // merge QASH token with account assets, replacing if exists
+      const mergedAssets = [defaultQashToken, ...accountAssets.filter(asset => asset.faucetId !== qashTokenAddress)];
+
+      // if QASH exists in accountAssets, update its amount
+      const qashFromAccount = accountAssets.find(asset => asset.faucetId === qashTokenAddress);
+      if (qashFromAccount) {
+        mergedAssets[0] = {
+          ...defaultQashToken,
+          amount: qashFromAccount.amount,
+        };
+      }
+
+      setAssets(mergedAssets);
+
+      // retry mechanism for getting consumable notes
+      const consumableNotes = await retryWithBackoff(async () => {
+        return await getConsumableNotes(walletAddress);
+      });
+
+      setConsumableNotes(consumableNotes);
+    } catch (err) {
+      const error = String(err);
+      if (error.includes("status: NotFound")) {
+        // account didnt do any transaction
+        setIsAccountDeployed(false);
+      }
+      setError(err);
+      console.error("Failed to fetch account data after 3 retries:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     assets,
+    refetchAssets: fetchAssets,
     loading,
     error,
     isAccountDeployed,

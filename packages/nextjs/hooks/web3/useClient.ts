@@ -2,7 +2,7 @@
 import { nodeEndpoint } from "@/services/utils/constant";
 import { WebClient } from "@demox-labs/miden-sdk";
 
-let client: any = null;
+let client: WebClient | null = null;
 
 export function useClient() {
   async function getClient(): Promise<WebClient> {

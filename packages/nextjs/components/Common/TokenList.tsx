@@ -16,13 +16,6 @@ interface TokenListProps {
 }
 
 export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps) {
-  // Format number with commas for better readability
-  const formatNumber = (num: string) => {
-    return parseFloat(num).toLocaleString("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6,
-    });
-  };
   return (
     <section className="flex flex-col gap-2.5 items-start self-stretch">
       <h2 className="self-stretch text-base tracking-tighter leading-5 text-white max-sm:px-1 max-sm:py-0 max-sm:text-sm">
@@ -41,19 +34,19 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
         ) : (
           assets.map((asset, index) => (
             <TokenItem
-              key={asset.tokenAddress}
+              key={asset.faucetId}
               icon={
-                asset.tokenAddress === qashTokenAddress
+                asset.faucetId === qashTokenAddress
                   ? "/q3x-icon.svg"
-                  : generateTokenAvatar(asset.tokenAddress, asset.metadata.symbol)
+                  : generateTokenAvatar(asset.faucetId, asset.metadata.symbol)
               }
-              address={asset.tokenAddress}
+              address={asset.faucetId}
               name={asset.metadata.symbol}
-              usdValue={formatNumber(
-                formatNumberWithCommas(formatUnits(BigInt(asset.amount), asset.metadata.decimals)),
+              usdValue={formatNumberWithCommas(
+                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
               )} // 1:1 ratio with token amount
-              tokenAmount={formatNumber(
-                formatNumberWithCommas(formatUnits(BigInt(asset.amount), asset.metadata.decimals)),
+              tokenAmount={formatNumberWithCommas(
+                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
               )}
               onClick={() => onTokenSelect?.(asset)}
             />

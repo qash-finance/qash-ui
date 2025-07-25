@@ -22,7 +22,6 @@ export const AmountInput: React.FC<AmountInputProps> = ({
 }) => {
   const handlePercentageSelect = (percentage: number | "MAX") => {
     console.log("Percentage button clicked:", percentage, "Available balance:", availableBalance);
-
     let newAmount: number;
     if (percentage === "MAX") {
       newAmount = availableBalance;

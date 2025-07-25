@@ -23,7 +23,9 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
       <input
         type="text"
         readOnly
-        value={formatNumberWithCommas(formatUnits(BigInt(selectedToken.amount), selectedToken.metadata.decimals))}
+        value={formatNumberWithCommas(
+          formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
+        )}
         placeholder="0.00"
         className="bg-transparent text-white outline-none w-20"
       />
@@ -39,7 +41,7 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
         >
           <img
             src={
-              selectedToken.tokenAddress === qashTokenAddress
+              selectedToken.faucetId === qashTokenAddress
                 ? "/q3x-icon.svg"
                 : generateTokenAvatar(displayTokenAddress, selectedToken.metadata.symbol)
             }

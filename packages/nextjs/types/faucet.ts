@@ -10,3 +10,13 @@ export interface FaucetMetadata {
 }
 
 export type AssetWithMetadata = Asset & { metadata: FaucetMetadata };
+
+export type PartialConsumableNote = {
+  id: string;
+  sender: string;
+  recipient: string;
+  private: boolean;
+  assets: AssetWithMetadata[];
+  recallableHeight: number;
+  serialNumber: string[];
+};

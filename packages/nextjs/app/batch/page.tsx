@@ -1,17 +1,21 @@
 "use client";
 
 import BatchTransactionContainer from "@/components/Batch/BatchTransactionContainer";
-import React from "react";
+import React, { useState } from "react";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { toast } from "react-hot-toast";
 import { AccountId, Felt, Note, OutputNote } from "@demox-labs/miden-sdk";
-import { createP2IDRNote } from "@/services/utils/miden/note";
-import { submitTransaction } from "@/services/utils/miden/transactions";
+import { createP2IDENote } from "@/services/utils/miden/note";
 import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { useSendBatchTransaction } from "@/hooks/server/useSendTransaction";
+import { submitTransaction } from "@/services/utils/miden/transactions";
 
 export default function BatchPage() {
+  // **************** Local State *******************
+  const [isLoading, setIsLoading] = useState(false);
+
+  // **************** Custom Hooks *******************
   const { accountId: walletAddress } = useAccountContext();
   const { getBatchTransactions, clearBatch } = useBatchTransactions();
   const { mutate: sendBatchTransaction, isPending: isSendingBatchTransaction } = useSendBatchTransaction();
@@ -23,8 +27,8 @@ export default function BatchPage() {
     }
 
     try {
+      setIsLoading(true);
       toast.loading("Processing batch transactions...");
-
       // Get all batch transactions for this wallet
       const transactions = getBatchTransactions(walletAddress);
 
@@ -35,28 +39,31 @@ export default function BatchPage() {
       }
 
       const batch: OutputNote[] = [];
+      const noteIds: string[] = [];
       const serialNumbers: string[][] = [];
       const recallableHeights: number[] = [];
 
       // Process each transaction
       for (const transaction of transactions) {
+        console.log(transaction);
         const amount = parseFloat(transaction.amount);
         const recallHeight = transaction.recallableHeight;
         // Create note for transaction
-        const [note, noteSerialNumbers, calculatedRecallHeight] = await createP2IDRNote(
+        const [note, noteSerialNumbers, calculatedRecallHeight] = await createP2IDENote(
           AccountId.fromBech32(walletAddress),
           AccountId.fromBech32(transaction.recipient),
           AccountId.fromBech32(transaction.tokenAddress),
-          amount * 10 ** transaction.tokenMetadata.decimals,
+          Math.round(amount * Math.pow(10, transaction.tokenMetadata.decimals)),
           transaction.isPrivate ? MidenNoteType.Private : MidenNoteType.Public,
           recallHeight,
         );
         batch.push(note);
+        noteIds.push(note.id().toString());
         serialNumbers.push(noteSerialNumbers);
         recallableHeights.push(calculatedRecallHeight);
       }
       // Submit transaction to blockchain
-      // await submitTransaction(new OutputNotesArray(batch), AccountId.fromBech32(walletAddress));
+      await submitTransaction(new OutputNotesArray(batch), AccountId.fromBech32(walletAddress));
 
       // submit transaction to server
       sendBatchTransaction(
@@ -75,7 +82,7 @@ export default function BatchPage() {
           recallableHeight: recallableHeights[index],
           serialNumber: serialNumbers[index],
           noteType: transaction.noteType,
-          noteId: batch[index].id().toString(),
+          noteId: noteIds[index],
         })),
       );
 
@@ -87,8 +94,10 @@ export default function BatchPage() {
       console.error("Failed to process batch transactions:", error);
       toast.dismiss();
       toast.error("Failed to process batch transactions");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return <BatchTransactionContainer onConfirm={handleConfirm} />;
+  return <BatchTransactionContainer isLoading={isLoading} onConfirm={handleConfirm} />;
 }

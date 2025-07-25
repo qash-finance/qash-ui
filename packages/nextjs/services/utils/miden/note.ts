@@ -18,15 +18,41 @@ import {
   TransactionRequestBuilder,
   OutputNotesArray,
   TransactionResult,
+  NoteScript,
+  NoteId,
+  NoteFilter,
+  NoteFilterTypes,
+  NoteAndArgsArray,
+  NoteAndArgs,
 } from "@demox-labs/miden-sdk";
 import { useClient } from "../../../hooks/web3/useClient";
+import { PartialConsumableNote } from "@/types/faucet";
 
-async function randomSerialNumbers(): Promise<Felt[]> {
-  const randomBytes = new Uint32Array(4);
-  crypto.getRandomValues(randomBytes);
+// **************** GET METHODS ********************
 
-  return Array.from(randomBytes).map(value => new Felt(BigInt(value)));
+export async function getConsumableNotes(accountId: string) {
+  const { getClient } = useClient();
+  console.log("getting consumable notes", accountId);
+  try {
+    const client = await getClient();
+
+    let id: AccountId;
+
+    if (accountId.startsWith("0x")) {
+      id = AccountId.fromHex(accountId);
+    } else {
+      //@ts-ignore
+      id = AccountId.fromBech32(accountId);
+    }
+
+    const notes = await client.getConsumableNotes(id);
+    return notes;
+  } catch (error) {
+    throw new Error("Failed to fetch consumable notes");
+  }
 }
+
+// **************** CREATE METHODS ********************
 
 export async function createP2IDNote(
   sender: AccountId,
@@ -51,7 +77,7 @@ export async function createP2IDNote(
   );
 }
 
-export async function createP2IDRNote(
+export async function createP2IDENote(
   sender: AccountId,
   receiver: AccountId,
   faucet: AccountId,
@@ -59,8 +85,6 @@ export async function createP2IDRNote(
   noteType: NoteType,
   recallHeight: number,
 ): Promise<[OutputNote, string[], number]> {
-  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } = await import("@demox-labs/miden-sdk");
-
   const { getClient } = useClient();
   const client = await getClient();
   const serialNumbers = await randomSerialNumbers();
@@ -68,57 +92,118 @@ export async function createP2IDRNote(
 
   // get current height
   const currentHeight = await client.getSyncHeight();
-  console.log("currentHeight", currentHeight);
   recallHeight = currentHeight + recallHeight;
-  return [
-    OutputNote.full(
-      Note.createP2IDENote(
-        sender,
-        receiver,
-        new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
-        noteType,
-        Word.newFromFelts(serialNumbers),
-        recallHeight,
-        new Felt(BigInt(0)),
-      ),
-    ),
-    serialNumbersCopy,
+
+  const note = await customCreateP2IDENote(
+    sender,
+    receiver,
+    amount,
+    faucet,
     recallHeight,
-  ];
+    0,
+    noteType,
+    0,
+    serialNumbers,
+  );
+
+  return [OutputNote.full(note), serialNumbersCopy, recallHeight];
 }
 
-export async function consumeAllNotes(accountId: AccountId, noteIds: string[]) {
+export async function consumeAllNotes(
+  accountId: AccountId,
+  notes: {
+    isPrivate: boolean;
+    noteId: string;
+    partialNote?: PartialConsumableNote;
+  }[],
+) {
   const { getClient } = useClient();
   try {
     const client = await getClient();
-    const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
-    const txResult = await client.newTransaction(accountId, consumeTxRequest);
+
+    const inputNotes: NoteAndArgs[] = [];
+
+    // loop through the notes
+    for (const noteInfo of notes) {
+      if (noteInfo.isPrivate) {
+        const note = await customCreateP2IDENote(
+          AccountId.fromBech32(noteInfo?.partialNote?.sender!),
+          AccountId.fromBech32(noteInfo?.partialNote?.recipient!),
+          Number(noteInfo?.partialNote?.assets[0].amount),
+          AccountId.fromBech32(noteInfo?.partialNote?.assets[0].faucetId!),
+          noteInfo?.partialNote?.recallableHeight!,
+          0,
+          noteInfo?.partialNote?.private ? NoteType.Private : NoteType.Public,
+          0,
+          noteInfo?.partialNote?.serialNumber.map(felt => new Felt(BigInt(felt)))!,
+        );
+        inputNotes.push(new NoteAndArgs(note));
+      } else {
+        const inputNote = await client.getInputNote(noteInfo.noteId);
+        const noteDetails = inputNote?.details();
+        const noteAsset = noteDetails?.assets()!;
+        const noteRecipient = noteDetails?.recipient()!;
+        const noteMetadata = inputNote?.metadata()!;
+        const note = new Note(noteAsset, noteMetadata, noteRecipient);
+        inputNotes.push(new NoteAndArgs(note));
+      }
+    }
+
+    const transactionRequest = new TransactionRequestBuilder()
+      .withUnauthenticatedInputNotes(new NoteAndArgsArray(inputNotes))
+      .build();
+
+    const txResult = await client.newTransaction(accountId, transactionRequest);
     await client.submitTransaction(txResult);
+
+    return txResult.executedTransaction().id().toHex();
   } catch (err) {
     throw new Error("Failed to consume notes");
   }
 }
 
-export async function getConsumableNotes(accountId: string) {
+export async function consumePrivateNote(accountId: AccountId, partialNote: PartialConsumableNote) {
   const { getClient } = useClient();
 
   try {
     const client = await getClient();
-    await client.syncState();
 
-    let id: AccountId;
+    const note = await customCreateP2IDENote(
+      AccountId.fromBech32(partialNote.sender),
+      AccountId.fromBech32(partialNote.recipient),
+      Number(partialNote.assets[0].amount),
+      AccountId.fromBech32(partialNote.assets[0].faucetId),
+      partialNote.recallableHeight,
+      0,
+      partialNote.private ? NoteType.Private : NoteType.Public,
+      0,
+      partialNote.serialNumber.map(felt => new Felt(BigInt(felt))),
+    );
 
-    if (accountId.startsWith("0x")) {
-      id = AccountId.fromHex(accountId);
-    } else {
-      //@ts-ignore
-      id = AccountId.fromBech32(accountId);
-    }
+    const transactionRequest = new TransactionRequestBuilder()
+      .withUnauthenticatedInputNotes(new NoteAndArgsArray([new NoteAndArgs(note)]))
+      .build();
 
-    const notes = await client.getConsumableNotes(id);
-    return notes;
-  } catch (error) {
-    throw new Error("Failed to fetch consumable notes");
+    const txResult = await client.newTransaction(accountId, transactionRequest);
+    await client.submitTransaction(txResult);
+
+    return txResult.executedTransaction().id().toHex();
+  } catch (err) {
+    throw new Error("Failed to consume notes");
+  }
+}
+
+export async function consumePublicNote(accountId: AccountId, noteId: string) {
+  const { getClient } = useClient();
+  try {
+    const client = await getClient();
+    const consumeTxRequest = client.newConsumeTransactionRequest([noteId]);
+    const txResult = await client.newTransaction(accountId, consumeTxRequest);
+    await client.submitTransaction(txResult);
+
+    return txResult.executedTransaction().id().toHex();
+  } catch (err) {
+    throw new Error("Failed to consume notes");
   }
 }
 
@@ -268,4 +353,44 @@ export async function createGiftNote(
   const note = new Note(noteAssets, noteMetadata, noteRecipient);
 
   return OutputNote.full(note);
+}
+
+// **************** HELPER METHODS ********************
+
+async function randomSerialNumbers(): Promise<Felt[]> {
+  const randomBytes = new Uint32Array(4);
+  crypto.getRandomValues(randomBytes);
+
+  return Array.from(randomBytes).map(value => new Felt(BigInt(value)));
+}
+
+async function customCreateP2IDENote(
+  sender: AccountId,
+  receiver: AccountId,
+  amount: number,
+  faucet: AccountId,
+  recallHeight: number,
+  timelockHeight: number,
+  noteType: NoteType,
+  aux: number,
+  serialNumber: Felt[],
+) {
+  const p2ideNoteScript = NoteScript.p2ide();
+
+  const p2ideInputs = new NoteInputs(
+    new FeltArray([
+      receiver.suffix(),
+      receiver.prefix(),
+      new Felt(BigInt(recallHeight)),
+      new Felt(BigInt(timelockHeight)),
+    ]),
+  );
+
+  const noteRecipient = new NoteRecipient(Word.newFromFelts(serialNumber), p2ideNoteScript, p2ideInputs);
+  const noteTag = NoteTag.fromAccountId(receiver);
+  const noteMetadata = new NoteMetadata(sender, noteType, noteTag, NoteExecutionHint.always(), new Felt(BigInt(aux)));
+  const noteAssets = new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]);
+
+  const note = new Note(noteAssets, noteMetadata, noteRecipient);
+  return note;
 }

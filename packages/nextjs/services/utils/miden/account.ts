@@ -64,7 +64,7 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
 
         const metadata = await getFaucetMetadata(faucet);
         assetsWithMetadata.push({
-          tokenAddress: asset.faucetId().toBech32(),
+          faucetId: asset.faucetId().toBech32(),
           amount: asset.amount().toString(),
           metadata,
         });

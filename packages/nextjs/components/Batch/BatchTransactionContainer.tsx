@@ -7,11 +7,16 @@ import { ActionButton } from "../Common/ActionButton";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 
 interface BatchTransactionContainerProps {
+  isLoading: boolean;
   onRemoveTransaction?: (id: string) => void;
   onConfirm?: () => void;
 }
 
-export function BatchTransactionContainer({ onRemoveTransaction, onConfirm }: BatchTransactionContainerProps) {
+export function BatchTransactionContainer({
+  isLoading,
+  onRemoveTransaction,
+  onConfirm,
+}: BatchTransactionContainerProps) {
   // **************** Custom Hooks *******************
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
   const { getBatchTransactions, removeTransaction } = useBatchTransactions();
@@ -80,7 +85,7 @@ export function BatchTransactionContainer({ onRemoveTransaction, onConfirm }: Ba
               buttonType="submit"
               className="w-full h-10"
               onClick={handleConnect}
-              disabled={false}
+              disabled={isLoading}
             />
           </div>
         )}

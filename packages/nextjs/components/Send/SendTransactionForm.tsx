@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
 import { AccountId } from "@demox-labs/miden-sdk";
-import { createP2IDRNote } from "@/services/utils/miden/note";
+import { createP2IDENote } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
@@ -73,8 +73,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
   const { handleConnect, isConnected } = useWalletConnect();
-  const { assets, accountId: walletAddress } = useAccountContext();
-  const { mutateAsync: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
+  const { assets, refetchAssets, accountId: walletAddress } = useAccountContext();
+  const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
   const { addTransaction } = useBatchTransactions(state => state);
 
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
@@ -167,16 +167,21 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
       // each block is 5 seconds, calculate recall height
       const recallHeight = Math.floor(recallableTime / blockTime);
+
       // create note
-      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDRNote(
+      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
         AccountId.fromBech32(walletAddress),
         AccountId.fromBech32(recipientAddress),
         AccountId.fromBech32(selectedToken.faucetId),
-        amount * 10 ** selectedToken.metadata.decimals, // convert amount with decimals
+        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
         isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
         recallHeight,
       );
+
+      const noteId = note.id().toString();
+
       // submit transaction to miden
+      const txId = await submitTransaction(new OutputNotesArray([note]), AccountId.fromBech32(walletAddress));
 
       // submit transaction to server
       const response = await sendSingleTransaction({
@@ -188,13 +193,30 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         recallableHeight: calculatedRecallHeight,
         serialNumber: serialNumbers,
         noteType: CustomNoteType.P2IDR,
-        noteId: note.id().toString(),
+        noteId: noteId,
       });
 
-      toast.dismiss();
+      // refetch assets
+      // call refetch assets 5 seconds later
+      setTimeout(() => {
+        refetchAssets();
+      }, 5000);
 
       if (response) {
-        toast.success("Transaction sent successfully");
+        toast.dismiss();
+        toast.success(
+          <div>
+            Transaction sent successfully, view transaction on{" "}
+            <a
+              href={`https://testnet.midenscan.com/tx/${txId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Miden Explorer
+            </a>
+          </div>,
+        );
         reset();
       }
     } catch (error) {
@@ -337,11 +359,9 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
         <AmountInput
           selectedToken={selectedToken}
-          availableBalance={
-            parseFloat(
-              formatNumberWithCommas(formatUnits(BigInt(selectedToken.amount), selectedToken.metadata.decimals)),
-            ) || 0
-          }
+          availableBalance={Number(
+            formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
+          )}
           register={register}
           errors={errors}
           setValue={setValue}
@@ -366,6 +386,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             buttonType="submit"
             type="neutral"
             className="w-[30%] h-10 mt-2"
+            disabled={isSending}
             onClick={() => setIsSubmittingAsBatch(true)}
           />
           <ActionButton

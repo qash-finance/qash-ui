@@ -29,14 +29,12 @@ export function SelectTokenModal({ isOpen, onClose, onTokenSelect }: ModalProp<S
 
   // **************** Effect  *******************
   useEffect(() => {
-    console.log("All assets", assets);
-
     const filteredAssets = assets.filter(asset => {
       const query = searchQuery.toLowerCase().trim();
       if (!query) return true;
 
       const symbol = asset.metadata.symbol.toLowerCase();
-      const tokenAddress = asset.tokenAddress.toLowerCase();
+      const tokenAddress = asset.faucetId.toLowerCase();
 
       return symbol.includes(query) || tokenAddress.includes(query);
     });

@@ -6,7 +6,7 @@ export const getDefaultSelectedToken = (assets: AssetWithMetadata[]): AssetWithM
   if (assets.length === 0) {
     return {
       amount: "0",
-      tokenAddress: qashTokenAddress,
+      faucetId: qashTokenAddress,
       metadata: {
         symbol: "QASH",
         decimals: 8,
@@ -21,7 +21,7 @@ export const getDefaultSelectedToken = (assets: AssetWithMetadata[]): AssetWithM
   if (nonZeroAssets.length === 0) {
     // All assets have 0 balance, default to Qash
     return {
-      tokenAddress: qashTokenAddress,
+      faucetId: qashTokenAddress,
       amount: "0",
       metadata: {
         symbol: "QASH",
@@ -38,7 +38,7 @@ export const getDefaultSelectedToken = (assets: AssetWithMetadata[]): AssetWithM
 
   return {
     amount: highestBalanceAsset.amount,
-    tokenAddress: highestBalanceAsset.tokenAddress,
+    faucetId: highestBalanceAsset.faucetId,
     metadata: highestBalanceAsset.metadata,
   };
 };

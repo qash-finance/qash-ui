@@ -3,6 +3,7 @@ import * as React from "react";
 import { StatusCard } from "./StatusCard";
 import { Table } from "../../Common/Table";
 import { ActionButton } from "../../Common/ActionButton";
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 
 const TableSection = ({
   title,
@@ -208,6 +209,10 @@ const waitingRecallData = [
 ];
 
 export const CancelDashboardContainer: React.FC = () => {
+  // **************** Server Hooks *******************
+  const { data: recallableNotes } = useRecallableNotes();
+
+  // **************** Local State *******************
   const pendingHeaders = ["Type", "Amount", "From", "Date/Time"];
   const waitingHeaders = ["Type", "Amount", "From", "Date/Time", "Recall in"];
 
