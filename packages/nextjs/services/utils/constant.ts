@@ -26,3 +26,6 @@ export const buttonStyle = {
   justifyContent: "center",
   backgroundColor: "#3b82f6",
 };
+
+// **************** CSS *******************
+export const STALE_TIME = 1000 * 60 * 5;

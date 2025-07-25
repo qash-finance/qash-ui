@@ -7,6 +7,8 @@ export interface TabData {
   label: string;
   href?: string;
   onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
 }
 
 export interface TabProps {
@@ -27,10 +29,11 @@ const Tab: React.FC<TabProps> = ({ href, tab, isActive, onClick }) => {
   const router = useRouter();
   return (
     <button
-      className={`flex relative gap-0.5 cursor-pointer justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] max-md:px-3 max-md:py-1.5 max-sm:p-2 max-sm:min-h-[30px] transition-colors duration-200 hover:bg-neutral-800 focus:outline-none ${
+      className={`flex relative gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] max-md:px-3 max-md:py-1.5 max-sm:p-2 max-sm:min-h-[30px] transition-colors duration-200 ${
         isActive ? "bg-neutral-800" : ""
-      }`}
+      } ${tab.disabled ? "cursor-not-allowed" : "cursor-pointer hover:bg-neutral-800"} ${tab.className || ""}`}
       onClick={() => {
+        if (tab.disabled) return;
         if (href) {
           router.push(href);
         } else {
@@ -40,11 +43,14 @@ const Tab: React.FC<TabProps> = ({ href, tab, isActive, onClick }) => {
       type="button"
       role="tab"
       aria-selected={isActive}
+      aria-disabled={tab.disabled}
       aria-controls={`tabpanel-${tab.id}`}
       id={`tab-${tab.id}`}
     >
-      <span className="relative text-base tracking-tight leading-5 text-white max-md:text-sm max-md:tracking-tight max-sm:text-xs max-sm:tracking-tight max-sm:leading-3">
-        <span className="text-base text-white max-sm:text-xs">{tab.label}</span>
+      <span
+        className={`relative text-base tracking-tight leading-5 max-md:text-sm max-md:tracking-tight max-sm:text-xs max-sm:tracking-tight max-sm:leading-3 ${isActive ? "text-white" : "text-neutral-400"}`}
+      >
+        <span className={`text-base max-sm:text-xs ${isActive ? "text-white" : "text-neutral-400"}`}>{tab.label}</span>
       </span>
     </button>
   );

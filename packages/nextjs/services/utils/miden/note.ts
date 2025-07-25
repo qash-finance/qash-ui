@@ -364,7 +364,7 @@ async function randomSerialNumbers(): Promise<Felt[]> {
   return Array.from(randomBytes).map(value => new Felt(BigInt(value)));
 }
 
-async function customCreateP2IDENote(
+export async function customCreateP2IDENote(
   sender: AccountId,
   receiver: AccountId,
   amount: number,

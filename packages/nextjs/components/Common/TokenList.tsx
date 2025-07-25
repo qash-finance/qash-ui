@@ -4,7 +4,7 @@ import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import * as React from "react";
 import { TokenItem } from "./TokenItem";
 import { AssetWithMetadata } from "@/types/faucet";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { generateTokenAvatar } from "@/services/utils/turnBechToHex";
 import { qashTokenAddress } from "@/services/utils/constant";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";

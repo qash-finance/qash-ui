@@ -1,7 +1,7 @@
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import React from "react";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { generateTokenAvatar } from "@/services/utils/turnBechToHex";
 import { qashTokenAddress } from "@/services/utils/constant";
 import { AssetWithMetadata } from "@/types/faucet";
 import { formatUnits } from "viem";

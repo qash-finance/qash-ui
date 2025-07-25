@@ -5,11 +5,11 @@ import React, { useState } from "react";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { toast } from "react-hot-toast";
-import { AccountId, Felt, Note, OutputNote } from "@demox-labs/miden-sdk";
+import { AccountId, OutputNote } from "@demox-labs/miden-sdk";
 import { createP2IDENote } from "@/services/utils/miden/note";
 import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { useSendBatchTransaction } from "@/hooks/server/useSendTransaction";
-import { submitTransaction } from "@/services/utils/miden/transactions";
+import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
 
 export default function BatchPage() {
   // **************** Local State *******************
@@ -18,7 +18,7 @@ export default function BatchPage() {
   // **************** Custom Hooks *******************
   const { accountId: walletAddress } = useAccountContext();
   const { getBatchTransactions, clearBatch } = useBatchTransactions();
-  const { mutate: sendBatchTransaction, isPending: isSendingBatchTransaction } = useSendBatchTransaction();
+  const { mutate: sendBatchTransaction } = useSendBatchTransaction();
 
   const handleConfirm = async () => {
     if (!walletAddress) {
@@ -63,7 +63,7 @@ export default function BatchPage() {
         recallableHeights.push(calculatedRecallHeight);
       }
       // Submit transaction to blockchain
-      await submitTransaction(new OutputNotesArray(batch), AccountId.fromBech32(walletAddress));
+      await submitTransactionWithOwnOutputNotes(new OutputNotesArray(batch), AccountId.fromBech32(walletAddress));
 
       // submit transaction to server
       sendBatchTransaction(

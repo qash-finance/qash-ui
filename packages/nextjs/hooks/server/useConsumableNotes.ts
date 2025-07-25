@@ -28,7 +28,7 @@ export function useConsumableNotes() {
             .map(async asset => {
               const metadata = await getFaucetMetadata(asset.faucetId());
               return {
-                faucetId: asset.faucetId().toString(),
+                faucetId: asset.faucetId().toBech32(),
                 amount: asset.amount().toString(),
                 metadata: metadata,
               } as AssetWithMetadata;

@@ -1,5 +1,5 @@
 import { AssetWithMetadata, FaucetMetadata } from "./faucet";
-import { CustomNoteType } from "./note";
+import { CustomNoteType, NoteStatus } from "./note";
 
 export enum NoteType {
   P2ID = "p2id",
@@ -42,11 +42,36 @@ export interface ConsumableNote {
   assets: AssetWithMetadata[];
 }
 
+export interface RecallRequestDto {
+  items: RecallItem[];
+}
+
 export interface RecallItem {
   type: "transaction" | "gift";
   id: number;
 }
 
-export interface RecallRequestDto {
-  items: RecallItem[];
+export interface RecallableDashboard {
+  nextRecallTime: Date;
+  recalledCount: number;
+  recallableItems: RecallableNote[];
+  waitingToRecallItems: RecallableNote[];
+}
+
+export interface RecallableNote {
+  id: number;
+  assets: AssetDto[];
+  createdAt: string;
+  updatedAt: string;
+  isGift: boolean;
+  noteId: string;
+  noteType: string;
+  private: boolean;
+  recallable: boolean;
+  recallableHeight: number;
+  recallableTime: string;
+  recipient: string;
+  sender: string;
+  serialNumber: string[];
+  status: NoteStatus;
 }

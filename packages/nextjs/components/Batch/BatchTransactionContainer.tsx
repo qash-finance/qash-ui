@@ -75,18 +75,12 @@ export function BatchTransactionContainer({
               buttonType="submit"
               className="w-full h-10"
               onClick={onConfirm}
-              disabled={transactions.length === 0}
+              disabled={transactions.length === 0 || isLoading}
             />
           </footer>
         ) : (
           <div className="relative w-full p-2 bg-zinc-800 rounded-b-2xl">
-            <ActionButton
-              text="Connect Wallet"
-              buttonType="submit"
-              className="w-full h-10"
-              onClick={handleConnect}
-              disabled={isLoading}
-            />
+            <ActionButton text="Connect Wallet" buttonType="submit" className="w-full h-10" onClick={handleConnect} />
           </div>
         )}
       </div>

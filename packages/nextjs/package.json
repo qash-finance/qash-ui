@@ -18,6 +18,7 @@
     "@demox-labs/miden-wallet-adapter-trident": "^0.1.2",
     "@tanstack/react-query": "^5.83.0",
     "axios": "^1.9.0",
+    "blo": "^2.0.0",
     "git": "link:github.com:demox-labs/miden-wallet-adapter.git",
     "miden-wallet-adapter-reactui": "link:@demox-labs/miden-wallet-adapter-reactui",
     "next": "15.3.1",

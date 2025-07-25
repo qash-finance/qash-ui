@@ -22,7 +22,7 @@ const AccountContext = createContext<AccountContextType | undefined>(undefined);
 export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { assets, refetchAssets, loading, error, isAccountDeployed, consumableNotes, accountId, isError } =
     useAccount();
-  console.log("ASSETS", assets);
+
   const refreshAccount = async () => {
     // This will trigger a re-fetch in useAccount due to dependency change
     // We can add more refresh logic here if needed in the future

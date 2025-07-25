@@ -7,22 +7,17 @@ import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import {
-  consumeAllNotes,
-  consumePrivateNote,
-  consumePublicNote,
-  getConsumableNotes,
-} from "@/services/utils/miden/note";
-import { AccountId, ConsumableNoteRecord } from "@demox-labs/miden-sdk";
-import { ConsumableNote } from "@/types/transaction";
+import { consumeAllNotes, consumePrivateNote, consumePublicNote } from "@/services/utils/miden/note";
+import { AccountId } from "@demox-labs/miden-sdk";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
 import { qashTokenAddress } from "@/services/utils/constant";
+import { blo } from "blo";
 
 const mockData = [
   {
@@ -106,11 +101,7 @@ const TableRow = ({
           {assets.map((asset, index) => (
             <div key={index} className="flex items-center gap-1 relative group">
               <img
-                src={
-                  qashTokenAddress === asset.faucetId
-                    ? "/q3x-icon.svg"
-                    : generateTokenAvatar(asset.faucetId, asset.metadata?.symbol)
-                }
+                src={qashTokenAddress == asset.faucetId ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
                 alt={asset.metadata?.symbol || "Token"}
                 className="w-4 h-4 flex-shrink-0 rounded-full"
               />
@@ -166,6 +157,8 @@ export const PendingRecieveContainer: React.FC = () => {
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
 
+  console.log("consumableNotesFromServer", consumableNotesFromServer);
+
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
@@ -212,12 +205,10 @@ export const PendingRecieveContainer: React.FC = () => {
       if (note.private) {
         // if private, we need to update on server
         await consumePrivateNote(AccountId.fromBech32(walletAddress), note);
-        const response = await consumeNotes([note.id]);
-        console.log(response);
       } else {
         await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
       }
-
+      await consumeNotes([note.id]);
       setClaiming(false);
       toast.dismiss();
       toast.success("Payment received successfully");
@@ -242,6 +233,8 @@ export const PendingRecieveContainer: React.FC = () => {
       toast.loading("Receiving payments...");
 
       setClaiming(true);
+
+      // consume on network level
       await consumeAllNotes(
         AccountId.fromBech32(walletAddress),
         checkedRows.map(idx => ({
@@ -250,6 +243,11 @@ export const PendingRecieveContainer: React.FC = () => {
           partialNote: consumableNotes[idx],
         })),
       );
+
+      // consume on server level
+      await consumeNotes(checkedRows.map(idx => consumableNotes[idx].id));
+
+      // get all private
       setClaiming(false);
 
       toast.dismiss();

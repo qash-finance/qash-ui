@@ -26,12 +26,11 @@ import {
   buttonStyle,
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
-import { submitTransaction } from "@/services/utils/miden/transactions";
+import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
 import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
-import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -181,7 +180,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       const noteId = note.id().toString();
 
       // submit transaction to miden
-      const txId = await submitTransaction(new OutputNotesArray([note]), AccountId.fromBech32(walletAddress));
+      const txId = await submitTransactionWithOwnOutputNotes(
+        new OutputNotesArray([note]),
+        AccountId.fromBech32(walletAddress),
+      );
 
       // submit transaction to server
       const response = await sendSingleTransaction({
