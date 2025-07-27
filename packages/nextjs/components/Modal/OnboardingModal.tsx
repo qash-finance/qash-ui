@@ -12,6 +12,7 @@ import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { mintToken } from "@/services/utils/miden/faucet";
 import { AccountId } from "@demox-labs/miden-sdk";
 import toast from "react-hot-toast";
+import { useClient } from "@/hooks/web3/useClient";
 
 // Create QASH token data
 const qashToken: AssetWithMetadata = {
@@ -26,24 +27,40 @@ const qashToken: AssetWithMetadata = {
 
 export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalProps>) {
   const { walletAddress } = useWalletAuth();
-
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleMintToken = async () => {
     if (!walletAddress) return toast.error("Please connect your wallet to mint tokens");
 
-    setLoading(true);
     try {
+      setLoading(true);
+      toast.loading("Minting...");
+
       // mint qash token to user
-      const tx = await mintToken(
+      const txId = await mintToken(
         AccountId.fromBech32(walletAddress),
         AccountId.fromBech32(QASH_TOKEN_ADDRESS),
         BigInt(1000 * 10 ** QASH_TOKEN_DECIMALS),
       );
-
+      toast.dismiss();
+      toast.success(
+        <div>
+          Mint successfully, view transaction on{" "}
+          <a
+            href={`https://testnet.midenscan.com/tx/${txId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Miden Explorer
+          </a>
+        </div>,
+      );
       setSuccess(true);
     } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to mint tokens, it might because the faucet was drained!");
       console.error(error);
     } finally {
       setLoading(false);

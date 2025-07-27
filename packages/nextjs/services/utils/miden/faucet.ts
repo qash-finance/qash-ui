@@ -19,7 +19,7 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
   }
 }
 
-export async function mintToken(accountId: AccountId, faucetId: AccountId, amount: BigInt): Promise<TransactionResult> {
+export async function mintToken(accountId: AccountId, faucetId: AccountId, amount: bigint): Promise<TransactionResult> {
   const { getClient } = useClient();
 
   try {

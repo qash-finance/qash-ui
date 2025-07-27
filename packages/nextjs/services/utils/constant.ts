@@ -1,8 +1,8 @@
 // **************** QASH TOKEN *******************
-export const QASH_TOKEN_ADDRESS = "mtst1qpwlhl3glkt0jgr92vcxcqjxlvxty26p";
+export const QASH_TOKEN_ADDRESS = "mtst1qqtyffwkp37l7gpc6pp8jm5m6vg9kzpz";
 export const QASH_TOKEN_SYMBOL = "QASH";
 export const QASH_TOKEN_DECIMALS = 8;
-export const QASH_TOKEN_MAX_SUPPLY = 1000000;
+export const QASH_TOKEN_MAX_SUPPLY = 1000000000000;
 
 // **************** MIDEN NETWORK *******************
 export const BLOCK_TIME = 5; // seconds

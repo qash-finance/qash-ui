@@ -28,7 +28,7 @@ export function TokenItem({ token, isLast }: TokenItemProps) {
     >
       <div className="flex justify-between items-start self-stretch max-sm:px-1 max-sm:py-0">
         <div className="flex gap-2 items-center">
-          <img src={token.icon} alt={token.metadata.symbol} className="w-6 h-6" />
+          <img src={token.icon} alt={token.metadata.symbol} className="w-6 h-6 rounded-full" />
           <div className="flex flex-col items-start w-[60px]">
             <h3 className="text-base font-medium leading-6 text-white">{token.metadata.symbol}</h3>
             <p className="text-sm leading-4 text-neutral-500">{formatAddress(token.faucetId || "")}</p>

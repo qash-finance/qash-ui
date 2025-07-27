@@ -43,7 +43,7 @@ export const Title = () => {
       title = "Address Book";
       break;
     default:
-      title = "Miden Q3x";
+      title = "Qash";
   }
 
   const dashboardTabs = [

@@ -156,6 +156,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         </div>
                       </div>
                     </div>
+                    <FloatingActionButton imgSrc="/q3x-icon.svg" />
                   </AccountProvider>
                 </AuthProvider>
               </AnalyticsProvider>

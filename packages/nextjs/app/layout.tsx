@@ -31,8 +31,8 @@ const barlow = Barlow({
   subsets: ["latin"],
 });
 export const metadata: Metadata = {
-  title: "Q3x",
-  description: "Q3x",
+  title: "Qash",
+  description: "Qash",
   icons: {
     icon: "/q3x-icon.svg",
   },
