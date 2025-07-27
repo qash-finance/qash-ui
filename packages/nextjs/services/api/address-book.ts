@@ -30,6 +30,10 @@ const useGetAddressBooks = () => {
     queryFn: async () => {
       return apiClient.getData<AddressBook[]>(`/address-book`);
     },
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 };
 
@@ -64,9 +68,13 @@ const useCreateAddressBook = () => {
     mutationFn: async (data: AddressBookDto) => {
       return apiClient.postData<AddressBook>("/address-book", data);
     },
-    onSuccess: (newAddressBook: AddressBook) => {
-      queryClient.setQueryData(["address-book"], (old: AddressBook[]) => [...old, newAddressBook]);
-      queryClient.invalidateQueries({ queryKey: ["address-book"] });
+    onSuccess: (newAddressBook: AddressBook): AddressBook => {
+      queryClient.setQueryData(["address-book"], (oldData: AddressBook[] | undefined) => {
+        if (!oldData) return [newAddressBook];
+        return [...oldData, newAddressBook];
+      });
+
+      return newAddressBook;
     },
   });
 };

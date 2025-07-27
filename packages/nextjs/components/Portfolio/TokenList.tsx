@@ -2,6 +2,10 @@
 
 import React, { useState } from "react";
 import { TokenItem } from "./TokenItem";
+import { useAccount } from "@/hooks/web3/useAccount";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { qashTokenAddress } from "@/services/utils/constant";
+import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 
 const tokens = [
   {
@@ -122,6 +126,11 @@ const tokens = [
 ];
 
 export function TokenList() {
+  // **************** Custom Hooks *******************
+  const { walletAddress } = useWalletConnect();
+  const { assets } = useAccount(walletAddress || "");
+
+  // **************** Local State *******************
   const [activeTab, setActiveTab] = useState<"tokens" | "nfts">("tokens");
 
   return (
@@ -155,19 +164,50 @@ export function TokenList() {
       </nav>
 
       {/* Token List */}
-      {activeTab === "tokens" && (
-        <div className="flex flex-col items-center self-stretch rounded-lg">
-          {tokens.map((token, index) => (
-            <TokenItem key={index} token={token} isLast={index === tokens.length - 1} />
-          ))}
-        </div>
-      )}
+      {(() => {
+        switch (activeTab) {
+          case "tokens":
+            return (
+              <>
+                {assets.length > 0 ? (
+                  <>
+                    <div className="flex flex-col items-center self-stretch rounded-lg">
+                      {assets.map((asset, index) => {
+                        const token = {
+                          id: asset.tokenAddress,
+                          symbol: asset.metadata.symbol,
+                          name: asset.metadata.symbol,
+                          amount: asset.amount,
+                          value: asset.amount,
+                          icon:
+                            asset.tokenAddress === qashTokenAddress
+                              ? "/q3x-icon.svg"
+                              : generateTokenAvatar(asset.tokenAddress),
+                        };
 
-      {activeTab === "nfts" && (
-        <div className="flex justify-center items-center self-stretch flex-1 text-white opacity-50">
-          <p>No NFTs to display</p>
-        </div>
-      )}
+                        return <TokenItem key={index} token={token} isLast={index === assets.length - 1} />;
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1 text-white opacity-50">
+                    <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
+                    <p>No tokens</p>
+                  </div>
+                )}
+              </>
+            );
+          case "nfts":
+            return (
+              <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1 text-white opacity-50">
+                <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
+                <p>No NFTs</p>
+              </div>
+            );
+          default:
+            return null;
+        }
+      })()}
     </section>
   );
 }

@@ -60,6 +60,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
               },
             },
           })}
+          autoComplete="off"
           className="text-white opacity-20 text-center outline-none"
           placeholder="0.00"
           type="text"

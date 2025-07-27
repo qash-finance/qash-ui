@@ -20,3 +20,13 @@ export type PartialConsumableNote = {
   recallableHeight: number;
   serialNumber: string[];
 };
+
+export const AnyToken: AssetWithMetadata = {
+  faucetId: "",
+  amount: "",
+  metadata: {
+    symbol: "Any Token",
+    decimals: 0,
+    maxSupply: 0,
+  },
+};

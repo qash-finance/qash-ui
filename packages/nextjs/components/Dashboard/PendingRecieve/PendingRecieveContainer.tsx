@@ -329,42 +329,46 @@ export const PendingRecieveContainer: React.FC = () => {
         )}
 
         {/* Unverified Section */}
-        <div className="mt-10">
-          <div>
-            <header className="flex flex-col gap-2 justify-center items-start w-full">
-              <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
-                Unverified request
-              </h2>
-              <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
-                Payments that need additional confirmation before you can receive them
-              </p>
-            </header>
-          </div>
-        </div>
-        <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
-          {true ? (
-            <Empty title="No pending receive" />
-          ) : (
-            <table className="w-full min-w-[800px]">
-              <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-              <tbody>
-                {mockData.map((row, index) => (
-                  <TableRow
-                    key={`pending-${index}`}
-                    assets={row.assets}
-                    from={row.from}
-                    dateTime={row.dateTime}
-                    action={row.action}
-                    checked={false}
-                    onCheck={() => {}}
-                    onClaim={() => {}}
-                    disabled={claiming}
-                  />
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {isConnected && (
+          <React.Fragment>
+            <div className="mt-10">
+              <div>
+                <header className="flex flex-col gap-2 justify-center items-start w-full">
+                  <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+                    Unverified request
+                  </h2>
+                  <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+                    Payments that need additional confirmation before you can receive them
+                  </p>
+                </header>
+              </div>
+            </div>
+            <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
+              {true ? (
+                <Empty title="No pending receive" />
+              ) : (
+                <table className="w-full min-w-[800px]">
+                  <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
+                  <tbody>
+                    {mockData.map((row, index) => (
+                      <TableRow
+                        key={`pending-${index}`}
+                        assets={row.assets}
+                        from={row.from}
+                        dateTime={row.dateTime}
+                        action={row.action}
+                        checked={false}
+                        onCheck={() => {}}
+                        onClaim={() => {}}
+                        disabled={claiming}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </React.Fragment>
+        )}
       </div>
 
       <div className="flex-1">

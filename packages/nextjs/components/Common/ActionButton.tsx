@@ -39,6 +39,19 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   buttonType = "button",
 }) => {
   const getButtonStyles = () => {
+    if (disabled) {
+      switch (type) {
+        case "accept":
+          return "bg-[#1E578E]/70";
+        case "deny":
+          return "bg-[#8B5A5A]/70";
+        case "neutral":
+          return "bg-[#E5E5E5]/70";
+        default:
+          return "bg-[#1E578E]/70";
+      }
+    }
+
     switch (type) {
       case "accept":
         return "bg-blue-500 hover:bg-blue-600";
@@ -71,8 +84,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     <button
       type={buttonType}
       className={`font-barlow font-medium text-white transition-colors cursor-pointer ${className} ${
-        disabled ? "bg-[#1E578E] cursor-not-allowed text-[#8E8E8E]" : getButtonStyles()
-      }`}
+        disabled ? "cursor-not-allowed text-[#8E8E8E]" : ""
+      } ${getButtonStyles()}`}
       style={{
         padding: "6px 10px 8px 10px",
         borderRadius: "10px",

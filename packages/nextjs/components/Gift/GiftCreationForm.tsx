@@ -33,7 +33,7 @@ export const GiftCreationForm: React.FC<GiftCreationFormProps> = ({
       <div className="flex relative flex-col items-center self-stretch rounded-xl flex-[1_0_0] bg-black">
         <div className="flex relative gap-20 justify-end items-center self-stretch pt-2.5 pr-2 pb-2 pl-4 bg-[#2D2D2D] rounded-t-xl">
           <h2 className="absolute top-4 left-4 text-base leading-4 text-white h-[17px] w-full">New gift</h2>
-          <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
+          {/* <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} /> */}
         </div>
         <div
           className="flex flex-col gap-2.5 justify-center items-center self-stretch px-0 py-10 flex-[1_0_0] rounded-b-xl bg-[#292929]"

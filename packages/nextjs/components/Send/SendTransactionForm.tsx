@@ -26,6 +26,7 @@ import {
   buttonStyle,
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
+import { useGetAddressBooks } from "@/services/api/address-book";
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
 import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType } from "@/types/note";
@@ -50,6 +51,7 @@ interface SendTransactionFormValues {
 }
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
+  const { data: addressBooks } = useGetAddressBooks();
   const searchParams = useSearchParams();
   const recipientParam = searchParams?.get("recipient") || "";
   const recipientNameParam = searchParams?.get("name") || "";
@@ -58,11 +60,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     handleSubmit,
     formState: { errors },
     setValue,
+    getValues,
     watch,
     reset,
   } = useForm<SendTransactionFormValues>({
     defaultValues: {
-      amount: 0,
+      amount: undefined,
       recipientAddress: recipientParam,
       recallableTime: 1 * 60 * 60, // 1 hour in seconds
       isPrivateTransaction: false,
@@ -90,15 +93,58 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   });
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [showTemporaryRecipient, setShowTemporaryRecipient] = useState(false);
   const [recipientName, setRecipientName] = useState(recipientNameParam);
   const [isSubmittingAsBatch, setIsSubmittingAsBatch] = useState(false);
 
+  // ********************************************
   // **************** Effects *******************
+  // ********************************************
+
   useEffect(() => {
     const defaultToken = getDefaultSelectedToken(assets);
     setSelectedToken(defaultToken);
     setSelectedTokenAddress(defaultToken.faucetId);
   }, [assets]);
+
+  // Auto-clear recipient name when address is empty
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === "recipientAddress") {
+        if (value.recipientAddress === "") {
+          setRecipientName("");
+          return;
+        }
+
+        if (addressBooks) {
+          const addressBook = addressBooks.find(book => book.address === value.recipientAddress);
+          if (addressBook) {
+            setRecipientName(addressBook.name);
+          } else {
+            setRecipientName("");
+            // Debounce validation for non-address book addresses
+            const timeoutId = setTimeout(() => {
+              if (value.recipientAddress) {
+                try {
+                  AccountId.fromBech32(value.recipientAddress);
+                  setShowTemporaryRecipient(true);
+                } catch (error) {
+                  setShowTemporaryRecipient(false);
+                }
+              }
+            }, 1000);
+
+            return () => clearTimeout(timeoutId);
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, addressBooks]);
+
+  // ********************************************
+  // **************** Handlers ******************
+  // ********************************************
 
   const handleTokenSelect = (token: AssetWithMetadata) => {
     setSelectedToken(token);
@@ -370,14 +416,43 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         />
       </section>
 
-      <RecipientInput
-        onChooseRecipient={handleChooseRecipient}
-        register={register}
-        errors={errors}
-        setValue={setValue}
-        watch={watch}
-        recipientName={recipientName}
-      />
+      {showTemporaryRecipient ? (
+        <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
+          <div className="flex flex-wrap gap-2.5 items-center">
+            <img
+              src="/default-avatar-icon.png"
+              alt="Recipient avatar"
+              className="object-contain shrink-0 aspect-square w-[40px]"
+            />
+            <div className="flex flex-col flex-1 shrink justify-center basis-5 min-w-60">
+              <div className="flex gap-2 items-center self-start whitespace-nowrap">
+                <label className="text-base leading-none text-center text-white">To</label>
+                <span className="text-base tracking-tight leading-none text-white">
+                  {getValues("recipientAddress")}
+                </span>
+              </div>
+            </div>
+            <ActionButton
+              text="Remove"
+              type="deny"
+              onClick={() => {
+                setShowTemporaryRecipient(false);
+                setValue("recipientAddress", "");
+                setRecipientName("");
+              }}
+            />
+          </div>
+        </section>
+      ) : (
+        <RecipientInput
+          onChooseRecipient={handleChooseRecipient}
+          register={register}
+          errors={errors}
+          setValue={setValue}
+          watch={watch}
+          recipientName={recipientName}
+        />
+      )}
 
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
 

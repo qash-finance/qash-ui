@@ -1,17 +1,16 @@
 "use client";
-import { useAccount } from "@/hooks/web3/useAccount";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import * as React from "react";
+import React from "react";
 import { TokenItem } from "./TokenItem";
-import { AssetWithMetadata } from "@/types/faucet";
-import { generateTokenAvatar } from "@/services/utils/turnBechToHex";
+import { AnyToken, AssetWithMetadata } from "@/types/faucet";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { qashTokenAddress } from "@/services/utils/constant";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
+import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 
 interface TokenListProps {
   assets: AssetWithMetadata[];
-  onTokenSelect?: (token: AssetWithMetadata) => void;
+  onTokenSelect?: (token: AssetWithMetadata | null) => void;
   searchQuery?: string;
 }
 
@@ -42,12 +41,8 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
               }
               address={asset.faucetId}
               name={asset.metadata.symbol}
-              usdValue={formatNumberWithCommas(
-                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
-              )} // 1:1 ratio with token amount
-              tokenAmount={formatNumberWithCommas(
-                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
-              )}
+              usdValue={formatNumberWithCommas(asset.amount)} // 1:1 ratio with token amount
+              tokenAmount={formatNumberWithCommas(asset.amount)}
               onClick={() => onTokenSelect?.(asset)}
             />
           ))

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ActionButton } from "../Common/ActionButton";
 import { SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
@@ -7,6 +7,8 @@ import { ModalHeader } from "../Common/ModalHeader";
 import BaseModal from "./BaseModal";
 import { useGetAddressBooks } from "@/services/api/address-book";
 import { AddressBook } from "@/types/address-book";
+import { Empty } from "../Common/Empty";
+import { useForm } from "react-hook-form";
 import { formatAddress } from "@/services/utils/miden/address";
 
 interface AddressItemProps {
@@ -60,14 +62,16 @@ function AddressItem({ name, address, isSelected = false, onToggle }: AddressIte
 }
 
 export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<SelectRecipientModalProps>) {
+  const { register, handleSubmit, watch } = useForm();
   const { data: addressBooks } = useGetAddressBooks();
   const [activeTab, setActiveTab] = useState<string>("");
-  const [addressInput, setAddressInput] = useState("");
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [selectedName, setSelectedName] = useState<string>("");
+  const [filteredAddressBooks, setFilteredAddressBooks] = useState<AddressBook[]>([]);
+  const search = watch("search");
 
   // Group address books by category
-  const groupedAddressBooks = React.useMemo(() => {
+  const groupedAddressBooks = useMemo(() => {
     if (!addressBooks) return {};
     return addressBooks.reduce((groups: Record<string, AddressBook[]>, ab: AddressBook) => {
       const category = ab.category;
@@ -77,13 +81,50 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
     }, {});
   }, [addressBooks]);
 
-  // Tabs = categories
-  const categories = React.useMemo(() => Object.keys(groupedAddressBooks), [groupedAddressBooks]);
+  // Filter address books by search term
+  const filteredGroupedAddressBooks = useMemo(() => {
+    if (!search || !groupedAddressBooks) return groupedAddressBooks;
+
+    const filtered: Record<string, AddressBook[]> = {};
+    Object.keys(groupedAddressBooks).forEach(category => {
+      const filteredInCategory = groupedAddressBooks[category].filter(ab =>
+        ab.name.toLowerCase().includes(search.toLowerCase()),
+      );
+      if (filteredInCategory.length > 0) {
+        filtered[category] = filteredInCategory;
+      }
+    });
+    return filtered;
+  }, [groupedAddressBooks, search]);
+
+  // Tabs = categories (use filtered results when searching)
+  const categories = useMemo(() => Object.keys(filteredGroupedAddressBooks), [filteredGroupedAddressBooks]);
+
+  //*******************************************************
+  //******************* Effects ***************************
+  //*******************************************************
 
   // Set default active tab
-  React.useEffect(() => {
+  useEffect(() => {
     if (categories.length > 0 && !activeTab) setActiveTab(categories[0]);
   }, [categories, activeTab]);
+
+  // Handle search - reset active tab when search changes
+  useEffect(() => {
+    if (search && categories.length > 0) {
+      // If current active tab doesn't exist in filtered results, switch to first available
+      if (!categories.includes(activeTab)) {
+        setActiveTab(categories[0]);
+      }
+    } else if (!search && categories.length > 0 && !activeTab) {
+      // Reset to first category when search is cleared
+      setActiveTab(categories[0]);
+    }
+  }, [search, categories, activeTab]);
+
+  //*******************************************************
+  //******************* Handlers ***************************
+  //*******************************************************
 
   // Handle select toggle (single select)
   const handleToggleAddress = (address: string, name: string) => {
@@ -93,14 +134,6 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
     } else {
       setSelectedAddress(address);
       setSelectedName(name);
-    }
-  };
-
-  // Handle manual address add/select
-  const handleAddManualAddress = () => {
-    if (addressInput) {
-      setSelectedAddress(addressInput);
-      setSelectedName("");
     }
   };
 
@@ -119,24 +152,22 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
       <div className="flex flex-col items-center rounded-b-2xl border border-solid bg-[#1E1E1E] border-zinc-800 h-[490px] w-[500px] max-md:h-auto max-md:max-w-[500px] max-md:min-h-[490px] max-md:w-[90%] max-sm:m-2.5 max-sm:h-auto max-sm:min-h-[400px] max-sm:w-[95%]">
         {/* Main */}
         <main className="flex flex-col gap-3 items-start self-stretch p-1.5 flex-[1_0_0]">
-          {/* Address Input */}
+          {/* Search Input */}
           <section className="flex flex-col gap-1.5 items-start self-stretch px-1 py-0 rounded-xl bg-zinc-800">
             <div className="flex relative gap-2.5 items-center self-stretch px-3.5 py-3.5 rounded-lg backdrop-blur-[2px] max-sm:p-3">
               <input
                 type="text"
-                placeholder="Enter address"
-                value={addressInput}
-                onChange={e => setAddressInput(e.target.value)}
+                placeholder="Search"
                 className="text-base tracking-tight leading-5 flex-[1_0_0] text-neutral-600 max-md:text-base bg-transparent border-none outline-none placeholder-neutral-600"
+                {...register("search")}
               />
-              <ActionButton text="Add" onClick={handleAddManualAddress} />
             </div>
           </section>
 
           {/* Address List */}
           <section className="flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0]">
             <h2 className="text-base tracking-tighter leading-5 text-white">
-              Your address book ({groupedAddressBooks[activeTab]?.length || 0})
+              Your address book ({filteredGroupedAddressBooks[activeTab]?.length || 0})
             </h2>
 
             {/* Filter Tabs */}
@@ -159,19 +190,27 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
               ))}
             </nav>
 
-            <div className="flex flex-col gap-1.5 items-start self-stretch">
-              <div className="flex flex-col gap-1.5 items-start self-stretch p-1 rounded-xl bg-[#313131]">
-                {groupedAddressBooks[activeTab]?.map((ab, idx) => (
-                  <AddressItem
-                    key={ab.address + ab.name}
-                    name={ab.name}
-                    address={ab.address}
-                    isSelected={selectedAddress === ab.address}
-                    onToggle={() => handleToggleAddress(ab.address, ab.name)}
-                  />
-                ))}
+            {filteredGroupedAddressBooks[activeTab]?.length > 0 ? (
+              <div className="flex flex-col gap-1.5 items-start self-stretch">
+                <div className="flex flex-col gap-1.5 items-start self-stretch p-1 rounded-xl bg-[#313131]">
+                  {filteredGroupedAddressBooks[activeTab]?.map((ab, idx) => (
+                    <AddressItem
+                      key={ab.address + ab.name}
+                      name={ab.name}
+                      address={ab.address}
+                      isSelected={selectedAddress === ab.address}
+                      onToggle={() => handleToggleAddress(ab.address, ab.name)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <Empty
+                icon="/no-request-icon.svg"
+                title={search ? "No matching addresses" : "No addresses"}
+                className="h-full"
+              />
+            )}
           </section>
 
           {/* Footer */}

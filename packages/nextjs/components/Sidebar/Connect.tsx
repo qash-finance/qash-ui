@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import Account from "./Account";
 import { useWalletState } from "@/services/store";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { MODAL_IDS } from "@/types/modal";
+import { useModal } from "@/contexts/ModalManagerProvider";
 
 const buttonStyle = {
   width: "100%",
@@ -94,6 +96,7 @@ export const Connect = () => {
   // **************** Global State *******************
   const { isConnected, setIsConnected, setFirstTimeConnected, firstTimeConnected } = useWalletState(state => state);
   const { handleConnect, walletAddress } = useWalletConnect();
+  const { openModal } = useModal();
 
   // **************** Custom Hooks *******************
   const { connectWallet, isAuthenticated } = useWalletAuth();
@@ -167,7 +170,25 @@ export const Connect = () => {
           </div>
           <div className="mt-1.5 w-full p-2">
             <SafeWalletButton
-              onClick={handleConnect}
+              onClick={async () => {
+                await handleConnect().then(() => {
+                  const deployedAccounts = localStorage.getItem(STORAGE_KEY);
+                  if (deployedAccounts) {
+                    try {
+                      const accounts = JSON.parse(deployedAccounts);
+                      const account = Object.values(accounts)[0] as any;
+                      const hasClaimQASH = account.hasClaimQASH;
+
+                      // Only open modal if user hasn't claimed QASH
+                      if (!hasClaimQASH) {
+                        openModal(MODAL_IDS.ONBOARDING);
+                      }
+                    } catch (error) {
+                      console.error("Error parsing deployed accounts:", error);
+                    }
+                  }
+                });
+              }}
               connected={isConnected}
               style={{
                 ...buttonStyle,

@@ -22,19 +22,23 @@ export function TokenItem({ icon, name, address, usdValue, tokenAmount, onClick 
         <h3 className="self-stretch text-sm font-medium tracking-tight leading-4 text-white max-md:text-sm max-sm:text-sm">
           {name}
         </h3>
-        <p className="self-stretch text-xs tracking-tight leading-4 text-neutral-400 max-sm:text-xs">
-          {formatAddress(address)}
-        </p>
+        {address && (
+          <p className="self-stretch text-xs tracking-tight leading-4 text-neutral-400 max-sm:text-xs">
+            {formatAddress(address)}
+          </p>
+        )}
       </div>
-      <div className="flex flex-col gap-1.5 justify-center items-start flex-[1_0_0] max-sm:gap-1">
-        <div className="self-stretch text-sm font-medium tracking-tight leading-4 text-right max-md:text-sm max-sm:text-xs">
-          <span className="text-zinc-500 mr-1">US$</span>
-          <span className="text-white">{usdValue}</span>
+      {address && (
+        <div className="flex flex-col gap-1.5 justify-center items-start flex-[1_0_0] max-sm:gap-1">
+          <div className="self-stretch text-sm font-medium tracking-tight leading-4 text-right max-md:text-sm max-sm:text-xs">
+            <span className="text-zinc-500 mr-1">US$</span>
+            <span className="text-white">{usdValue}</span>
+          </div>
+          <p className="self-stretch text-xs tracking-tight leading-4 text-right text-neutral-400 max-md:text-xs max-sm:text-xs">
+            {tokenAmount}
+          </p>
         </div>
-        <p className="self-stretch text-xs tracking-tight leading-4 text-right text-neutral-400 max-md:text-xs max-sm:text-xs">
-          {tokenAmount}
-        </p>
-      </div>
+      )}
     </div>
   );
 }

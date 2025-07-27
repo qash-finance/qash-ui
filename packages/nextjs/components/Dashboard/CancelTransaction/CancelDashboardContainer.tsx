@@ -233,6 +233,19 @@ export const CancelDashboardContainer: React.FC = () => {
     </div>
   );
 
+  // Checkbox handlers for pending section
+  const handlePendingCheckAll = () => {
+    if (pendingCheckedRows.length === pendingRecallData.length) {
+      setPendingCheckedRows([]);
+    } else {
+      setPendingCheckedRows(pendingRecallData.map((_, idx) => idx));
+    }
+  };
+
+  const handlePendingCheckRow = (index: number) => {
+    setPendingCheckedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
+  };
+
   return (
     <section className="rounded-2xl bg-neutral-900 w-full h-full px-[16px] py-[20px]">
       {recallableNotesLoading ? (

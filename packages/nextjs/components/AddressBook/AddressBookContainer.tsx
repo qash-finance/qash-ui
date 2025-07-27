@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
 import { AddressCard } from "./AddressCard";
 import { CreateAddressCard } from "./CreateAddressCard";
 import { useCreateAddressBook, useGetAddressBooks } from "@/services/api/address-book";
@@ -38,14 +39,19 @@ const NewFolder = ({
   reveal,
   toggleNewFolder,
   handleCreateAddressBook,
+  register,
+  watch,
 }: {
   reveal: boolean;
   toggleNewFolder: () => void;
   handleCreateAddressBook: (data: { name: string; address: string; category: string }) => void;
+  register: any;
+  watch: any;
 }) => {
-  const [category, setCategory] = useState("");
+  const category = watch("category");
+
   return (
-    <div className="relative w-[150px] h-full">
+    <div className="relative w-[150px] h-full z-10">
       <div className="absolute z-20 left-1/2 bottom-10 translate-x-[-50%] cursor-pointer" onClick={toggleNewFolder}>
         <img
           src="/address-book/folder.svg"
@@ -59,8 +65,13 @@ const NewFolder = ({
           style={{ overflowWrap: "break-word", wordBreak: "break-word" }}
           rows={2}
           maxLength={20}
-          value={category}
-          onChange={e => setCategory(e.target.value)}
+          {...register("category", {
+            required: "Category is required",
+            maxLength: {
+              value: 20,
+              message: "Category must be 20 characters or less",
+            },
+          })}
         />
       </div>
 
@@ -78,8 +89,9 @@ const NewFolder = ({
           left: "55%",
           transform: reveal ? "translate(-50%, -500%)" : "translate(-50%, -200%)",
           opacity: reveal ? 1 : 0,
-          zIndex: 100,
+          zIndex: 50,
           transitionDuration: `${ANIMATION_DURATION}ms`,
+          pointerEvents: reveal ? "auto" : "none",
         }}
       >
         <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category })} />
@@ -88,8 +100,10 @@ const NewFolder = ({
       <img
         src="/address-book/funnel.svg"
         alt="funnel"
-        className={`absolute z-10 left-1/2 bottom-20 translate-x-[-46%] transition-all`}
+        className={`absolute left-1/2 bottom-20 translate-x-[-46%] transition-all`}
         style={{
+          zIndex: 10,
+          pointerEvents: "none",
           transitionDuration: `${ANIMATION_DURATION}ms`,
           opacity: reveal ? 1 : 0,
           width: "auto",
@@ -122,8 +136,10 @@ const Folder = ({ reveal, onClick, category }: { reveal: boolean; onClick: () =>
       <img
         src="/address-book/funnel.svg"
         alt="funnel"
-        className={`absolute z-10 left-1/2 bottom-20 translate-x-[-46%] transition-all`}
+        className={`absolute left-1/2 bottom-20 translate-x-[-46%] transition-all`}
         style={{
+          zIndex: 10,
+          pointerEvents: "none",
           transitionDuration: `${ANIMATION_DURATION}ms`,
           opacity: reveal ? 1 : 0,
           width: "auto",
@@ -141,7 +157,17 @@ export function AddressBookContainer() {
   const [folderStates, setFolderStates] = useState<boolean[]>([]);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const isAnyFolderOpen = folderStates.some(state => state) || newFolderOpen;
-  console.log("🚀 ~ AddressBookContainer ~ isAnyFolderOpen:", isAnyFolderOpen);
+
+  const {
+    register,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useForm<{ category: string }>({
+    defaultValues: {
+      category: "",
+    },
+  });
   // Group address books by category
   const groupedAddressBooks = useMemo(() => {
     if (!addressBooks) return {};
@@ -167,17 +193,19 @@ export function AddressBookContainer() {
       }));
   }, [groupedAddressBooks]);
 
-  // Initialize folder states
+  // Initialize folderStates with correct length when folders change
   useEffect(() => {
-    setFolderStates(new Array(folders.length).fill(false));
-  }, [folders.length]);
+    if (folders.length !== folderStates.length) {
+      setFolderStates(new Array(folders.length).fill(false));
+    }
+  }, [folders.length, folderStates.length]);
 
   const toggleFolder = (folderIndex: number) => {
     const isCurrentlyOpen = folderStates[folderIndex];
 
     if (isCurrentlyOpen) {
       // If clicking the same folder, just close it
-      setFolderStates(prev => prev.map((state, index) => (index === folderIndex ? false : false)));
+      setFolderStates(prev => prev.map((state, index) => (index === folderIndex ? false : state)));
     } else {
       // If opening a different folder, switch directly without intermediate state
       setFolderStates(prev => prev.map((state, index) => (index === folderIndex ? true : false)));
@@ -192,7 +220,15 @@ export function AddressBookContainer() {
   };
 
   const handleCreateAddressBook = async (data: AddressBookDto) => {
-    const { category, name } = data;
+    const name = data.name.trim();
+    const category = data.category.trim();
+    const address = data.address.trim();
+    const token = data.token?.trim();
+
+    if (category === "") {
+      toast.error("Category is required");
+      return;
+    }
 
     // Prevent duplicate name in the same category
     const nameExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.name === name);
@@ -201,14 +237,64 @@ export function AddressBookContainer() {
       return;
     }
 
-    createAddressBook(data, {
-      onSuccess: () => {
-        toast.success("Address book created successfully");
+    // Prevent duplicate address in the same category
+    const addressExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.address === address);
+    if (addressExistsInCategory) {
+      toast.error("Address already exists in this category");
+      return;
+    }
+
+    createAddressBook(
+      { name, category, address, token },
+      {
+        onSuccess: data => {
+          toast.success("Address book created successfully");
+
+          // Reset the form
+          setValue("category", "");
+
+          // Auto open the folder for the new address book
+          // Check if this is a new category by looking at current folders
+          const existingFolderIndex = folders.findIndex(folder => folder.category === category);
+          console.log("🚀 ~ handleCreateAddressBook ~ existingFolderIndex:", existingFolderIndex);
+
+          if (existingFolderIndex !== -1) {
+            // Existing category - open that folder
+            setFolderStates(prev => prev.map((state, index) => (index === existingFolderIndex ? true : false)));
+          } else {
+            // New category - the folders array will be updated by the memo when addressBooks changes
+            // We need to wait for the next render cycle to find the new folder index
+            setTimeout(() => {
+              const updatedFolders = Object.keys(
+                addressBooks
+                  ? [...addressBooks, data].reduce((groups: Record<string, any[]>, addressBook: any) => {
+                      const cat = addressBook.category;
+                      if (!groups[cat]) {
+                        groups[cat] = [];
+                      }
+                      groups[cat].push(addressBook);
+                      return groups;
+                    }, {})
+                  : {},
+              ).sort();
+              const newFolderIndex = updatedFolders.findIndex(folder => folder === category);
+              if (newFolderIndex !== -1) {
+                setFolderStates(prev => {
+                  const newStates = new Array(updatedFolders.length).fill(false);
+                  newStates[newFolderIndex] = true;
+                  return newStates;
+                });
+              }
+            }, 0);
+          }
+          setNewFolderOpen(false);
+        },
+        onError: (error: any) => {
+          console.log(error);
+          toast.error("Failed to create address book");
+        },
       },
-      onError: () => {
-        toast.error("Failed to create address book");
-      },
-    });
+    );
   };
 
   return (
@@ -217,18 +303,24 @@ export function AddressBookContainer() {
       {folders.map((folder, folderIndex) => (
         <div
           key={folder.id}
-          className="absolute left-0 w-full flex flex-wrap gap-4 justify-center items-center p-2 z-100 transition-all"
+          className="absolute left-0 w-full flex flex-wrap gap-4 justify-center items-center p-2 z-20 transition-all"
           style={{
+            pointerEvents: folderStates[folderIndex] ? "auto" : "none",
             transitionDuration: `${ANIMATION_DURATION}ms`,
             top: "150px",
             opacity: folderStates[folderIndex] ? 1 : 0,
-            transform: folderStates[folderIndex] ? "translateY(0)" : "translateY(-100%)",
+            transform: folderStates[folderIndex] ? "translateY(0)" : "translateY(100%)",
+            visibility: folderStates[folderIndex] ? "visible" : "hidden",
           }}
         >
-          {folder.addressBooks.map((addressBook: any, index: number) => (
-            <AddressCard key={addressBook.id || index} addressBook={addressBook} />
-          ))}
-          <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category: folder.category })} />
+          {folderStates[folderIndex] && (
+            <>
+              {folder.addressBooks.map((addressBook: any, index: number) => (
+                <AddressCard key={addressBook.id || index} addressBook={addressBook} />
+              ))}
+              <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category: folder.category })} />
+            </>
+          )}
         </div>
       ))}
 
@@ -246,6 +338,8 @@ export function AddressBookContainer() {
             reveal={newFolderOpen}
             toggleNewFolder={toggleNewFolder}
             handleCreateAddressBook={data => handleCreateAddressBook(data)}
+            register={register}
+            watch={watch}
           />
         </div>
       </div>
