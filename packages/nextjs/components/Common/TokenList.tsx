@@ -1,9 +1,12 @@
 "use client";
 import React from "react";
 import { TokenItem } from "./TokenItem";
-import { AnyToken, AssetWithMetadata } from "@/types/faucet";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { AssetWithMetadata } from "@/types/faucet";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { blo } from "blo";
+import { formatUnits } from "viem";
 
 interface TokenListProps {
   assets: AssetWithMetadata[];
@@ -12,13 +15,6 @@ interface TokenListProps {
 }
 
 export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps) {
-  // Format number with commas for better readability
-  const formatNumber = (num: string) => {
-    return parseFloat(num).toLocaleString("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6,
-    });
-  };
   return (
     <section className="flex flex-col gap-2.5 items-start self-stretch">
       <h2 className="self-stretch text-base tracking-tighter leading-5 text-white max-sm:px-1 max-sm:py-0 max-sm:text-sm">
@@ -35,34 +31,21 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
             )}
           </div>
         ) : (
-          <>
+          assets.map((asset, index) => (
             <TokenItem
-              key="any-token"
-              icon="/token/any-token.svg"
-              address=""
-              name={AnyToken.metadata.symbol}
-              usdValue="" // 1:1 ratio with token amount
-              tokenAmount=""
-              onClick={() => {
-                onTokenSelect?.(null);
-              }}
+              key={asset.faucetId}
+              icon={asset.faucetId === QASH_TOKEN_ADDRESS ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
+              address={asset.faucetId}
+              name={asset.metadata.symbol}
+              usdValue={formatNumberWithCommas(
+                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
+              )} // 1:1 ratio with token amount
+              tokenAmount={formatNumberWithCommas(
+                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
+              )}
+              onClick={() => onTokenSelect?.(asset)}
             />
-            {assets.map((asset, index) => (
-              <TokenItem
-                key={asset.tokenAddress}
-                icon={
-                  asset.tokenAddress === qashTokenAddress
-                    ? "/q3x-icon.svg"
-                    : generateTokenAvatar(asset.tokenAddress, asset.metadata.symbol)
-                }
-                address={asset.tokenAddress}
-                name={asset.metadata.symbol}
-                usdValue={formatNumber(asset.amount)} // 1:1 ratio with token amount
-                tokenAmount={formatNumber(asset.amount)}
-                onClick={() => onTokenSelect?.(asset)}
-              />
-            ))}
-          </>
+          ))
         )}
       </div>
     </section>

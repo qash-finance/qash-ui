@@ -4,7 +4,6 @@ import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import { useRouter, usePathname } from "next/navigation";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { STORAGE_KEY } from "@/contexts/AccountProvider";
 import { useWalletState } from "@/services/store";
 import { FloatingActionButton } from "../Common/FloatingActionButton";
 
@@ -111,21 +110,21 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
     if (!walletAddress) return;
 
     // Check if user has deployed accounts and hasn't claimed QASH
-    const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-    if (deployedAccounts) {
-      try {
-        const accounts = JSON.parse(deployedAccounts);
-        const account = Object.values(accounts)[0] as any;
-        const hasClaimQASH = account.hasClaimQASH;
+    // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
+    // if (deployedAccounts) {
+    //   try {
+    //     const accounts = JSON.parse(deployedAccounts);
+    //     const account = Object.values(accounts)[0] as any;
+    //     const hasClaimQASH = account.hasClaimQASH;
 
-        //Only open toast if user hasn't claimed QASH
-        if (!hasClaimQASH) {
-          setRenderFab(true);
-        }
-      } catch (error) {
-        console.error("Error parsing deployed accounts:", error);
-      }
-    }
+    //     //Only open toast if user hasn't claimed QASH
+    //     if (!hasClaimQASH) {
+    //       setRenderFab(true);
+    //     }
+    //   } catch (error) {
+    //     console.error("Error parsing deployed accounts:", error);
+    //   }
+    // }
   }, [walletAddress]);
 
   // **************** Handlers ****************

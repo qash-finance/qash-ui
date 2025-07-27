@@ -1,6 +1,6 @@
 "use client";
 import { Account, AccountId, FungibleAsset } from "@demox-labs/miden-sdk";
-import { useClient } from "../../hooks/web3/useClient";
+import { useClient } from "../../../hooks/web3/useClient";
 import { getFaucetMetadata } from "./faucet";
 import { AssetWithMetadata, FaucetMetadata } from "@/types/faucet";
 
@@ -53,7 +53,6 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
     let account = await importAndGetAccount(accountId);
 
     const accountAssets: FungibleAsset[] = account.vault().fungibleAssets();
-    console.log("Found assets:", accountAssets.length);
 
     // Process assets sequentially to avoid Rust memory aliasing issues
     const assetsWithMetadata = [];
@@ -62,23 +61,10 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
       try {
         // get token metadata
         const faucet = asset.faucetId();
-        console.log(`Processing asset ${index + 1}/${accountAssets.length}:`, faucet.toString());
 
         const metadata = await getFaucetMetadata(faucet);
-        console.log(
-          "DID YOU GUYS USE THIS?",
-          {
-            tokenAddress: asset.faucetId().toBech32(),
-            amount: asset.amount().toString(),
-            metadata,
-          },
-          accountId.toString(),
-          faucet.toString(),
-          metadata,
-        );
-
         assetsWithMetadata.push({
-          tokenAddress: asset.faucetId().toString(),
+          faucetId: asset.faucetId().toBech32(),
           amount: asset.amount().toString(),
           metadata,
         });
@@ -88,8 +74,6 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
         console.log(`Skipping asset ${index + 1} due to error`);
       }
     }
-
-    console.log("assetsWithMetadata", assetsWithMetadata);
 
     return assetsWithMetadata;
   } catch (err) {
@@ -105,7 +89,10 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
     const client = await getClient();
 
     let accountContract = await client.getAccount(accountId);
+
     if (!accountContract) {
+      console.log("I THINK WE FAILED HERE", accountContract);
+
       try {
         await client.importAccountById(accountId);
         await client.syncState();

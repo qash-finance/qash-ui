@@ -27,7 +27,10 @@ const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-end z-[100] pointer-events-auto">
+    <div
+      data-tour="portfolio-section"
+      className="portfolio fixed inset-0 flex items-center justify-end z-[100] pointer-events-auto"
+    >
       {/* Overlay */}
       <div
         className={`absolute inset-0 transition-all duration-300 ease-out

@@ -1,18 +1,17 @@
 "use client";
 import React, { useState } from "react";
-import { CreateCustomQRModalProps, MODAL_IDS, SelectTokenModalProps } from "@/types/modal";
+import { CreateCustomQRModalProps } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
-import { ModalHeader } from "../Common/ModalHeader";
-import { AmountInput } from "../Send/AmountInput";
-import { RecipientInput } from "../Send/RecipientInput";
 import { ActionButton } from "../Common/ActionButton";
 import BaseModal from "./BaseModal";
 import { useForm } from "react-hook-form";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { AnyToken, AssetWithMetadata } from "@/types/faucet";
-import { getTokenAvatar } from "@/services/utils/tokenAvatar";
 import { generateQRCode, saveQRToLocalStorage, generateQRName, generateQRData } from "@/services/utils/qrCode";
 import toast from "react-hot-toast";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { blo } from "blo";
 
 export function CreateCustomQRModal({
   isOpen,
@@ -33,7 +32,7 @@ export function CreateCustomQRModal({
   //**********Handlers**********
   const handleTokenSelect = (token: AssetWithMetadata) => {
     setSelectedToken(token);
-    setSelectedTokenAddress(token.tokenAddress);
+    setSelectedTokenAddress(token.faucetId);
   };
 
   const handleGenerateQR = async () => {
@@ -51,8 +50,8 @@ export function CreateCustomQRModal({
         return;
       }
 
-      const tokenSymbol = selectedToken.tokenAddress ? selectedToken.metadata.symbol : AnyToken.metadata.symbol;
-      const tokenAddress = selectedToken.tokenAddress || AnyToken.tokenAddress;
+      const tokenSymbol = selectedToken.faucetId ? selectedToken.metadata.symbol : AnyToken.metadata.symbol;
+      const tokenAddress = selectedToken.faucetId || AnyToken.faucetId;
 
       // Generate QR name based on token and amount
       const qrName = generateQRName(tokenSymbol, amount);
@@ -140,9 +139,17 @@ export function CreateCustomQRModal({
 
           <div className="flex gap-1 flex-row  items-center rounded-[10px] px-2 py-2 bg-[#292929] my-2">
             <div className="w-2 h-[0.1px] rotate-90 outline-[2px] outline-[#26A17B] rounded-full" />
-            <img src={getTokenAvatar(selectedToken?.tokenAddress)} alt="coin-icon" className="w-6 h-6" />
+            <img
+              src={
+                selectedToken?.faucetId === QASH_TOKEN_ADDRESS
+                  ? "/q3x-icon.svg"
+                  : blo(turnBechToHex(selectedToken?.faucetId || ""))
+              }
+              alt="coin-icon"
+              className="w-6 h-6"
+            />
             <span className="text-white text-xl">
-              {selectedToken?.tokenAddress ? selectedToken?.metadata.symbol : AnyToken.metadata.symbol}
+              {selectedToken?.faucetId ? selectedToken?.metadata.symbol : AnyToken.metadata.symbol}
             </span>
           </div>
 

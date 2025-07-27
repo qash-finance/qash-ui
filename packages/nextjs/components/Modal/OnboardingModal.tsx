@@ -5,57 +5,62 @@ import { OnboardingModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { AssetWithMetadata } from "@/types/faucet";
-import { qashTokenAddress, qashTokenDecimals, qashTokenMaxSupply } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_MAX_SUPPLY } from "@/services/utils/constant";
 import { ActionButton } from "../Common/ActionButton";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { useWalletState } from "@/services/store";
 import { useAccount } from "@/hooks/web3/useAccount";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
+import { mintToken } from "@/services/utils/miden/faucet";
 import { AccountId } from "@demox-labs/miden-sdk";
-import { mintToken } from "@/services/utils/faucet";
-import { STORAGE_KEY } from "@/contexts/AccountProvider";
+import toast from "react-hot-toast";
+import { useClient } from "@/hooks/web3/useClient";
 
 // Create QASH token data
 const qashToken: AssetWithMetadata = {
-  tokenAddress: qashTokenAddress,
+  faucetId: QASH_TOKEN_ADDRESS,
   amount: "0", // Default amount if user doesn't have any
   metadata: {
     symbol: "QASH",
-    decimals: qashTokenDecimals,
-    maxSupply: qashTokenMaxSupply,
+    decimals: QASH_TOKEN_DECIMALS,
+    maxSupply: QASH_TOKEN_MAX_SUPPLY,
   },
 };
 
 export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalProps>) {
-  const { walletAddress } = useWalletState(state => state);
-  const { accountId } = useAccount(walletAddress);
-
+  const { walletAddress } = useWalletAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleMintToken = async () => {
-    setLoading(true);
+    if (!walletAddress) return toast.error("Please connect your wallet to mint tokens");
+
     try {
-      const accountIdHex = AccountId.fromBech32(accountId);
-      const faucetIdHex = AccountId.fromBech32(qashToken.tokenAddress);
-      await mintToken(accountIdHex.toString(), faucetIdHex.toString(), 1000);
+      setLoading(true);
+      toast.loading("Minting...");
 
-      // Set hasClaimQASH to true in localStorage after successful mint
-      const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-      if (deployedAccounts) {
-        try {
-          const accounts = JSON.parse(deployedAccounts);
-          const walletAddress = Object.keys(accounts)[0]; // Get the first wallet address
-          if (accounts[walletAddress]) {
-            accounts[walletAddress].hasClaimQASH = true;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
-          }
-        } catch (error) {
-          console.error("Error updating hasClaimQASH in localStorage:", error);
-        }
-      }
-
+      // mint qash token to user
+      const txId = await mintToken(
+        AccountId.fromBech32(walletAddress),
+        AccountId.fromBech32(QASH_TOKEN_ADDRESS),
+        BigInt(1000 * 10 ** QASH_TOKEN_DECIMALS),
+      );
+      toast.dismiss();
+      toast.success(
+        <div>
+          Mint successfully, view transaction on{" "}
+          <a
+            href={`https://testnet.midenscan.com/tx/${txId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Miden Explorer
+          </a>
+        </div>,
+      );
       setSuccess(true);
     } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to mint tokens, it might because the faucet was drained!");
       console.error(error);
     } finally {
       setLoading(false);

@@ -5,21 +5,8 @@ import { TokenList } from "../Common/TokenList";
 import { SelectTokenModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { useAccount } from "@/hooks/web3/useAccount";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { useAccountContext } from "@/contexts/AccountProvider";
 import { AssetWithMetadata } from "@/types/faucet";
-
-// Always include Qash token
-const qashToken: AssetWithMetadata = {
-  tokenAddress: qashTokenAddress,
-  amount: "0", // Default amount if user doesn't have any
-  metadata: {
-    symbol: "QASH",
-    decimals: 8,
-    maxSupply: 1000000,
-  },
-};
 
 export function SelectTokenModal({
   isOpen,
@@ -28,15 +15,15 @@ export function SelectTokenModal({
   zIndex,
 }: ModalProp<SelectTokenModalProps> & { zIndex?: number }) {
   // **************** Custom Hooks *******************
-  const { walletAddress } = useWalletConnect();
-  const { assets } = useAccount(walletAddress || "");
+  const { assets, isError } = useAccountContext();
 
   // **************** Local State *******************
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredAssets, setFilteredAssets] = useState<AssetWithMetadata[]>([]);
 
-  // **************** Handlers *******************
+  // **************** Local Functions *******************
   const handleTokenSelect = (token: AssetWithMetadata | null) => {
+    console.log("SELECTED TOKEN", token);
     onTokenSelect?.(token);
     onClose();
   };
@@ -46,24 +33,19 @@ export function SelectTokenModal({
   };
 
   // **************** Effect  *******************
-
   useEffect(() => {
-    // Merge user assets with Qash token, avoiding duplicates
-    const allAssets = [qashToken, ...assets.filter(asset => asset.tokenAddress !== qashTokenAddress)];
-
-    // Filter assets based on search query
-    const filteredAssets = allAssets.filter(asset => {
+    const filteredAssets = assets.filter(asset => {
       const query = searchQuery.toLowerCase().trim();
-      if (!query) return true; // Show all if no search query
+      if (!query) return true;
 
       const symbol = asset.metadata.symbol.toLowerCase();
-      const tokenAddress = asset.tokenAddress.toLowerCase();
+      const tokenAddress = asset.faucetId.toLowerCase();
 
       return symbol.includes(query) || tokenAddress.includes(query);
     });
 
     setFilteredAssets(filteredAssets);
-  }, [assets]);
+  }, [assets, searchQuery, isError]);
 
   if (!isOpen) return null;
 

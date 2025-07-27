@@ -43,12 +43,18 @@ export const Title = () => {
       title = "Address Book";
       break;
     default:
-      title = "Miden Q3x";
+      title = "Qash";
   }
 
   const dashboardTabs = [
     { id: "pending-recieve", label: "Recieve", href: "/dashboard/pending-recieve" },
-    { id: "pending-request", label: "Payment Request", href: "/dashboard/pending-request" },
+    {
+      id: "pending-request",
+      label: "Payment Request",
+      href: "/dashboard/pending-request",
+      disabled: true,
+      className: "cursor-not-allowed",
+    },
     { id: "cancel-transaction", label: "Cancel Payment", href: "/dashboard/cancel-transaction" },
   ];
 

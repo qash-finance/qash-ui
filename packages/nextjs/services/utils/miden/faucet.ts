@@ -1,6 +1,6 @@
 "use client";
 import { Account, AccountId, TransactionResult } from "@demox-labs/miden-sdk";
-import { useClient } from "../../hooks/web3/useClient";
+import { useClient } from "../../../hooks/web3/useClient";
 import { getAccountById, importAndGetAccount } from "./account";
 import { FaucetMetadata } from "@/types/faucet";
 
@@ -19,19 +19,14 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
   }
 }
 
-export async function mintToken(accountId: string, faucetId: string, amount: number): Promise<TransactionResult> {
+export async function mintToken(accountId: AccountId, faucetId: AccountId, amount: bigint): Promise<TransactionResult> {
   const { getClient } = useClient();
 
   try {
     const client = await getClient();
-    const { AccountId, NoteType } = await import("@demox-labs/miden-sdk");
-    const mintTxRequest = client.newMintTransactionRequest(
-      AccountId.fromHex(accountId),
-      AccountId.fromHex(faucetId),
-      NoteType.Public,
-      BigInt(amount),
-    );
-    const txResult = await client.newTransaction(AccountId.fromHex(faucetId), mintTxRequest);
+    const { NoteType } = await import("@demox-labs/miden-sdk");
+    const mintTxRequest = client.newMintTransactionRequest(accountId, faucetId, NoteType.Public, amount);
+    const txResult = await client.newTransaction(faucetId, mintTxRequest);
     await client.submitTransaction(txResult);
     return txResult;
   } catch (err) {
@@ -76,7 +71,6 @@ function decodeFeltToSymbol(encodedFelt: number): string {
   return decodedString;
 }
 
-// Cache to store faucet metadata and prevent duplicate calls
 const faucetMetadataCache = new Map<string, Promise<FaucetMetadata>>();
 
 export const getFaucetMetadata = async (faucetId: AccountId): Promise<FaucetMetadata> => {
@@ -94,6 +88,8 @@ export const getFaucetMetadata = async (faucetId: AccountId): Promise<FaucetMeta
     // read slot 0
     const storageItem = faucet.storage().getItem(2);
     if (!storageItem) {
+      console.log("NO STORAGE ITEM AT KEY 0");
+      // no storage item at slot 0 means its no auth faucet
       throw new Error("No storage item at key 0");
     }
     const valueWord = storageItem.toHex();

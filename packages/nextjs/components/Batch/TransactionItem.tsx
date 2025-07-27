@@ -1,11 +1,9 @@
 "use client";
 import * as React from "react";
-import { TransactionTypeBadge } from "@/components/Common/TransactionTypeBadge";
 import { RecipientDetails } from "./RecipientDetails";
 import { ActionButton } from "../Common/ActionButton";
 
 interface TransactionItemProps {
-  badgeType: "P2ID-R" | "P2ID";
   amount: string;
   recipient: string;
   isPrivate?: boolean;
@@ -21,7 +19,6 @@ interface RemoveButtonProps {
 }
 
 export function TransactionItem({
-  badgeType,
   amount,
   recipient,
   isPrivate,
@@ -33,7 +30,7 @@ export function TransactionItem({
   const containerContent = (
     <div className="flex gap-2.5 items-center self-stretch py-2.5 pr-4 pl-3 rounded-lg bg-neutral-700 max-sm:flex-col max-sm:gap-2 max-sm:p-3">
       <div className="flex gap-2 items-center self-stretch flex-[1_0_0] max-sm:flex-col max-sm:gap-2 max-sm:items-start">
-        <TransactionTypeBadge type={badgeType} />
+        {/* <TransactionTypeBadge type={badgeType} /> */}
         <span className="overflow-hidden text-base leading-4 text-white underline decoration-dotted text-ellipsis">
           {amount}
         </span>

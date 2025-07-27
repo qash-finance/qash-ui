@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { AmountInput } from "./AmountInput";
 import { RecipientInput } from "./RecipientInput";
 import { TransactionOptions } from "./TransactionOptions";
@@ -8,39 +8,30 @@ import { MODAL_IDS } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
-import { useSendSingleTransaction } from "@/services/api/transaction";
-import { NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
+import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
 import { AccountId } from "@demox-labs/miden-sdk";
-import { createNoteAndSubmit } from "@/services/utils/note";
-import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
-import { useWalletState } from "@/services/store";
+import { createP2IDENote } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { useAccount } from "@/hooks/web3/useAccount";
+import { useAccountContext } from "@/contexts/AccountProvider";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
 import { useEffect } from "react";
 import { AssetWithMetadata } from "@/types/faucet";
-import { qashTokenAddress, qashTokenSymbol, qashTokenDecimals, qashTokenMaxSupply } from "@/services/utils/constant";
-
-const buttonStyle = {
-  width: "100%",
-  padding: "12px 16px",
-  fontSize: "16px",
-  fontWeight: "500",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-  transition: "background-color 0.2s",
-  textAlign: "center" as const,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  backgroundColor: "#3b82f6",
-};
+import {
+  QASH_TOKEN_ADDRESS,
+  QASH_TOKEN_SYMBOL,
+  QASH_TOKEN_DECIMALS,
+  QASH_TOKEN_MAX_SUPPLY,
+  BLOCK_TIME,
+  BUTTON_STYLES,
+} from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
 import { useGetAddressBooks } from "@/services/api/address-book";
+import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
+import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
+import { CustomNoteType } from "@/types/note";
+import { useBatchTransactions } from "@/services/store/batchTransactions";
+import { formatUnits } from "viem";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -80,77 +71,89 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       isPrivateTransaction: false,
     },
   });
+
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
-  const { deployedAccountData } = useDeployedAccount();
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
-  const { assets } = useAccount(walletAddress || "");
-  const [recipientName, setRecipientName] = useState(recipientNameParam);
-
-  const { mutate: sendSingleTransaction, isPending: isSendingSingleTransaction } = useSendSingleTransaction();
+  const { handleConnect, isConnected } = useWalletConnect();
+  const { assets, refetchAssets, accountId: walletAddress } = useAccountContext();
+  const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
+  const { addTransaction } = useBatchTransactions(state => state);
 
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
     amount: "0",
-    tokenAddress: qashTokenAddress,
+    faucetId: QASH_TOKEN_ADDRESS,
     metadata: {
-      symbol: qashTokenSymbol,
-      decimals: qashTokenDecimals,
-      maxSupply: qashTokenMaxSupply,
+      symbol: QASH_TOKEN_SYMBOL,
+      decimals: QASH_TOKEN_DECIMALS,
+      maxSupply: QASH_TOKEN_MAX_SUPPLY,
     },
   });
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
-  // Form values are now handled by react-hook-form
   const [isSending, setIsSending] = useState(false);
   const [showTemporaryRecipient, setShowTemporaryRecipient] = useState(false);
+  const [recipientName, setRecipientName] = useState(recipientNameParam);
+  const [isSubmittingAsBatch, setIsSubmittingAsBatch] = useState(false);
+
+  // Debounced address validation
+  const validateAddress = useCallback((address: string) => {
+    try {
+      AccountId.fromBech32(address);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }, []);
 
   // ********************************************
   // **************** Effects *******************
   // ********************************************
 
-  // Update default selected token when assets change
   useEffect(() => {
     const defaultToken = getDefaultSelectedToken(assets);
     setSelectedToken(defaultToken);
-    setSelectedTokenAddress(defaultToken.tokenAddress);
+    setSelectedTokenAddress(defaultToken.faucetId);
   }, [assets]);
 
-  // Auto-clear recipient name when address is empty
+  // Handle recipient changes
   useEffect(() => {
     const subscription = watch((value, { name }) => {
       if (name === "recipientAddress") {
-        if (value.recipientAddress === "") {
+        const currentAddress = value.recipientAddress;
+
+        // Clear everything if address is empty
+        if (!currentAddress) {
           setRecipientName("");
+          setShowTemporaryRecipient(false);
           return;
         }
 
+        // Check if address is in address book - immediate display
         if (addressBooks) {
-          const addressBook = addressBooks.find(book => book.address === value.recipientAddress);
+          const addressBook = addressBooks.find(book => book.address === currentAddress);
           if (addressBook) {
             setRecipientName(addressBook.name);
-          } else {
-            setRecipientName("");
-            // Debounce validation for non-address book addresses
-            const timeoutId = setTimeout(() => {
-              if (value.recipientAddress) {
-                try {
-                  AccountId.fromBech32(value.recipientAddress);
-                  setShowTemporaryRecipient(true);
-                } catch (error) {
-                  setShowTemporaryRecipient(false);
-                }
-              }
-            }, 1000);
-
-            return () => clearTimeout(timeoutId);
+            setShowTemporaryRecipient(true);
+            return;
           }
         }
+
+        // Handle custom addresses with a short delay
+        const timeoutId = setTimeout(() => {
+          const isValid = validateAddress(currentAddress);
+          setShowTemporaryRecipient(isValid);
+          if (isValid) {
+            setRecipientName(""); // Clear name for custom addresses
+          }
+        }, 300); // 0.3 second delay
+
+        return () => clearTimeout(timeoutId);
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch, addressBooks]);
+  }, [watch, addressBooks, validateAddress]);
 
   // ********************************************
   // **************** Handlers ******************
@@ -164,12 +167,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
     // Find the selected token in assets to get its address
     if (token.metadata.symbol === "QASH") {
-      const qashTokenAddress = require("@/services/utils/constant").qashTokenAddress;
+      const qashTokenAddress = require("@/services/utils/constant").QASH_TOKEN_ADDRESS;
       setSelectedTokenAddress(qashTokenAddress);
     } else {
       const selectedAsset = assets.find(asset => asset.metadata.symbol === token.metadata.symbol);
       if (selectedAsset) {
-        setSelectedTokenAddress(selectedAsset.tokenAddress);
+        setSelectedTokenAddress(selectedAsset.faucetId);
       }
     }
   };
@@ -191,11 +194,118 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
 
     try {
-      console.log("YOYOOY");
-      console.log({ amount, recipientAddress, recallableTime, isPrivateTransaction });
+      setIsSending(true);
+      toast.loading("Sending transaction...");
 
       // check if amount > balance
       if (amount > parseFloat(selectedToken.amount)) {
+        toast.dismiss();
+        toast.error("Insufficient balance");
+        return;
+      }
+
+      // check if recipient address is valid bech32
+      try {
+        console.log("RECIPIENT ADDRESS", recipientAddress);
+        AccountId.fromBech32(recipientAddress);
+      } catch (error) {
+        toast.dismiss();
+
+        toast.error("Invalid recipient address");
+        return;
+      }
+
+      // check if recallable time is valid
+      if (recallableTime <= 0) {
+        toast.dismiss();
+        toast.error("Recallable time must be greater than 0");
+        return;
+      }
+
+      // check if amount > 0
+      if (amount <= 0) {
+        toast.dismiss();
+        toast.error("Amount must be greater than 0");
+        return;
+      }
+
+      // each block is 5 seconds, calculate recall height
+      const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+
+      // create note
+      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
+        AccountId.fromBech32(walletAddress),
+        AccountId.fromBech32(recipientAddress),
+        AccountId.fromBech32(selectedToken.faucetId),
+        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
+        isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+        recallHeight,
+      );
+
+      const noteId = note.id().toString();
+
+      // submit transaction to miden
+      const txId = await submitTransactionWithOwnOutputNotes(
+        new OutputNotesArray([note]),
+        AccountId.fromBech32(walletAddress),
+      );
+
+      // submit transaction to server
+      const response = await sendSingleTransaction({
+        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
+        private: isPrivateTransaction,
+        recipient: recipientAddress,
+        recallable: true,
+        recallableTime: new Date(Date.now() + recallableTime * 1000),
+        recallableHeight: calculatedRecallHeight,
+        serialNumber: serialNumbers,
+        noteType: CustomNoteType.P2IDR,
+        noteId: noteId,
+      });
+
+      // refetch assets
+      // call refetch assets 5 seconds later
+      setTimeout(() => {
+        refetchAssets();
+      }, 5000);
+
+      if (response) {
+        toast.dismiss();
+        toast.success(
+          <div>
+            Transaction sent successfully, view transaction on{" "}
+            <a
+              href={`https://testnet.midenscan.com/tx/${txId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Miden Explorer
+            </a>
+          </div>,
+        );
+        reset();
+      }
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to send transaction");
+      console.error(error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleAddToBatch = async (data: SendTransactionFormValues) => {
+    const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
+
+    if (!isConnected || !walletAddress) {
+      return;
+    }
+
+    try {
+      // check if amount > balance
+      if (amount > parseFloat(selectedToken.amount)) {
+        toast.dismiss();
         toast.error("Insufficient balance");
         return;
       }
@@ -204,27 +314,56 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       try {
         AccountId.fromBech32(recipientAddress);
       } catch (error) {
+        toast.dismiss();
         toast.error("Invalid recipient address");
         return;
       }
 
       // check if recallable time is valid
       if (recallableTime <= 0) {
+        toast.dismiss();
         toast.error("Recallable time must be greater than 0");
         return;
       }
 
       // check if amount > 0
+      if (amount <= 0) {
+        toast.dismiss();
+        toast.error("Amount must be greater than 0");
+        return;
+      }
+
+      // add to batch storage
+      addTransaction(walletAddress, {
+        tokenAddress: selectedToken.faucetId,
+        tokenMetadata: selectedToken.metadata,
+        amount: amount.toString(),
+        recipient: recipientAddress,
+        isPrivate: isPrivateTransaction,
+        recallableHeight: Math.floor(recallableTime / BLOCK_TIME),
+        recallableTime: recallableTime,
+        noteType: CustomNoteType.P2IDR,
+      });
+
+      toast.success("Transaction added to batch successfully");
       reset();
     } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to add transaction to batch");
       console.error(error);
-    } finally {
-      setIsSending(false);
+    }
+  };
+
+  const handleFormSubmit = async (data: SendTransactionFormValues) => {
+    if (isSubmittingAsBatch) {
+      handleAddToBatch(data);
+    } else {
+      await handleSendTransaction(data);
     }
   };
 
   return (
-    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleSendTransaction)}>
+    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleFormSubmit)}>
       <section
         className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-lg bg-[#292929] mb-1"
         style={{
@@ -287,14 +426,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
         <AmountInput
           selectedToken={selectedToken}
-          availableBalance={parseFloat(selectedToken.amount) || 0}
+          availableBalance={Number(
+            formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
+          )}
           register={register}
           errors={errors}
           setValue={setValue}
         />
       </section>
 
-      {showTemporaryRecipient ? (
+      {showTemporaryRecipient && getValues("recipientAddress") ? (
         <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
           <div className="flex flex-wrap gap-2.5 items-center">
             <img
@@ -306,7 +447,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               <div className="flex gap-2 items-center self-start whitespace-nowrap">
                 <label className="text-base leading-none text-center text-white">To</label>
                 <span className="text-base tracking-tight leading-none text-white">
-                  {getValues("recipientAddress")}
+                  {recipientName || getValues("recipientAddress")}
                 </span>
               </div>
             </div>
@@ -335,13 +476,23 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
 
       {isConnected ? (
-        <ActionButton
-          text="Send Transaction"
-          buttonType="submit"
-          onClick={() => console.log("Send button clicked")}
-          className="w-full h-10 mt-2"
-          disabled={isSending}
-        />
+        <div className="flex items-center gap-2 mt-1">
+          <ActionButton
+            text="Add To Batch"
+            buttonType="submit"
+            type="neutral"
+            className="w-[30%] h-10 mt-2"
+            disabled={isSending}
+            onClick={() => setIsSubmittingAsBatch(true)}
+          />
+          <ActionButton
+            text="Send Transaction"
+            buttonType="submit"
+            className="w-[70%] h-10 mt-2"
+            disabled={isSending}
+            onClick={() => setIsSubmittingAsBatch(false)}
+          />
+        </div>
       ) : (
         <div className="relative">
           {/* <WalletMultiButton
@@ -358,11 +509,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             type="button"
             onClick={handleConnect}
             style={{
-              ...buttonStyle,
+              ...BUTTON_STYLES,
               color: "transparent", // Hide original text
               fontSize: "0", // Hide text
             }}
-            className="mt-3 wallet-button-custom cursor-pointer h-[40px]"
+            className="mt-2 wallet-button-custom cursor-pointer h-[40px]"
           />
           <div className="absolute bottom-0 bg-[#1E8FFF] text-white text-[16px] font-medium pointer-events-none z-10 w-full text-center h-10 flex items-center justify-center rounded-lg">
             Connect Wallet

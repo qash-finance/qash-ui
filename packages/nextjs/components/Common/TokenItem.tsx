@@ -1,5 +1,5 @@
 "use client";
-import { formatAddress } from "@/services/utils/address";
+import { formatAddress } from "@/services/utils/miden/address";
 import * as React from "react";
 
 interface TokenItemProps {

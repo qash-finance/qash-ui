@@ -7,9 +7,9 @@ import { ModalHeader } from "../Common/ModalHeader";
 import BaseModal from "./BaseModal";
 import { useGetAddressBooks } from "@/services/api/address-book";
 import { AddressBook } from "@/types/address-book";
-import { formatAddress } from "@/services/utils/address";
 import { Empty } from "../Common/Empty";
 import { useForm } from "react-hook-form";
+import { formatAddress } from "@/services/utils/miden/address";
 
 interface AddressItemProps {
   name: string;

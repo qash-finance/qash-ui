@@ -54,7 +54,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const wallets = useMemo(
     () => [
       new TridentWalletAdapter({
-        appName: "App Name",
+        appName: "Qash",
       }),
     ],
     [],
@@ -125,12 +125,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <TourProvider steps={steps}>
             <ModalProvider>
               <AnalyticsProvider config={analyticsConfig}>
-                <AccountProvider>
-                  <AuthProvider
-                    apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                    autoRefresh={true}
-                    refreshInterval={5 * 1000} // 5 minutes
-                  >
+                <AuthProvider
+                  apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                  autoRefresh={true}
+                  refreshInterval={5 * 1000} // 5 minutes
+                >
+                  <AccountProvider>
                     {/* <ConnectWalletButton /> */}
                     <ModalManager />
                     <div className="flex flex-row h-screen">
@@ -156,8 +156,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         </div>
                       </div>
                     </div>
-                  </AuthProvider>
-                </AccountProvider>
+                    <FloatingActionButton imgSrc="/q3x-icon.svg" />
+                  </AccountProvider>
+                </AuthProvider>
               </AnalyticsProvider>
             </ModalProvider>
           </TourProvider>

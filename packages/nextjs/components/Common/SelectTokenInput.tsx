@@ -1,8 +1,12 @@
+import React from "react";
+import { blo } from "blo";
+import { formatUnits } from "viem";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
-import React from "react";
-import { getTokenAvatar } from "@/services/utils/tokenAvatar";
-import { AssetWithMetadata, AnyToken } from "@/types/faucet";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { AnyToken, AssetWithMetadata } from "@/types/faucet";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
 interface SelectTokenInputProps {
   selectedToken: AssetWithMetadata | null;
@@ -19,7 +23,7 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
       <input
         type="text"
         readOnly
-        value={token.amount}
+        value={formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}
         placeholder="0.00"
         className="bg-transparent text-white outline-none w-20"
       />
@@ -33,7 +37,11 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
             openModal(MODAL_IDS.SELECT_TOKEN, { onTokenSelect });
           }}
         >
-          <img src={getTokenAvatar(token.tokenAddress)} alt={token.metadata.symbol} className="w-5 h-5 rounded-full" />
+          <img
+            src={token.faucetId === QASH_TOKEN_ADDRESS ? "/q3x-icon.svg" : blo(turnBechToHex(token.faucetId))}
+            alt={token.metadata.symbol}
+            className="w-5 h-5 rounded-full"
+          />
           <span className="text-white">{token.metadata.symbol}</span>
           <img
             src="/arrow/filled-arrow-down.svg"

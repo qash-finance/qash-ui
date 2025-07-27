@@ -5,7 +5,7 @@ import { FieldErrors, UseFormRegister, UseFormSetValue, useForm } from "react-ho
 
 interface AmountInputProps {
   selectedToken: AssetWithMetadata;
-  availableBalance?: number; // add this prop
+  availableBalance?: number;
   register: UseFormRegister<any>;
   errors: FieldErrors<any>;
   setValue: UseFormSetValue<any>;
@@ -22,7 +22,6 @@ export const AmountInput: React.FC<AmountInputProps> = ({
 }) => {
   const handlePercentageSelect = (percentage: number | "MAX") => {
     console.log("Percentage button clicked:", percentage, "Available balance:", availableBalance);
-
     let newAmount: number;
     if (percentage === "MAX") {
       newAmount = availableBalance;
@@ -30,8 +29,8 @@ export const AmountInput: React.FC<AmountInputProps> = ({
       newAmount = (availableBalance * percentage) / 100;
     }
 
-    // Round to 6 decimal places to avoid floating point precision issues
-    const roundedAmount = Math.round(newAmount * 1000000) / 1000000;
+    // Round to the token's decimal places
+    const roundedAmount = Number(newAmount.toFixed(selectedToken.metadata.decimals));
 
     console.log("Setting amount to:", roundedAmount);
     setValue("amount", roundedAmount);
@@ -57,6 +56,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
             if (e.key === "e" || e.key === "E") e.preventDefault();
           }}
         />
+        {errors.amount && <span className="text-sm text-red-500 mt-1">{errors.amount.message as string}</span>}
       </div>
 
       {/* Percentage Buttons */}

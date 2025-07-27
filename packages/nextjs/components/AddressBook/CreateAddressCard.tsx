@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { ActionButton } from "../Common/ActionButton";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { blo } from "blo";
+import { ActionButton } from "../Common/ActionButton";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { AssetWithMetadata } from "@/types/faucet";
-import { generateTokenAvatar, getTokenAvatar } from "@/services/utils/tokenAvatar";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
 export const CreateAddressCard = ({
   onSave,
@@ -30,7 +31,7 @@ export const CreateAddressCard = ({
   };
 
   const handleSave = (data: { name: string; address: string; token?: string }) => {
-    onSave({ ...data, token: selectedToken?.tokenAddress });
+    onSave({ ...data, token: selectedToken?.faucetId });
     reset();
   };
 
@@ -81,7 +82,17 @@ export const CreateAddressCard = ({
             })
           }
         >
-          <img src={getTokenAvatar(selectedToken?.tokenAddress)} alt="token" className="w-8 h-8" />
+          <img
+            src={
+              !selectedToken
+                ? "/token/any-token.svg"
+                : selectedToken.faucetId == QASH_TOKEN_ADDRESS
+                  ? "/q3x-icon.svg"
+                  : blo(turnBechToHex(selectedToken.faucetId))
+            }
+            alt="token"
+            className="w-8 h-8"
+          />
           <img src="/arrow/filled-arrow-down.svg" alt="token" className="w-4 h-4" style={{ filter: "brightness(0)" }} />
         </div>
       </div>

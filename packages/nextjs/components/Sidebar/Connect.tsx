@@ -1,30 +1,13 @@
 "use client";
 import * as React from "react";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
-import { STORAGE_KEY, useAccount } from "@/contexts/AccountProvider";
 import { useEffect } from "react";
 import Account from "./Account";
 import { useWalletState } from "@/services/store";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-
-const buttonStyle = {
-  width: "100%",
-  padding: "12px 16px",
-  fontSize: "16px",
-  fontWeight: "500",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-  transition: "background-color 0.2s",
-  textAlign: "center" as const,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
+import { BUTTON_STYLES } from "@/services/utils/constant";
 
 // Custom hook to safely render WalletMultiButton
 const SafeWalletButton = ({
@@ -101,7 +84,6 @@ export const Connect = () => {
 
   // **************** Custom Hooks *******************
   const { connectWallet, isAuthenticated } = useWalletAuth();
-  const { deployAccountForWallet, switchToWalletAccount } = useAccount();
 
   // **************** Local State *******************
 
@@ -121,7 +103,6 @@ export const Connect = () => {
         try {
           // server side authentication
           // generate local keypair for signing message
-          await deployAccountForWallet(walletAddress, true); // Deploy public account
 
           // Then authenticate
           if (!isAuthenticated) {
@@ -175,26 +156,25 @@ export const Connect = () => {
             <SafeWalletButton
               onClick={async () => {
                 await handleConnect().then(() => {
-                  const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-                  if (deployedAccounts) {
-                    try {
-                      const accounts = JSON.parse(deployedAccounts);
-                      const account = Object.values(accounts)[0] as any;
-                      const hasClaimQASH = account.hasClaimQASH;
-
-                      // Only open modal if user hasn't claimed QASH
-                      if (!hasClaimQASH) {
-                        openModal(MODAL_IDS.ONBOARDING);
-                      }
-                    } catch (error) {
-                      console.error("Error parsing deployed accounts:", error);
-                    }
-                  }
+                  // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
+                  // if (deployedAccounts) {
+                  //   try {
+                  //     const accounts = JSON.parse(deployedAccounts);
+                  //     const account = Object.values(accounts)[0] as any;
+                  //     const hasClaimQASH = account.hasClaimQASH;
+                  //     // Only open modal if user hasn't claimed QASH
+                  //     if (!hasClaimQASH) {
+                  //       openModal(MODAL_IDS.ONBOARDING);
+                  //     }
+                  //   } catch (error) {
+                  //     console.error("Error parsing deployed accounts:", error);
+                  //   }
+                  // }
                 });
               }}
               connected={isConnected}
               style={{
-                ...buttonStyle,
+                ...BUTTON_STYLES,
                 backgroundColor: "#3b82f6",
               }}
             />

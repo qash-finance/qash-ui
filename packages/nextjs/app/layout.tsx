@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Barlow } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "../components/ClientLayout";
 import localFont from "next/font/local";
+import { AccountProvider } from "@/contexts/AccountProvider";
+import { AuthProvider } from "@/services/auth/context";
 
 const repetitionScrolling = localFont({
   src: "../public/fonts/repet___.ttf",
@@ -29,14 +31,14 @@ const barlow = Barlow({
   subsets: ["latin"],
 });
 export const metadata: Metadata = {
-  title: "Q3x",
-  description: "Q3x",
+  title: "Qash",
+  description: "Qash",
   icons: {
     icon: "/q3x-icon.svg",
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body

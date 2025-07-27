@@ -5,35 +5,37 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import { ToggleSwitch } from "@/components/Common/ToggleSwitch";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { useGetConsumable } from "@/services/api/transaction";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import { consumeAllNotes, getConsumableNotes } from "@/services/utils/note";
-import { AccountId, ConsumableNoteRecord, NoteType as MidenNoteType } from "@demox-labs/miden-sdk";
-import { ConsumableNote, NoteType } from "@/types/transaction";
-import { useDeployedAccount } from "@/hooks/web3/useDeployedAccount";
+import { consumeAllNotes, consumePrivateNote, consumePublicNote } from "@/services/utils/miden/note";
+import { AccountId } from "@demox-labs/miden-sdk";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { getFaucetMetadata } from "@/services/utils/faucet";
-import { AssetWithMetadata } from "@/types/faucet";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
-import { Skeleton } from "@/components/Common/Skeleton";
+import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { formatUnits } from "viem";
+import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
+import useConsumeNotes from "@/hooks/server/useConsume";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { blo } from "blo";
+import SkeletonLoading from "@/components/Common/SkeletonLoading";
+import { useTour } from "@reactour/tour";
 
 const mockData = [
   {
-    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
+    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
   },
   {
-    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
+    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
   },
   {
-    assets: [{ amount: "120,000", tokenAddress: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
+    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
     from: "0xd...s78",
     dateTime: "25/11/2024, 07:15",
     action: "Claim",
@@ -101,11 +103,15 @@ const TableRow = ({
           {assets.map((asset, index) => (
             <div key={index} className="flex items-center gap-1 relative group">
               <img
-                src={generateTokenAvatar(asset.tokenAddress, asset.metadata?.symbol)}
+                src={QASH_TOKEN_ADDRESS == asset.faucetId ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
                 alt={asset.metadata?.symbol || "Token"}
                 className="w-4 h-4 flex-shrink-0 rounded-full"
               />
-              <p className="text-stone-300 truncate">{asset.amount}</p>
+              <p className="text-stone-300 truncate">
+                {formatNumberWithCommas(
+                  formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata?.decimals),
+                )}
+              </p>
 
               {/* Tooltip on hover */}
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -142,67 +148,40 @@ const TableRow = ({
 
 export const PendingRecieveContainer: React.FC = () => {
   // **************** Custom Hooks *******************
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
-  const { publicKey } = useWallet();
+  const { walletAddress, isConnected } = useWalletConnect();
   const { openModal } = useModal();
-  const { isReady } = useDeployedAccount();
 
   // **************** Server Hooks *******************
-  const { data: consumable } = useGetConsumable(publicKey || "");
-  // const { mutate: consumeTransactions } = useConsumeTransactions(publicKey || "");
+  const {
+    data: consumableNotesFromServer,
+    isLoading: isLoadingConsumableNotesFromServer,
+    error: errorConsumableNotesFromServer,
+  } = useConsumableNotes();
+  const { mutateAsync: consumeNotes } = useConsumeNotes();
+
+  console.log("CONSUMABLE NOTES FROM SERVER", consumableNotesFromServer, errorConsumableNotesFromServer);
 
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
-  const [consumableNotes, setConsumableNotes] = useState<ConsumableNote[]>([]);
+  const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
-        setLoading(true);
-        try {
-          const notes: ConsumableNoteRecord[] = await getConsumableNotes(walletAddress);
-          const consumableNotes: ConsumableNote[] = await Promise.all(
-            notes.map(async note => {
-              const id = note.inputNoteRecord().id().toString();
-              const inputNoteRecord = note.inputNoteRecord();
-              const noteMetadata = inputNoteRecord.metadata();
-              const noteDetails = inputNoteRecord.details();
-              const assetPromises = noteDetails
-                .assets()
-                .fungibleAssets()
-                .map(async asset => {
-                  const metadata = await getFaucetMetadata(asset.faucetId());
-                  return {
-                    tokenAddress: asset.faucetId().toString(),
-                    amount: asset.amount().toString(),
-                    metadata: metadata,
-                  } as AssetWithMetadata;
-                });
-              const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-              const sender = noteMetadata?.sender().toBech32();
-
-              return {
-                id: id,
-                sender: sender!,
-                recipient: walletAddress!,
-                assets: assets,
-              };
-            }),
-          );
-
-          setConsumableNotes(consumableNotes);
-        } catch (error) {
-          console.error("Error fetching consumable notes:", error);
+        if (!errorConsumableNotesFromServer) {
+          if (consumableNotesFromServer) {
+            setConsumableNotes(consumableNotesFromServer);
+          } else {
+            setConsumableNotes([]);
+          }
+        } else {
           setConsumableNotes([]);
-        } finally {
-          setLoading(false);
         }
       }
     })();
-  }, [walletAddress, isConnected]);
+  }, [walletAddress, isConnected, consumableNotesFromServer]);
 
   const isAllChecked = consumableNotes.length > 0 && checkedRows.length === consumableNotes.length;
 
@@ -216,16 +195,23 @@ export const PendingRecieveContainer: React.FC = () => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   }, []);
 
-  const handleClaim = async (note: ConsumableNote) => {
+  const handleClaim = async (note: PartialConsumableNote) => {
     try {
       if (!walletAddress) {
         return toast.error("Please connect your wallet");
       }
       toast.loading("Receiving payment...");
-      setClaiming(true);
-      await consumeAllNotes(AccountId.fromBech32(walletAddress), [note.id]);
-      setClaiming(false);
 
+      setClaiming(true);
+
+      if (note.private) {
+        // if private, we need to update on server
+        await consumePrivateNote(AccountId.fromBech32(walletAddress), note);
+      } else {
+        await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
+      }
+      await consumeNotes([note.id]);
+      setClaiming(false);
       toast.dismiss();
       toast.success("Payment received successfully");
 
@@ -249,10 +235,21 @@ export const PendingRecieveContainer: React.FC = () => {
       toast.loading("Receiving payments...");
 
       setClaiming(true);
+
+      // consume on network level
       await consumeAllNotes(
         AccountId.fromBech32(walletAddress),
-        checkedRows.map(idx => consumableNotes[idx].id),
+        checkedRows.map(idx => ({
+          isPrivate: consumableNotes[idx].private,
+          noteId: consumableNotes[idx].id,
+          partialNote: consumableNotes[idx],
+        })),
       );
+
+      // consume on server level
+      await consumeNotes(checkedRows.map(idx => consumableNotes[idx].id));
+
+      // get all private
       setClaiming(false);
 
       toast.dismiss();
@@ -273,105 +270,119 @@ export const PendingRecieveContainer: React.FC = () => {
 
   return (
     <div className="flex w-full h-full bg-neutral-900  rounded-xl text-white p-6 space-y-6 gap-4">
-      <div className="flex-3">
-        {/* Pending Section */}
-        <div className="flex items-center justify-between">
+      {
+        <div className="flex-3">
           <div>
-            <header className="flex flex-col gap-2 justify-center items-start w-full">
-              <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
-                Pending to receive
-              </h2>
-              <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
-                Payments sent to you that are ready to be added to your wallet
-              </p>
-            </header>
-          </div>
-
-          <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
-            <span className="text-lg text-black">Auto Claim</span>
-            <ToggleSwitch disabled={true} enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
-          </div>
-        </div>
-
-        {/* Pending Table */}
-        <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
-          {loading ? (
-            <Skeleton />
-          ) : consumableNotes?.length === 0 || !consumableNotes ? (
-            <Empty title="No pending receive" />
-          ) : (
-            <table className="w-full min-w-[800px]">
-              <TableHeader columns={HeaderColumns} allChecked={isAllChecked || false} onCheckAll={handleCheckAll} />
-              <tbody>
-                {consumableNotes?.map((row, index) => (
-                  <TableRow
-                    key={`pending-${index}`}
-                    assets={row.assets}
-                    from={row.sender}
-                    dateTime={new Date().toISOString()}
-                    action={"Claim"}
-                    checked={checkedRows.includes(index)}
-                    onCheck={() => handleCheckRow(index)}
-                    onClaim={() => handleClaim(row)}
-                    disabled={claiming}
-                  />
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {checkedRows.length > 0 && (
-          <div className="flex items-center justify-end mt-2 gap-2">
-            <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
-            <ActionButton text="Receive all" onClick={() => handleClaimAll()} disabled={claiming} />
-          </div>
-        )}
-
-        {/* Unverified Section */}
-        {isConnected && (
-          <React.Fragment>
-            <div className="mt-10">
+            {/* Pending Section */}
+            <div className="flex items-center justify-between">
               <div>
                 <header className="flex flex-col gap-2 justify-center items-start w-full">
                   <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
-                    Unverified request
+                    Pending to receive
                   </h2>
                   <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
-                    Payments that need additional confirmation before you can receive them
+                    Payments sent to you that are ready to be added to your wallet
                   </p>
                 </header>
               </div>
-            </div>
-            <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
-              {true ? (
-                <Empty title="No pending receive" />
-              ) : (
-                <table className="w-full min-w-[800px]">
-                  <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-                  <tbody>
-                    {mockData.map((row, index) => (
-                      <TableRow
-                        key={`pending-${index}`}
-                        assets={row.assets}
-                        from={row.from}
-                        dateTime={row.dateTime}
-                        action={row.action}
-                        checked={false}
-                        onCheck={() => {}}
-                        onClaim={() => {}}
-                        disabled={claiming}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </React.Fragment>
-        )}
-      </div>
 
-      <div className="flex-1">
+              <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
+                <span className="text-lg text-black">Auto Claim</span>
+                <ToggleSwitch disabled={true} enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
+              </div>
+            </div>
+            {!isConnected ? (
+              <div className="mt-2">
+                {" "}
+                <Empty title="No pending receive" />
+              </div>
+            ) : isLoadingConsumableNotesFromServer ? (
+              <SkeletonLoading />
+            ) : (
+              <div>
+                {/* Pending Table */}
+                <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800" data-tour="pending-payments">
+                  {consumableNotes?.length === 0 || !consumableNotes ? (
+                    <Empty title="No pending receive" />
+                  ) : (
+                    <table className="w-full min-w-[800px]">
+                      <TableHeader
+                        columns={HeaderColumns}
+                        allChecked={isAllChecked || false}
+                        onCheckAll={handleCheckAll}
+                      />
+                      <tbody>
+                        {consumableNotes?.map((row, index) => (
+                          <TableRow
+                            key={`pending-${index}`}
+                            assets={row.assets}
+                            from={row.sender}
+                            dateTime={new Date().toISOString()}
+                            action={"Claim"}
+                            checked={checkedRows.includes(index)}
+                            onCheck={() => handleCheckRow(index)}
+                            onClaim={() => handleClaim(row)}
+                            disabled={claiming}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                {checkedRows.length > 0 && (
+                  <div className="flex items-center justify-end mt-2 gap-2">
+                    <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
+                    <ActionButton text="Receive all" onClick={() => handleClaimAll()} disabled={claiming} />
+                  </div>
+                )}
+                {/* Unverified Section */}
+                {isConnected && (
+                  <React.Fragment>
+                    <div className="mt-10">
+                      <div>
+                        <header className="flex flex-col gap-2 justify-center items-start w-full">
+                          <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+                            Unverified request
+                          </h2>
+                          <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+                            Payments that need additional confirmation before you can receive them
+                          </p>
+                        </header>
+                      </div>
+                    </div>
+                    <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
+                      {true ? (
+                        <Empty title="No pending receive" />
+                      ) : (
+                        <table className="w-full min-w-[800px]">
+                          <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
+                          <tbody>
+                            {mockData.map((row, index) => (
+                              <TableRow
+                                key={`pending-${index}`}
+                                assets={row.assets}
+                                from={row.from}
+                                dateTime={row.dateTime}
+                                action={row.action}
+                                checked={false}
+                                onCheck={() => {}}
+                                onClaim={() => {}}
+                                disabled={claiming}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </React.Fragment>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      }
+
+      <div className="flex-1" data-tour="receive-section">
         <ReceiveAddress
           onEnterAmount={() => {
             openModal(MODAL_IDS.CREATE_CUSTOM_QR);

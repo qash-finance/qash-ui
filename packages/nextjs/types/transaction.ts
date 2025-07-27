@@ -1,4 +1,5 @@
-import { AssetWithMetadata } from "./faucet";
+import { AssetWithMetadata, FaucetMetadata } from "./faucet";
+import { CustomNoteType, NoteStatus } from "./note";
 
 export enum NoteType {
   P2ID = "p2id",
@@ -9,6 +10,7 @@ export enum NoteType {
 export interface AssetDto {
   faucetId: string;
   amount: string;
+  metadata: FaucetMetadata;
 }
 
 export interface SendTransactionDto {
@@ -16,16 +18,32 @@ export interface SendTransactionDto {
   assets: AssetDto[];
   private: boolean;
   recallable: boolean;
-  recallableTime?: Date;
-  serialNumber: number[];
-  noteType: NoteType;
+  recallableTime: Date;
+  recallableHeight: number;
+  serialNumber: string[];
+  noteType: CustomNoteType;
+  noteId: string;
 }
 
 export interface ConsumableNote {
   id: string;
-  sender: string;
+  noteId: string;
+  noteType: string;
+  private: boolean;
+  recallable: boolean;
+  recallableHeight: number;
+  recallableTime: string;
   recipient: string;
+  sender: string;
+  serialNumber: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
   assets: AssetWithMetadata[];
+}
+
+export interface RecallRequestDto {
+  items: RecallItem[];
 }
 
 export interface RecallItem {
@@ -33,6 +51,27 @@ export interface RecallItem {
   id: number;
 }
 
-export interface RecallRequestDto {
-  items: RecallItem[];
+export interface RecallableDashboard {
+  nextRecallTime: Date;
+  recalledCount: number;
+  recallableItems: RecallableNote[];
+  waitingToRecallItems: RecallableNote[];
+}
+
+export interface RecallableNote {
+  id: number;
+  assets: AssetDto[];
+  createdAt: string;
+  updatedAt: string;
+  isGift: boolean;
+  noteId: string;
+  noteType: string;
+  private: boolean;
+  recallable: boolean;
+  recallableHeight: number;
+  recallableTime: string;
+  recipient: string;
+  sender: string;
+  serialNumber: string[];
+  status: NoteStatus;
 }

@@ -35,7 +35,7 @@ export function AuthProvider({
   children,
   apiBaseUrl,
   autoRefresh = true,
-  refreshInterval = 5 * 60 * 1000, // 5 minutes
+  refreshInterval = 15 * 60 * 1000, // 15 minutes instead of 5
 }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,

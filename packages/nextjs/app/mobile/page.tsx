@@ -56,7 +56,7 @@ export default function MobilePage() {
           <img alt="" className="size-full" src="/q3x-icon.svg" />
         </div>
         <div className="font-['Schibsted_Grotesk:ExtraBold',_sans-serif] text-[19.96px] font-extrabold leading-[1.2] tracking-[-0.2003px] text-[#2470ff] whitespace-pre shrink-0">
-          Q3x
+          Qash
         </div>
       </div>
 

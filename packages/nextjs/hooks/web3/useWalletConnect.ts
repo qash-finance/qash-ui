@@ -1,6 +1,6 @@
 "use client";
 import { useWalletState } from "@/services/store";
-import { deployAccount } from "@/services/utils/account";
+import { deployAccount } from "@/services/utils/miden/account";
 import toast from "react-hot-toast";
 
 export const useWalletConnect = () => {

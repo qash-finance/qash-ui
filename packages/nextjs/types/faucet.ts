@@ -1,5 +1,5 @@
 export interface Asset {
-  tokenAddress: string;
+  faucetId: string;
   amount: string;
 }
 
@@ -11,8 +11,18 @@ export interface FaucetMetadata {
 
 export type AssetWithMetadata = Asset & { metadata: FaucetMetadata };
 
+export type PartialConsumableNote = {
+  id: string;
+  sender: string;
+  recipient: string;
+  private: boolean;
+  assets: AssetWithMetadata[];
+  recallableHeight: number;
+  serialNumber: string[];
+};
+
 export const AnyToken: AssetWithMetadata = {
-  tokenAddress: "",
+  faucetId: "",
   amount: "",
   metadata: {
     symbol: "Any Token",

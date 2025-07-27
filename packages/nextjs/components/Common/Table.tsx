@@ -10,7 +10,7 @@ interface TableProps {
   rowClassName?: string;
   actionColumn?: boolean;
   actionRenderer?: (rowData: Record<string, CellContent>, index: number) => React.ReactNode;
-  columnWidths?: Record<number, string>;
+  columnWidths?: Record<string, string>;
 }
 
 const createTableRow = (
@@ -53,9 +53,9 @@ const TableHeader = ({
   columns: string[];
   headerClassName?: string;
   actionColumn?: boolean;
-  columnWidths?: Record<number, string>;
+  columnWidths?: Record<string, string>;
 }) => {
-  const defaultHeaderClass = "px-3 py-2 text-center text-sm font-medium text-neutral-400 border-r border-[#292929]";
+  const defaultHeaderClass = "px-3 py-2 text-sm font-medium text-neutral-400 border-r border-[#292929]";
 
   return (
     <thead>
@@ -63,18 +63,18 @@ const TableHeader = ({
         {columns.map((column, index) => (
           <th
             key={column}
-            className={`${defaultHeaderClass} ${
+            className={`${defaultHeaderClass} ${index === 0 ? "text-left" : "text-center"} ${
               index === 0 ? "rounded-tl-lg" : ""
             } ${index === columns.length - 1 && !actionColumn ? "rounded-tr-lg border-r-0" : ""} ${headerClassName}`}
-            style={{ width: columnWidths[index] }}
+            style={{ width: columnWidths[index.toString()] }}
           >
             {column}
           </th>
         ))}
         {actionColumn && (
           <th
-            className={`${defaultHeaderClass} rounded-tr-lg border-r-0 ${headerClassName}`}
-            style={{ width: columnWidths[columns.length] }}
+            className={`${defaultHeaderClass} rounded-tr-lg border-r-0 text-center ${headerClassName}`}
+            style={{ width: "10%" }}
           >
             Actions
           </th>
@@ -86,12 +86,14 @@ const TableHeader = ({
 
 const TableRow = ({
   cells,
+  headers,
   rowClassName = "",
   columnWidths = {},
 }: {
   cells: React.ReactNode[];
+  headers: string[];
   rowClassName?: string;
-  columnWidths?: Record<number, string>;
+  columnWidths?: Record<string, string>;
 }) => {
   const defaultRowClass = "bg-[#1E1E1E] border-b border-zinc-800 last:border-b-0 hover:bg-[#292929]";
 
@@ -100,8 +102,10 @@ const TableRow = ({
       {cells.map((cell, index) => (
         <td
           key={index}
-          className={`px-3 py-2 text-center ${index === cells.length - 1 ? "" : "border-r border-zinc-800"}`}
-          style={{ width: columnWidths[index] }}
+          className={`px-3 py-2 ${index === 0 ? "text-left" : "text-center"} ${
+            index === cells.length - 1 ? "" : "border-r border-zinc-800"
+          }`}
+          style={{ width: columnWidths[index.toString()] }}
         >
           {cell}
         </td>
@@ -122,11 +126,9 @@ export function Table({
 }: TableProps) {
   const defaultTableClass = "overflow-x-auto rounded-lg border border-zinc-800";
 
-  const rows = data.map((rowData, index) => createTableRow(rowData, headers, actionRenderer, index));
-
   return (
     <div className={`${defaultTableClass} ${className}`}>
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <TableHeader
           columns={headers}
           headerClassName={headerClassName}
@@ -134,9 +136,18 @@ export function Table({
           columnWidths={columnWidths}
         />
         <tbody>
-          {rows.map((row, index) => (
-            <TableRow key={index} cells={row} rowClassName={rowClassName} columnWidths={columnWidths} />
-          ))}
+          {data.map((rowData, index) => {
+            const row = createTableRow(rowData, headers, actionRenderer, index);
+            return (
+              <TableRow
+                key={index}
+                cells={row}
+                headers={headers}
+                rowClassName={rowClassName}
+                columnWidths={columnWidths}
+              />
+            );
+          })}
         </tbody>
       </table>
     </div>
