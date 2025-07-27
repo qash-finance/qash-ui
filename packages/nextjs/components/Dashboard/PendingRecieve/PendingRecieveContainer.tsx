@@ -159,6 +159,8 @@ export const PendingRecieveContainer: React.FC = () => {
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
 
+  console.log("CONSUMABLE NOTES FROM SERVER", consumableNotesFromServer, errorConsumableNotesFromServer);
+
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);

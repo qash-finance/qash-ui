@@ -89,7 +89,10 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
     const client = await getClient();
 
     let accountContract = await client.getAccount(accountId);
+
     if (!accountContract) {
+      console.log("I THINK WE FAILED HERE", accountContract);
+
       try {
         await client.importAccountById(accountId);
         await client.syncState();

@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 import { AccountId, ConsumableNoteRecord } from "@demox-labs/miden-sdk";
 import { getConsumableNotes } from "../../services/utils/miden/note";
 import { getAccountAssets } from "@/services/utils/miden/account";
@@ -33,31 +32,6 @@ interface AccountData {
   error?: unknown;
 }
 
-// Retry utility function with exponential backoff
-const retryWithBackoff = async <T>(
-  operation: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000,
-): Promise<T> => {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-
-      if (attempt === maxRetries) {
-        throw error; // Final attempt failed, throw the error
-      }
-
-      await new Promise(resolve => setTimeout(resolve, baseDelay));
-    }
-  }
-
-  throw lastError;
-};
-
 // Function to fetch assets and notes
 const fetchAccountData = async (walletAddress: string | null): Promise<AccountData> => {
   if (!walletAddress || walletAddress.trim() === "") {
@@ -84,8 +58,8 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
   try {
     // Fetch assets and notes in parallel
     const [accountAssets, consumableNotes] = await Promise.all([
-      retryWithBackoff(() => getAccountAssets(walletAddress)),
-      retryWithBackoff(() => getConsumableNotes(walletAddress)),
+      getAccountAssets(walletAddress),
+      getConsumableNotes(walletAddress),
     ]);
 
     // merge QASH token with account assets, replacing if exists

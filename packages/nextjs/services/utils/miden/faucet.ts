@@ -71,7 +71,6 @@ function decodeFeltToSymbol(encodedFelt: number): string {
   return decodedString;
 }
 
-// Cache to store faucet metadata and prevent duplicate calls
 const faucetMetadataCache = new Map<string, Promise<FaucetMetadata>>();
 
 export const getFaucetMetadata = async (faucetId: AccountId): Promise<FaucetMetadata> => {
@@ -89,6 +88,8 @@ export const getFaucetMetadata = async (faucetId: AccountId): Promise<FaucetMeta
     // read slot 0
     const storageItem = faucet.storage().getItem(2);
     if (!storageItem) {
+      console.log("NO STORAGE ITEM AT KEY 0");
+      // no storage item at slot 0 means its no auth faucet
       throw new Error("No storage item at key 0");
     }
     const valueWord = storageItem.toHex();
