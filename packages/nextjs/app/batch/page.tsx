@@ -99,5 +99,9 @@ export default function BatchPage() {
     }
   };
 
-  return <BatchTransactionContainer isLoading={isLoading} onConfirm={handleConfirm} />;
+  return (
+    <div>
+      <BatchTransactionContainer isLoading={isLoading} onConfirm={handleConfirm} />
+    </div>
+  );
 }

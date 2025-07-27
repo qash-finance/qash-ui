@@ -1,15 +1,15 @@
 // **************** QASH TOKEN *******************
-export const qashTokenAddress = "mtst1qpwlhl3glkt0jgr92vcxcqjxlvxty26p";
-export const qashTokenSymbol = "QASH";
-export const qashTokenDecimals = 8;
-export const qashTokenMaxSupply = 1000000;
+export const QASH_TOKEN_ADDRESS = "mtst1qpwlhl3glkt0jgr92vcxcqjxlvxty26p";
+export const QASH_TOKEN_SYMBOL = "QASH";
+export const QASH_TOKEN_DECIMALS = 8;
+export const QASH_TOKEN_MAX_SUPPLY = 1000000;
 
 // **************** MIDEN NETWORK *******************
-export const blockTime = 5; // seconds
-export const nodeEndpoint = process.env.NEXT_PUBLIC_NODE_ENDPOINT || "https://rpc.testnet.miden.io:443";
+export const BLOCK_TIME = 5; // seconds
+export const NODE_ENDPOINT = process.env.NEXT_PUBLIC_NODE_ENDPOINT || "https://rpc.testnet.miden.io:443";
 
 // **************** CSS *******************
-export const buttonStyle = {
+export const BUTTON_STYLES = {
   width: "100%",
   padding: "12px 16px",
   fontSize: "16px",
@@ -29,3 +29,6 @@ export const buttonStyle = {
 
 // **************** CSS *******************
 export const STALE_TIME = 1000 * 60 * 5;
+
+// **************** DEFAULT AVATAR *******************
+export const DEFAULT_AVATAR_ADDRESS = "0x44d6cAAC62A593A53931E2DB6124c9045f78345c";

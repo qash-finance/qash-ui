@@ -36,12 +36,9 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
           </div>
           <input
             {...register("recipientAddress", {
-              required: "Recipient address is required",
-              pattern: {
-                value: /^mt/i,
-                message: "Address must start with 'mt'",
-              },
               validate: (value: string) => {
+                if (!value) return true; // Don't show error when empty
+                if (!value.startsWith("mt")) return "Address must start with 'mt'";
                 try {
                   AccountId.fromBech32(value);
                   return true;
@@ -58,7 +55,7 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
         <ActionButton text="Choose" onClick={onChooseRecipient} />
       </div>
 
-      {errors.recipientAddress && (
+      {errors.recipientAddress && watch("recipientAddress") && (
         <span className="text-sm text-red-500">{errors?.recipientAddress?.message as string}</span>
       )}
     </section>

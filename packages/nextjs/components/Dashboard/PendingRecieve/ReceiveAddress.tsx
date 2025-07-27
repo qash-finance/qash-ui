@@ -2,11 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import QRCodeStyling, { Options } from "qr-code-styling";
 import { ActionButton } from "@/components/Common/ActionButton";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { getQRsFromLocalStorage, generateQRCode, deleteQRFromLocalStorage } from "@/services/utils/qrCode";
-import { getTokenAvatar } from "@/services/utils/tokenAvatar";
+import { getQRsFromLocalStorage, generateQRCode } from "@/services/utils/qrCode";
 import { CustomQRData } from "@/services/utils/qrCode";
 
 interface ReceiveAddressProps {

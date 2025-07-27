@@ -1,37 +1,52 @@
 import React from "react";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 export default function SkeletonLoading() {
   return (
-    <div className="w-full animate-pulse">
-      {/* Cards Section */}
-      <div className="flex flex-wrap gap-2 p-1.5 w-full rounded-2xl bg-neutral-950 min-h-[164px]">
-        {/* Main Card */}
-        <div className="flex-1 rounded-xl bg-gray-600 min-w-[300px] h-[140px]" />
-
-        {/* Status Cards */}
-        <div className="w-[200px] rounded-xl bg-gray-600 h-[140px]" />
-        <div className="w-[200px] rounded-xl bg-gray-600 h-[140px]" />
-      </div>
-
-      {/* Tables Section */}
-      {[1, 2].map(section => (
-        <div key={section} className="mt-8">
-          {/* Table Header */}
-          <div className="h-6 bg-gray-600 rounded w-48 mb-2" />
-          <div className="h-4 bg-gray-600 rounded w-96 mb-6" />
-
-          {/* Table Rows */}
-          {[1, 2, 3].map(row => (
-            <div key={row} className="flex items-center gap-4 mb-4">
-              <div className="h-8 bg-gray-600 rounded w-24" />
-              <div className="h-8 bg-gray-600 rounded w-32" />
-              <div className="h-8 bg-gray-600 rounded w-40" />
-              <div className="h-8 bg-gray-600 rounded w-32" />
-              <div className="h-8 bg-gray-600 rounded w-24" />
-            </div>
-          ))}
+    <SkeletonTheme baseColor="#292929" highlightColor="#1E1E1E">
+      <div className="mt-2 grid grid-cols-7 gap-2">
+        <div className="col-span-3">
+          <Skeleton className="h-10 " />
         </div>
-      ))}
-    </div>
+        <div className="col-span-2">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-1">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-1">
+          <Skeleton className="h-10 " />
+        </div>
+      </div>
+      <div className="my-2 grid grid-cols-7 gap-2">
+        <div className="col-span-3">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-2">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-1">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-1">
+          <Skeleton className="h-10 " />
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-2">
+        <div className="col-span-3">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-2">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-1">
+          <Skeleton className="h-10 " />
+        </div>
+        <div className="col-span-1">
+          <Skeleton className="h-10 " />
+        </div>
+      </div>
+    </SkeletonTheme>
   );
 }

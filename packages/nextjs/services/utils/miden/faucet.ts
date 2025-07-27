@@ -19,19 +19,14 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
   }
 }
 
-export async function mintToken(accountId: string, faucetId: string, amount: number): Promise<TransactionResult> {
+export async function mintToken(accountId: AccountId, faucetId: AccountId, amount: BigInt): Promise<TransactionResult> {
   const { getClient } = useClient();
 
   try {
     const client = await getClient();
-    const { AccountId, NoteType } = await import("@demox-labs/miden-sdk");
-    const mintTxRequest = client.newMintTransactionRequest(
-      AccountId.fromHex(accountId),
-      AccountId.fromHex(faucetId),
-      NoteType.Public,
-      BigInt(amount),
-    );
-    const txResult = await client.newTransaction(AccountId.fromHex(faucetId), mintTxRequest);
+    const { NoteType } = await import("@demox-labs/miden-sdk");
+    const mintTxRequest = client.newMintTransactionRequest(accountId, faucetId, NoteType.Public, amount);
+    const txResult = await client.newTransaction(faucetId, mintTxRequest);
     await client.submitTransaction(txResult);
     return txResult;
   } catch (err) {

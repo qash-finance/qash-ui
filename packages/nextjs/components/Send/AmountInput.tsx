@@ -43,64 +43,17 @@ export const AmountInput: React.FC<AmountInputProps> = ({
         <input
           {...register("amount", {
             required: "Amount is required",
-            validate: {
-              isNumber: value => !isNaN(value) || "Please enter a valid number",
-              isPositive: value => parseFloat(value) > 0 || "Amount must be greater than 0",
-              hasValidDecimals: value => {
-                const decimals = value.toString().split(".")[1];
-                return (
-                  !decimals ||
-                  decimals.length <= selectedToken.metadata.decimals ||
-                  `Maximum ${selectedToken.metadata.decimals} decimal places allowed`
-                );
-              },
-              isInRange: value => {
-                const amount = parseFloat(value);
-                return amount <= availableBalance || "Amount exceeds available balance";
-              },
-            },
+            min: { value: 0, message: "Amount must be greater than 0" },
           })}
           autoComplete="off"
           className="text-white opacity-20 text-center outline-none"
           placeholder="0.00"
-          type="text"
+          type="number"
           inputMode="decimal"
+          step="0.000000000000000001" // 18 decimal places
           onKeyDown={e => {
-            // Allow: backspace, delete, tab, escape, enter, decimal point
-            if (
-              e.key === "Backspace" ||
-              e.key === "Delete" ||
-              e.key === "Tab" ||
-              e.key === "Escape" ||
-              e.key === "Enter" ||
-              e.key === "." ||
-              e.key === "ArrowLeft" ||
-              e.key === "ArrowRight"
-            ) {
-              // Allow the key
-              return;
-            }
-
-            // Block any non-number keys
-            if (!/[0-9]/.test(e.key)) {
-              e.preventDefault();
-            }
-
-            // Block multiple decimal points
-            if (e.key === "." && (e.target as HTMLInputElement).value.includes(".")) {
-              e.preventDefault();
-            }
-          }}
-          onChange={e => {
-            // Remove any non-numeric characters except decimal point
-            const value = e.target.value.replace(/[^\d.]/g, "");
-            // Ensure only one decimal point
-            const parts = value.split(".");
-            const sanitizedValue = parts[0] + (parts.length > 1 ? "." + parts[1] : "");
-            e.target.value = sanitizedValue;
-
-            // Update form value
-            setValue("amount", sanitizedValue === "" ? "" : parseFloat(sanitizedValue));
+            if (e.key === "-" || e.key === "+" || e.key === "=") e.preventDefault();
+            if (e.key === "e" || e.key === "E") e.preventDefault();
           }}
         />
         {errors.amount && <span className="text-sm text-red-500 mt-1">{errors.amount.message as string}</span>}

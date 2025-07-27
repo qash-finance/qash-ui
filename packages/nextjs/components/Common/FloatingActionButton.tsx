@@ -24,7 +24,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
   return (
     <button
-      className={`fixed bottom-6 right-6 w-14 h-14 z-50 flex items-center justify-center rounded-full transition-all duration-200 bg-white outline-none cursor-pointer `}
+      className={`cursor-pointer fixed bottom-6 right-6 w-14 h-14 z-50 flex items-center justify-center rounded-full transition-all duration-200 bg-white outline-none `}
       style={{
         boxShadow: "0px 0px 0px 1px #989898, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #989898 inset",
       }}

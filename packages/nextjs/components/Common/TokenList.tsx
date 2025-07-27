@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
 import { TokenItem } from "./TokenItem";
-import { AnyToken, AssetWithMetadata } from "@/types/faucet";
-import { turnBechToHex } from "@/services/utils/turnBechToHex";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { AssetWithMetadata } from "@/types/faucet";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { blo } from "blo";
 import { formatUnits } from "viem";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
 
 interface TokenListProps {
   assets: AssetWithMetadata[];
@@ -34,15 +34,15 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
           assets.map((asset, index) => (
             <TokenItem
               key={asset.faucetId}
-              icon={
-                asset.faucetId === qashTokenAddress
-                  ? "/q3x-icon.svg"
-                  : generateTokenAvatar(asset.faucetId, asset.metadata.symbol)
-              }
+              icon={asset.faucetId === QASH_TOKEN_ADDRESS ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
               address={asset.faucetId}
               name={asset.metadata.symbol}
-              usdValue={formatNumberWithCommas(asset.amount)} // 1:1 ratio with token amount
-              tokenAmount={formatNumberWithCommas(asset.amount)}
+              usdValue={formatNumberWithCommas(
+                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
+              )} // 1:1 ratio with token amount
+              tokenAmount={formatNumberWithCommas(
+                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
+              )}
               onClick={() => onTokenSelect?.(asset)}
             />
           ))

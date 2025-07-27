@@ -16,8 +16,10 @@ import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
+import SkeletonLoading from "@/components/Common/SkeletonLoading";
+import { useTour } from "@reactour/tour";
 
 const mockData = [
   {
@@ -101,7 +103,7 @@ const TableRow = ({
           {assets.map((asset, index) => (
             <div key={index} className="flex items-center gap-1 relative group">
               <img
-                src={qashTokenAddress == asset.faucetId ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
+                src={QASH_TOKEN_ADDRESS == asset.faucetId ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
                 alt={asset.metadata?.symbol || "Token"}
                 className="w-4 h-4 flex-shrink-0 rounded-full"
               />
@@ -156,8 +158,6 @@ export const PendingRecieveContainer: React.FC = () => {
     error: errorConsumableNotesFromServer,
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
-
-  console.log("consumableNotesFromServer", consumableNotesFromServer);
 
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
@@ -268,110 +268,119 @@ export const PendingRecieveContainer: React.FC = () => {
 
   return (
     <div className="flex w-full h-full bg-neutral-900  rounded-xl text-white p-6 space-y-6 gap-4">
-      <div className="flex-3">
-        {/* Pending Section */}
-        <div className="flex items-center justify-between">
+      {
+        <div className="flex-3">
           <div>
-            <header className="flex flex-col gap-2 justify-center items-start w-full">
-              <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
-                Pending to receive
-              </h2>
-              <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
-                Payments sent to you that are ready to be added to your wallet
-              </p>
-            </header>
-          </div>
-
-          <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
-            <span className="text-lg text-black">Auto Claim</span>
-            <ToggleSwitch disabled={true} enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
-          </div>
-        </div>
-
-        {/* Pending Table */}
-        <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800">
-          {isLoadingConsumableNotesFromServer ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                <span className="text-white">Loading consumable notes...</span>
-              </div>
-            </div>
-          ) : consumableNotes?.length === 0 || !consumableNotes ? (
-            <Empty title="No pending receive" />
-          ) : (
-            <table className="w-full min-w-[800px]">
-              <TableHeader columns={HeaderColumns} allChecked={isAllChecked || false} onCheckAll={handleCheckAll} />
-              <tbody>
-                {consumableNotes?.map((row, index) => (
-                  <TableRow
-                    key={`pending-${index}`}
-                    assets={row.assets}
-                    from={row.sender}
-                    dateTime={new Date().toISOString()}
-                    action={"Claim"}
-                    checked={checkedRows.includes(index)}
-                    onCheck={() => handleCheckRow(index)}
-                    onClaim={() => handleClaim(row)}
-                    disabled={claiming}
-                  />
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {checkedRows.length > 0 && (
-          <div className="flex items-center justify-end mt-2 gap-2">
-            <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
-            <ActionButton text="Receive all" onClick={() => handleClaimAll()} disabled={claiming} />
-          </div>
-        )}
-
-        {/* Unverified Section */}
-        {isConnected && (
-          <React.Fragment>
-            <div className="mt-10">
+            {/* Pending Section */}
+            <div className="flex items-center justify-between">
               <div>
                 <header className="flex flex-col gap-2 justify-center items-start w-full">
                   <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
-                    Unverified request
+                    Pending to receive
                   </h2>
                   <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
-                    Payments that need additional confirmation before you can receive them
+                    Payments sent to you that are ready to be added to your wallet
                   </p>
                 </header>
               </div>
-            </div>
-            <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
-              {true ? (
-                <Empty title="No pending receive" />
-              ) : (
-                <table className="w-full min-w-[800px]">
-                  <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-                  <tbody>
-                    {mockData.map((row, index) => (
-                      <TableRow
-                        key={`pending-${index}`}
-                        assets={row.assets}
-                        from={row.from}
-                        dateTime={row.dateTime}
-                        action={row.action}
-                        checked={false}
-                        onCheck={() => {}}
-                        onClaim={() => {}}
-                        disabled={claiming}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </React.Fragment>
-        )}
-      </div>
 
-      <div className="flex-1">
+              <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
+                <span className="text-lg text-black">Auto Claim</span>
+                <ToggleSwitch disabled={true} enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
+              </div>
+            </div>
+            {!isConnected ? (
+              <div className="mt-2">
+                {" "}
+                <Empty title="No pending receive" />
+              </div>
+            ) : isLoadingConsumableNotesFromServer ? (
+              <SkeletonLoading />
+            ) : (
+              <div>
+                {/* Pending Table */}
+                <div className="mt-2 overflow-x-auto rounded-lg border border-zinc-800" data-tour="pending-payments">
+                  {consumableNotes?.length === 0 || !consumableNotes ? (
+                    <Empty title="No pending receive" />
+                  ) : (
+                    <table className="w-full min-w-[800px]">
+                      <TableHeader
+                        columns={HeaderColumns}
+                        allChecked={isAllChecked || false}
+                        onCheckAll={handleCheckAll}
+                      />
+                      <tbody>
+                        {consumableNotes?.map((row, index) => (
+                          <TableRow
+                            key={`pending-${index}`}
+                            assets={row.assets}
+                            from={row.sender}
+                            dateTime={new Date().toISOString()}
+                            action={"Claim"}
+                            checked={checkedRows.includes(index)}
+                            onCheck={() => handleCheckRow(index)}
+                            onClaim={() => handleClaim(row)}
+                            disabled={claiming}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                {checkedRows.length > 0 && (
+                  <div className="flex items-center justify-end mt-2 gap-2">
+                    <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
+                    <ActionButton text="Receive all" onClick={() => handleClaimAll()} disabled={claiming} />
+                  </div>
+                )}
+                {/* Unverified Section */}
+                {isConnected && (
+                  <React.Fragment>
+                    <div className="mt-10">
+                      <div>
+                        <header className="flex flex-col gap-2 justify-center items-start w-full">
+                          <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+                            Unverified request
+                          </h2>
+                          <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+                            Payments that need additional confirmation before you can receive them
+                          </p>
+                        </header>
+                      </div>
+                    </div>
+                    <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
+                      {true ? (
+                        <Empty title="No pending receive" />
+                      ) : (
+                        <table className="w-full min-w-[800px]">
+                          <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
+                          <tbody>
+                            {mockData.map((row, index) => (
+                              <TableRow
+                                key={`pending-${index}`}
+                                assets={row.assets}
+                                from={row.from}
+                                dateTime={row.dateTime}
+                                action={row.action}
+                                checked={false}
+                                onCheck={() => {}}
+                                onClaim={() => {}}
+                                disabled={claiming}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </React.Fragment>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      }
+
+      <div className="flex-1" data-tour="receive-section">
         <ReceiveAddress
           onEnterAmount={() => {
             openModal(MODAL_IDS.CREATE_CUSTOM_QR);
@@ -383,5 +392,3 @@ export const PendingRecieveContainer: React.FC = () => {
     </div>
   );
 };
-
-// 1.2123

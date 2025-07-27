@@ -18,7 +18,9 @@ export default function SendPage() {
         activeTab === AmountInputTab.STREAM ? "overflow-y-auto" : "overflow-hidden"
       }`}
     >
-      <SendTransactionForm activeTab={activeTab} onTabChange={handleTabChange} />
+      <div data-tour="send-form">
+        <SendTransactionForm activeTab={activeTab} onTabChange={handleTabChange} />
+      </div>
       <div
         className={`transition-all duration-700 ease-out ${activeTab === AmountInputTab.STREAM ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-8 pointer-events-none"} w-full`}
       >

@@ -1,12 +1,12 @@
 import { AssetWithMetadata } from "@/types/faucet";
-import { qashTokenAddress } from "./constant";
+import { QASH_TOKEN_ADDRESS } from "./constant";
 
 export const getDefaultSelectedToken = (assets: AssetWithMetadata[]): AssetWithMetadata => {
   // If user has no assets, default to Qash
   if (assets.length === 0) {
     return {
       amount: "0",
-      faucetId: qashTokenAddress,
+      faucetId: QASH_TOKEN_ADDRESS,
       metadata: {
         symbol: "QASH",
         decimals: 8,
@@ -21,7 +21,7 @@ export const getDefaultSelectedToken = (assets: AssetWithMetadata[]): AssetWithM
   if (nonZeroAssets.length === 0) {
     // All assets have 0 balance, default to Qash
     return {
-      faucetId: qashTokenAddress,
+      faucetId: QASH_TOKEN_ADDRESS,
       amount: "0",
       metadata: {
         symbol: "QASH",

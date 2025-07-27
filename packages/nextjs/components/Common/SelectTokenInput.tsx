@@ -1,12 +1,12 @@
+import React from "react";
+import { blo } from "blo";
+import { formatUnits } from "viem";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
-import React from "react";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { AnyToken, AssetWithMetadata } from "@/types/faucet";
-import { formatUnits } from "viem";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
-import { qashTokenAddress } from "@/services/utils/constant";
-import { generateTokenAvatar } from "@/services/utils/tokenAvatar";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
 interface SelectTokenInputProps {
   selectedToken: AssetWithMetadata | null;
@@ -38,11 +38,7 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
           }}
         >
           <img
-            src={
-              token.faucetId === qashTokenAddress
-                ? "/q3x-icon.svg"
-                : generateTokenAvatar(token.faucetId, token.metadata.symbol)
-            }
+            src={token.faucetId === QASH_TOKEN_ADDRESS ? "/q3x-icon.svg" : blo(turnBechToHex(token.faucetId))}
             alt={token.metadata.symbol}
             className="w-5 h-5 rounded-full"
           />

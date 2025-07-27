@@ -6,23 +6,13 @@ import { ActionButton } from "../../Common/ActionButton";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { formatAddress } from "@/services/utils/miden/address";
-import { qashTokenAddress } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
 import { RecallableNote } from "@/types/transaction";
 import { customCreateP2IDENote } from "@/services/utils/miden/note";
-import {
-  AccountId,
-  Felt,
-  NoteAndArgs,
-  NoteAndArgsArray,
-  NoteType,
-  TransactionRequestBuilder,
-} from "@demox-labs/miden-sdk";
-import {
-  submitTransactionWithOwnInputNotes,
-  submitTransactionWithOwnOutputNotes,
-} from "@/services/utils/miden/transactions";
+import { AccountId, Felt, NoteAndArgs, NoteAndArgsArray, NoteType } from "@demox-labs/miden-sdk";
+import { submitTransactionWithOwnInputNotes } from "@/services/utils/miden/transactions";
 import toast from "react-hot-toast";
 
 const formatDate = (dateString: string) => {
@@ -233,19 +223,6 @@ export const CancelDashboardContainer: React.FC = () => {
     </div>
   );
 
-  // Checkbox handlers for pending section
-  const handlePendingCheckAll = () => {
-    if (pendingCheckedRows.length === pendingRecallData.length) {
-      setPendingCheckedRows([]);
-    } else {
-      setPendingCheckedRows(pendingRecallData.map((_, idx) => idx));
-    }
-  };
-
-  const handlePendingCheckRow = (index: number) => {
-    setPendingCheckedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
-  };
-
   return (
     <section className="rounded-2xl bg-neutral-900 w-full h-full px-[16px] py-[20px]">
       {recallableNotesLoading ? (
@@ -282,7 +259,7 @@ export const CancelDashboardContainer: React.FC = () => {
 
             <StatusCard
               title="Waiting for cancel payment"
-              value={recallableNotes?.recalledCount.toString() || "0"}
+              value={recallableNotes?.waitingToRecallItems.length.toString() || "0"}
               hasBackground={true}
             />
 
@@ -314,7 +291,7 @@ export const CancelDashboardContainer: React.FC = () => {
                     <div className="group relative flex items-center gap-1">
                       <img
                         src={
-                          qashTokenAddress == note.assets[0].faucetId
+                          QASH_TOKEN_ADDRESS == note.assets[0].faucetId
                             ? "/q3x-icon.svg"
                             : blo(turnBechToHex(note.assets[0].faucetId))
                         }
@@ -368,7 +345,7 @@ export const CancelDashboardContainer: React.FC = () => {
                     <div className="group relative flex items-center gap-1">
                       <img
                         src={
-                          qashTokenAddress == note.assets[0].faucetId
+                          QASH_TOKEN_ADDRESS == note.assets[0].faucetId
                             ? "/q3x-icon.svg"
                             : blo(turnBechToHex(note.assets[0].faucetId))
                         }
