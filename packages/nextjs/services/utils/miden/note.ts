@@ -16,12 +16,7 @@ import {
   NoteAssets,
   FungibleAsset,
   TransactionRequestBuilder,
-  OutputNotesArray,
-  TransactionResult,
   NoteScript,
-  NoteId,
-  NoteFilter,
-  NoteFilterTypes,
   NoteAndArgsArray,
   NoteAndArgs,
 } from "@demox-labs/miden-sdk";
@@ -32,22 +27,13 @@ import { PartialConsumableNote } from "@/types/faucet";
 
 export async function getConsumableNotes(accountId: string) {
   const { getClient } = useClient();
-  console.log("getting consumable notes", accountId);
   try {
     const client = await getClient();
 
-    let id: AccountId;
-
-    if (accountId.startsWith("0x")) {
-      id = AccountId.fromHex(accountId);
-    } else {
-      //@ts-ignore
-      id = AccountId.fromBech32(accountId);
-    }
-
-    const notes = await client.getConsumableNotes(id);
+    const notes = await client.getConsumableNotes(AccountId.fromBech32(accountId));
     return notes;
   } catch (error) {
+    console.log("ERROR GETTING CONSUMABLE NOTES", error);
     throw new Error("Failed to fetch consumable notes");
   }
 }
@@ -126,11 +112,16 @@ export async function consumeAllNotes(
     // loop through the notes
     for (const noteInfo of notes) {
       if (noteInfo.isPrivate) {
+        // Create AccountId objects once and reuse them to avoid aliasing issues
+        const senderAccountId = AccountId.fromBech32(noteInfo?.partialNote?.sender!);
+        const recipientAccountId = AccountId.fromBech32(noteInfo?.partialNote?.recipient!);
+        const faucetAccountId = AccountId.fromBech32(noteInfo?.partialNote?.assets[0].faucetId!);
+
         const note = await customCreateP2IDENote(
-          AccountId.fromBech32(noteInfo?.partialNote?.sender!),
-          AccountId.fromBech32(noteInfo?.partialNote?.recipient!),
+          senderAccountId,
+          recipientAccountId,
           Number(noteInfo?.partialNote?.assets[0].amount),
-          AccountId.fromBech32(noteInfo?.partialNote?.assets[0].faucetId!),
+          faucetAccountId,
           noteInfo?.partialNote?.recallableHeight!,
           0,
           noteInfo?.partialNote?.private ? NoteType.Private : NoteType.Public,
@@ -168,11 +159,16 @@ export async function consumePrivateNote(accountId: AccountId, partialNote: Part
   try {
     const client = await getClient();
 
+    // Create AccountId objects once and reuse them to avoid aliasing issues
+    const senderAccountId = AccountId.fromBech32(partialNote.sender);
+    const recipientAccountId = AccountId.fromBech32(partialNote.recipient);
+    const faucetAccountId = AccountId.fromBech32(partialNote.assets[0].faucetId);
+
     const note = await customCreateP2IDENote(
-      AccountId.fromBech32(partialNote.sender),
-      AccountId.fromBech32(partialNote.recipient),
+      senderAccountId,
+      recipientAccountId,
       Number(partialNote.assets[0].amount),
-      AccountId.fromBech32(partialNote.assets[0].faucetId),
+      faucetAccountId,
       partialNote.recallableHeight,
       0,
       partialNote.private ? NoteType.Private : NoteType.Public,
@@ -206,6 +202,8 @@ export async function consumePublicNote(accountId: AccountId, noteId: string) {
     throw new Error("Failed to consume notes");
   }
 }
+
+
 
 export async function createNoteAndSubmit(
   sender: AccountId,

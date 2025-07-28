@@ -16,6 +16,7 @@ import { AccountId, Felt, NoteAndArgs, NoteAndArgsArray, NoteType } from "@demox
 import { submitTransactionWithOwnInputNotes } from "@/services/utils/miden/transactions";
 import toast from "react-hot-toast";
 import { NoteStatus } from "@/types/note";
+import { Empty } from "@/components/Common/Empty";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -53,14 +54,18 @@ const TableSection = ({
         </div>
       </div>
       <div className="mt-2.5">
-        <Table
-          headers={headers}
-          data={data}
-          actionColumn={true}
-          actionRenderer={actionRenderer}
-          className="w-full"
-          columnWidths={columnWidths}
-        />
+        {data.length > 0 ? (
+          <Table
+            headers={headers}
+            data={data}
+            actionColumn={true}
+            actionRenderer={actionRenderer}
+            className="w-full"
+            columnWidths={columnWidths}
+          />
+        ) : (
+          <Empty title="No payments to cancel" />
+        )}
       </div>
     </div>
   </section>

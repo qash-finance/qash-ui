@@ -232,11 +232,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       // each block is 5 seconds, calculate recall height
       const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
 
+      // Create AccountId objects once to avoid aliasing issues
+      const senderAccountId = AccountId.fromBech32(walletAddress);
+      const recipientAccountId = AccountId.fromBech32(recipientAddress);
+      const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
+
       // create note
       const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
-        AccountId.fromBech32(walletAddress),
-        AccountId.fromBech32(recipientAddress),
-        AccountId.fromBech32(selectedToken.faucetId),
+        senderAccountId,
+        recipientAccountId,
+        faucetAccountId,
         Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
         isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
         recallHeight,
@@ -245,10 +250,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       const noteId = note.id().toString();
 
       // submit transaction to miden
-      const txId = await submitTransactionWithOwnOutputNotes(
-        new OutputNotesArray([note]),
-        AccountId.fromBech32(walletAddress),
-      );
+      const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
 
       // submit transaction to server
       const response = await sendSingleTransaction({
