@@ -19,7 +19,6 @@ import useConsumeNotes from "@/hooks/server/useConsume";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
-import { useTour } from "@reactour/tour";
 
 const mockData = [
   {
@@ -156,10 +155,9 @@ export const PendingRecieveContainer: React.FC = () => {
     data: consumableNotesFromServer,
     isLoading: isLoadingConsumableNotesFromServer,
     error: errorConsumableNotesFromServer,
+    isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
-
-  console.log("CONSUMABLE NOTES FROM SERVER", consumableNotesFromServer, errorConsumableNotesFromServer);
 
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
@@ -181,7 +179,7 @@ export const PendingRecieveContainer: React.FC = () => {
         }
       }
     })();
-  }, [walletAddress, isConnected, consumableNotesFromServer]);
+  }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
 
   const isAllChecked = consumableNotes.length > 0 && checkedRows.length === consumableNotes.length;
 
@@ -203,14 +201,25 @@ export const PendingRecieveContainer: React.FC = () => {
       toast.loading("Receiving payment...");
 
       setClaiming(true);
+      console.log("NOTE", note);
 
-      if (note.private) {
-        // if private, we need to update on server
-        await consumePrivateNote(AccountId.fromBech32(walletAddress), note);
+      if (note.private || note.recallableHeight > 0) {
+        // if private or recallableHeight > 0, we need to update on server
+        if (!note.private && note.recallableHeight > 0) {
+          // public + recallable
+          await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
+          // consume on server level
+          await consumeNotes([note.id]);
+        } else if (note.private && note.recallableHeight > 0) {
+          // private + recallable
+          await consumePrivateNote(AccountId.fromBech32(walletAddress), note);
+          // consume on server level
+          await consumeNotes([note.id]);
+        }
       } else {
+        // dont need to update server
         await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
       }
-      await consumeNotes([note.id]);
       setClaiming(false);
       toast.dismiss();
       toast.success("Payment received successfully");
@@ -245,7 +254,7 @@ export const PendingRecieveContainer: React.FC = () => {
           partialNote: consumableNotes[idx],
         })),
       );
-
+      console.log(checkedRows);
       // consume on server level
       await consumeNotes(checkedRows.map(idx => consumableNotes[idx].id));
 

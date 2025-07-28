@@ -1,6 +1,5 @@
 "use client";
-import { AccountId, ConsumableNoteRecord } from "@demox-labs/miden-sdk";
-import { getConsumableNotes } from "../../services/utils/miden/note";
+import { AccountId } from "@demox-labs/miden-sdk";
 import { getAccountAssets } from "@/services/utils/miden/account";
 import { AssetWithMetadata } from "@/types/faucet";
 import {
@@ -26,7 +25,6 @@ const defaultQashToken: AssetWithMetadata = {
 
 interface AccountData {
   assets: AssetWithMetadata[];
-  consumableNotes: ConsumableNoteRecord[] | null;
   isAccountDeployed: boolean;
   accountBalance: string;
   error?: unknown;
@@ -37,7 +35,6 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
   if (!walletAddress || walletAddress.trim() === "") {
     return {
       assets: [defaultQashToken],
-      consumableNotes: null,
       isAccountDeployed: true,
       accountBalance: "0",
     };
@@ -49,7 +46,6 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
   } catch (error) {
     return {
       assets: [defaultQashToken],
-      consumableNotes: null,
       isAccountDeployed: true,
       accountBalance: "0",
     };
@@ -57,10 +53,7 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
 
   try {
     // Fetch assets and notes in parallel
-    const [accountAssets, consumableNotes] = await Promise.all([
-      getAccountAssets(walletAddress),
-      getConsumableNotes(walletAddress),
-    ]);
+    const [accountAssets] = await Promise.all([getAccountAssets(walletAddress)]);
 
     // merge QASH token with account assets, replacing if exists
     const mergedAssets = [defaultQashToken, ...accountAssets.filter(asset => asset.faucetId !== QASH_TOKEN_ADDRESS)];
@@ -81,7 +74,6 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
 
     return {
       assets: mergedAssets,
-      consumableNotes,
       isAccountDeployed: true,
       accountBalance: totalBalance.toString(),
     };
@@ -91,7 +83,6 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
 
     return {
       assets: [defaultQashToken],
-      consumableNotes: null,
       isAccountDeployed: !isNotFound,
       accountBalance: "0",
       error: err,
@@ -118,7 +109,6 @@ export function useAccount() {
 
   const defaultData: AccountData = {
     assets: [defaultQashToken],
-    consumableNotes: null,
     isAccountDeployed: true,
     accountBalance: "0",
   };
@@ -130,7 +120,6 @@ export function useAccount() {
     loading,
     error,
     isAccountDeployed: accountData?.isAccountDeployed ?? defaultData.isAccountDeployed,
-    consumableNotes: accountData?.consumableNotes || defaultData.consumableNotes,
     accountId: walletAddress,
     isError: !!error,
   };

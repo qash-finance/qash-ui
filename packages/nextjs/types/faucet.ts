@@ -18,6 +18,7 @@ export type PartialConsumableNote = {
   private: boolean;
   assets: AssetWithMetadata[];
   recallableHeight: number;
+  recallableTime: string;
   serialNumber: string[];
 };
 
