@@ -5,6 +5,7 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { getQRsFromLocalStorage, generateQRCode } from "@/services/utils/qrCode";
 import { CustomQRData } from "@/services/utils/qrCode";
+import toast from "react-hot-toast";
 
 interface ReceiveAddressProps {
   address?: string;
@@ -17,8 +18,6 @@ interface ReceiveAddressProps {
 export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
   address = "0x137f06b5b832592900253730d5a5ad01c456...",
   onEnterAmount,
-  onSaveQR,
-  onCopyAddress,
 }) => {
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
 
@@ -150,7 +149,7 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
   };
 
   return (
-    <main className="mx-auto rounded-2xl bg-neutral-700 w-full max-w-[380px] p-4 flex flex-col gap-4 h-full max-h-[800px]">
+    <main className="receive-address mx-auto rounded-2xl bg-neutral-700 w-full max-w-[380px] p-4 flex flex-col gap-4 h-full max-h-[800px]">
       {/* Header */}
       <header className="flex-col gap-2">
         <h1 className="text-lg font-medium leading-5 text-white">Receive Address</h1>
@@ -269,7 +268,14 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
               }}
               className="flex-1"
             />
-            <ActionButton text="Copy Address" onClick={onCopyAddress} className="flex-1" />
+            <ActionButton
+              text="Copy Address"
+              onClick={() => {
+                navigator.clipboard.writeText(walletAddress);
+                toast.success("Address copied to clipboard");
+              }}
+              className="flex-1"
+            />
           </div>
         </>
       ) : (

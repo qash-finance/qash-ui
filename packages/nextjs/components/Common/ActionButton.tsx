@@ -1,104 +1,97 @@
 "use client";
-import * as React from "react";
+import React, { useMemo } from "react";
 
 interface ActionButtonProps {
   text: string;
   type?: "accept" | "deny" | "neutral";
   disabled?: boolean;
+  loading?: boolean;
   onClick?: () => void;
   className?: string;
   buttonType?: "button" | "submit" | "reset";
 }
 
-/**
- * 
- * @param param0 
- * <button
-          className="flex gap-1.5 justify-center items-center px-2.5 pt-1.5 pb-2 bg-[#FF2323] rounded-xl shadow"
-          style={{
-            padding: "6px 10px 8px 10px",
-            borderRadius: "10px",
-            fontWeight: "500",
-            letterSpacing: "-0.084px",
-            lineHeight: "100%",
-            boxShadow:
-              "0px 0px 0px 1px #D70000, 0px 1px 3px 0px rgba(143, 9, 9, 0.20), 0px -2.4px 0px 0px #D70000 inset",
-          }}
-        >
-          <span className="text-sm font-medium tracking-normal leading-3 text-white">Remove</span>
-        </button>
- * @returns 
- */
+const BUTTON_STYLES = {
+  accept: {
+    enabled: {
+      bg: "bg-blue-500 hover:bg-blue-600",
+      shadow: "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset",
+      color: "white",
+    },
+    disabled: {
+      bg: "bg-[#1E578E]/70",
+      shadow: "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset",
+      color: "#8E8E8E",
+    },
+  },
+  deny: {
+    enabled: {
+      bg: "bg-[#FF2323] hover:bg-[#D70000]",
+      shadow: "0px 0px 0px 1px #D70000, 0px 1px 3px 0px rgba(143, 9, 9, 0.20), 0px -2.4px 0px 0px #D70000 inset",
+      color: "white",
+    },
+    disabled: {
+      bg: "bg-[#8B5A5A]/70",
+      shadow: "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset",
+      color: "#8E8E8E",
+    },
+  },
+  neutral: {
+    enabled: {
+      bg: "bg-white hover:bg-white/80",
+      shadow: "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset",
+      color: "#066EFF",
+    },
+    disabled: {
+      bg: "bg-[#E5E5E5]/70",
+      shadow: "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset",
+      color: "#8E8E8E",
+    },
+  },
+} as const;
 
 export const ActionButton: React.FC<ActionButtonProps> = ({
   text,
   type = "accept",
   disabled = false,
+  loading = false,
   onClick,
-  className,
+  className = "",
   buttonType = "button",
 }) => {
-  const getButtonStyles = () => {
-    if (disabled) {
-      switch (type) {
-        case "accept":
-          return "bg-[#1E578E]/70";
-        case "deny":
-          return "bg-[#8B5A5A]/70";
-        case "neutral":
-          return "bg-[#E5E5E5]/70";
-        default:
-          return "bg-[#1E578E]/70";
-      }
-    }
+  const isDisabled = disabled || loading;
+  const buttonStyle = BUTTON_STYLES[type];
+  const currentStyle = isDisabled ? buttonStyle.disabled : buttonStyle.enabled;
 
-    switch (type) {
-      case "accept":
-        return "bg-blue-500 hover:bg-blue-600";
-      case "deny":
-        return "bg-[#FF2323] hover:bg-[#D70000]";
-      case "neutral":
-        return "bg-white hover:bg-white/80";
-      default:
-        return "bg-blue-500 hover:bg-blue-600";
-    }
-  };
+  const buttonStyles = useMemo(
+    () => ({
+      padding: "6px 10px 8px 10px",
+      borderRadius: "10px",
+      fontWeight: "500",
+      letterSpacing: "-0.084px",
+      lineHeight: "100%",
+      boxShadow: currentStyle.shadow,
+      color: currentStyle.color,
+    }),
+    [currentStyle.shadow, currentStyle.color],
+  );
 
-  const getBoxShadow = () => {
-    if (disabled)
-      return "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset";
+  const buttonClasses = useMemo(() => {
+    const baseClasses = "font-barlow font-medium transition-colors";
+    const stateClasses = isDisabled ? "cursor-not-allowed" : "cursor-pointer";
 
-    switch (type) {
-      case "accept":
-        return "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset";
-      case "deny":
-        return "0px 0px 0px 1px #D70000, 0px 1px 3px 0px rgba(143, 9, 9, 0.20), 0px -2.4px 0px 0px #D70000 inset";
-      case "neutral":
-        return "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset";
-      default:
-        return "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset";
-    }
-  };
+    return `${baseClasses} ${stateClasses} ${currentStyle.bg} ${className}`.trim();
+  }, [isDisabled, loading, currentStyle.bg, className]);
 
   return (
     <button
       type={buttonType}
-      className={`font-barlow font-medium text-white transition-colors cursor-pointer ${className} ${
-        disabled ? "cursor-not-allowed text-[#8E8E8E]" : ""
-      } ${getButtonStyles()}`}
-      style={{
-        padding: "6px 10px 8px 10px",
-        borderRadius: "10px",
-        fontWeight: "500",
-        letterSpacing: "-0.084px",
-        lineHeight: "100%",
-        boxShadow: getBoxShadow(),
-        color: type === "neutral" ? "#066EFF" : "white",
-      }}
-      disabled={disabled}
+      className={`${buttonClasses} justify-center items-center flex`}
+      style={buttonStyles}
+      disabled={isDisabled}
       onClick={onClick}
     >
-      {text}
+      {loading ? <img src="/loading-square.gif" alt="loading" className="w-6 h-6" /> : text}
     </button>
   );
 };

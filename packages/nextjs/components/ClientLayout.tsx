@@ -16,8 +16,8 @@ import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
-import { StepType, TourProvider } from "@reactour/tour";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
+import { TourProviderWrapper } from "@/contexts/TourProvider";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -30,13 +30,6 @@ const analyticsConfig = {
   enableErrorTracking: true,
   sessionTimeout: 30, // 30 minutes
 };
-
-const steps: StepType[] = [
-  {
-    selector: ".sidebar",
-    content: "This is the sidebar",
-  },
-];
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -122,7 +115,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </ToastBar>
             )}
           />
-          <TourProvider steps={steps}>
+          <TourProviderWrapper>
             <ModalProvider>
               <AnalyticsProvider config={analyticsConfig}>
                 <AuthProvider
@@ -156,12 +149,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         </div>
                       </div>
                     </div>
-                    <FloatingActionButton imgSrc="/q3x-icon.svg" />
+                    <FloatingActionButton imgSrc="/token/qash.svg" />
                   </AccountProvider>
                 </AuthProvider>
               </AnalyticsProvider>
             </ModalProvider>
-          </TourProvider>
+          </TourProviderWrapper>
         </WalletModalProvider>
       </WalletProvider>
     </QueryClientProvider>

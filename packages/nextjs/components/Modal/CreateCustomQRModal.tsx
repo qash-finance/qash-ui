@@ -77,10 +77,7 @@ export function CreateCustomQRModal({
         duration: 2000,
       });
 
-      // Close modal after a short delay
-      setTimeout(() => {
-        onClose();
-      }, 2000);
+      onClose();
     } catch (error) {
       console.error("Error generating QR:", error);
       alert("Failed to generate QR code. Please try again.");

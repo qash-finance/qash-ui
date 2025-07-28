@@ -1,6 +1,6 @@
 "use client";
 import { formatAddress } from "@/services/utils/miden/address";
-import * as React from "react";
+import React from "react";
 
 interface TokenItemProps {
   icon: string;

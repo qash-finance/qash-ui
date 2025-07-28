@@ -28,7 +28,7 @@ export enum SidebarLink {
 
 export const actionItems = [
   {
-    title: "Action",
+    title: "Quick Access",
     items: [
       {
         icon: "/sidebar/dashboard.gif",
@@ -37,8 +37,13 @@ export const actionItems = [
         link: SidebarLink.Dashboard,
         disabled: false,
       },
-      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send, disabled: false },
-      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: true },
+      {
+        icon: "/sidebar/address-book.gif",
+        label: "Address Book",
+        isActive: false,
+        link: SidebarLink.AddressBook,
+        disabled: false,
+      },
       // {
       //   icon: "/sidebar/ai-assistant.gif",
       //   label: "AI Assistant",
@@ -46,20 +51,20 @@ export const actionItems = [
       //   link: SidebarLink.AIAssistant,
       //   disabled: true,
       // },
+    ],
+  },
+  {
+    title: "Payments",
+    items: [
+      { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send, disabled: false },
       { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch, disabled: false },
+      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: true },
       {
         icon: "/sidebar/group-payment.gif",
         label: "Group Payment",
         isActive: false,
         link: SidebarLink.GroupPayment,
         disabled: true,
-      },
-      {
-        icon: "/sidebar/address-book.gif",
-        label: "Address Book",
-        isActive: false,
-        link: SidebarLink.AddressBook,
-        disabled: false,
       },
     ],
   },
@@ -78,7 +83,7 @@ export const actionItems = [
         label: "Transactions",
         isActive: false,
         link: SidebarLink.Transactions,
-        disabled: false,
+        disabled: true,
       },
     ],
   },
@@ -155,7 +160,10 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
       <div className="flex flex-col justify-between h-full">
         <div className="px-3.5 w-full">
           {/* Logo */}
-          <header className={`flex max-w-full leading-tight justify-items-start gap-2`}>
+          <header
+            className={`flex max-w-full leading-tight justify-items-start gap-2 cursor-pointer`}
+            onClick={() => router.push("/dashboard/pending-recieve")}
+          >
             <img src="/qash-logo.svg" alt="Qash Logo" className="w-20" />
             <div className="flex items-center justify-start px-3 border-gradient ">
               <p className="text-[13px] font-semibold text-[#7C7C7C]">Beta</p>

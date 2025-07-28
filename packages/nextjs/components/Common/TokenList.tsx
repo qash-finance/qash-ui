@@ -34,7 +34,7 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
           assets.map((asset, index) => (
             <TokenItem
               key={asset.faucetId}
-              icon={asset.faucetId === QASH_TOKEN_ADDRESS ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
+              icon={asset.faucetId === QASH_TOKEN_ADDRESS ? "/token/qash.svg" : blo(turnBechToHex(asset.faucetId))}
               address={asset.faucetId}
               name={asset.metadata.symbol}
               usdValue={formatNumberWithCommas(

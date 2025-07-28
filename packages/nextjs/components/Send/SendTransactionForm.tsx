@@ -435,7 +435,46 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         />
       </section>
 
-      {showTemporaryRecipient && getValues("recipientAddress") ? (
+      {/* Recipient Input */}
+      {/* If recipient name is not set, show the input */}
+      {!recipientName ? (
+        <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
+          <div className="flex flex-wrap gap-2.5 items-center">
+            <img
+              src="/default-avatar-icon.png"
+              alt="Recipient avatar"
+              className="object-contain shrink-0 aspect-square w-[40px]"
+            />
+            <div className="flex flex-col flex-1 ">
+              <div className="flex gap-2 items-center self-start whitespace-nowrap w-full">
+                <label className="text-base leading-none text-center text-white">To</label>
+                <input
+                  {...register("recipientAddress", {
+                    validate: (value: string) => {
+                      if (!value) return true; // Don't show error when empty
+                      if (!value.startsWith("mt")) return "Address must start with 'mt'";
+                      try {
+                        AccountId.fromBech32(value);
+                        return true;
+                      } catch (error) {
+                        return "Invalid recipient address";
+                      }
+                    },
+                  })}
+                  type="text"
+                  placeholder="Enter address or choose from your contacts book"
+                  className=" flex-1 leading-none text-white bg-transparent outline-none placeholder:text-neutral-600 w-full"
+                />
+              </div>
+            </div>
+            <ActionButton text="Choose" onClick={handleChooseRecipient} />
+          </div>
+
+          {errors.recipientAddress && watch("recipientAddress") && (
+            <span className="text-sm text-red-500">{errors?.recipientAddress?.message as string}</span>
+          )}
+        </section>
+      ) : (
         <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
           <div className="flex flex-wrap gap-2.5 items-center">
             <img
@@ -446,31 +485,22 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             <div className="flex flex-col flex-1 shrink justify-center basis-5 min-w-60">
               <div className="flex gap-2 items-center self-start whitespace-nowrap">
                 <label className="text-base leading-none text-center text-white">To</label>
-                <span className="text-base tracking-tight leading-none text-white">
-                  {recipientName || getValues("recipientAddress")}
-                </span>
+                <span className="text-base tracking-tight leading-none text-neutral-600">{recipientName}</span>
               </div>
+              <span className="mt-2 text-base tracking-tight leading-none text-white bg-transparent outline-none">
+                {getValues("recipientAddress")}
+              </span>
             </div>
             <ActionButton
               text="Remove"
               type="deny"
               onClick={() => {
-                setShowTemporaryRecipient(false);
-                setValue("recipientAddress", "");
                 setRecipientName("");
+                setValue("recipientAddress", "");
               }}
             />
           </div>
         </section>
-      ) : (
-        <RecipientInput
-          onChooseRecipient={handleChooseRecipient}
-          register={register}
-          errors={errors}
-          setValue={setValue}
-          watch={watch}
-          recipientName={recipientName}
-        />
       )}
 
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
@@ -489,7 +519,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             text="Send Transaction"
             buttonType="submit"
             className="w-[70%] h-10 mt-2"
-            disabled={isSending}
+            loading={isSending}
             onClick={() => setIsSubmittingAsBatch(false)}
           />
         </div>

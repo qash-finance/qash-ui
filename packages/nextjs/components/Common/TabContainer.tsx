@@ -45,7 +45,7 @@ const Tab: React.FC<TabProps> = ({ href, tab, isActive, onClick }) => {
       aria-selected={isActive}
       aria-disabled={tab.disabled}
       aria-controls={`tabpanel-${tab.id}`}
-      id={`tab-${tab.id}`}
+      id={tab.id}
     >
       <span
         className={`relative text-base tracking-tight leading-5 max-md:text-sm max-md:tracking-tight max-sm:text-xs max-sm:tracking-tight max-sm:leading-3 ${isActive ? "text-white" : "text-neutral-400"}`}
@@ -65,7 +65,7 @@ export const TabContainer: React.FC<TabContainerProps> = ({ tabs, defaultActiveT
 
   const [activeTab, setActiveTab] = useState<string>(defaultActiveTab || getTabIdFromPath());
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!tabs) return;
     const firstNonHrefTab = tabs.find(tab => !tab.href);
     if (firstNonHrefTab) {
@@ -78,7 +78,7 @@ export const TabContainer: React.FC<TabContainerProps> = ({ tabs, defaultActiveT
 
   return (
     <div
-      className={`flex relative shrink-0 gap-1.5 justify-center items-center p-1 mx-auto my-0 rounded-xl bg-neutral-950 h-[34px] max-md:p-1 max-md:w-full max-md:max-w-[600px] max-sm:p-0.5 max-sm:w-full max-sm:h-auto max-sm:rounded-xl ${className}`}
+      className={`dashboard-tab flex relative shrink-0 gap-1.5 justify-center items-center p-1 mx-auto my-0 rounded-xl bg-neutral-950 h-[34px] max-md:p-1 max-md:w-full max-md:max-w-[600px] max-sm:p-0.5 max-sm:w-full max-sm:h-auto max-sm:rounded-xl ${className}`}
       role="tablist"
       aria-label="Transaction tabs"
     >

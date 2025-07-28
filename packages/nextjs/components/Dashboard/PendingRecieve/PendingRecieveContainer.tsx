@@ -274,7 +274,7 @@ export const PendingRecieveContainer: React.FC = () => {
         <div className="flex-3">
           <div>
             {/* Pending Section */}
-            <div className="flex items-center justify-between">
+            <div className=" pending-to-receive flex items-center justify-between">
               <div>
                 <header className="flex flex-col gap-2 justify-center items-start w-full">
                   <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
@@ -293,7 +293,6 @@ export const PendingRecieveContainer: React.FC = () => {
             </div>
             {!isConnected ? (
               <div className="mt-2">
-                {" "}
                 <Empty title="No pending receive" />
               </div>
             ) : isLoadingConsumableNotesFromServer ? (
@@ -387,8 +386,6 @@ export const PendingRecieveContainer: React.FC = () => {
           onEnterAmount={() => {
             openModal(MODAL_IDS.CREATE_CUSTOM_QR);
           }}
-          onSaveQR={() => {}}
-          onCopyAddress={() => {}}
         />
       </div>
     </div>

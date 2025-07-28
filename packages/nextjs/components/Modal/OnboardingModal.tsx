@@ -97,9 +97,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
           </div>
 
           {/* Action Button */}
-          {loading ? (
-            <ActionButton text="■ ■ ■" onClick={() => {}} className="w-full h-10 animate-pulse" disabled />
-          ) : success ? (
+          {success ? (
             <ActionButton
               text="Ready to Claim!"
               onClick={() => {
@@ -108,7 +106,12 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
               className="w-full h-10"
             />
           ) : (
-            <ActionButton text="Request free tokens" onClick={() => handleMintToken()} className="w-full h-10" />
+            <ActionButton
+              text="Request free tokens"
+              onClick={() => handleMintToken()}
+              className="w-full h-10"
+              loading={loading}
+            />
           )}
         </main>
       </div>

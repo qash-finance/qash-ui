@@ -38,7 +38,7 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
           }}
         >
           <img
-            src={token.faucetId === QASH_TOKEN_ADDRESS ? "/q3x-icon.svg" : blo(turnBechToHex(token.faucetId))}
+            src={token.faucetId === QASH_TOKEN_ADDRESS ? "/token/qash.svg" : blo(turnBechToHex(token.faucetId))}
             alt={token.metadata.symbol}
             className="w-5 h-5 rounded-full"
           />

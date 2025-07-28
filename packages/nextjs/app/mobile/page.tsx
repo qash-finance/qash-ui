@@ -53,7 +53,7 @@ export default function MobilePage() {
       {/* Header */}
       <div className="flex items-center gap-[9.319px] mt-5 ml-5">
         <div className="h-7 w-7 shrink-0">
-          <img alt="" className="size-full" src="/q3x-icon.svg" />
+          <img alt="" className="size-full" src="/qash-icon.svg" />
         </div>
         <div className="font-['Schibsted_Grotesk:ExtraBold',_sans-serif] text-[19.96px] font-extrabold leading-[1.2] tracking-[-0.2003px] text-[#2470ff] whitespace-pre shrink-0">
           Qash
