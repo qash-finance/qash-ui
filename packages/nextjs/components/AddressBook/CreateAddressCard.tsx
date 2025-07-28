@@ -87,7 +87,7 @@ export const CreateAddressCard = ({
               !selectedToken
                 ? "/token/any-token.svg"
                 : selectedToken.faucetId == QASH_TOKEN_ADDRESS
-                  ? "/q3x-icon.svg"
+                  ? "/q3x-icon.png"
                   : blo(turnBechToHex(selectedToken.faucetId))
             }
             alt="token"

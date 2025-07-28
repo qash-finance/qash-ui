@@ -139,7 +139,7 @@ export function CreateCustomQRModal({
             <img
               src={
                 selectedToken?.faucetId === QASH_TOKEN_ADDRESS
-                  ? "/q3x-icon.svg"
+                  ? "/q3x-icon.png"
                   : blo(turnBechToHex(selectedToken?.faucetId || ""))
               }
               alt="coin-icon"

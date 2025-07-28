@@ -102,7 +102,7 @@ const TableRow = ({
           {assets.map((asset, index) => (
             <div key={index} className="flex items-center gap-1 relative group">
               <img
-                src={QASH_TOKEN_ADDRESS == asset.faucetId ? "/q3x-icon.svg" : blo(turnBechToHex(asset.faucetId))}
+                src={QASH_TOKEN_ADDRESS == asset.faucetId ? "/q3x-icon.png" : blo(turnBechToHex(asset.faucetId))}
                 alt={asset.metadata?.symbol || "Token"}
                 className="w-4 h-4 flex-shrink-0 rounded-full"
               />

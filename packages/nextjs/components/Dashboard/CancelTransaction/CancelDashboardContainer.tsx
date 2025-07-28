@@ -392,7 +392,7 @@ export const CancelDashboardContainer: React.FC = () => {
                       <img
                         src={
                           QASH_TOKEN_ADDRESS == note.assets[0].faucetId
-                            ? "/q3x-icon.svg"
+                            ? "/q3x-icon.png"
                             : blo(turnBechToHex(note.assets[0].faucetId))
                         }
                         alt={note.assets[0].metadata?.symbol || "Token"}
@@ -446,7 +446,7 @@ export const CancelDashboardContainer: React.FC = () => {
                       <img
                         src={
                           QASH_TOKEN_ADDRESS == note.assets[0].faucetId
-                            ? "/q3x-icon.svg"
+                            ? "/q3x-icon.png"
                             : blo(turnBechToHex(note.assets[0].faucetId))
                         }
                         alt={note.assets[0].metadata?.symbol || "Token"}

@@ -63,7 +63,7 @@ export function TokenList() {
                           value: asset.amount,
                           icon:
                             asset.faucetId === QASH_TOKEN_ADDRESS
-                              ? "/q3x-icon.svg"
+                              ? "/q3x-icon.png"
                               : blo(turnBechToHex(asset.faucetId)),
                         };
 

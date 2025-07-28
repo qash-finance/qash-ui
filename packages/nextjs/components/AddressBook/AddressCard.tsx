@@ -47,7 +47,7 @@ export const AddressCard = ({ addressBook }: AddressCardProps) => {
             !tokenAddress
               ? "/token/any-token.svg"
               : tokenAddress == QASH_TOKEN_ADDRESS
-                ? "/q3x-icon.svg"
+                ? "/q3x-icon.png"
                 : blo(turnBechToHex(tokenAddress))
           }
           alt="token"
