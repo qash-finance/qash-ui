@@ -3,7 +3,10 @@ import { apiServerWithAuth } from "./index";
 
 const getConsumable = async () => {
   const response = await apiServerWithAuth.getData(`/transactions/consumable`);
-  return response as ConsumableNote[];
+  return response as {
+    consumableTxs: ConsumableNote[];
+    recallableTxs: ConsumableNote[];
+  };
 };
 
 const getRecallable = async () => {

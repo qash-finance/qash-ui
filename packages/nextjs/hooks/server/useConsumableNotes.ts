@@ -15,14 +15,30 @@ export function useConsumableNotes() {
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["consumable-notes", walletAddress],
     queryFn: async (): Promise<PartialConsumableNote[]> => {
-      let consumableNotesFromServer: ConsumableNote[] = [];
+      // sender can get
+      // 1. p2id note
+      // 2. p2ide note as receiver
+      // 3. p2ide note as sender
+
+      // Basically I dont want to put recallable transactions in consumable note to prevent sender recall transactions
+
+      // So in this hook, we will only get
+      // 1. p2id note as receiver
+      // 2. p2ide note as receiver
+
+      // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
+
+      let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
+        consumableTxs: [],
+        recallableTxs: [],
+      };
       try {
         consumableNotesFromServer = await getConsumableNotesFromServer();
       } catch (error) {
         console.log("ERROR GETTING PRIVATE NOTES", error);
       }
 
-      const consumablePrivateNotes: PartialConsumableNote[] = consumableNotesFromServer.map(note => ({
+      const consumablePrivateNotes: PartialConsumableNote[] = consumableNotesFromServer.consumableTxs.map(note => ({
         id: note.noteId,
         sender: note.sender,
         recipient: note.recipient,
@@ -41,6 +57,8 @@ export function useConsumableNotes() {
 
       const consumableNotes: PartialConsumableNote[] = await Promise.all(
         notes.map(async note => {
+          // if note is in recallableTxs, dont include it
+
           const id = note.inputNoteRecord().id().toString();
           const inputNoteRecord = note.inputNoteRecord();
           const noteMetadata = inputNoteRecord.metadata();
@@ -72,22 +90,16 @@ export function useConsumableNotes() {
         }),
       );
 
-      // check duplicate notes (should be public recallable notes, if the note is not able to consume yet, dont show it)
-      const recallableTransactions = consumablePrivateNotes.filter(
-        note => note.sender == walletAddress && note.recallableHeight > 0,
-      );
-
-      // from recallable transactions, we check with consumableNotes, to see if the note is ready to be consumed
-      const readyToConsumeNotes = recallableTransactions.filter(transaction => {
-        const note = consumableNotes.find(note => note.id === transaction.id);
-        if (!note) return false;
-        return note.recallableTime <= new Date().toISOString();
+      // filter consumableNotes
+      const filteredConsumableNotes = consumableNotes.filter(note => {
+        // if note is in recallableTxs, dont include it
+        if (consumableNotesFromServer.recallableTxs.some(tx => tx.noteId === note.id)) {
+          return false;
+        }
+        return true;
       });
 
-      // also filter out the note from server that is private
-      const privateNotes = consumablePrivateNotes.filter(note => note.private);
-
-      return [...readyToConsumeNotes, ...privateNotes];
+      return [...filteredConsumableNotes, ...consumablePrivateNotes];
     },
     enabled: !!walletAddress,
     staleTime: 1000, // Consider data stale after 1 second
