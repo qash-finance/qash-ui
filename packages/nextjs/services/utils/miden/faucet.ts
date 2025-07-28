@@ -25,7 +25,11 @@ export async function mintToken(accountId: AccountId, faucetId: AccountId, amoun
   try {
     const client = await getClient();
     const { NoteType } = await import("@demox-labs/miden-sdk");
-    const mintTxRequest = client.newMintTransactionRequest(accountId, faucetId, NoteType.Public, amount);
+
+    // import faucet
+    const faucet = await importAndGetAccount(faucetId);
+
+    const mintTxRequest = client.newMintTransactionRequest(accountId, faucet.id(), NoteType.Public, amount);
     const txResult = await client.newTransaction(faucetId, mintTxRequest);
     await client.submitTransaction(txResult);
     return txResult;
@@ -86,12 +90,18 @@ export const getFaucetMetadata = async (faucetId: AccountId): Promise<FaucetMeta
     const faucet = await importAndGetAccount(faucetId);
 
     // read slot 0
-    const storageItem = faucet.storage().getItem(2);
+
+    // first we check if storage 2 have things, if have, then we read storage 2
+    let storageItem = faucet.storage().getItem(2);
+
     if (!storageItem) {
-      console.log("NO STORAGE ITEM AT KEY 0");
-      // no storage item at slot 0 means its no auth faucet
+      storageItem = faucet.storage().getItem(1);
+    }
+
+    if (!storageItem) {
       throw new Error("No storage item at key 0");
     }
+
     const valueWord = storageItem.toHex();
 
     const hex = valueWord.slice(2); // Remove '0x' prefix

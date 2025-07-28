@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { getConsumable as getPrivateConsumableNotes } from "@/services/api/transaction";
-import { useQuery } from "@tanstack/react-query";
+import { getConsumable as getConsumableNotesFromServer } from "@/services/api/transaction";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWalletAuth } from "./useWalletAuth";
 import { getConsumableNotes } from "@/services/utils/miden/note";
 import { ConsumableNoteRecord } from "@demox-labs/miden-sdk";
@@ -10,24 +10,41 @@ import { ConsumableNote } from "@/types/transaction";
 
 export function useConsumableNotes() {
   const { walletAddress } = useWalletAuth();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["consumable-notes", walletAddress],
     queryFn: async (): Promise<PartialConsumableNote[]> => {
-      let privateNotes: ConsumableNote[] = [];
+      // sender can get
+      // 1. p2id note
+      // 2. p2ide note as receiver
+      // 3. p2ide note as sender
+
+      // Basically I dont want to put recallable transactions in consumable note to prevent sender recall transactions
+
+      // So in this hook, we will only get
+      // 1. p2id note as receiver
+      // 2. p2ide note as receiver
+
+      // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
+
+      let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
+        consumableTxs: [],
+        recallableTxs: [],
+      };
       try {
-        privateNotes = await getPrivateConsumableNotes();
-      } catch (error) {}
+        consumableNotesFromServer = await getConsumableNotesFromServer();
+      } catch (error) {
+        console.log("ERROR GETTING PRIVATE NOTES", error);
+      }
 
-      const notes: ConsumableNoteRecord[] = await getConsumableNotes(walletAddress!);
-      console.log("CONSUMABLE PRIVATE NOTES", notes);
-
-      const consumablePrivateNotes: PartialConsumableNote[] = privateNotes.map(note => ({
+      const consumablePrivateNotes: PartialConsumableNote[] = consumableNotesFromServer.consumableTxs.map(note => ({
         id: note.noteId,
         sender: note.sender,
         recipient: note.recipient,
         private: true,
         recallableHeight: note.recallableHeight,
+        recallableTime: note.recallableTime,
         serialNumber: note.serialNumber,
         assets: note.assets.map(asset => ({
           amount: (Number(asset.amount) * 10 ** asset.metadata.decimals).toString(),
@@ -36,8 +53,12 @@ export function useConsumableNotes() {
         })),
       }));
 
+      const notes: ConsumableNoteRecord[] = await getConsumableNotes(walletAddress!);
+
       const consumableNotes: PartialConsumableNote[] = await Promise.all(
         notes.map(async note => {
+          // if note is in recallableTxs, dont include it
+
           const id = note.inputNoteRecord().id().toString();
           const inputNoteRecord = note.inputNoteRecord();
           const noteMetadata = inputNoteRecord.metadata();
@@ -63,19 +84,43 @@ export function useConsumableNotes() {
             recipient: walletAddress!,
             assets: assets,
             recallableHeight: -1,
+            recallableTime: "",
             serialNumber: [],
           };
         }),
       );
 
-      return [...consumableNotes, ...consumablePrivateNotes];
+      // filter consumableNotes
+      const filteredConsumableNotes = consumableNotes.filter(note => {
+        // if note is in recallableTxs, dont include it
+        if (consumableNotesFromServer.recallableTxs.some(tx => tx.noteId === note.id)) {
+          return false;
+        }
+        return true;
+      });
+
+      return [...filteredConsumableNotes, ...consumablePrivateNotes];
     },
     enabled: !!walletAddress,
+    staleTime: 1000, // Consider data stale after 1 second
+    gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always refetch on mount
   });
+
+  // Force fresh fetch by invalidating cache
+  const forceFetch = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["consumable-notes", walletAddress],
+    });
+  };
 
   return {
     data,
     isLoading,
+    isRefetching,
     error,
+    refetch,
+    forceFetch,
   };
 }

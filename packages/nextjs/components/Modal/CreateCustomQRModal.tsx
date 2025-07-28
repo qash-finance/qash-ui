@@ -77,10 +77,7 @@ export function CreateCustomQRModal({
         duration: 2000,
       });
 
-      // Close modal after a short delay
-      setTimeout(() => {
-        onClose();
-      }, 2000);
+      onClose();
     } catch (error) {
       console.error("Error generating QR:", error);
       alert("Failed to generate QR code. Please try again.");
@@ -142,7 +139,7 @@ export function CreateCustomQRModal({
             <img
               src={
                 selectedToken?.faucetId === QASH_TOKEN_ADDRESS
-                  ? "/q3x-icon.svg"
+                  ? "/q3x-icon.png"
                   : blo(turnBechToHex(selectedToken?.faucetId || ""))
               }
               alt="coin-icon"

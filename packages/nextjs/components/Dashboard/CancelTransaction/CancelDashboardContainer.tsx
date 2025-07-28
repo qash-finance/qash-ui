@@ -1,19 +1,22 @@
 "use client";
-import * as React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StatusCard } from "./StatusCard";
 import { Table } from "../../Common/Table";
 import { ActionButton } from "../../Common/ActionButton";
+import { CustomCheckbox } from "../../Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { formatAddress } from "@/services/utils/miden/address";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
-import { RecallableNote } from "@/types/transaction";
+import { RecallableDashboard, RecallableNote } from "@/types/transaction";
 import { customCreateP2IDENote } from "@/services/utils/miden/note";
 import { AccountId, Felt, NoteAndArgs, NoteAndArgsArray, NoteType } from "@demox-labs/miden-sdk";
 import { submitTransactionWithOwnInputNotes } from "@/services/utils/miden/transactions";
 import toast from "react-hot-toast";
+import { NoteStatus } from "@/types/note";
+import { Empty } from "@/components/Common/Empty";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -51,23 +54,116 @@ const TableSection = ({
         </div>
       </div>
       <div className="mt-2.5">
-        <Table
-          headers={headers}
-          data={data}
-          actionColumn={true}
-          actionRenderer={actionRenderer}
-          className="w-full"
-          columnWidths={columnWidths}
-        />
+        {data.length > 0 ? (
+          <Table
+            headers={headers}
+            data={data}
+            actionColumn={true}
+            actionRenderer={actionRenderer}
+            className="w-full"
+            columnWidths={columnWidths}
+          />
+        ) : (
+          <Empty title="No payments to cancel" />
+        )}
       </div>
     </div>
   </section>
 );
 
 export const CancelDashboardContainer: React.FC = () => {
+  const recallableNotes: RecallableDashboard = {
+    nextRecallTime: new Date("2024-06-03T15:00:00Z"),
+    recalledCount: 2,
+    recallableItems: [
+      {
+        id: 1,
+        assets: [
+          {
+            faucetId: "0x1234567890abcdef",
+            amount: "100.00",
+            metadata: {
+              symbol: "QASH",
+              decimals: 18,
+              maxSupply: 10000,
+            },
+          },
+        ],
+        createdAt: "2024-06-01T12:00:00Z",
+        updatedAt: "2024-06-01T12:00:00Z",
+        isGift: false,
+        noteId: "note-1",
+        noteType: "p2id",
+        private: false,
+        recallable: true,
+        recallableHeight: 123456,
+        recallableTime: "2024-06-02T12:00:00Z",
+        recipient: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        sender: "0x1234123412341234123412341234123412341234",
+        serialNumber: ["SN123456"],
+        status: NoteStatus.PENDING,
+      },
+      {
+        id: 2,
+        assets: [
+          {
+            faucetId: "0xabcdefabcdefabcdef",
+            amount: "50.00",
+            metadata: {
+              symbol: "USDC",
+              decimals: 6,
+              maxSupply: 10000,
+            },
+          },
+        ],
+        createdAt: "2024-06-01T13:00:00Z",
+        updatedAt: "2024-06-01T13:00:00Z",
+        isGift: true,
+        noteId: "note-2",
+        noteType: "gift",
+        private: true,
+        recallable: true,
+        recallableHeight: 123457,
+        recallableTime: "2024-06-02T13:00:00Z",
+        recipient: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        sender: "0xbeefbeefbeefbeefbeefbeefbeefbeefbeefbeef",
+        serialNumber: ["SN654321"],
+        status: NoteStatus.PENDING,
+      },
+    ],
+    waitingToRecallItems: [
+      {
+        id: 3,
+        assets: [
+          {
+            faucetId: "0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed",
+            amount: "200.00",
+            metadata: {
+              symbol: "ETH",
+              decimals: 18,
+              maxSupply: 21000000,
+            },
+          },
+        ],
+        createdAt: "2024-06-01T14:00:00Z",
+        updatedAt: "2024-06-01T14:00:00Z",
+        isGift: false,
+        noteId: "note-3",
+        noteType: "p2idr",
+        private: false,
+        recallable: true,
+        recallableHeight: 123458,
+        recallableTime: "2024-06-03T14:00:00Z",
+        recipient: "0xcafebabecafebabecafebabecafebabecafebabe",
+        sender: "0xfacefacefacefacefacefacefacefacefaceface",
+        serialNumber: ["SN789012"],
+        status: NoteStatus.PENDING,
+      },
+    ],
+  };
   // **************** Server Hooks *******************
   const {
-    data: recallableNotes,
+    data: recallableNotez,
     isLoading: recallableNotesLoading,
     refetch: refetchRecallableNotes,
   } = useRecallableNotes();
@@ -76,7 +172,7 @@ export const CancelDashboardContainer: React.FC = () => {
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
 
   // Update countdown every second
-  React.useEffect(() => {
+  useEffect(() => {
     if (!recallableNotes?.nextRecallTime) return;
 
     const updateCountdown = () => {
@@ -108,7 +204,7 @@ export const CancelDashboardContainer: React.FC = () => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   }, []);
 
-  const handleCheckAll = React.useCallback(
+  const handleCheckAll = useCallback(
     (items: any[]) => {
       if (checkedRows.length === items.length) {
         setCheckedRows([]);
@@ -259,13 +355,13 @@ export const CancelDashboardContainer: React.FC = () => {
 
             <StatusCard
               title="Waiting for cancel payment"
-              value={recallableNotes?.waitingToRecallItems.length.toString() || "0"}
+              value={recallableNotes?.waitingToRecallItems?.length.toString() || "0"}
               hasBackground={true}
             />
 
             <StatusCard
               title="Cancelled"
-              value={recallableNotes?.recalledCount.toString() || "0"}
+              value={recallableNotes?.recalledCount?.toString() || "0"}
               hasBackground={true}
             />
           </div>
@@ -275,14 +371,18 @@ export const CancelDashboardContainer: React.FC = () => {
             subtitle="Payments that are now eligible for cancellation. You can select multiple payments to cancel them in batch."
             headers={pendingHeaders}
             data={
-              recallableNotes?.recallableItems.map((note, index) => ({
+              recallableNotes?.recallableItems?.map((note: RecallableNote, index: number) => ({
                 "": (
                   <div className="flex justify-center items-center">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4"
+                    <CustomCheckbox
                       checked={checkedRows.includes(index)}
-                      onChange={() => handleCheckRow(index)}
+                      onChange={checked => {
+                        if (checked) {
+                          setCheckedRows(prev => [...prev, index]);
+                        } else {
+                          setCheckedRows(prev => prev.filter(i => i !== index));
+                        }
+                      }}
                     />
                   </div>
                 ),
@@ -292,7 +392,7 @@ export const CancelDashboardContainer: React.FC = () => {
                       <img
                         src={
                           QASH_TOKEN_ADDRESS == note.assets[0].faucetId
-                            ? "/q3x-icon.svg"
+                            ? "/q3x-icon.png"
                             : blo(turnBechToHex(note.assets[0].faucetId))
                         }
                         alt={note.assets[0].metadata?.symbol || "Token"}
@@ -339,14 +439,14 @@ export const CancelDashboardContainer: React.FC = () => {
             subtitle="Payments that will become cancellable once their scheduled time is reached. The cancel button will automatically enable at the specified time."
             headers={waitingHeaders}
             data={
-              recallableNotes?.waitingToRecallItems.map((note, index) => ({
+              recallableNotes?.waitingToRecallItems?.map((note, index) => ({
                 Amount: (
                   <div className="relative flex flex-row flex-wrap gap-1 items-center">
                     <div className="group relative flex items-center gap-1">
                       <img
                         src={
                           QASH_TOKEN_ADDRESS == note.assets[0].faucetId
-                            ? "/q3x-icon.svg"
+                            ? "/q3x-icon.png"
                             : blo(turnBechToHex(note.assets[0].faucetId))
                         }
                         alt={note.assets[0].metadata?.symbol || "Token"}

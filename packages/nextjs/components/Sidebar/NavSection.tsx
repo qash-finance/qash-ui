@@ -69,7 +69,9 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
       <img
         src={`${icon}?key=${gifKey}`}
         alt=""
-        className={`object-contain shrink-0 self-stretch my-auto w-6 aspect-square transition-all`}
+        className={`object-contain shrink-0 self-stretch my-auto w-6 aspect-square transition-all ${
+          showActiveStyle ? "" : "grayscale"
+        }`}
       />
       <span
         className={`flex-1 shrink self-stretch my-auto basis-0 text-left ${

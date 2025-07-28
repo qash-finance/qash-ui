@@ -4,29 +4,20 @@ import React, { useState } from "react";
 import { OnboardingModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { AssetWithMetadata } from "@/types/faucet";
-import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_MAX_SUPPLY } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { ActionButton } from "../Common/ActionButton";
-import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { mintToken } from "@/services/utils/miden/faucet";
 import { AccountId } from "@demox-labs/miden-sdk";
 import toast from "react-hot-toast";
-import { useClient } from "@/hooks/web3/useClient";
-
-// Create QASH token data
-const qashToken: AssetWithMetadata = {
-  faucetId: QASH_TOKEN_ADDRESS,
-  amount: "0", // Default amount if user doesn't have any
-  metadata: {
-    symbol: "QASH",
-    decimals: QASH_TOKEN_DECIMALS,
-    maxSupply: QASH_TOKEN_MAX_SUPPLY,
-  },
-};
+import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 
 export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalProps>) {
+  // **************** Custom Hooks *******************
   const { walletAddress } = useWalletAuth();
+  const { forceFetch: forceRefetchConsumableNotes } = useConsumableNotes();
+
+  // **************** Local State *******************
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -41,7 +32,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
       const txId = await mintToken(
         AccountId.fromBech32(walletAddress),
         AccountId.fromBech32(QASH_TOKEN_ADDRESS),
-        BigInt(1000 * 10 ** QASH_TOKEN_DECIMALS),
+        BigInt(10 * 10 ** QASH_TOKEN_DECIMALS),
       );
       toast.dismiss();
       toast.success(
@@ -57,6 +48,22 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
           </a>
         </div>,
       );
+
+      // Wait for network propagation then force fresh fetch
+      setTimeout(async () => {
+        try {
+          await forceRefetchConsumableNotes();
+
+          // Retry after additional delay if needed
+          setTimeout(async () => {
+            await forceRefetchConsumableNotes();
+            toast.dismiss();
+          }, 3000);
+        } catch (error) {
+          console.error("Error refetching notes:", error);
+        }
+      }, 2000);
+
       setSuccess(true);
     } catch (error) {
       toast.dismiss();
@@ -88,7 +95,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
           <div className="flex flex-col gap-4 items-center">
             <img src="/token/qash.svg" alt="QASH Token" className="w-16 h-16" />
             <div className="flex flex-col gap-2 items-center">
-              <span className="text-5xl font-bold text-white">1000</span>
+              <span className="text-5xl font-bold text-white">10</span>
               <span className="text-xl text-white text-center">
                 Grab your free test tokens to start exploring Qash on testnet.
               </span>
@@ -97,9 +104,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
           </div>
 
           {/* Action Button */}
-          {loading ? (
-            <ActionButton text="■ ■ ■" onClick={() => {}} className="w-full h-10 animate-pulse" disabled />
-          ) : success ? (
+          {success ? (
             <ActionButton
               text="Ready to Claim!"
               onClick={() => {
@@ -108,7 +113,12 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
               className="w-full h-10"
             />
           ) : (
-            <ActionButton text="Request free tokens" onClick={() => handleMintToken()} className="w-full h-10" />
+            <ActionButton
+              text="Request free tokens"
+              onClick={() => handleMintToken()}
+              className="w-full h-10"
+              loading={loading}
+            />
           )}
         </main>
       </div>

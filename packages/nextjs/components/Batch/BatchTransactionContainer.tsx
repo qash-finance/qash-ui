@@ -35,7 +35,12 @@ export function BatchTransactionContainer({
         {/* Header */}
         <header className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#3D3D3D] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-t-2xl">
           <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
-          <div className="flex gap-1 justify-center items-center py-1.5 pr-3 pl-1.5 bg-[#7C7C7C] rounded-xl max-md:self-center">
+          <div
+            className={`flex gap-1 justify-center items-center py-1.5 pr-3 pl-1.5 rounded-xl max-md:self-center`}
+            style={{
+              background: transactions.length > 0 ? "#066EFF" : "#7C7C7C",
+            }}
+          >
             <div className="flex gap-1 justify-center items-center px-2  rounded-xl bg-neutral-950">
               <span className="text-xs tracking-tight leading-5 text-white">
                 {transactions.length.toString().padStart(2, "0")}
@@ -75,7 +80,8 @@ export function BatchTransactionContainer({
               buttonType="submit"
               className="w-full h-10"
               onClick={onConfirm}
-              disabled={transactions.length === 0 || isLoading}
+              loading={isLoading}
+              disabled={transactions.length === 0}
             />
           </footer>
         ) : (

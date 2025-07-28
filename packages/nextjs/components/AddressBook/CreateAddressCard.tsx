@@ -18,7 +18,6 @@ export const CreateAddressCard = ({
     register,
     handleSubmit,
     formState: { errors },
-    reset,
   } = useForm<{ name: string; address: string; token?: string }>();
   const { openModal } = useModal();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
@@ -32,17 +31,17 @@ export const CreateAddressCard = ({
 
   const handleSave = (data: { name: string; address: string; token?: string }) => {
     onSave({ ...data, token: selectedToken?.faucetId });
-    reset();
   };
 
   return (
-    <form className="flex flex-col gap-2 w-[250px] bg-[#292929] rounded-2xl p-2">
+    <div className="flex flex-col gap-2 w-[250px] bg-[#292929] rounded-2xl p-2">
       <div className="flex flex-row gap-2 items-center">
         <img src="/plus-icon.svg" alt="folder" className="w-12 h-12 rounded-xl" />
         <div className="flex flex-col gap-1">
           <input
             type="text"
             placeholder="Remember name"
+            autoComplete="off"
             className="w-full bg-transparent border-none outline-none text-white text-base leading-5"
             {...register("name", {
               required: {
@@ -54,6 +53,7 @@ export const CreateAddressCard = ({
           <input
             type="text"
             placeholder="Address"
+            autoComplete="off"
             className="w-full bg-transparent border-none outline-none text-white text-sm leading-4"
             {...register("address", {
               required: {
@@ -87,7 +87,7 @@ export const CreateAddressCard = ({
               !selectedToken
                 ? "/token/any-token.svg"
                 : selectedToken.faucetId == QASH_TOKEN_ADDRESS
-                  ? "/q3x-icon.svg"
+                  ? "/q3x-icon.png"
                   : blo(turnBechToHex(selectedToken.faucetId))
             }
             alt="token"
@@ -96,6 +96,6 @@ export const CreateAddressCard = ({
           <img src="/arrow/filled-arrow-down.svg" alt="token" className="w-4 h-4" style={{ filter: "brightness(0)" }} />
         </div>
       </div>
-    </form>
+    </div>
   );
 };

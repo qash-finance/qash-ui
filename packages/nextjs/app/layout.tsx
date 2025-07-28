@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   title: "Qash",
   description: "Qash",
   icons: {
-    icon: "/q3x-icon.svg",
+    icon: "/qash-icon.svg",
   },
 };
 
