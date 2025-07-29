@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
+import { useAccountContext } from "@/contexts/AccountProvider";
 
 export function CreateCustomQRModal({
   isOpen,
@@ -20,6 +21,7 @@ export function CreateCustomQRModal({
 }: ModalProp<CreateCustomQRModalProps> & { zIndex?: number }) {
   const { register, handleSubmit, watch } = useForm();
   const { openModal } = useModal();
+  const { accountId: walletAddress } = useAccountContext();
 
   //**********Local State**********
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>("");
@@ -57,7 +59,7 @@ export function CreateCustomQRModal({
       const qrName = generateQRName(tokenSymbol, amount);
 
       // Generate QR data
-      const qrData = generateQRData(tokenAddress, amount, message);
+      const qrData = generateQRData(tokenAddress, amount, message, walletAddress);
 
       // Create QR code instance
       const qrCode = generateQRCode(qrData);

@@ -9,6 +9,7 @@ import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
 import Portfolio from "@/components/Portfolio/Portfolio";
 import OnboardingModal from "@/components/Modal/OnboardingModal";
 import ConnectWalletModal from "@/components/Modal/ConnectWalletModal";
+import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
 import { AssetWithMetadata } from "./faucet";
 
 export const MODAL_IDS = {
@@ -23,6 +24,7 @@ export const MODAL_IDS = {
   PORTFOLIO: "PORTFOLIO",
   ONBOARDING: "ONBOARDING",
   CONNECT_WALLET: "CONNECT_WALLET",
+  TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -71,6 +73,20 @@ export interface OnboardingModalProps extends BaseModalProps {}
 
 export interface ConnectWalletModalProps extends BaseModalProps {}
 
+export interface TransactionOverviewModalProps extends BaseModalProps {
+  amount?: string;
+  accountName?: string;
+  accountAddress?: string;
+  recipientName?: string;
+  recipientAddress?: string;
+  transactionType?: string;
+  cancellableTime?: string;
+  message?: string;
+  onConfirm?: () => void;
+  tokenAddress?: string;
+  tokenSymbol?: string;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -83,6 +99,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.PORTFOLIO]: PortfolioModalProps;
   [MODAL_IDS.ONBOARDING]: OnboardingModalProps;
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModalProps;
+  [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -99,4 +116,5 @@ export const modalRegistry = {
   [MODAL_IDS.PORTFOLIO]: Portfolio,
   [MODAL_IDS.ONBOARDING]: OnboardingModal,
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModal,
+  [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModal,
 } as const;
