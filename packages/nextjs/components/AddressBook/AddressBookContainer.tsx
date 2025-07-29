@@ -169,21 +169,25 @@ export function AddressBookContainer() {
       category: "",
     },
   });
-  // Group address books by category
+  // Group address books by category and sort by createdAt
   const groupedAddressBooks = useMemo(() => {
     if (!addressBooks) return {};
 
-    return addressBooks.reduce((groups: Record<string, any[]>, addressBook: any) => {
-      const category = addressBook.category;
+    return addressBooks.reduce((groups: Record<string, any[]>, categoryData: any) => {
+      const category = categoryData.name; // Use 'name' as category from the new structure
       if (!groups[category]) {
         groups[category] = [];
       }
-      groups[category].push(addressBook);
+      // Add all addressBooks from this category, sorted by createdAt
+      const sortedAddressBooks = (categoryData.addressBooks || []).sort(
+        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      groups[category].push(...sortedAddressBooks);
       return groups;
     }, {});
   }, [addressBooks]);
 
-  // Create folders based on categories
+  // Create folders based on categories, sorted by createdAt
   const folders = useMemo(() => {
     return Object.keys(groupedAddressBooks)
       .sort()
@@ -232,14 +236,20 @@ export function AddressBookContainer() {
     }
 
     // Prevent duplicate name in the same category
-    const nameExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.name === name);
+    const nameExistsInCategory = addressBooks?.some(
+      (categoryData: any) =>
+        categoryData.name === category && categoryData.addressBooks.some((ab: any) => ab.name === name),
+    );
     if (nameExistsInCategory) {
       toast.error("Name already exists in this category");
       return false;
     }
 
     // Prevent duplicate address in the same category
-    const addressExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.address === address);
+    const addressExistsInCategory = addressBooks?.some(
+      (categoryData: any) =>
+        categoryData.name === category && categoryData.addressBooks.some((ab: any) => ab.address === address),
+    );
     if (addressExistsInCategory) {
       toast.error("Address already exists in this category");
       return false;
@@ -277,14 +287,17 @@ export function AddressBookContainer() {
               setTimeout(() => {
                 const updatedFolders = Object.keys(
                   addressBooks
-                    ? [...addressBooks, data].reduce((groups: Record<string, any[]>, addressBook: any) => {
-                        const cat = addressBook.category;
-                        if (!groups[cat]) {
-                          groups[cat] = [];
-                        }
-                        groups[cat].push(addressBook);
-                        return groups;
-                      }, {})
+                    ? [...addressBooks, { name: category, addressBooks: [data] }].reduce(
+                        (groups: Record<string, any[]>, categoryData: any) => {
+                          const cat = categoryData.name;
+                          if (!groups[cat]) {
+                            groups[cat] = [];
+                          }
+                          groups[cat].push(...categoryData.addressBooks);
+                          return groups;
+                        },
+                        {},
+                      )
                     : {},
                 ).sort();
                 const newFolderIndex = updatedFolders.findIndex(folder => folder === category);

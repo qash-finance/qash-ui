@@ -3,9 +3,14 @@ export interface IPaginationParams {
   limit: number;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  addressBooks?: AddressBook[];
+}
+
 export interface AddressBook {
   userAddress: string;
-  category: string;
   name: string;
   address: string;
   token?: string;

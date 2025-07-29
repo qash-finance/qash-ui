@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthenticatedApiClient } from "./index";
 import { AuthStorage } from "../auth/storage";
-import { AddressBook, AddressBookDto } from "@/types/address-book";
+import { AddressBook, AddressBookDto, Category } from "@/types/address-book";
 
 // *************************************************
 // **************** API CLIENT SETUP ***************
@@ -28,7 +28,7 @@ const useGetAddressBooks = () => {
   return useQuery({
     queryKey: ["address-book"],
     queryFn: async () => {
-      return apiClient.getData<AddressBook[]>(`/address-book`);
+      return apiClient.getData<Category[]>(`/address-book`);
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,
@@ -68,10 +68,25 @@ const useCreateAddressBook = () => {
     mutationFn: async (data: AddressBookDto) => {
       return apiClient.postData<AddressBook>("/address-book", data);
     },
-    onSuccess: (newAddressBook: AddressBook): AddressBook => {
-      queryClient.setQueryData(["address-book"], (oldData: AddressBook[] | undefined) => {
-        if (!oldData) return [newAddressBook];
-        return [...oldData, newAddressBook];
+    onSuccess: (newAddressBook: AddressBook, variables: AddressBookDto): AddressBook => {
+      queryClient.setQueryData(["address-book"], (oldData: Category[] | undefined) => {
+        if (!oldData) return [{ id: 1, name: variables.category, addressBooks: [newAddressBook] }];
+
+        // Find if category already exists
+        const existingCategoryIndex = oldData.findIndex(cat => cat.name === variables.category);
+
+        if (existingCategoryIndex !== -1) {
+          // Add to existing category
+          const updatedData = [...oldData];
+          updatedData[existingCategoryIndex] = {
+            ...updatedData[existingCategoryIndex],
+            addressBooks: [...(updatedData[existingCategoryIndex].addressBooks || []), newAddressBook],
+          };
+          return updatedData;
+        } else {
+          // Create new category
+          return [...oldData, { id: oldData.length + 1, name: variables.category, addressBooks: [newAddressBook] }];
+        }
       });
 
       return newAddressBook;
