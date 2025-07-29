@@ -39,7 +39,7 @@ export function BatchTransactionContainer({
 
   return (
     <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-zinc-900 w-[600px] h-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
-      <div className="flex flex-col gap-1.5 items-center self-stretch rounded-2xl h-full">
+      <div className="flex flex-col items-center self-stretch rounded-2xl h-full">
         {/* Header */}
         <header className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#3D3D3D] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-t-2xl">
           <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
@@ -59,7 +59,7 @@ export function BatchTransactionContainer({
         </header>
 
         {/* Transaction list - Now with fixed height and scrollable */}
-        {/* {transactions.length > 0 ? (
+        {transactions.length > 0 ? (
           <div className="flex-1 w-full overflow-hidden">
             <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0 h-full overflow-y-auto">
               {transactions.map(transaction => (
@@ -75,8 +75,8 @@ export function BatchTransactionContainer({
             </section>
           </div>
         ) : (
-        )} */}
-        <EmptyBatch />
+          <EmptyBatch />
+        )}
 
         {/* Footer */}
         {isConnected ? (

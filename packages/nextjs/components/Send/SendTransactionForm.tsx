@@ -48,6 +48,7 @@ interface SendTransactionFormValues {
   recipientAddress: string;
   recallableTime: number;
   isPrivateTransaction: boolean;
+  message?: string;
 }
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
@@ -55,6 +56,9 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const searchParams = useSearchParams();
   const recipientParam = searchParams?.get("recipient") || "";
   const recipientNameParam = searchParams?.get("name") || "";
+  const tokenAddressParam = searchParams?.get("tokenAddress") || "";
+  const amountParam = searchParams?.get("amount") || "";
+  const messageParam = searchParams?.get("message") || "";
   const {
     register,
     handleSubmit,
@@ -65,10 +69,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     reset,
   } = useForm<SendTransactionFormValues>({
     defaultValues: {
-      amount: undefined,
+      amount: amountParam ? parseFloat(amountParam) : undefined,
       recipientAddress: recipientParam,
       recallableTime: 1 * 60 * 60, // 1 hour in seconds
       isPrivateTransaction: false,
+      message: messageParam || "",
     },
   });
 
@@ -116,6 +121,18 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     setSelectedTokenAddress(defaultToken.faucetId);
   }, [assets]);
 
+  // Handle URL parameters for payment requests
+  useEffect(() => {
+    if (tokenAddressParam && assets.length > 0) {
+      // Find the token by address
+      const token = assets.find(asset => asset.faucetId === tokenAddressParam);
+      if (token) {
+        setSelectedToken(token);
+        setSelectedTokenAddress(token.faucetId);
+      }
+    }
+  }, [tokenAddressParam, assets]);
+
   // ********************************************
   // **************** Handlers ******************
   // ********************************************
@@ -154,108 +171,114 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
-    try {
-      setIsSending(true);
-      toast.loading("Sending transaction...");
-
-      // check if amount > balance
-      if (amount > parseFloat(selectedToken.amount)) {
-        toast.dismiss();
-        toast.error("Insufficient balance");
-        return;
-      }
-
-      // check if recipient address is valid bech32
-      try {
-        console.log("RECIPIENT ADDRESS", recipientAddress);
-        AccountId.fromBech32(recipientAddress);
-      } catch (error) {
-        toast.dismiss();
-
-        toast.error("Invalid recipient address");
-        return;
-      }
-
-      // check if recallable time is valid
-      if (recallableTime <= 0) {
-        toast.dismiss();
-        toast.error("Recallable time must be greater than 0");
-        return;
-      }
-
-      // check if amount > 0
-      if (amount <= 0) {
-        toast.dismiss();
-        toast.error("Amount must be greater than 0");
-        return;
-      }
-
-      // each block is 5 seconds, calculate recall height
-      const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
-
-      // Create AccountId objects once to avoid aliasing issues
-      const senderAccountId = AccountId.fromBech32(walletAddress);
-      const recipientAccountId = AccountId.fromBech32(recipientAddress);
-      const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
-
-      // create note
-      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
-        senderAccountId,
-        recipientAccountId,
-        faucetAccountId,
-        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
-        isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
-        recallHeight,
-      );
-
-      const noteId = note.id().toString();
-
-      // submit transaction to miden
-      const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
-
-      // submit transaction to server
-      const response = await sendSingleTransaction({
-        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
-        private: isPrivateTransaction,
-        recipient: recipientAddress,
-        recallable: true,
-        recallableTime: new Date(Date.now() + recallableTime * 1000),
-        recallableHeight: calculatedRecallHeight,
-        serialNumber: serialNumbers,
-        noteType: CustomNoteType.P2IDR,
-        noteId: noteId,
-      });
-
-      // refetch assets
-      // call refetch assets 5 seconds later
-      setTimeout(() => {
-        refetchAssets();
-      }, 5000);
-
-      if (response) {
-        toast.dismiss();
-        toast.success(
-          <div>
-            Transaction sent successfully, view transaction on{" "}
-            <a
-              href={`https://testnet.midenscan.com/tx/${txId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              Miden Explorer
-            </a>
-          </div>,
-        );
-        reset();
-      }
-    } catch (error) {
-      toast.dismiss();
-      toast.error("Failed to send transaction");
-      console.error(error);
-    } finally {
-      setIsSending(false);
+    // Validate form data before showing overview
+    if (amount <= 0) {
+      toast.error("Amount must be greater than 0");
+      return;
     }
+
+    // if (amount > parseFloat(selectedToken.amount)) {
+    //   toast.error("Insufficient balance");
+    //   return;
+    // }
+
+    try {
+      AccountId.fromBech32(recipientAddress);
+    } catch (error) {
+      toast.error("Invalid recipient address");
+      return;
+    }
+
+    if (recallableTime <= 0) {
+      toast.error("Recallable time must be greater than 0");
+      return;
+    }
+
+    // Show transaction overview modal first
+    openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
+      amount: `${amount}`,
+      accountName: "My Account", // You can get this from account context if available
+      accountAddress: walletAddress,
+      recipientName: recipientName || null,
+      recipientAddress: recipientAddress,
+      transactionType: isPrivateTransaction ? "Private" : "Public",
+      cancellableTime: `${recallableTime / 3600} hour(s)`,
+      message: data.message || "Transaction details",
+      tokenAddress: selectedToken.faucetId,
+      tokenSymbol: selectedToken.metadata.symbol,
+      onConfirm: async () => {
+        try {
+          setIsSending(true);
+          toast.loading("Sending transaction...");
+
+          // each block is 5 seconds, calculate recall height
+          const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+
+          // Create AccountId objects once to avoid aliasing issues
+          const senderAccountId = AccountId.fromBech32(walletAddress);
+          const recipientAccountId = AccountId.fromBech32(recipientAddress);
+          const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
+
+          // create note
+          const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
+            senderAccountId,
+            recipientAccountId,
+            faucetAccountId,
+            Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
+            isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+            recallHeight,
+          );
+
+          const noteId = note.id().toString();
+
+          // submit transaction to miden
+          const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
+
+          // submit transaction to server
+          const response = await sendSingleTransaction({
+            assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
+            private: isPrivateTransaction,
+            recipient: recipientAddress,
+            recallable: true,
+            recallableTime: new Date(Date.now() + recallableTime * 1000),
+            recallableHeight: calculatedRecallHeight,
+            serialNumber: serialNumbers,
+            noteType: CustomNoteType.P2IDR,
+            noteId: noteId,
+          });
+
+          // refetch assets
+          // call refetch assets 5 seconds later
+          setTimeout(() => {
+            refetchAssets();
+          }, 5000);
+
+          if (response) {
+            toast.dismiss();
+            toast.success(
+              <div>
+                Transaction sent successfully, view transaction on{" "}
+                <a
+                  href={`https://testnet.midenscan.com/tx/${txId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Miden Explorer
+                </a>
+              </div>,
+            );
+            reset();
+          }
+        } catch (error) {
+          toast.dismiss();
+          toast.error("Failed to send transaction");
+          console.error(error);
+        } finally {
+          setIsSending(false);
+        }
+      },
+    });
   };
 
   const handleAddToBatch = async (data: SendTransactionFormValues) => {
