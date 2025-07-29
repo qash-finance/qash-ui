@@ -7,7 +7,11 @@ import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import { consumeAllNotes, consumePrivateNote, consumePublicNote } from "@/services/utils/miden/note";
+import {
+  consumeAllUnauthenticatedNotes,
+  consumeUnauthenticatedNote,
+  consumeNoteByID,
+} from "@/services/utils/miden/note";
 import { AccountId } from "@demox-labs/miden-sdk";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
@@ -208,18 +212,18 @@ export const PendingRecieveContainer: React.FC = () => {
         // if private or recallableHeight > 0, we need to update on server
         if (!note.private && note.recallableHeight > 0) {
           // public + recallable
-          await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
+          await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
           // consume on server level
           await consumeNotes([note.id]);
         } else if (note.private && note.recallableHeight > 0) {
           // private + recallable
-          await consumePrivateNote(AccountId.fromBech32(walletAddress), note);
+          await consumeUnauthenticatedNote(AccountId.fromBech32(walletAddress), note);
           // consume on server level
           await consumeNotes([note.id]);
         }
       } else {
         // dont need to update server
-        await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
+        await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
       }
       setClaiming(false);
       toast.dismiss();
@@ -247,7 +251,7 @@ export const PendingRecieveContainer: React.FC = () => {
       setClaiming(true);
 
       // consume on network level
-      await consumeAllNotes(
+      await consumeAllUnauthenticatedNotes(
         AccountId.fromBech32(walletAddress),
         checkedRows.map(idx => ({
           isPrivate: consumableNotes[idx].private,

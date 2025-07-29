@@ -1,4 +1,4 @@
-import { ConsumableNote, SendTransactionDto } from "@/types/transaction";
+import { ConsumableNote, RecallRequestDto, SendTransactionDto } from "@/types/transaction";
 import { apiServerWithAuth } from "./index";
 
 const getConsumable = async () => {
@@ -24,13 +24,13 @@ const sendBatchTransaction = async (transaction: SendTransactionDto[]) => {
   return response;
 };
 
-const consumeTransactions = async (transactionIds: string[]) => {
-  const response = await apiServerWithAuth.putData("/transactions/consume", transactionIds);
+const consumeTransactions = async (noteIds: string[]) => {
+  const response = await apiServerWithAuth.putData("/transactions/consume", noteIds);
   return response;
 };
 
-const recallBatch = async (transactionIds: string[]) => {
-  const response = await apiServerWithAuth.putData("/transactions/recall", transactionIds);
+const recallBatch = async (recallRequest: RecallRequestDto) => {
+  const response = await apiServerWithAuth.putData("/transactions/recall", recallRequest);
   return response;
 };
 

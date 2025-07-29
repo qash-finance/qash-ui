@@ -24,6 +24,7 @@ import {
   QASH_TOKEN_MAX_SUPPLY,
   BLOCK_TIME,
   BUTTON_STYLES,
+  REFETCH_DELAY,
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
 import { useGetAddressBooks } from "@/services/api/address-book";
@@ -32,6 +33,7 @@ import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -80,9 +82,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
   const { handleConnect, isConnected } = useWalletConnect();
-  const { assets, refetchAssets, accountId: walletAddress } = useAccountContext();
+  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
   const { addTransaction } = useBatchTransactions(state => state);
+  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
 
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
@@ -171,16 +174,86 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
-    // Validate form data before showing overview
-    if (amount <= 0) {
-      toast.error("Amount must be greater than 0");
-      return;
-    }
 
-    // if (amount > parseFloat(selectedToken.amount)) {
-    //   toast.error("Insufficient balance");
-    //   return;
-    // }
+    try {
+      setIsSending(true);
+      toast.loading("Sending transaction...");
+
+      // check if amount > balance
+      if (amount > parseFloat(selectedToken.amount)) {
+        toast.dismiss();
+        toast.error("Insufficient balance");
+        return;
+      }
+
+      // check if recipient address is valid bech32
+      try {
+        console.log("RECIPIENT ADDRESS", recipientAddress);
+        AccountId.fromBech32(recipientAddress);
+      } catch (error) {
+        toast.dismiss();
+        console.log(error);
+
+        toast.error("Invalid recipient address");
+        return;
+      }
+
+      // check if recallable time is valid
+      if (recallableTime <= 0) {
+        toast.dismiss();
+        toast.error("Recallable time must be greater than 0");
+        return;
+      }
+
+      // check if amount > 0
+      if (amount <= 0) {
+        toast.dismiss();
+        toast.error("Amount must be greater than 0");
+        return;
+      }
+
+      // each block is 5 seconds, calculate recall height
+      const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+
+      // Create AccountId objects once to avoid aliasing issues
+      const senderAccountId = AccountId.fromBech32(walletAddress);
+      const recipientAccountId = AccountId.fromBech32(recipientAddress);
+      const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
+
+      // create note
+      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
+        senderAccountId,
+        recipientAccountId,
+        faucetAccountId,
+        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
+        isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+        recallHeight,
+      );
+
+      const noteId = note.id().toString();
+
+      // submit transaction to miden
+      const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
+
+      // submit transaction to server
+      const response = await sendSingleTransaction({
+        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
+        private: isPrivateTransaction,
+        recipient: recipientAddress,
+        recallable: true,
+        recallableTime: new Date(Date.now() + recallableTime * 1000),
+        recallableHeight: calculatedRecallHeight,
+        serialNumber: serialNumbers,
+        noteType: CustomNoteType.P2IDR,
+        noteId: noteId,
+      });
+
+      // refetch assets
+      // call refetch assets 5 seconds later
+      setTimeout(() => {
+        forceRefetchAssets();
+        forceRefetchRecallablePayment();
+      }, REFETCH_DELAY);
 
     try {
       AccountId.fromBech32(recipientAddress);

@@ -10,7 +10,7 @@ import {
 } from "@/services/utils/constant";
 import { useWalletAuth } from "../server/useWalletAuth";
 import { formatUnits } from "viem";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Default QASH token that should always be present
 const defaultQashToken: AssetWithMetadata = {
@@ -92,6 +92,7 @@ const fetchAccountData = async (walletAddress: string | null): Promise<AccountDa
 
 export function useAccount() {
   const { isAuthenticated, walletAddress } = useWalletAuth();
+  const queryClient = useQueryClient();
 
   const {
     data: accountData,
@@ -99,13 +100,19 @@ export function useAccount() {
     error,
     refetch: refetchAssets,
   } = useQuery<AccountData>({
-    queryKey: ["accountData", walletAddress],
+    queryKey: ["account-data", walletAddress],
     queryFn: () => fetchAccountData(walletAddress),
     gcTime: 5 * 60 * 1000, // Keep unused data in cache for 5 minutes
     staleTime: 30000, // Consider data fresh for 30 seconds
     enabled: !!walletAddress && isAuthenticated,
     retry: 3,
   });
+
+  const forceFetch = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["account-data", walletAddress],
+    });
+  };
 
   const defaultData: AccountData = {
     assets: [defaultQashToken],
@@ -116,6 +123,7 @@ export function useAccount() {
   return {
     assets: accountData?.assets || defaultData.assets,
     refetchAssets,
+    forceFetch,
     accountBalance: accountData?.accountBalance || defaultData.accountBalance,
     loading,
     error,

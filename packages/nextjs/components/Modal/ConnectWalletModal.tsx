@@ -4,6 +4,9 @@ import { SelectTokenModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { ActionButton } from "../Common/ActionButton";
+import { deployAccount, exportAccounts } from "@/services/utils/miden/account";
+import toast from "react-hot-toast";
+import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
 
 type Step = "init" | "creating" | "final";
 
@@ -43,24 +46,169 @@ const LoadingBar: React.FC<LoadingBarProps> = ({ progress, className = "" }) => 
 export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
   const [currentStep, setCurrentStep] = useState<Step>("init");
   const [progress, setProgress] = useState(0);
+  const [accountId, setAccountId] = useState<string>("");
+  const [accounts, setAccounts] = useState<string[]>([]);
+  const [lastConnectedAddress, setLastConnectedAddress] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep("init");
+      setProgress(0);
+      setAccountId("");
+      setIsImporting(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
-    if (currentStep === "creating") {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return prev + 1;
-        });
-      }, 50);
+    const fetchAccounts = () => {
+      const accounts = getWalletAddresses();
+      setAccounts(accounts);
+      const lastConnected = getLastConnectedAddress();
+      setLastConnectedAddress(lastConnected);
+    };
+    fetchAccounts();
+  }, []);
 
-      return () => clearInterval(interval);
-    } else {
-      setProgress(0);
+  // Refresh accounts list when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const accounts = getWalletAddresses();
+      setAccounts(accounts);
+      const lastConnected = getLastConnectedAddress();
+      setLastConnectedAddress(lastConnected);
     }
-  }, [currentStep]);
+  }, [isOpen]);
+
+  const handleCreateClick = async () => {
+    setCurrentStep("creating");
+    setIsImporting(false);
+
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, 50);
+    // at least wait for 1 second
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const accountId = await handleCreateWallet();
+
+    if (accountId) {
+      setAccountId(accountId);
+    }
+
+    setProgress(100);
+    clearInterval(interval);
+
+    setTimeout(() => {
+      setCurrentStep("final");
+    }, 1500);
+  };
+
+  const handleExportWallet = async () => {
+    try {
+      toast.loading("Exporting accounts...");
+
+      // Get the store data from exportAccounts
+      const storeData = await exportAccounts();
+
+      // Format as JSON string (storeData is likely already a JSON string)
+      const jsonContent = typeof storeData === "string" ? storeData : JSON.stringify(storeData, null, 2);
+
+      // Create blob and download link
+      const blob = new Blob([jsonContent], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      // Create temporary link element and trigger download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `miden-accounts-${Date.now()}.json`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success("Accounts exported successfully");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.dismiss();
+      toast.error("Failed to export accounts");
+    }
+  };
+
+  const handleImportClick = () => {
+    // Create a hidden file input
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".json";
+    fileInput.style.display = "none";
+
+    fileInput.onchange = async e => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          // Show creating step and start progress
+          setCurrentStep("creating");
+          setIsImporting(true);
+
+          const interval = setInterval(() => {
+            setProgress(prev => {
+              if (prev >= 100) {
+                clearInterval(interval);
+                return 100;
+              }
+              return prev + 1;
+            });
+          }, 50);
+
+          // at least wait for 1 second
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          const importedAddresses = await handleImportWallet(file);
+
+          // Refresh the accounts list to include the newly imported wallets
+          const updatedAccounts = getWalletAddresses();
+          setAccounts(updatedAccounts);
+
+          // Complete progress and show success
+          setProgress(100);
+          clearInterval(interval);
+
+          // Wait a moment for user to see completion, then show wallet selection
+          setTimeout(() => {
+            setCurrentStep("init");
+            setProgress(0);
+            setIsImporting(false);
+            toast.success(
+              `${importedAddresses.length} wallet${importedAddresses.length > 1 ? "s" : ""} imported successfully`,
+            );
+          }, 1500);
+        } catch (error) {
+          setCurrentStep("init");
+          setProgress(0);
+          setIsImporting(false);
+          toast.error("Failed to import wallet. Please check the file format.");
+          console.error("Import error:", error);
+        }
+      }
+
+      // Cleanup
+      document.body.removeChild(fileInput);
+    };
+
+    // Trigger file selection
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  };
 
   if (!isOpen) return null;
 
@@ -69,32 +217,92 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       case "init":
         return (
           <div className="flex flex-col gap-2 w-[600px] p-2 bg-[#1E1E1E] rounded-b-2xl">
-            <div
-              className="relative flex flex-col gap-2 rounded-b-2xl h-full"
-              style={{
-                background: "url('/modal/new-wallet-background.png')",
-                backgroundSize: "cover",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
-              <div className=" flex flex-col gap-2 h-[300px] rounded-b-2xl">
-                <div className="flex-1 flex items-center justify-center text-white">
-                  <div className="flex flex-col items-center gap-2">
-                    <img src="/modal/blue-wallet-icon.gif" alt="Wallet icon" className="w-15 h-15" />
-                    <span className="text-2xl font-bold">Create or Import Your Wallet</span>
-                    <span className="text-sm">Create or import a wallet to get started – it's quick and secure.</span>
+            {accounts.length > 0 ? (
+              <div className="flex flex-col gap-4 h-[300px] p-4">
+                <h2 className="text-neutral-400 text-sm font-medium">Recently Connected Wallets</h2>
+                <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
+                  {accounts.map((account, index) => (
+                    <div
+                      key={account}
+                      className="flex items-center gap-3 p-3 bg-neutral-800/50 rounded-xl hover:bg-neutral-700/50 transition-colors cursor-pointer"
+                      onClick={async () => {
+                        const connectedAddress = await handleConnectExisting(account);
+                        if (connectedAddress) {
+                          onClose();
+                        }
+                      }}
+                    >
+                      {/* Wallet Icon */}
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                          <path d="M20 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 18H4V8H20V18ZM18 11H6V13H18V11Z" />
+                        </svg>
+                      </div>
+
+                      {/* Wallet Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-medium text-sm truncate">
+                            {account.slice(0, 6)}...{account.slice(-6)}
+                          </span>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(account);
+                              toast.success("Copied to clipboard");
+                            }}
+                            className="text-neutral-400 hover:text-white transition-colors"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" />
+                            </svg>
+                          </button>
+                        </div>
+                        {account === lastConnectedAddress && (
+                          <span className="text-green-400 text-xs font-medium">Last connected</span>
+                        )}
+                      </div>
+
+                      {/* Export Button */}
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleExportWallet();
+                        }}
+                        className="text-neutral-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-neutral-600/50"
+                        title="Export wallet"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div
+                className="relative flex flex-col gap-2 rounded-b-2xl h-full"
+                style={{
+                  background: "url('/modal/new-wallet-background.png')",
+                  backgroundSize: "cover",
+                  backgroundRepeat: "no-repeat",
+                }}
+              >
+                <div className=" flex flex-col gap-2 h-[300px] rounded-b-2xl">
+                  <div className="flex-1 flex items-center justify-center text-white">
+                    <div className="flex flex-col items-center gap-2">
+                      <img src="/modal/blue-wallet-icon.gif" alt="Wallet icon" className="w-15 h-15" />
+                      <span className="text-2xl font-bold">Create or Import Your Wallet</span>
+                      <span className="text-sm">Create or import a wallet to get started – it's quick and secure.</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
             <div className="flex flex-row gap-2">
-              <ActionButton
-                text="Import"
-                type="neutral"
-                onClick={() => setCurrentStep("creating")}
-                className="flex-1"
-              />
-              <ActionButton text="Connect" onClick={() => setCurrentStep("creating")} className="flex-1" />
+              <ActionButton text="Import" type="neutral" onClick={handleImportClick} className="flex-1" />
+              <ActionButton text="Create" onClick={handleCreateClick} className="flex-1" />
             </div>
           </div>
         );
@@ -118,13 +326,21 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                     {progress < 100 ? (
                       <>
                         <img src="/modal/new-wallet-spinner.gif" alt="Loading" className="w-15 h-15" />
-                        <span className="text-2xl font-bold">Creating Your Wallet</span>
-                        <span className="text-sm">Just a moment while we set things up securely for you.</span>
+                        <span className="text-2xl font-bold">
+                          {isImporting ? "Importing Your Wallets" : "Creating Your Wallet"}
+                        </span>
+                        <span className="text-sm">
+                          {isImporting
+                            ? "Just a moment while we import your wallet data securely."
+                            : "Just a moment while we set things up securely for you."}
+                        </span>
                       </>
                     ) : (
                       <>
                         <img src="/modal/green-circle-check.gif" alt="green-circle-check" className="w-15 h-15" />
-                        <span className="text-2xl font-bold">Your Wallet is Ready</span>
+                        <span className="text-2xl font-bold">
+                          {isImporting ? "Wallets Imported Successfully" : "Your Wallet is Ready"}
+                        </span>
                         <span className="text-sm">You’re all set — your wallet has been created and secured.</span>
                       </>
                     )}
@@ -177,15 +393,18 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                   </p>
 
                   <p className="font-['Barlow:SemiBold',_sans-serif] text-white text-3xl text-center leading-tight tracking-[-0.64px] break-all">
-                    0x2A098898990628505749aBe334547B3f0D0d0F75
+                    {accountId}
                   </p>
 
                   <button
-                    onClick={() => {}}
-                    className="bg-[#edf8ff] flex items-center gap-2.5 px-2 py-2 rounded-3xl hover:bg-[#d1e7ff] transition-colors"
+                    onClick={() => {
+                      toast.success("Copied to clipboard");
+                      navigator.clipboard.writeText(accountId);
+                    }}
+                    className="bg-[#edf8ff] cursor-pointer flex items-center gap-2.5 px-2 py-2 rounded-3xl hover:bg-[#d1e7ff] transition-colors"
                   >
                     <div className="w-3.5 h-3.5 relative">
-                      <img alt="Copy" className="w-full h-full" src="/modal/copy-icon.svg" />
+                      <img alt="Copy" className="w-full h-full" src="/copy-icon.svg" />
                     </div>
                   </button>
                 </div>
@@ -198,7 +417,13 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                 onClick={() => setCurrentStep("creating")}
                 className="flex-1"
               />
-              <ActionButton text="Continue" onClick={() => setCurrentStep("creating")} className="flex-1" />
+              <ActionButton
+                text="Continue"
+                onClick={() => {
+                  onClose();
+                }}
+                className="flex-1"
+              />
             </div>
           </div>
         );

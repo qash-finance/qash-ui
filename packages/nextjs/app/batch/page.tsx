@@ -10,15 +10,17 @@ import { createP2IDENote } from "@/services/utils/miden/note";
 import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { useSendBatchTransaction } from "@/hooks/server/useSendTransaction";
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 
 export default function BatchPage() {
   // **************** Local State *******************
   const [isLoading, setIsLoading] = useState(false);
 
   // **************** Custom Hooks *******************
-  const { accountId: walletAddress } = useAccountContext();
+  const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { getBatchTransactions, clearBatch } = useBatchTransactions();
   const { mutate: sendBatchTransaction } = useSendBatchTransaction();
+  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
 
   const handleConfirm = async () => {
     if (!walletAddress) {
@@ -87,7 +89,8 @@ export default function BatchPage() {
       );
 
       clearBatch(walletAddress);
-
+      await forceRefetchRecallablePayment();
+      await forceRefetchAssets();
       toast.dismiss();
       toast.success("Batch transactions processed successfully");
     } catch (error) {

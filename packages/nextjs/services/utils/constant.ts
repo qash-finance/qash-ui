@@ -7,6 +7,7 @@ export const QASH_TOKEN_MAX_SUPPLY = 1000000000000000000;
 // **************** MIDEN NETWORK *******************
 export const BLOCK_TIME = 5; // seconds
 export const NODE_ENDPOINT = process.env.NEXT_PUBLIC_NODE_ENDPOINT || "https://rpc.testnet.miden.io:443";
+export const REFETCH_DELAY = 6000;
 
 // **************** CSS *******************
 export const BUTTON_STYLES = {

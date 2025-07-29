@@ -121,7 +121,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 <AuthProvider
                   apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
                   autoRefresh={true}
-                  refreshInterval={5 * 1000} // 5 minutes
+                  refreshInterval={15 * 60 * 1000} // 15 minutes
                 >
                   <AccountProvider>
                     {/* <ConnectWalletButton /> */}
