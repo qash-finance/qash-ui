@@ -111,27 +111,6 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
     );
   }, [pathname]);
 
-  useEffect(() => {
-    if (!walletAddress) return;
-
-    // Check if user has deployed accounts and hasn't claimed QASH
-    // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-    // if (deployedAccounts) {
-    //   try {
-    //     const accounts = JSON.parse(deployedAccounts);
-    //     const account = Object.values(accounts)[0] as any;
-    //     const hasClaimQASH = account.hasClaimQASH;
-
-    //     //Only open toast if user hasn't claimed QASH
-    //     if (!hasClaimQASH) {
-    //       setRenderFab(true);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error parsing deployed accounts:", error);
-    //   }
-    // }
-  }, [walletAddress]);
-
   // **************** Handlers ****************
   const handleActionItemClick = (sectionIndex: number, itemIndex: number) => {
     const item = action[sectionIndex].items[itemIndex];

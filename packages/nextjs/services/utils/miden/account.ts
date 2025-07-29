@@ -110,3 +110,48 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
 
   return importPromise;
 };
+
+export const getAccounts = async () => {
+  const { getClient } = useClient();
+  const client = await getClient();
+
+  const accounts = await client.getAccounts();
+
+  // for each account, we use getAccount, if fail, means we dont own the account
+  const accountsWeOwn = await Promise.all(
+    accounts.filter(async account => {
+      try {
+        const readAccount = await client.getAccount(account.id());
+        if (!readAccount) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }),
+  );
+
+  return accountsWeOwn.map(account => account.id().toBech32());
+};
+
+export const exportAccounts = async () => {
+  try {
+    const { getClient } = useClient();
+    const client = await getClient();
+
+    const store = await client.exportStore();
+    console.log("🚀 ~ exportAccounts ~ store:", store);
+    return store;
+  } catch (error) {
+    console.error("Failed to export account:", error);
+    throw new Error("Failed to export account");
+  }
+};
+
+export const importAccount = async (store: string) => {
+  const { getClient } = useClient();
+  const client = await getClient();
+
+  await client.forceImportStore(store);
+};
