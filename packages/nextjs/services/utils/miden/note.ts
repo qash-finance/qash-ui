@@ -95,7 +95,7 @@ export async function createP2IDENote(
   return [OutputNote.full(note), serialNumbersCopy, recallHeight];
 }
 
-export async function consumeAllNotes(
+export async function consumeAllUnauthenticatedNotes(
   accountId: AccountId,
   notes: {
     isPrivate: boolean;
@@ -153,7 +153,7 @@ export async function consumeAllNotes(
   }
 }
 
-export async function consumePrivateNote(accountId: AccountId, partialNote: PartialConsumableNote) {
+export async function consumeUnauthenticatedNote(accountId: AccountId, partialNote: PartialConsumableNote) {
   const { getClient } = useClient();
 
   try {
@@ -189,7 +189,7 @@ export async function consumePrivateNote(accountId: AccountId, partialNote: Part
   }
 }
 
-export async function consumePublicNote(accountId: AccountId, noteId: string) {
+export async function consumeNoteByID(accountId: AccountId, noteId: string) {
   const { getClient } = useClient();
   try {
     const client = await getClient();
@@ -203,35 +203,17 @@ export async function consumePublicNote(accountId: AccountId, noteId: string) {
   }
 }
 
-
-
-export async function createNoteAndSubmit(
-  sender: AccountId,
-  receiver: AccountId,
-  faucetId: AccountId,
-  amount: number,
-  noteType: NoteType,
-  recallableTimeInSeconds?: number,
-) {
+export async function consumeNoteByIDs(accountId: AccountId, noteIds: string[]) {
   const { getClient } = useClient();
-
-  console.log("🚀 ~ createNoteAndSubmit ~ sender:", sender.toString());
-  console.log("🚀 ~ createNoteAndSubmit ~ receiver:", receiver.toString());
-  console.log("🚀 ~ createNoteAndSubmit ~ faucetId:", faucetId.toString());
-  console.log("🚀 ~ createNoteAndSubmit ~ amount:", amount);
-  console.log("🚀 ~ createNoteAndSubmit ~ noteType:", noteType);
-
   try {
     const client = await getClient();
-    await client.syncState();
-
-    const transactionRequest = client.newSendTransactionRequest(sender, receiver, faucetId, noteType, BigInt(amount));
-    const txResult = await client.newTransaction(sender, transactionRequest);
+    const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
+    const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
 
-    await client.syncState();
-  } catch (error) {
-    throw new Error("Failed to submit note");
+    return txResult.executedTransaction().id().toHex();
+  } catch (err) {
+    throw new Error("Failed to consume notes");
   }
 }
 

@@ -3,8 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 
 const useConsumeNotes = () => {
   return useMutation({
-    mutationFn: async (transactionIds: string[]) => {
-      const response = await consumeTransactions(transactionIds);
+    mutationFn: async (noteIds: string[]) => {
+      const response = await consumeTransactions(noteIds);
       return response;
     },
   });

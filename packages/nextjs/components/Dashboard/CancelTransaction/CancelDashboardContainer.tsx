@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { StatusCard } from "./StatusCard";
 import { Table } from "../../Common/Table";
 import { ActionButton } from "../../Common/ActionButton";
@@ -7,16 +7,16 @@ import { CustomCheckbox } from "../../Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { formatAddress } from "@/services/utils/miden/address";
-import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS, REFETCH_DELAY } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
-import { RecallableDashboard, RecallableNote } from "@/types/transaction";
-import { customCreateP2IDENote } from "@/services/utils/miden/note";
-import { AccountId, Felt, NoteAndArgs, NoteAndArgsArray, NoteType } from "@demox-labs/miden-sdk";
-import { submitTransactionWithOwnInputNotes } from "@/services/utils/miden/transactions";
+import { RecallableNote, RecallableNoteType } from "@/types/transaction";
+import { consumeNoteByID, consumeNoteByIDs } from "@/services/utils/miden/note";
+import { AccountId } from "@demox-labs/miden-sdk";
 import toast from "react-hot-toast";
-import { NoteStatus } from "@/types/note";
 import { Empty } from "@/components/Common/Empty";
+import useRecall from "@/hooks/server/useRecall";
+import { useAccountContext } from "@/contexts/AccountProvider";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -72,101 +72,16 @@ const TableSection = ({
 );
 
 export const CancelDashboardContainer: React.FC = () => {
-  const recallableNotes: RecallableDashboard = {
-    nextRecallTime: new Date("2024-06-03T15:00:00Z"),
-    recalledCount: 2,
-    recallableItems: [
-      {
-        id: 1,
-        assets: [
-          {
-            faucetId: "0x1234567890abcdef",
-            amount: "100.00",
-            metadata: {
-              symbol: "QASH",
-              decimals: 18,
-              maxSupply: 10000,
-            },
-          },
-        ],
-        createdAt: "2024-06-01T12:00:00Z",
-        updatedAt: "2024-06-01T12:00:00Z",
-        isGift: false,
-        noteId: "note-1",
-        noteType: "p2id",
-        private: false,
-        recallable: true,
-        recallableHeight: 123456,
-        recallableTime: "2024-06-02T12:00:00Z",
-        recipient: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-        sender: "0x1234123412341234123412341234123412341234",
-        serialNumber: ["SN123456"],
-        status: NoteStatus.PENDING,
-      },
-      {
-        id: 2,
-        assets: [
-          {
-            faucetId: "0xabcdefabcdefabcdef",
-            amount: "50.00",
-            metadata: {
-              symbol: "USDC",
-              decimals: 6,
-              maxSupply: 10000,
-            },
-          },
-        ],
-        createdAt: "2024-06-01T13:00:00Z",
-        updatedAt: "2024-06-01T13:00:00Z",
-        isGift: true,
-        noteId: "note-2",
-        noteType: "gift",
-        private: true,
-        recallable: true,
-        recallableHeight: 123457,
-        recallableTime: "2024-06-02T13:00:00Z",
-        recipient: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-        sender: "0xbeefbeefbeefbeefbeefbeefbeefbeefbeefbeef",
-        serialNumber: ["SN654321"],
-        status: NoteStatus.PENDING,
-      },
-    ],
-    waitingToRecallItems: [
-      {
-        id: 3,
-        assets: [
-          {
-            faucetId: "0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed",
-            amount: "200.00",
-            metadata: {
-              symbol: "ETH",
-              decimals: 18,
-              maxSupply: 21000000,
-            },
-          },
-        ],
-        createdAt: "2024-06-01T14:00:00Z",
-        updatedAt: "2024-06-01T14:00:00Z",
-        isGift: false,
-        noteId: "note-3",
-        noteType: "p2idr",
-        private: false,
-        recallable: true,
-        recallableHeight: 123458,
-        recallableTime: "2024-06-03T14:00:00Z",
-        recipient: "0xcafebabecafebabecafebabecafebabecafebabe",
-        sender: "0xfacefacefacefacefacefacefacefacefaceface",
-        serialNumber: ["SN789012"],
-        status: NoteStatus.PENDING,
-      },
-    ],
-  };
   // **************** Server Hooks *******************
   const {
-    data: recallableNotez,
+    data: recallableNotes,
     isLoading: recallableNotesLoading,
     refetch: refetchRecallableNotes,
   } = useRecallableNotes();
+  const { mutateAsync: recallBatch } = useRecall();
+  const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+
+  // **************** Local State *******************
   const [countdown, setCountdown] = React.useState("00H:00M:00S");
   const [recallingNoteId, setRecallingNoteId] = React.useState<number | null>(null);
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
@@ -220,34 +135,60 @@ export const CancelDashboardContainer: React.FC = () => {
       toast.loading("Cancelling transactions...");
 
       // Process each checked note
-      for (const idx of checkedRows) {
-        const note = recallableNotes?.recallableItems[idx];
-        if (!note) continue;
+      // for (const idx of checkedRows) {
+      //   const note = recallableNotes?.recallableItems[idx];
+      //   if (!note) continue;
 
-        setRecallingNoteId(note.id);
+      //   setRecallingNoteId(note.id);
 
-        // build p2ide
-        const p2ideNote = await customCreateP2IDENote(
-          AccountId.fromBech32(note.sender),
-          AccountId.fromBech32(note.recipient),
-          Number(note.assets[0].amount),
-          AccountId.fromBech32(note.assets[0].faucetId),
-          note.recallableHeight,
-          note.recallableHeight,
-          note.private ? NoteType.Private : NoteType.Public,
-          0,
-          note.serialNumber.map(serialNumber => new Felt(BigInt(serialNumber))),
-        );
+      //   // build p2ide
+      //   const p2ideNote = await customCreateP2IDENote(
+      //     AccountId.fromBech32(note.sender),
+      //     AccountId.fromBech32(note.recipient),
+      //     Number(note.assets[0].amount),
+      //     AccountId.fromBech32(note.assets[0].faucetId),
+      //     note.recallableHeight,
+      //     note.recallableHeight,
+      //     note.private ? NoteType.Private : NoteType.Public,
+      //     0,
+      //     note.serialNumber.map(serialNumber => new Felt(BigInt(serialNumber))),
+      //   );
 
-        // submit tx
-        await submitTransactionWithOwnInputNotes(
-          new NoteAndArgsArray([new NoteAndArgs(p2ideNote)]),
-          AccountId.fromBech32(note.sender),
-        );
-      }
+      //   // submit tx
+      //   await submitTransactionWithOwnInputNotes(
+      //     new NoteAndArgsArray([new NoteAndArgs(p2ideNote)]),
+      //     AccountId.fromBech32(note.sender),
+      //   );
+      // }
+
+      // get all notes
+      const notes = checkedRows.map(idx => recallableNotes?.recallableItems[idx]);
+
+      // notesId to consume
+      const noteIds = notes.map(note => note?.noteId).filter(noteId => noteId !== undefined);
+
+      // consume the notes on blockchain level
+      await consumeNoteByIDs(AccountId.fromBech32(walletAddress), noteIds);
+
+      await recallBatch({
+        items: [
+          ...notes
+            .filter(note => note != undefined)
+            .map(note => ({
+              type: RecallableNoteType.TRANSACTION,
+              id: note.id,
+            })),
+        ],
+      });
 
       // refetch recallable notes
       await refetchRecallableNotes();
+
+      // refetch assets
+      setTimeout(() => {
+        forceRefetchAssets();
+      }, REFETCH_DELAY);
+
       setCheckedRows([]);
 
       toast.dismiss();
@@ -265,30 +206,47 @@ export const CancelDashboardContainer: React.FC = () => {
     <div className="flex justify-center items-center">
       <ActionButton
         text={"Cancel"}
-        disabled={recallingNoteId === recallingNote.id || new Date(recallingNote.recallableTime) > new Date()}
+        disabled={recallingNoteId !== null || new Date(recallingNote.recallableTime) > new Date()}
         onClick={async () => {
           try {
             toast.loading("Cancelling transaction...");
+            console.log(recallingNote);
+
             setRecallingNoteId(recallingNote.id);
 
             // build p2ide
-            const note = await customCreateP2IDENote(
-              AccountId.fromBech32(recallingNote.sender),
-              AccountId.fromBech32(recallingNote.recipient),
-              Number(recallingNote.assets[0].amount),
-              AccountId.fromBech32(recallingNote.assets[0].faucetId),
-              recallingNote.recallableHeight,
-              recallingNote.recallableHeight,
-              recallingNote.private ? NoteType.Private : NoteType.Public,
-              0,
-              recallingNote.serialNumber.map(serialNumber => new Felt(BigInt(serialNumber))),
-            );
+            // const note = await customCreateP2IDENote(
+            //   AccountId.fromBech32(recallingNote.sender),
+            //   AccountId.fromBech32(recallingNote.recipient),
+            //   Number(recallingNote.assets[0].amount),
+            //   AccountId.fromBech32(recallingNote.assets[0].faucetId),
+            //   recallingNote.recallableHeight,
+            //   recallingNote.recallableHeight,
+            //   recallingNote.private ? NoteType.Private : NoteType.Public,
+            //   0,
+            //   recallingNote.serialNumber.map(serialNumber => new Felt(BigInt(serialNumber))),
+            // );
 
             // submit tx
-            const txId = await submitTransactionWithOwnInputNotes(
-              new NoteAndArgsArray([new NoteAndArgs(note)]),
+            // const txId = await submitTransactionWithOwnInputNotes(
+            //   new NoteAndArgsArray([new NoteAndArgs(note)]),
+            //   AccountId.fromBech32(recallingNote.sender),
+            // );
+
+            const txId = await consumeNoteByID(
               AccountId.fromBech32(recallingNote.sender),
+              recallingNote.noteId.toString(),
             );
+
+            // recall on server
+            await recallBatch({
+              items: [
+                {
+                  type: RecallableNoteType.TRANSACTION,
+                  id: recallingNote.id,
+                },
+              ],
+            });
 
             // refetch recallable notes
             await refetchRecallableNotes();

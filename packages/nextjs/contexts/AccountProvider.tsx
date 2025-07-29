@@ -1,8 +1,6 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import React, { createContext, useContext } from "react";
 import { AssetWithMetadata } from "@/types/faucet";
-import { ConsumableNoteRecord } from "@demox-labs/miden-sdk";
 import { useAccount } from "@/hooks/web3/useAccount";
 
 interface AccountContextType {
@@ -10,18 +8,17 @@ interface AccountContextType {
   loading: boolean;
   error: unknown;
   isAccountDeployed: boolean;
-  consumableNotes: ConsumableNoteRecord[] | null;
   accountId: string;
   isError: boolean;
   refreshAccount: () => Promise<void>;
   refetchAssets: () => Promise<void>;
+  forceFetch: () => Promise<void>;
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
 export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { assets, refetchAssets, loading, error, isAccountDeployed, consumableNotes, accountId, isError } =
-    useAccount();
+  const { assets, refetchAssets, loading, error, isAccountDeployed, accountId, isError, forceFetch } = useAccount();
 
   const refreshAccount = async () => {
     // This will trigger a re-fetch in useAccount due to dependency change
@@ -33,11 +30,13 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     loading,
     error,
     isAccountDeployed,
-    consumableNotes,
     accountId: accountId || "",
     isError,
     refreshAccount,
-    refetchAssets,
+    refetchAssets: async () => {
+      await refetchAssets();
+    },
+    forceFetch,
   };
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;

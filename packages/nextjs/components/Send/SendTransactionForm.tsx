@@ -24,6 +24,7 @@ import {
   QASH_TOKEN_MAX_SUPPLY,
   BLOCK_TIME,
   BUTTON_STYLES,
+  REFETCH_DELAY,
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
 import { useGetAddressBooks } from "@/services/api/address-book";
@@ -32,6 +33,7 @@ import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -75,9 +77,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
   const { handleConnect, isConnected } = useWalletConnect();
-  const { assets, refetchAssets, accountId: walletAddress } = useAccountContext();
+  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
   const { addTransaction } = useBatchTransactions(state => state);
+  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
 
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
@@ -210,6 +213,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         AccountId.fromBech32(recipientAddress);
       } catch (error) {
         toast.dismiss();
+        console.log(error);
 
         toast.error("Invalid recipient address");
         return;
@@ -268,8 +272,9 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       // refetch assets
       // call refetch assets 5 seconds later
       setTimeout(() => {
-        refetchAssets();
-      }, 5000);
+        forceRefetchAssets();
+        forceRefetchRecallablePayment();
+      }, REFETCH_DELAY);
 
       if (response) {
         toast.dismiss();

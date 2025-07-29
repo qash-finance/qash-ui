@@ -7,6 +7,11 @@ export enum NoteType {
   GIFT = "gift",
 }
 
+export enum RecallableNoteType {
+  TRANSACTION = "transaction",
+  GIFT = "gift",
+}
+
 export interface AssetDto {
   faucetId: string;
   amount: string;
@@ -47,7 +52,7 @@ export interface RecallRequestDto {
 }
 
 export interface RecallItem {
-  type: "transaction" | "gift";
+  type: RecallableNoteType;
   id: number;
 }
 
