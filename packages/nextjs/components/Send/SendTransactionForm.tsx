@@ -96,7 +96,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   });
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [showTemporaryRecipient, setShowTemporaryRecipient] = useState(false);
   const [recipientName, setRecipientName] = useState(recipientNameParam);
   const [isSubmittingAsBatch, setIsSubmittingAsBatch] = useState(false);
 
@@ -119,44 +118,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     setSelectedToken(defaultToken);
     setSelectedTokenAddress(defaultToken.faucetId);
   }, [assets]);
-
-  // Handle recipient changes
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      if (name === "recipientAddress") {
-        const currentAddress = value.recipientAddress;
-
-        // Clear everything if address is empty
-        if (!currentAddress) {
-          setRecipientName("");
-          setShowTemporaryRecipient(false);
-          return;
-        }
-
-        // Check if address is in address book - immediate display
-        if (addressBooks) {
-          const addressBook = addressBooks.find(book => book.address === currentAddress);
-          if (addressBook) {
-            setRecipientName(addressBook.name);
-            setShowTemporaryRecipient(true);
-            return;
-          }
-        }
-
-        // Handle custom addresses with a short delay
-        const timeoutId = setTimeout(() => {
-          const isValid = validateAddress(currentAddress);
-          setShowTemporaryRecipient(isValid);
-          if (isValid) {
-            setRecipientName(""); // Clear name for custom addresses
-          }
-        }, 300); // 0.3 second delay
-
-        return () => clearTimeout(timeoutId);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, addressBooks, validateAddress]);
 
   // ********************************************
   // **************** Handlers ******************
@@ -474,11 +435,22 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                 />
               </div>
             </div>
-            <ActionButton text="Choose" onClick={handleChooseRecipient} />
+            {watch("recipientAddress") && validateAddress(watch("recipientAddress")) ? (
+              <ActionButton
+                text="Remove"
+                type="deny"
+                onClick={() => {
+                  setRecipientName("");
+                  setValue("recipientAddress", "");
+                }}
+              />
+            ) : (
+              <ActionButton text="Choose" onClick={handleChooseRecipient} />
+            )}
           </div>
 
-          {errors.recipientAddress && watch("recipientAddress") && (
-            <span className="text-sm text-red-500">{errors?.recipientAddress?.message as string}</span>
+          {watch("recipientAddress") && !validateAddress(watch("recipientAddress")) && (
+            <span className="text-sm text-red-500">Invalid recipient address</span>
           )}
         </section>
       ) : (

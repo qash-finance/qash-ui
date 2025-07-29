@@ -69,9 +69,8 @@ export const Title = () => {
       </div>
 
       <button
-        className={`portfolio-button font-barlow font-bold transition-colors cursor-pointer bg-white hover:bg-white/80 flex flex-row gap-1 items-center justify-center`}
+        className={`portfolio-button font-barlow font-bold transition-colors cursor-pointer bg-white hover:bg-white/80 flex flex-row gap-1 items-center justify-center px-3.5 py-1.5`}
         style={{
-          padding: "6px 10px 8px 10px",
           borderRadius: "10px",
           fontWeight: "500",
           letterSpacing: "-0.084px",
@@ -81,7 +80,7 @@ export const Title = () => {
         }}
         onClick={() => openModal(MODAL_IDS.PORTFOLIO)}
       >
-        <img src="/modal/coin-icon.gif" alt="coin-icon" className="w-5 h-5 mx-1" />
+        <img src="/modal/coin-icon.gif" alt="coin-icon" className="w-5 h-5 " />
         PORTFOLIO
       </button>
     </div>

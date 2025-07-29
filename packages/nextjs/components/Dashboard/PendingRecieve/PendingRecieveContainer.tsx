@@ -23,6 +23,7 @@ import useConsumeNotes from "@/hooks/server/useConsume";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
+import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 
 const mockData = [
   {
@@ -60,7 +61,7 @@ const TableHeader = ({
     <thead>
       <tr className="bg-[#181818] ">
         <th className=" text-center text-sm font-medium text-neutral-400 rounded-tl-lg py-2">
-          <input type="checkbox" className="w-4 h-4 mt-1" checked={allChecked} onChange={onCheckAll} />
+          <CustomCheckbox checked={allChecked} onChange={onCheckAll} />
         </th>
         {columns.map((column, index) => (
           <th
@@ -99,7 +100,7 @@ const TableRow = ({
   return (
     <tr className="bg-[#1E1E1E] border-b border-zinc-800 last:border-b-0 hover:bg-[#292929]">
       <td className="px-2 py-2 border-r border-zinc-800 text-center">
-        <input type="checkbox" className="w-4 h-4" checked={checked} onChange={onCheck} />
+        <CustomCheckbox checked={checked} onChange={onCheck} />
       </td>
       <td className="px-2 py-2 border-r border-zinc-800 min-w-[300px]">
         <div className="flex justify-center items-center gap-2">
