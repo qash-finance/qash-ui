@@ -37,6 +37,9 @@ const TableSection = ({
   data,
   actionRenderer,
   columnWidths,
+  checkedRows,
+  onCheckAll,
+  onCheckRow,
 }: {
   title: string;
   subtitle: string;
@@ -44,132 +47,119 @@ const TableSection = ({
   data: any[];
   actionRenderer: (rowData: any, index: number) => React.ReactNode;
   columnWidths?: Record<number, string>;
-}) => (
-  <section className="mt-2.5 w-full max-md:max-w-full">
-    <div className="w-full max-md:max-w-full">
-      <div className="flex gap-2.5 items-start w-full max-md:max-w-full">
-        <div className="flex flex-col flex-1 shrink justify-center w-full basis-0 min-w-60 max-md:max-w-full">
-          <h1 className="text-white text-xl font-bold">{title}</h1>
-          <p className="mt-2 text-base tracking-tight leading-none text-neutral-500 max-md:max-w-full">{subtitle}</p>
+  checkedRows: number[];
+  onCheckAll: () => void;
+  onCheckRow: (index: number) => void;
+}) => {
+  const isAllChecked = data.length > 0 && checkedRows.length === data.length;
+
+  const TableHeader = ({
+    columns,
+    allChecked,
+    onCheckAll,
+  }: {
+    columns: string[];
+    allChecked: boolean;
+    onCheckAll: () => void;
+  }) => {
+    return (
+      <thead>
+        <tr className="bg-[#181818] ">
+          <th className=" text-center text-sm font-medium text-neutral-400 rounded-tl-lg py-2">
+            <CustomCheckbox checked={allChecked} onChange={onCheckAll} />
+          </th>
+          {columns.map((column, index) => (
+            <th
+              key={column}
+              className={` text-center font-medium text-neutral-400 border-r border-[#292929] py-2 ${
+                index === 0 ? "rounded-tl-lg" : ""
+              } ${index === columns.length - 1 ? "rounded-tr-lg border-r-0" : ""} ${index === 1 ? "min-w-[300px]" : ""}`}
+            >
+              {column}
+            </th>
+          ))}
+        </tr>
+      </thead>
+    );
+  };
+
+  const TableRow = ({
+    rowData,
+    index,
+    checked,
+    onCheck,
+  }: {
+    rowData: any;
+    index: number;
+    checked: boolean;
+    onCheck: () => void;
+  }) => {
+    return (
+      <tr className="bg-[#1E1E1E] border-b border-zinc-800 last:border-b-0 hover:bg-[#292929]">
+        <td className="px-2 py-2 border-r border-zinc-800 text-center">
+          <CustomCheckbox checked={checked} onChange={onCheck} />
+        </td>
+        {headers.map((header, headerIndex) => (
+          <td
+            key={header}
+            className={`px-2 py-2 ${headerIndex === 0 ? "min-w-[300px]" : ""} ${
+              headerIndex === headers.length - 1 ? "" : "border-r border-zinc-800"
+            } ${headerIndex === 0 ? "text-left" : "text-center"}`}
+          >
+            {header === "Action" ? actionRenderer(rowData, index) : rowData[header]}
+          </td>
+        ))}
+      </tr>
+    );
+  };
+
+  return (
+    <section className="mt-2.5 w-full max-md:max-w-full">
+      <div className="w-full max-md:max-w-full">
+        <div className="flex gap-2.5 items-start w-full max-md:max-w-full">
+          <div className="flex flex-col flex-1 shrink justify-center w-full basis-0 min-w-60 max-md:max-w-full">
+            <h1 className="text-white text-xl font-bold">{title}</h1>
+            <p className="mt-2 text-base tracking-tight leading-none text-neutral-500 max-md:max-w-full">{subtitle}</p>
+          </div>
+        </div>
+        <div className="mt-2.5">
+          {data.length > 0 ? (
+            <div className="overflow-x-auto rounded-lg border border-zinc-800">
+              <table className="w-full min-w-[800px]">
+                <TableHeader columns={headers} allChecked={isAllChecked} onCheckAll={onCheckAll} />
+                <tbody>
+                  {data.map((rowData, index) => (
+                    <TableRow
+                      key={index}
+                      rowData={rowData}
+                      index={index}
+                      checked={checkedRows.includes(index)}
+                      onCheck={() => onCheckRow(index)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Empty title="No payments to cancel" />
+          )}
         </div>
       </div>
-      <div className="mt-2.5">
-        {data.length > 0 ? (
-          <Table
-            headers={headers}
-            data={data}
-            actionColumn={true}
-            actionRenderer={actionRenderer}
-            className="w-full"
-            columnWidths={columnWidths}
-          />
-        ) : (
-          <Empty title="No payments to cancel" />
-        )}
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export const CancelDashboardContainer: React.FC = () => {
-  const recallableNotes: RecallableDashboard = {
-    nextRecallTime: new Date("2024-06-03T15:00:00Z"),
-    recalledCount: 2,
-    recallableItems: [
-      {
-        id: 1,
-        assets: [
-          {
-            faucetId: "0x1234567890abcdef",
-            amount: "100.00",
-            metadata: {
-              symbol: "QASH",
-              decimals: 18,
-              maxSupply: 10000,
-            },
-          },
-        ],
-        createdAt: "2024-06-01T12:00:00Z",
-        updatedAt: "2024-06-01T12:00:00Z",
-        isGift: false,
-        noteId: "note-1",
-        noteType: "p2id",
-        private: false,
-        recallable: true,
-        recallableHeight: 123456,
-        recallableTime: "2024-06-02T12:00:00Z",
-        recipient: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-        sender: "0x1234123412341234123412341234123412341234",
-        serialNumber: ["SN123456"],
-        status: NoteStatus.PENDING,
-      },
-      {
-        id: 2,
-        assets: [
-          {
-            faucetId: "0xabcdefabcdefabcdef",
-            amount: "50.00",
-            metadata: {
-              symbol: "USDC",
-              decimals: 6,
-              maxSupply: 10000,
-            },
-          },
-        ],
-        createdAt: "2024-06-01T13:00:00Z",
-        updatedAt: "2024-06-01T13:00:00Z",
-        isGift: true,
-        noteId: "note-2",
-        noteType: "gift",
-        private: true,
-        recallable: true,
-        recallableHeight: 123457,
-        recallableTime: "2024-06-02T13:00:00Z",
-        recipient: "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-        sender: "0xbeefbeefbeefbeefbeefbeefbeefbeefbeefbeef",
-        serialNumber: ["SN654321"],
-        status: NoteStatus.PENDING,
-      },
-    ],
-    waitingToRecallItems: [
-      {
-        id: 3,
-        assets: [
-          {
-            faucetId: "0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed",
-            amount: "200.00",
-            metadata: {
-              symbol: "ETH",
-              decimals: 18,
-              maxSupply: 21000000,
-            },
-          },
-        ],
-        createdAt: "2024-06-01T14:00:00Z",
-        updatedAt: "2024-06-01T14:00:00Z",
-        isGift: false,
-        noteId: "note-3",
-        noteType: "p2idr",
-        private: false,
-        recallable: true,
-        recallableHeight: 123458,
-        recallableTime: "2024-06-03T14:00:00Z",
-        recipient: "0xcafebabecafebabecafebabecafebabecafebabe",
-        sender: "0xfacefacefacefacefacefacefacefacefaceface",
-        serialNumber: ["SN789012"],
-        status: NoteStatus.PENDING,
-      },
-    ],
-  };
   // **************** Server Hooks *******************
   const {
-    data: recallableNotez,
+    data: recallableNotes,
     isLoading: recallableNotesLoading,
     refetch: refetchRecallableNotes,
   } = useRecallableNotes();
-  const [countdown, setCountdown] = React.useState("00H:00M:00S");
-  const [recallingNoteId, setRecallingNoteId] = React.useState<number | null>(null);
-  const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
+  const [countdown, setCountdown] = useState("00H:00M:00S");
+  const [recallingNoteId, setRecallingNoteId] = useState<number | null>(null);
+  const [checkedRows, setCheckedRows] = useState<number[]>([]);
+  const [checkedWaitingRows, setCheckedWaitingRows] = useState<number[]>([]);
 
   // Update countdown every second
   useEffect(() => {
@@ -197,23 +187,32 @@ export const CancelDashboardContainer: React.FC = () => {
   }, [recallableNotes?.nextRecallTime]);
 
   // **************** Local State *******************
-  const pendingHeaders = ["", "Amount", "To", "Date/Time"];
-  const waitingHeaders = ["Amount", "To", "Date/Time", "Recall in"];
+  const readyToCancelHeaders = ["Amount", "To", "Date/Time", "Action"];
+  const upcomingCancelHeaders = ["Amount", "To", "Date/Time", "Recall in", "Action"];
 
   const handleCheckRow = React.useCallback((idx: number) => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   }, []);
 
-  const handleCheckAll = useCallback(
-    (items: any[]) => {
-      if (checkedRows.length === items.length) {
-        setCheckedRows([]);
-      } else {
-        setCheckedRows(items.map((_, idx) => idx));
-      }
-    },
-    [checkedRows],
-  );
+  const handleCheckAll = useCallback(() => {
+    if (checkedRows.length === (recallableNotes?.recallableItems?.length || 0)) {
+      setCheckedRows([]);
+    } else {
+      setCheckedRows((recallableNotes?.recallableItems || []).map((_, idx) => idx));
+    }
+  }, [checkedRows, recallableNotes?.recallableItems]);
+
+  const handleCheckWaitingRow = React.useCallback((idx: number) => {
+    setCheckedWaitingRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
+  }, []);
+
+  const handleCheckAllWaiting = useCallback(() => {
+    if (checkedWaitingRows.length === (recallableNotes?.waitingToRecallItems?.length || 0)) {
+      setCheckedWaitingRows([]);
+    } else {
+      setCheckedWaitingRows((recallableNotes?.waitingToRecallItems || []).map((_, idx) => idx));
+    }
+  }, [checkedWaitingRows, recallableNotes?.waitingToRecallItems]);
 
   const handleCancelAll = async () => {
     try {
@@ -369,23 +368,9 @@ export const CancelDashboardContainer: React.FC = () => {
           <TableSection
             title="Ready to Cancel"
             subtitle="Payments that are now eligible for cancellation. You can select multiple payments to cancel them in batch."
-            headers={pendingHeaders}
+            headers={readyToCancelHeaders}
             data={
               recallableNotes?.recallableItems?.map((note: RecallableNote, index: number) => ({
-                "": (
-                  <div className="flex justify-center items-center">
-                    <CustomCheckbox
-                      checked={checkedRows.includes(index)}
-                      onChange={checked => {
-                        if (checked) {
-                          setCheckedRows(prev => [...prev, index]);
-                        } else {
-                          setCheckedRows(prev => prev.filter(i => i !== index));
-                        }
-                      }}
-                    />
-                  </div>
-                ),
                 Amount: (
                   <div className="relative flex flex-row flex-wrap gap-1 items-center">
                     <div className="group relative flex items-center gap-1">
@@ -420,11 +405,13 @@ export const CancelDashboardContainer: React.FC = () => {
             }
             actionRenderer={rowData => renderCancelAction(rowData.originalNote)}
             columnWidths={{
-              "0": "5%",
-              "1": "55%",
-              "2": "20%",
-              "3": "20%",
+              "0": "55%",
+              "1": "20%",
+              "2": "25%",
             }}
+            checkedRows={checkedRows}
+            onCheckAll={handleCheckAll}
+            onCheckRow={handleCheckRow}
           />
 
           {checkedRows.length > 0 && (
@@ -437,7 +424,7 @@ export const CancelDashboardContainer: React.FC = () => {
           <TableSection
             title="Upcoming Cancellations"
             subtitle="Payments that will become cancellable once their scheduled time is reached. The cancel button will automatically enable at the specified time."
-            headers={waitingHeaders}
+            headers={upcomingCancelHeaders}
             data={
               recallableNotes?.waitingToRecallItems?.map((note, index) => ({
                 Amount: (
@@ -480,6 +467,9 @@ export const CancelDashboardContainer: React.FC = () => {
               "2": "20%",
               "3": "20%",
             }}
+            checkedRows={checkedWaitingRows}
+            onCheckAll={handleCheckAllWaiting}
+            onCheckRow={handleCheckWaitingRow}
           />
         </div>
       )}

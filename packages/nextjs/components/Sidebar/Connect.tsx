@@ -155,22 +155,23 @@ export const Connect = () => {
           <div className="mt-1.5 w-full p-2">
             <SafeWalletButton
               onClick={async () => {
-                await handleConnect().then(() => {
-                  // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-                  // if (deployedAccounts) {
-                  //   try {
-                  //     const accounts = JSON.parse(deployedAccounts);
-                  //     const account = Object.values(accounts)[0] as any;
-                  //     const hasClaimQASH = account.hasClaimQASH;
-                  //     // Only open modal if user hasn't claimed QASH
-                  //     if (!hasClaimQASH) {
-                  //       openModal(MODAL_IDS.ONBOARDING);
-                  //     }
-                  //   } catch (error) {
-                  //     console.error("Error parsing deployed accounts:", error);
-                  //   }
-                  // }
-                });
+                // await handleConnect().then(() => {
+                //   // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
+                //   // if (deployedAccounts) {
+                //   //   try {
+                //   //     const accounts = JSON.parse(deployedAccounts);
+                //   //     const account = Object.values(accounts)[0] as any;
+                //   //     const hasClaimQASH = account.hasClaimQASH;
+                //   //     // Only open modal if user hasn't claimed QASH
+                //   //     if (!hasClaimQASH) {
+                //   //       openModal(MODAL_IDS.ONBOARDING);
+                //   //     }
+                //   //   } catch (error) {
+                //   //     console.error("Error parsing deployed accounts:", error);
+                //   //   }
+                //   // }
+                // });
+                openModal(MODAL_IDS.CONNECT_WALLET);
               }}
               connected={isConnected}
               style={{

@@ -20,7 +20,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ title, value, hasTimer =
             backgroundSize: "cover",
             backgroundPosition: "left",
             width: "20%",
-            height: "8.25%",
+            height: "7.25%",
           }}
         ></div>
         <div className="font-bold text-4xl font-repetition-scrolling">{value}</div>

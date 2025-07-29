@@ -8,6 +8,7 @@ import NewRequestModal from "@/components/Modal/NewRequestModal";
 import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
 import Portfolio from "@/components/Portfolio/Portfolio";
 import OnboardingModal from "@/components/Modal/OnboardingModal";
+import ConnectWalletModal from "@/components/Modal/ConnectWalletModal";
 import { AssetWithMetadata } from "./faucet";
 
 export const MODAL_IDS = {
@@ -21,6 +22,7 @@ export const MODAL_IDS = {
   CREATE_CUSTOM_QR: "CREATE_CUSTOM_QR",
   PORTFOLIO: "PORTFOLIO",
   ONBOARDING: "ONBOARDING",
+  CONNECT_WALLET: "CONNECT_WALLET",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -67,6 +69,8 @@ export interface PortfolioModalProps extends BaseModalProps {}
 
 export interface OnboardingModalProps extends BaseModalProps {}
 
+export interface ConnectWalletModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -78,6 +82,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModalProps;
   [MODAL_IDS.PORTFOLIO]: PortfolioModalProps;
   [MODAL_IDS.ONBOARDING]: OnboardingModalProps;
+  [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -93,4 +98,5 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModal,
   [MODAL_IDS.PORTFOLIO]: Portfolio,
   [MODAL_IDS.ONBOARDING]: OnboardingModal,
+  [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModal,
 } as const;

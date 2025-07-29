@@ -46,7 +46,7 @@ export function CreateCustomQRModal({
       const message = formData.message;
 
       if (!selectedToken) {
-        alert("Please select a token first");
+        toast.error("Please select a token first");
         return;
       }
 
@@ -80,7 +80,7 @@ export function CreateCustomQRModal({
       onClose();
     } catch (error) {
       console.error("Error generating QR:", error);
-      alert("Failed to generate QR code. Please try again.");
+      toast.error("Failed to generate QR code. Please try again.");
     } finally {
       setIsGenerating(false);
     }
