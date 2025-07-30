@@ -3,10 +3,20 @@ import { usePathname } from "next/navigation";
 import TabContainer from "./TabContainer";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
+import { useGetNotificationsInfinite } from "@/services/api/notification";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 export const Title = () => {
   const { openModal } = useModal();
   const pathname = usePathname();
+  const { walletAddress } = useWalletConnect();
+
+  // Calculate unread count
+  const { data } = useGetNotificationsInfinite(walletAddress, 20);
+  const unreadCount = data?.pages
+    ? data.pages.flatMap(page => page.notifications).filter((item: any) => item.status === "UNREAD").length
+    : 0;
+
   let title;
   switch (pathname) {
     case "/send":
@@ -83,6 +93,14 @@ export const Title = () => {
         <img src="/modal/coin-icon.gif" alt="coin-icon" className="w-5 h-5 " />
         PORTFOLIO
       </button>
+
+      <div
+        className="relative flex flex-row gap-2 justify-center items-center w-15 h-[50px] bg-[#292929] rounded-lg cursor-pointer"
+        onClick={() => openModal(MODAL_IDS.NOTIFICATION)}
+      >
+        <img src="/notification/bell.svg" alt="bell" className="w-5 h-5" />
+        {unreadCount > 0 && <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-[#FF2323] rounded-full" />}
+      </div>
     </div>
   );
 };

@@ -225,36 +225,6 @@ const steps: StepType[] = [
   },
 ];
 
-// Separate component to handle auto-start logic
-const TourAutoStart = () => {
-  const { setIsOpen } = useTour();
-  const [hasInitialized, setHasInitialized] = useState(false);
-
-  useEffect(() => {
-    // Check if tour has been skipped before
-    const tourSkipped = localStorage.getItem(TOUR_KEY);
-
-    // Check if we're on a page where tour shouldn't start
-    const currentPath = window.location.pathname;
-    const isNotFoundPage = document.querySelector('[data-testid="not-found"]');
-    const shouldSkipTour = currentPath === "/mobile" || isNotFoundPage;
-
-    if (!tourSkipped && !hasInitialized && !shouldSkipTour) {
-      // Auto-start tour after a short delay to ensure components are rendered
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        setHasInitialized(true);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-
-    setHasInitialized(true);
-  }, [setIsOpen, hasInitialized]);
-
-  return null;
-};
-
 interface TourProviderWrapperProps {
   children: ReactNode;
 }
@@ -290,7 +260,6 @@ export const TourProviderWrapper = ({ children }: TourProviderWrapperProps) => {
         maskArea: base => ({ ...base, rx: 13 }),
       }}
     >
-      <TourAutoStart />
       {children}
     </TourProvider>
   );

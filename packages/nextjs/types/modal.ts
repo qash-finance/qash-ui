@@ -10,10 +10,12 @@ import Portfolio from "@/components/Portfolio/Portfolio";
 import OnboardingModal from "@/components/Modal/OnboardingModal";
 import ConnectWalletModal from "@/components/Modal/ConnectWallet/ConnectWalletModal";
 import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
+import Notification from "@/components/Notification/Notification";
 import { AssetWithMetadata } from "./faucet";
 import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
 import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
 import { BatchTransaction } from "@/services/store/batchTransactions";
+import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -30,6 +32,8 @@ export const MODAL_IDS = {
   TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
   IMPORT_WALLET: "IMPORT_WALLET",
   BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
+  NOTIFICATION: "NOTIFICATION",
+  BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -100,6 +104,10 @@ export interface BatchTransactionOverviewModalProps extends BaseModalProps {
 
 export interface ImportWalletModalProps extends BaseModalProps {}
 
+export interface BatchTransactionsModalProps extends BaseModalProps {}
+
+export interface NotificationModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -115,6 +123,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModalProps;
   [MODAL_IDS.IMPORT_WALLET]: ImportWalletModalProps;
   [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModalProps;
+  [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
+  [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -134,4 +144,6 @@ export const modalRegistry = {
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModal,
   [MODAL_IDS.IMPORT_WALLET]: ImportWalletModal,
   [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModal,
+  [MODAL_IDS.NOTIFICATION]: Notification,
+  [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
 } as const;

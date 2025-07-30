@@ -8,6 +8,7 @@ import { exportAccounts } from "@/services/utils/miden/account";
 import toast from "react-hot-toast";
 import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
+import { useTour } from "@reactour/tour";
 
 type Step = "init" | "creating" | "final";
 
@@ -58,6 +59,8 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
   const [lastConnectedAddress, setLastConnectedAddress] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [filesToImport, setFilesToImport] = useState<File[]>([]);
+
+  const { setIsOpen } = useTour();
 
   // Reset state when modal closes
   useEffect(() => {
@@ -414,7 +417,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
             <div
               className="flex flex-col gap-2 rounded-b-2xl h-[300px] justify-center items-center"
               style={{
-                background: "url('/modal/final-wallet-background.svg')",
+                backgroundImage: "url('/modal/final-wallet-background.svg')",
                 backgroundPosition: "center",
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
@@ -460,6 +463,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                 text="Continue"
                 onClick={() => {
                   onClose();
+                  setIsOpen(true);
                 }}
                 className="flex-1 w-full"
               />

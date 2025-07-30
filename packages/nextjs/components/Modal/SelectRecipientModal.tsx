@@ -53,10 +53,11 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
   // Group address books by category
   const groupedAddressBooks = useMemo(() => {
     if (!addressBooks) return {};
-    return addressBooks.reduce((groups: Record<string, AddressBook[]>, ab: AddressBook) => {
-      const category = ab.category;
+    return addressBooks.reduce((groups: Record<string, AddressBook[]>, categoryData: any) => {
+      const category = categoryData.name; // Use 'name' as category from the new structure
       if (!groups[category]) groups[category] = [];
-      groups[category].push(ab);
+      // Add all addressBooks from this category
+      groups[category].push(...(categoryData.addressBooks || []));
       return groups;
     }, {});
   }, [addressBooks]);
@@ -67,7 +68,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
 
     const filtered: Record<string, AddressBook[]> = {};
     Object.keys(groupedAddressBooks).forEach(category => {
-      const filteredInCategory = groupedAddressBooks[category].filter(ab =>
+      const filteredInCategory = (groupedAddressBooks[category] || []).filter((ab: AddressBook) =>
         ab.name.toLowerCase().includes(search.toLowerCase()),
       );
       if (filteredInCategory.length > 0) {
@@ -147,7 +148,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
           {/* Address List */}
           <section className="flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0]">
             <h2 className="text-base tracking-tighter leading-5 text-white">
-              Your address book ({filteredGroupedAddressBooks[activeTab]?.length || 0})
+              Your address book ({(filteredGroupedAddressBooks[activeTab] as AddressBook[])?.length || 0})
             </h2>
 
             {/* Filter Tabs */}
@@ -170,10 +171,10 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
               ))}
             </nav>
 
-            {filteredGroupedAddressBooks[activeTab]?.length > 0 ? (
+            {(filteredGroupedAddressBooks[activeTab] as AddressBook[])?.length > 0 ? (
               <div className="flex flex-col gap-1.5 items-start self-stretch">
                 <div className="flex flex-col gap-1.5 items-start self-stretch p-1 rounded-xl bg-[#313131]">
-                  {filteredGroupedAddressBooks[activeTab]?.map((ab, idx) => (
+                  {(filteredGroupedAddressBooks[activeTab] as AddressBook[])?.map((ab: AddressBook, idx: number) => (
                     <AddressItem
                       key={ab.address + ab.name}
                       name={ab.name}

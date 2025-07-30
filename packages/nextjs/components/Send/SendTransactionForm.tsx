@@ -174,115 +174,190 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
-    // Validation checks
     try {
-      AccountId.fromBech32(recipientAddress);
-    } catch (error) {
-      toast.error("Invalid recipient address");
-      return;
-    }
+      setIsSending(true);
+      toast.loading("Sending transaction...");
 
-    if (amount > parseFloat(selectedToken.amount)) {
-      toast.error("Insufficient balance");
-      return;
-    }
+      // check if amount > balance
+      if (amount > parseFloat(selectedToken.amount)) {
+        toast.dismiss();
+        toast.error("Insufficient balance");
+        return;
+      }
 
-    if (recallableTime <= 0) {
-      toast.error("Recallable time must be greater than 0");
-      return;
-    }
+      // check if recipient address is valid bech32
+      try {
+        console.log("RECIPIENT ADDRESS", recipientAddress);
+        AccountId.fromBech32(recipientAddress);
+      } catch (error) {
+        toast.dismiss();
+        console.log(error);
 
-    if (amount <= 0) {
-      toast.error("Amount must be greater than 0");
-      return;
-    }
+        toast.error("Invalid recipient address");
+        return;
+      }
 
-    // Show transaction overview modal first
-    openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
-      amount: `${amount}`,
-      accountName: "My Account", // You can get this from account context if available
-      accountAddress: walletAddress,
-      recipientName: recipientName || null,
-      recipientAddress: recipientAddress,
-      transactionType: isPrivateTransaction ? "Private" : "Public",
-      cancellableTime: `${recallableTime / 3600} hour(s)`,
-      message: data.message || "Transaction details",
-      tokenAddress: selectedToken.faucetId,
-      tokenSymbol: selectedToken.metadata.symbol,
-      onConfirm: async () => {
-        try {
-          setIsSending(true);
-          toast.loading("Sending transaction...");
+      // check if recallable time is valid
+      if (recallableTime <= 0) {
+        toast.dismiss();
+        toast.error("Recallable time must be greater than 0");
+        return;
+      }
 
-          // each block is 5 seconds, calculate recall height
-          const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+      // check if amount > 0
+      if (amount <= 0) {
+        toast.dismiss();
+        toast.error("Amount must be greater than 0");
+        return;
+      }
 
-          // Create AccountId objects once to avoid aliasing issues
-          const senderAccountId = AccountId.fromBech32(walletAddress);
-          const recipientAccountId = AccountId.fromBech32(recipientAddress);
-          const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
+      // each block is 5 seconds, calculate recall height
+      const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
 
-          // create note
-          const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
-            senderAccountId,
-            recipientAccountId,
-            faucetAccountId,
-            Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
-            isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
-            recallHeight,
-          );
+      // Create AccountId objects once to avoid aliasing issues
+      const senderAccountId = AccountId.fromBech32(walletAddress);
+      const recipientAccountId = AccountId.fromBech32(recipientAddress);
+      const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
 
-          const noteId = note.id().toString();
+      // create note
+      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
+        senderAccountId,
+        recipientAccountId,
+        faucetAccountId,
+        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
+        isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+        recallHeight,
+      );
 
-          // submit transaction to miden
-          const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
+      const noteId = note.id().toString();
 
-          // submit transaction to server
-          const response = await sendSingleTransaction({
-            assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
-            private: isPrivateTransaction,
-            recipient: recipientAddress,
-            recallable: true,
-            recallableTime: new Date(Date.now() + recallableTime * 1000),
-            recallableHeight: calculatedRecallHeight,
-            serialNumber: serialNumbers,
-            noteType: CustomNoteType.P2IDR,
-            noteId: noteId,
-          });
+      // submit transaction to miden
+      const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
 
-          // refetch assets
-          // call refetch assets 5 seconds later
-          setTimeout(() => {
-            forceRefetchAssets();
-            forceRefetchRecallablePayment();
-          }, REFETCH_DELAY);
+      // submit transaction to server
+      const response = await sendSingleTransaction({
+        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
+        private: isPrivateTransaction,
+        recipient: recipientAddress,
+        recallable: true,
+        recallableTime: new Date(Date.now() + recallableTime * 1000),
+        recallableHeight: calculatedRecallHeight,
+        serialNumber: serialNumbers,
+        noteType: CustomNoteType.P2IDR,
+        noteId: noteId,
+      });
 
-          if (response) {
-            toast.dismiss();
-            toast.success(
-              <div>
-                Transaction sent successfully, view transaction on{" "}
-                <a
-                  href={`https://testnet.midenscan.com/tx/${txId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  Miden Explorer
-                </a>
-              </div>,
+      // refetch assets
+      // call refetch assets 5 seconds later
+      setTimeout(() => {
+        forceRefetchAssets();
+        forceRefetchRecallablePayment();
+      }, REFETCH_DELAY);
+
+      try {
+        AccountId.fromBech32(recipientAddress);
+      } catch (error) {
+        toast.error("Invalid recipient address");
+        return;
+      }
+
+      if (recallableTime <= 0) {
+        toast.error("Recallable time must be greater than 0");
+        return;
+      }
+
+      // Show transaction overview modal first
+      openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
+        amount: `${amount}`,
+        accountName: "My Account", // You can get this from account context if available
+        accountAddress: walletAddress,
+        recipientName: recipientName || null,
+        recipientAddress: recipientAddress,
+        transactionType: isPrivateTransaction ? "Private" : "Public",
+        cancellableTime: `${recallableTime / 3600} hour(s)`,
+        message: data.message || "Transaction details",
+        tokenAddress: selectedToken.faucetId,
+        tokenSymbol: selectedToken.metadata.symbol,
+        onConfirm: async () => {
+          try {
+            setIsSending(true);
+            toast.loading("Sending transaction...");
+
+            // each block is 5 seconds, calculate recall height
+            const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+
+            // Create AccountId objects once to avoid aliasing issues
+            const senderAccountId = AccountId.fromBech32(walletAddress);
+            const recipientAccountId = AccountId.fromBech32(recipientAddress);
+            const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
+
+            // create note
+            const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
+              senderAccountId,
+              recipientAccountId,
+              faucetAccountId,
+              Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
+              isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+              recallHeight,
             );
-            reset();
+
+            const noteId = note.id().toString();
+
+            // submit transaction to miden
+            const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
+
+            // submit transaction to server
+            const response = await sendSingleTransaction({
+              assets: [
+                { faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata },
+              ],
+              private: isPrivateTransaction,
+              recipient: recipientAddress,
+              recallable: true,
+              recallableTime: new Date(Date.now() + recallableTime * 1000),
+              recallableHeight: calculatedRecallHeight,
+              serialNumber: serialNumbers,
+              noteType: CustomNoteType.P2IDR,
+              noteId: noteId,
+            });
+
+            // refetch assets
+            // call refetch assets 5 seconds later
+            setTimeout(() => {
+              forceRefetchAssets();
+              forceRefetchRecallablePayment();
+            }, REFETCH_DELAY);
+
+            if (response) {
+              toast.dismiss();
+              toast.success(
+                <div>
+                  Transaction sent successfully, view transaction on{" "}
+                  <a
+                    href={`https://testnet.midenscan.com/tx/${txId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Miden Explorer
+                  </a>
+                </div>,
+              );
+              reset();
+            }
+          } catch (error) {
+            toast.dismiss();
+            toast.error("Failed to send transaction");
+            console.error(error);
+          } finally {
+            setIsSending(false);
           }
-        } catch (error) {
-          toast.dismiss();
-          toast.error("Failed to send transaction");
-          console.error(error);
-        } finally {
-          setIsSending(false);
-        }
-      },
-    });
+        },
+      });
+    } catch (error) {
+      toast.error("Failed to process transaction");
+      console.error(error);
+    }
   };
 
   const handleAddToBatch = async (data: SendTransactionFormValues) => {

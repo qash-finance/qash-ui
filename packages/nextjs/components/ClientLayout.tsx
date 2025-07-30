@@ -21,6 +21,7 @@ import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import { MidenSdkProvider, useInitAndPollSyncState } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
+import { SocketProvider } from "@/contexts/SocketProvider";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -120,45 +121,47 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               )}
             />
             <TourProviderWrapper>
-              <ModalProvider>
-                <AnalyticsProvider config={analyticsConfig}>
-                  <AuthProvider
-                    apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                    autoRefresh={true}
-                    refreshInterval={AUTH_REFRESH_INTERVAL}
-                  >
-                    <AccountProvider>
-                      {/* <ConnectWalletButton /> */}
-                      <ModalManager />
-                      <div className="flex flex-row h-screen">
-                        <div className="w-1/6">
-                          <Sidebar />
-                        </div>
-                        <div className="w-5/6">
-                          <div className="p-[24px]">
-                            <Title />
+              <SocketProvider>
+                <ModalProvider>
+                  <AnalyticsProvider config={analyticsConfig}>
+                    <AuthProvider
+                      apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                      autoRefresh={true}
+                      refreshInterval={AUTH_REFRESH_INTERVAL}
+                    >
+                      <AccountProvider>
+                        {/* <ConnectWalletButton /> */}
+                        <ModalManager />
+                        <div className="flex flex-row h-screen">
+                          <div className="w-1/6">
+                            <Sidebar />
                           </div>
-                          <div
-                            style={{
-                              backgroundImage: 'url("/background.svg")',
-                              backgroundSize: "contain",
-                              height: "88%",
-                              backgroundClip: "content-box",
-                              backgroundColor: "#101111", // dark gray (tailwind zinc-900)
-                              // You can tweak the color as needed
-                            }}
-                            className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
-                          >
-                            {children}
+                          <div className="w-5/6">
+                            <div className="p-[24px]">
+                              <Title />
+                            </div>
+                            <div
+                              style={{
+                                backgroundImage: 'url("/background.svg")',
+                                backgroundSize: "contain",
+                                height: "88%",
+                                backgroundClip: "content-box",
+                                backgroundColor: "#101111", // dark gray (tailwind zinc-900)
+                                // You can tweak the color as needed
+                              }}
+                              className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
+                            >
+                              {children}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <FloatingActionButton imgSrc="/token/qash.svg" />
-                      <Background />
-                    </AccountProvider>
-                  </AuthProvider>
-                </AnalyticsProvider>
-              </ModalProvider>
+                        <FloatingActionButton imgSrc="/token/qash.svg" />
+                        <Background />
+                      </AccountProvider>
+                    </AuthProvider>
+                  </AnalyticsProvider>
+                </ModalProvider>
+              </SocketProvider>
             </TourProviderWrapper>
           </WalletModalProvider>
         </WalletProvider>
