@@ -7,6 +7,7 @@ import { ActionButton } from "../Common/ActionButton";
 import { deployAccount, exportAccounts } from "@/services/utils/miden/account";
 import toast from "react-hot-toast";
 import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 
 type Step = "init" | "creating" | "final";
 
@@ -50,7 +51,9 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
   const [accounts, setAccounts] = useState<string[]>([]);
   const [lastConnectedAddress, setLastConnectedAddress] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
+  const { connectWallet: authenticateWallet } = useWalletAuth();
 
   // Reset state when modal closes
   useEffect(() => {
@@ -59,6 +62,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       setProgress(0);
       setAccountId("");
       setIsImporting(false);
+      setSelectedAccounts([]);
     }
   }, [isOpen]);
 
@@ -72,7 +76,6 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
     fetchAccounts();
   }, []);
 
-  // Refresh accounts list when modal opens
   useEffect(() => {
     if (isOpen) {
       const accounts = getWalletAddresses();
@@ -101,6 +104,13 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
 
     if (accountId) {
       setAccountId(accountId);
+      // Authenticate the newly created wallet
+      try {
+        await authenticateWallet(accountId);
+      } catch (error) {
+        console.error("Failed to authenticate new wallet:", error);
+        // Continue anyway since wallet was created successfully
+      }
     }
 
     setProgress(100);
@@ -226,9 +236,18 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                       key={account}
                       className="flex items-center gap-3 p-3 bg-neutral-800/50 rounded-xl hover:bg-neutral-700/50 transition-colors cursor-pointer"
                       onClick={async () => {
-                        const connectedAddress = await handleConnectExisting(account);
-                        if (connectedAddress) {
-                          onClose();
+                        try {
+                          // First connect the wallet
+                          const connectedAddress = await handleConnectExisting(account);
+                          if (connectedAddress) {
+                            // Then authenticate with the selected account
+                            await authenticateWallet(connectedAddress);
+                            toast.success("Wallet connected and authenticated");
+                            onClose();
+                          }
+                        } catch (error) {
+                          console.error("Account switch error:", error);
+                          toast.error("Failed to switch account");
                         }
                       }}
                     >

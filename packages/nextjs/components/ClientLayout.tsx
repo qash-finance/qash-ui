@@ -6,7 +6,6 @@ import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { WalletError } from "@demox-labs/miden-wallet-adapter-base";
-import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
@@ -18,6 +17,8 @@ import { AccountProvider } from "@/contexts/AccountProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
+import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
+import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -121,7 +122,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 <AuthProvider
                   apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
                   autoRefresh={true}
-                  refreshInterval={15 * 60 * 1000} // 15 minutes
+                  refreshInterval={AUTH_REFRESH_INTERVAL}
                 >
                   <AccountProvider>
                     {/* <ConnectWalletButton /> */}

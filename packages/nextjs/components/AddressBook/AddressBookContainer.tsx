@@ -256,13 +256,13 @@ export function AddressBookContainer() {
     }
 
     //AccountBech32 validation
-    try {
-      //@ts-ignore
-      Account.fromBech32(address);
-    } catch (error) {
-      toast.error("Invalid address");
-      return false;
-    }
+    // try {
+    //   //@ts-ignore
+    //   Account.fromBech32(address);
+    // } catch (error) {
+    //   toast.error("Invalid address");
+    //   return false;
+    // }
 
     return new Promise(resolve => {
       createAddressBook(

@@ -77,7 +77,15 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Welcome to Qash testnet!" icon="/modal/coin-icon.gif">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        setSuccess(false);
+      }}
+      title="Welcome to Qash testnet!"
+      icon="/modal/coin-icon.gif"
+    >
       <div
         className="flex flex-col items-center rounded-b-2xl border border-solid bg-stone-900 border-zinc-800 w-[450px] relative overflow-hidden"
         style={{
@@ -109,6 +117,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
               text="Ready to Claim!"
               onClick={() => {
                 onClose();
+                setSuccess(false);
               }}
               className="w-full h-10"
             />

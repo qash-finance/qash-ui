@@ -9,6 +9,10 @@ export const BLOCK_TIME = 5; // seconds
 export const NODE_ENDPOINT = process.env.NEXT_PUBLIC_NODE_ENDPOINT || "https://rpc.testnet.miden.io:443";
 export const REFETCH_DELAY = 6000;
 
+// **************** AUTH *******************
+export const AUTH_EXPIRATION_HOURS = 720; // 30 days
+export const AUTH_REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
+
 // **************** CSS *******************
 export const BUTTON_STYLES = {
   width: "100%",
