@@ -3309,6 +3309,7 @@ __metadata:
     "@reactour/tour": ^3.8.0
     "@tailwindcss/postcss": ^4
     "@tanstack/react-query": ^5.81.5
+    "@types/lodash": ^4
     "@types/node": ^20
     "@types/react": ^19
     "@types/react-dom": ^19
@@ -3316,6 +3317,7 @@ __metadata:
     axios: ^1.9.0
     blo: ^2.0.0
     git: "link:github.com:demox-labs/miden-wallet-adapter.git"
+    lodash: ^4.17.21
     miden-wallet-adapter-reactui: "link:@demox-labs/miden-wallet-adapter-reactui"
     next: 15.3.1
     prettier: ^3.5.3
@@ -4275,6 +4277,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: e009a2bfb50e90ca9b7c6e8f648f8464067271fd99116f881073fa6fa76dc8d0133181dd65e6614d5fb1220d671d67b0124aef7d97dc02d7e342ab143a47779d
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4":
+  version: 4.17.20
+  resolution: "@types/lodash@npm:4.17.20"
+  checksum: dc7bb4653514dd91117a4c4cec2c37e2b5a163d7643445e4757d76a360fabe064422ec7a42dde7450c5e7e0e7e678d5e6eae6d2a919abcddf581d81e63e63839
   languageName: node
   linkType: hard
 

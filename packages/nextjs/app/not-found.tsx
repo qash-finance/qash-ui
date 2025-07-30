@@ -70,7 +70,7 @@ export default function NotFound() {
               <div className="flex-1 text-left ">
                 <p className="leading-none">{item.label}</p>
               </div>
-              <img alt="" className="w-4 h-4" src="/arrow/filled-arrow-up-right.svg" />
+              <img alt="" className="w-4 h-4" src="/arrow/thin-arrow-up-right.svg" />
             </Link>
           ))}
       </div>

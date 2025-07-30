@@ -10,6 +10,7 @@ import Portfolio from "@/components/Portfolio/Portfolio";
 import OnboardingModal from "@/components/Modal/OnboardingModal";
 import ConnectWalletModal from "@/components/Modal/ConnectWalletModal";
 import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
+import Notification from "@/components/Notification/Notification";
 import { AssetWithMetadata } from "./faucet";
 
 export const MODAL_IDS = {
@@ -25,6 +26,7 @@ export const MODAL_IDS = {
   ONBOARDING: "ONBOARDING",
   CONNECT_WALLET: "CONNECT_WALLET",
   TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
+  NOTIFICATION: "NOTIFICATION",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -87,6 +89,8 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
   tokenSymbol?: string;
 }
 
+export interface NotificationModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -100,6 +104,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.ONBOARDING]: OnboardingModalProps;
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModalProps;
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModalProps;
+  [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -117,4 +122,5 @@ export const modalRegistry = {
   [MODAL_IDS.ONBOARDING]: OnboardingModal,
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModal,
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModal,
+  [MODAL_IDS.NOTIFICATION]: Notification,
 } as const;

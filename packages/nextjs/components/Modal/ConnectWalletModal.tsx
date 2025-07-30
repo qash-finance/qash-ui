@@ -7,6 +7,7 @@ import { ActionButton } from "../Common/ActionButton";
 import { deployAccount, exportAccounts } from "@/services/utils/miden/account";
 import toast from "react-hot-toast";
 import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
+import { useTour } from "@reactour/tour";
 
 type Step = "init" | "creating" | "final";
 
@@ -51,6 +52,8 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
   const [lastConnectedAddress, setLastConnectedAddress] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
+
+  const { setIsOpen } = useTour();
 
   // Reset state when modal closes
   useEffect(() => {
@@ -369,7 +372,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
             <div
               className="flex flex-col gap-2 rounded-b-2xl h-[300px] justify-center items-center"
               style={{
-                background: "url('/modal/final-wallet-background.svg')",
+                backgroundImage: "url('/modal/final-wallet-background.svg')",
                 backgroundPosition: "center",
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
@@ -412,15 +415,10 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
             </div>
             <div className="flex flex-row gap-2">
               <ActionButton
-                text="Export"
-                type="neutral"
-                onClick={() => setCurrentStep("creating")}
-                className="flex-1"
-              />
-              <ActionButton
                 text="Continue"
                 onClick={() => {
                   onClose();
+                  setIsOpen(true);
                 }}
                 className="flex-1"
               />
