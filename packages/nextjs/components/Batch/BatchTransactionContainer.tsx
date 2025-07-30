@@ -4,6 +4,8 @@ import { TransactionItem } from "./TransactionItem";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ActionButton } from "../Common/ActionButton";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS } from "@/types/modal";
 
 interface BatchTransactionContainerProps {
   isLoading: boolean;
@@ -28,6 +30,7 @@ export function BatchTransactionContainer({
   // **************** Custom Hooks *******************
   const { handleConnect, walletAddress, isConnected } = useWalletConnect();
   const { getBatchTransactions, removeTransaction } = useBatchTransactions();
+  const { openModal } = useModal();
 
   const transactions = walletAddress ? getBatchTransactions(walletAddress) : [];
 
@@ -38,8 +41,8 @@ export function BatchTransactionContainer({
   };
 
   return (
-    <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-zinc-900 w-[600px] h-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
-      <div className="flex flex-col items-center self-stretch rounded-2xl h-full">
+    <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-[#1B1B1B] w-[600px] h-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
+      <div className="flex bg-[#292929] flex-col items-center self-stretch rounded-2xl h-full">
         {/* Header */}
         <header className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#3D3D3D] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-t-2xl">
           <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
@@ -60,7 +63,7 @@ export function BatchTransactionContainer({
 
         {/* Transaction list - Now with fixed height and scrollable */}
         {transactions.length > 0 ? (
-          <div className="flex-1 w-full overflow-hidden">
+          <div className="max-h-[470px] mt-2 flex-1 w-full overflow-hidden">
             <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0 h-full overflow-y-auto">
               {transactions.map(transaction => (
                 <TransactionItem
@@ -77,21 +80,27 @@ export function BatchTransactionContainer({
         ) : (
           <EmptyBatch />
         )}
-
-        {/* Footer */}
-        {isConnected ? (
-          <ActionButton
-            text="Confirm & Sign"
-            buttonType="submit"
-            className="w-full h-10"
-            onClick={onConfirm}
-            loading={isLoading}
-            disabled={transactions.length === 0}
-          />
-        ) : (
-          <ActionButton text="Connect Wallet" buttonType="submit" className="w-full h-10" onClick={handleConnect} />
-        )}
       </div>
+      {/* Footer */}
+      {isConnected ? (
+        <ActionButton
+          text="Confirm & Sign"
+          buttonType="submit"
+          className="mt-2 w-full h-10"
+          onClick={onConfirm}
+          loading={isLoading}
+          disabled={transactions.length === 0}
+        />
+      ) : (
+        <ActionButton
+          text="Connect Wallet"
+          buttonType="submit"
+          className="w-full h-10"
+          onClick={() => {
+            openModal(MODAL_IDS.CONNECT_WALLET);
+          }}
+        />
+      )}
     </main>
   );
 }

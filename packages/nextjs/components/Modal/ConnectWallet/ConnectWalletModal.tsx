@@ -268,7 +268,6 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                           if (connectedAddress) {
                             // Then authenticate with the selected account
                             await authenticateWallet(connectedAddress);
-                            toast.success("Wallet connected and authenticated");
                             onClose();
                           }
                         } catch (error) {

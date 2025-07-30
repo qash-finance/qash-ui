@@ -451,6 +451,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                       }
                     },
                   })}
+                  autoComplete="off"
                   type="text"
                   placeholder="Enter address or choose from your contacts book"
                   className=" flex-1 leading-none text-white bg-transparent outline-none placeholder:text-neutral-600 w-full"
@@ -541,7 +542,9 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             text="Connect Wallet"
             buttonType="submit"
             className="w-full h-10 mt-2"
-            onClick={handleConnect}
+            onClick={() => {
+              openModal(MODAL_IDS.CONNECT_WALLET);
+            }}
           />
         </div>
       )}
