@@ -12,6 +12,8 @@ import ConnectWalletModal from "@/components/Modal/ConnectWalletModal";
 import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
 import Notification from "@/components/Notification/Notification";
 import { AssetWithMetadata } from "./faucet";
+import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
+import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -27,6 +29,8 @@ export const MODAL_IDS = {
   CONNECT_WALLET: "CONNECT_WALLET",
   TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
   NOTIFICATION: "NOTIFICATION",
+  BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
+  BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -89,6 +93,10 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
   tokenSymbol?: string;
 }
 
+export interface BatchTransactionOverviewModalProps extends BaseModalProps {}
+
+export interface BatchTransactionsModalProps extends BaseModalProps {}
+
 export interface NotificationModalProps extends BaseModalProps {}
 
 export type ModalPropsMap = {
@@ -105,6 +113,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModalProps;
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModalProps;
   [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
+  [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModalProps;
+  [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -123,4 +133,6 @@ export const modalRegistry = {
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModal,
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModal,
   [MODAL_IDS.NOTIFICATION]: Notification,
+  [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModal,
+  [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
 } as const;
