@@ -1,24 +1,22 @@
 "use client";
-import { Account, AccountId, FungibleAsset } from "@demox-labs/miden-sdk";
-import { useClient } from "../../../hooks/web3/useClient";
+import { Account, AccountId, FungibleAsset, WebClient } from "@demox-labs/miden-sdk";
 import { getFaucetMetadata } from "./faucet";
-import { AssetWithMetadata, FaucetMetadata } from "@/types/faucet";
+import { AssetWithMetadata } from "@/types/faucet";
+import { NODE_ENDPOINT } from "../constant";
 
 export async function deployAccount(isPublic: boolean) {
-  const { getClient } = useClient();
-  const client = await getClient();
   const { AccountStorageMode } = await import("@demox-labs/miden-sdk");
 
+  const client = await WebClient.createClient(NODE_ENDPOINT);
   const account = await client.newWallet(isPublic ? AccountStorageMode.public() : AccountStorageMode.private(), true);
   return account;
 }
 
 export async function getAccountById(accountId: string) {
   if (typeof window === "undefined") throw new Error("getAccountById can only be used in the browser");
-  const { getClient } = useClient();
 
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
     const { AccountId } = await import("@demox-labs/miden-sdk");
 
     // Try to get account from client
@@ -85,8 +83,7 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
 export const importAndGetAccount = async (accountId: AccountId): Promise<Account> => {
   // Create a promise for this account import
   const importPromise = (async () => {
-    const { getClient } = useClient();
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
 
     let accountContract = await client.getAccount(accountId);
 
@@ -95,7 +92,6 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
 
       try {
         await client.importAccountById(accountId);
-        await client.syncState();
         accountContract = await client.getAccount(accountId);
         if (!accountContract) {
           throw new Error(`Account not found after import: ${accountId}`);
@@ -112,8 +108,7 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
 };
 
 export const getAccounts = async () => {
-  const { getClient } = useClient();
-  const client = await getClient();
+  const client = await WebClient.createClient(NODE_ENDPOINT);
 
   const accounts = await client.getAccounts();
 
@@ -137,11 +132,9 @@ export const getAccounts = async () => {
 
 export const exportAccounts = async () => {
   try {
-    const { getClient } = useClient();
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
 
     const store = await client.exportStore();
-    console.log("🚀 ~ exportAccounts ~ store:", store);
     return store;
   } catch (error) {
     console.error("Failed to export account:", error);
@@ -150,8 +143,6 @@ export const exportAccounts = async () => {
 };
 
 export const importAccount = async (store: string) => {
-  const { getClient } = useClient();
-  const client = await getClient();
-
+  const client = await WebClient.createClient(NODE_ENDPOINT);
   await client.forceImportStore(store);
 };

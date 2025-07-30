@@ -3,8 +3,6 @@ import React, { useState, useEffect } from "react";
 import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import { useRouter, usePathname } from "next/navigation";
-import { useModal } from "@/contexts/ModalManagerProvider";
-import { useWalletState } from "@/services/store";
 import { FloatingActionButton } from "../Common/FloatingActionButton";
 
 interface NavProps {
@@ -90,8 +88,6 @@ export const actionItems = [
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
-  const { openModal, isModalOpen } = useModal();
-  const { walletAddress } = useWalletState(state => state);
   const [renderFab, setRenderFab] = useState(false);
 
   const [action, setActions] = useState(actionItems);

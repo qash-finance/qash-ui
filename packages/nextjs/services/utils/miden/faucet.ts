@@ -1,17 +1,15 @@
 "use client";
-import { Account, AccountId, TransactionResult } from "@demox-labs/miden-sdk";
-import { useClient } from "../../../hooks/web3/useClient";
-import { getAccountById, importAndGetAccount } from "./account";
+import { Account, AccountId, TransactionResult, WebClient } from "@demox-labs/miden-sdk";
+import { importAndGetAccount } from "./account";
 import { FaucetMetadata } from "@/types/faucet";
+import { NODE_ENDPOINT } from "../constant";
 
 /// @param symbol can't exceed 6 characters
 /// @param decimals can't exceed 12
 export async function deployFaucet(symbol: string, decimals: number, maxSupply: number): Promise<Account> {
-  const { getClient } = useClient();
-
   try {
-    const client = await getClient();
     const { AccountStorageMode } = await import("@demox-labs/miden-sdk");
+    const client = await WebClient.createClient(NODE_ENDPOINT);
     const faucet = await client.newFaucet(AccountStorageMode.public(), false, symbol, decimals, BigInt(maxSupply));
     return faucet;
   } catch (err) {
@@ -20,10 +18,8 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
 }
 
 export async function mintToken(accountId: AccountId, faucetId: AccountId, amount: bigint): Promise<TransactionResult> {
-  const { getClient } = useClient();
-
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
     const { NoteType } = await import("@demox-labs/miden-sdk");
 
     // import faucet

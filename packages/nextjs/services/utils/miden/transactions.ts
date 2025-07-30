@@ -1,15 +1,14 @@
-import { useClient } from "@/hooks/web3/useClient";
 import {
   AccountId,
   NoteAndArgsArray,
   OutputNotesArray,
   TransactionRequestBuilder,
-  TransactionResult,
+  WebClient,
 } from "@demox-labs/miden-sdk";
+import { NODE_ENDPOINT } from "../constant";
 
 export async function submitTransactionWithOwnOutputNotes(notes: OutputNotesArray, sender: AccountId): Promise<string> {
-  const { getClient } = useClient();
-  const client = await getClient();
+  const client = await WebClient.createClient(NODE_ENDPOINT);
 
   const transactionRequest = new TransactionRequestBuilder().withOwnOutputNotes(notes).build();
   const txResult = await client.newTransaction(sender, transactionRequest);
@@ -25,8 +24,7 @@ export async function submitTransactionWithOwnOutputNotes(notes: OutputNotesArra
 }
 
 export async function submitTransactionWithOwnInputNotes(notes: NoteAndArgsArray, sender: AccountId): Promise<string> {
-  const { getClient } = useClient();
-  const client = await getClient();
+  const client = await WebClient.createClient(NODE_ENDPOINT);
 
   const transactionRequest = new TransactionRequestBuilder().withUnauthenticatedInputNotes(notes).build();
   const txResult = await client.newTransaction(sender, transactionRequest);

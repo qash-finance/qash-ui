@@ -19,16 +19,16 @@ import {
   NoteScript,
   NoteAndArgsArray,
   NoteAndArgs,
+  WebClient,
 } from "@demox-labs/miden-sdk";
-import { useClient } from "../../../hooks/web3/useClient";
 import { PartialConsumableNote } from "@/types/faucet";
+import { NODE_ENDPOINT } from "../constant";
 
 // **************** GET METHODS ********************
 
 export async function getConsumableNotes(accountId: string) {
-  const { getClient } = useClient();
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
 
     const notes = await client.getConsumableNotes(AccountId.fromBech32(accountId));
     return notes;
@@ -71,8 +71,8 @@ export async function createP2IDENote(
   noteType: NoteType,
   recallHeight: number,
 ): Promise<[OutputNote, string[], number]> {
-  const { getClient } = useClient();
-  const client = await getClient();
+  const client = await WebClient.createClient(NODE_ENDPOINT);
+
   const serialNumbers = await randomSerialNumbers();
   const serialNumbersCopy = serialNumbers.map(felt => felt.toString());
 
@@ -103,9 +103,8 @@ export async function consumeAllUnauthenticatedNotes(
     partialNote?: PartialConsumableNote;
   }[],
 ) {
-  const { getClient } = useClient();
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
 
     const inputNotes: NoteAndArgs[] = [];
 
@@ -154,10 +153,8 @@ export async function consumeAllUnauthenticatedNotes(
 }
 
 export async function consumeUnauthenticatedNote(accountId: AccountId, partialNote: PartialConsumableNote) {
-  const { getClient } = useClient();
-
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
 
     // Create AccountId objects once and reuse them to avoid aliasing issues
     const senderAccountId = AccountId.fromBech32(partialNote.sender);
@@ -190,9 +187,8 @@ export async function consumeUnauthenticatedNote(accountId: AccountId, partialNo
 }
 
 export async function consumeNoteByID(accountId: AccountId, noteId: string) {
-  const { getClient } = useClient();
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest([noteId]);
     const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
@@ -204,9 +200,8 @@ export async function consumeNoteByID(accountId: AccountId, noteId: string) {
 }
 
 export async function consumeNoteByIDs(accountId: AccountId, noteIds: string[]) {
-  const { getClient } = useClient();
   try {
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
     const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
@@ -223,8 +218,7 @@ export async function createGiftNote(
   secret: [Felt, Felt, Felt, Felt],
   serialNumber: [Felt, Felt, Felt, Felt],
 ) {
-  const { getClient } = useClient();
-  const client = await getClient();
+  const client = await WebClient.createClient(NODE_ENDPOINT);
 
   const giftNote = `
       use.miden::note

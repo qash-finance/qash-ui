@@ -3316,6 +3316,7 @@ __metadata:
     axios: ^1.9.0
     blo: ^2.0.0
     git: "link:github.com:demox-labs/miden-wallet-adapter.git"
+    immer: ^10.1.1
     miden-wallet-adapter-reactui: "link:@demox-labs/miden-wallet-adapter-reactui"
     next: 15.3.1
     prettier: ^3.5.3
@@ -9233,6 +9234,13 @@ __metadata:
   bin:
     image-size: bin/image-size.js
   checksum: 8601ddd4edc1db16f097f5cf585c23214e29c3b8f4d8a8f8d59b8e3bae2338c8a5073236bfff421d8541091a98a38b802ed049203c745286a69d1aac4e5bc4c7
+  languageName: node
+  linkType: hard
+
+"immer@npm:^10.1.1":
+  version: 10.1.1
+  resolution: "immer@npm:10.1.1"
+  checksum: 07c67970b7d22aded73607193d84861bf786f07d47f7d7c98bb10016c7a88f6654ad78ae1e220b3c623695b133aabbf24f5eb8d9e8060cff11e89ccd81c9c10b
   languageName: node
   linkType: hard
 
