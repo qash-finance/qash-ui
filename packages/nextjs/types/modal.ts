@@ -12,6 +12,8 @@ import ConnectWalletModal from "@/components/Modal/ConnectWallet/ConnectWalletMo
 import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
 import { AssetWithMetadata } from "./faucet";
 import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
+import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
+import { BatchTransaction } from "@/services/store/batchTransactions";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -27,6 +29,7 @@ export const MODAL_IDS = {
   CONNECT_WALLET: "CONNECT_WALLET",
   TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
   IMPORT_WALLET: "IMPORT_WALLET",
+  BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -89,6 +92,12 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
   tokenSymbol?: string;
 }
 
+export interface BatchTransactionOverviewModalProps extends BaseModalProps {
+  sender: string;
+  transactions: BatchTransaction[];
+  onConfirm?: () => Promise<void>;
+}
+
 export interface ImportWalletModalProps extends BaseModalProps {}
 
 export type ModalPropsMap = {
@@ -105,6 +114,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModalProps;
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModalProps;
   [MODAL_IDS.IMPORT_WALLET]: ImportWalletModalProps;
+  [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -123,4 +133,5 @@ export const modalRegistry = {
   [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModal,
   [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModal,
   [MODAL_IDS.IMPORT_WALLET]: ImportWalletModal,
+  [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModal,
 } as const;
