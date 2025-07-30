@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { SelectTokenModalProps } from "@/types/modal";
-import { ModalProp } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS, SelectTokenModalProps } from "@/types/modal";
+import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { ActionButton } from "../Common/ActionButton";
-import { deployAccount, exportAccounts } from "@/services/utils/miden/account";
+import { ActionButton } from "../../Common/ActionButton";
+import { exportAccounts } from "@/services/utils/miden/account";
 import toast from "react-hot-toast";
 import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
@@ -45,15 +45,19 @@ const LoadingBar: React.FC<LoadingBarProps> = ({ progress, className = "" }) => 
 };
 
 export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
+  // **************** Custom Hooks *******************
+  const { openModal } = useModal();
+  const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
+  const { connectWallet: authenticateWallet } = useWalletAuth();
+
+  // **************** Local State *******************
   const [currentStep, setCurrentStep] = useState<Step>("init");
   const [progress, setProgress] = useState(0);
   const [accountId, setAccountId] = useState<string>("");
   const [accounts, setAccounts] = useState<string[]>([]);
   const [lastConnectedAddress, setLastConnectedAddress] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
-  const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
-  const { connectWallet: authenticateWallet } = useWalletAuth();
+  const [filesToImport, setFilesToImport] = useState<File[]>([]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -62,9 +66,17 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       setProgress(0);
       setAccountId("");
       setIsImporting(false);
-      setSelectedAccounts([]);
+      setFilesToImport([]);
     }
   }, [isOpen]);
+
+  // Handle files from ImportWallet modal
+  useEffect(() => {
+    if (filesToImport.length > 0) {
+      handleImportFiles(filesToImport);
+      setFilesToImport([]);
+    }
+  }, [filesToImport]);
 
   useEffect(() => {
     const fetchAccounts = () => {
@@ -155,69 +167,77 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
     }
   };
 
-  const handleImportClick = () => {
-    // Create a hidden file input
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = ".json";
-    fileInput.style.display = "none";
+  const handleImportFiles = async (files: File[]) => {
+    try {
+      // Show creating step and start progress
+      setCurrentStep("creating");
+      setIsImporting(true);
+      setProgress(0);
 
-    fileInput.onchange = async e => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        try {
-          // Show creating step and start progress
-          setCurrentStep("creating");
-          setIsImporting(true);
+      // Process each file
+      let totalImportedAddresses = 0;
 
-          const interval = setInterval(() => {
-            setProgress(prev => {
-              if (prev >= 100) {
-                clearInterval(interval);
-                return 100;
-              }
-              return prev + 1;
-            });
-          }, 50);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const extension = file.name.toLowerCase().split(".").pop();
 
-          // at least wait for 1 second
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        // Simulate progress for each file
+        const fileProgress = (i / files.length) * 100;
+        const interval = setInterval(() => {
+          setProgress(prev => {
+            const targetProgress = fileProgress + ((i + 1) / files.length) * 100;
+            if (prev >= targetProgress) {
+              clearInterval(interval);
+              return targetProgress;
+            }
+            return prev + 2;
+          });
+        }, 50);
 
+        // Process file based on extension
+        if (extension === "json") {
           const importedAddresses = await handleImportWallet(file);
-
-          // Refresh the accounts list to include the newly imported wallets
-          const updatedAccounts = getWalletAddresses();
-          setAccounts(updatedAccounts);
-
-          // Complete progress and show success
-          setProgress(100);
+          totalImportedAddresses += importedAddresses.length;
+        } else {
+          // For xlsx and csv files, we would need additional processing
           clearInterval(interval);
-
-          // Wait a moment for user to see completion, then show wallet selection
-          setTimeout(() => {
-            setCurrentStep("init");
-            setProgress(0);
-            setIsImporting(false);
-            toast.success(
-              `${importedAddresses.length} wallet${importedAddresses.length > 1 ? "s" : ""} imported successfully`,
-            );
-          }, 1500);
-        } catch (error) {
+          toast.error("Currently only JSON wallet files are supported. XLSX and CSV support coming soon.");
           setCurrentStep("init");
           setProgress(0);
           setIsImporting(false);
-          toast.error("Failed to import wallet. Please check the file format.");
-          console.error("Import error:", error);
+          return;
         }
+
+        clearInterval(interval);
+        // Wait a moment between files
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
-      // Cleanup
-      document.body.removeChild(fileInput);
-    };
+      // Refresh the accounts list to include the newly imported wallets
+      const updatedAccounts = getWalletAddresses();
+      setAccounts(updatedAccounts);
 
-    // Trigger file selection
-    document.body.appendChild(fileInput);
-    fileInput.click();
+      // Complete progress and show success
+      setProgress(100);
+
+      // Wait a moment for user to see completion, then show wallet selection
+      setTimeout(() => {
+        setCurrentStep("init");
+        setProgress(0);
+        setIsImporting(false);
+        toast.success(`${totalImportedAddresses} wallet${totalImportedAddresses > 1 ? "s" : ""} imported successfully`);
+      }, 1500);
+    } catch (error) {
+      setCurrentStep("init");
+      setProgress(0);
+      setIsImporting(false);
+      toast.error("Failed to import wallet. Please check the file format.");
+      console.error("Import error:", error);
+    }
+  };
+
+  const handleImportFromModal = (files: File[]) => {
+    setFilesToImport(files);
   };
 
   if (!isOpen) return null;
@@ -228,13 +248,19 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
         return (
           <div className="flex flex-col gap-2 w-[600px] p-2 bg-[#1E1E1E] rounded-b-2xl">
             {accounts.length > 0 ? (
-              <div className="flex flex-col gap-4 h-[300px] p-4">
+              <div
+                style={{
+                  backgroundImage: "url('/connect-wallet/bg.png')",
+                  backgroundSize: "cover",
+                }}
+                className="flex flex-col gap-4 h-[300px] p-4 rounded-xl"
+              >
                 <h2 className="text-neutral-400 text-sm font-medium">Recently Connected Wallets</h2>
                 <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
                   {accounts.map((account, index) => (
                     <div
                       key={account}
-                      className="flex items-center gap-3 p-3 bg-neutral-800/50 rounded-xl hover:bg-neutral-700/50 transition-colors cursor-pointer"
+                      className="flex items-center gap-3 p-3 bg-[#0C0C0C] rounded-xl cursor-pointer"
                       onClick={async () => {
                         try {
                           // First connect the wallet
@@ -252,16 +278,14 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                       }}
                     >
                       {/* Wallet Icon */}
-                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                          <path d="M20 4H4C2.89 4 2 4.89 2 6V18C2 19.11 2.89 20 4 20H20C21.11 20 22 19.11 22 18V6C22 4.89 21.11 4 20 4ZM20 18H4V8H20V18ZM18 11H6V13H18V11Z" />
-                        </svg>
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <img src="/connect-wallet/wallet-item.svg" alt="" className="scale-105" />
                       </div>
 
                       {/* Wallet Details */}
-                      <div className="flex-1 min-w-0">
+                      <div className="cursor-pointer flex gap-5 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-white font-medium text-sm truncate">
+                          <span className="text-white font-medium truncate">
                             {account.slice(0, 6)}...{account.slice(-6)}
                           </span>
                           <button
@@ -270,30 +294,29 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                               navigator.clipboard.writeText(account);
                               toast.success("Copied to clipboard");
                             }}
-                            className="text-neutral-400 hover:text-white transition-colors"
+                            className="cursor-pointer text-neutral-400 hover:text-white transition-colors"
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" />
-                            </svg>
+                            <img src="/connect-wallet/copy-icon.svg" alt="" className="text-[#989898]" />
                           </button>
                         </div>
-                        {account === lastConnectedAddress && (
-                          <span className="text-green-400 text-xs font-medium">Last connected</span>
-                        )}
+                        <div>
+                          {account === lastConnectedAddress && (
+                            <span className="text-[#0059FF] bg-[#D6EDFF] text-xs px-3 py-1.5 rounded-xl font-medium">
+                              Recently Used
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Export Button */}
                       <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleExportWallet();
-                        }}
-                        className="text-neutral-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-neutral-600/50"
+                        // onClick={e => {
+                        //   e.stopPropagation();
+                        //   handleExportWallet();
+                        // }}
+                        className="text-neutral-400 p-2 rounded-lg cursor-pointer"
                         title="Export wallet"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                        </svg>
+                        <img src={"/connect-wallet/arrow-right.svg"} />
                       </button>
                     </div>
                   ))}
@@ -320,8 +343,12 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
               </div>
             )}
             <div className="flex flex-row gap-2">
-              <ActionButton text="Import" type="neutral" onClick={handleImportClick} className="flex-1" />
-              <ActionButton text="Create" onClick={handleCreateClick} className="flex-1" />
+              <ActionButton text="Export" type="neutral" onClick={handleExportWallet} className="flex-1" />
+              <ActionButton
+                text="Import"
+                onClick={() => openModal(MODAL_IDS.IMPORT_WALLET, { onImport: handleImportFromModal })}
+                className="flex-1"
+              />
             </div>
           </div>
         );
@@ -431,17 +458,11 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
             </div>
             <div className="flex flex-row gap-2">
               <ActionButton
-                text="Export"
-                type="neutral"
-                onClick={() => setCurrentStep("creating")}
-                className="flex-1"
-              />
-              <ActionButton
                 text="Continue"
                 onClick={() => {
                   onClose();
                 }}
-                className="flex-1"
+                className="flex-1 w-full"
               />
             </div>
           </div>
@@ -453,7 +474,15 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Connect wallet" icon="/modal/wallet-icon.gif">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Connect wallet"
+      icon="/modal/wallet-icon.gif"
+      actionButtonIcon="/plus.png"
+      currentStep={currentStep}
+      handleCreateClick={handleCreateClick}
+    >
       {renderStepContent()}
     </BaseModal>
   );

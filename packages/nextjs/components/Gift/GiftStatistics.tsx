@@ -64,15 +64,7 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({
           </div>
 
           {/* Gift opened */}
-          <div
-            className="relative flex flex-col justify-between items-left p-3 rounded-xl  md:w-30 w-full bg-fuchsia-600 min-h-32 overflow-hidden"
-            style={{
-              backgroundImage: "url('/gift/gift-opened-background.svg')",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "cover",
-            }}
-          >
+          <div className="relative flex flex-col justify-between items-left p-3 rounded-xl  md:w-30 w-full bg-fuchsia-600 min-h-32 overflow-hidden">
             <img
               src="/gift/gift-star-background.svg"
               alt=""

@@ -88,8 +88,7 @@ export const useWalletConnect = () => {
       if (!walletAddress) {
         toast.loading("Deploying account...");
 
-        // Deploy account if not already deployed
-        const deployedAccount = await deployAccount(true);
+        const deployedAccount = await deployAccount(false);
 
         // Get account id (bech32)
         const accountId = deployedAccount.id().toBech32();
