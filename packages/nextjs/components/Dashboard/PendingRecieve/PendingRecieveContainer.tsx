@@ -12,7 +12,6 @@ import {
   consumeUnauthenticatedNote,
   consumeNoteByID,
 } from "@/services/utils/miden/note";
-import { AccountId } from "@demox-labs/miden-sdk";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
@@ -47,7 +46,7 @@ const mockData = [
   },
 ];
 
-const HeaderColumns = ["Amount", "From", "Date/Time", "Action"];
+const HeaderColumns = ["Amount", "From", "Action"];
 
 const TableHeader = ({
   columns,
@@ -133,15 +132,7 @@ const TableRow = ({
           </span>
         </div>
       </td>
-      <td className="px-2 py-2 border-r border-zinc-800 text-center">
-        <span className="text-white  font-medium">
-          {new Date(dateTime).toLocaleString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </span>
-      </td>
+
       <td className="px-2 py-2 text-center">
         <div className="flex items-center justify-center gap-2">
           <ActionButton text="Receive" onClick={() => onClaim()} disabled={disabled} />
@@ -165,13 +156,14 @@ export const PendingRecieveContainer: React.FC = () => {
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
-
+  console.log("consumableNotesFromServer", consumableNotesFromServer);
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-
+  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
+  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
@@ -214,7 +206,7 @@ export const PendingRecieveContainer: React.FC = () => {
         // if private or recallableHeight > 0, we need to update on server
         if (!note.private && note.recallableHeight > 0) {
           // public + recallable
-          const txId = await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
+          const txId = await consumeNoteByID(walletAddress, note.id);
           // consume on server level
           await consumeNotes([
             {
@@ -224,7 +216,7 @@ export const PendingRecieveContainer: React.FC = () => {
           ]);
         } else if (note.private && note.recallableHeight > 0) {
           // private + recallable
-          const txId = await consumeUnauthenticatedNote(AccountId.fromBech32(walletAddress), note);
+          const txId = await consumeUnauthenticatedNote(walletAddress, note);
           // consume on server level
           await consumeNotes([
             {
@@ -235,7 +227,7 @@ export const PendingRecieveContainer: React.FC = () => {
         }
       } else {
         // dont need to update server
-        const txId = await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
+        const txId = await consumeNoteByID(walletAddress, note.id);
         await consumePublicNotes([
           {
             sender: note.sender,
@@ -276,7 +268,7 @@ export const PendingRecieveContainer: React.FC = () => {
 
       // consume on network level
       const txId = await consumeAllUnauthenticatedNotes(
-        AccountId.fromBech32(walletAddress),
+        walletAddress,
         checkedRows.map(idx => ({
           isPrivate: consumableNotes[idx].private,
           noteId: consumableNotes[idx].id,

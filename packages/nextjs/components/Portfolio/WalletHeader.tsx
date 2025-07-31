@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getAccountById } from "@/services/utils/miden/account";
-import { AccountId } from "@demox-labs/miden-sdk";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/hooks/web3/useAccount";

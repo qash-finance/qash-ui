@@ -11,7 +11,6 @@ import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
 import { RecallableNote, RecallableNoteType } from "@/types/transaction";
 import { consumeNoteByID, consumeNoteByIDs } from "@/services/utils/miden/note";
-import { AccountId } from "@demox-labs/miden-sdk";
 import toast from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
 import useRecall from "@/hooks/server/useRecall";
@@ -263,7 +262,7 @@ export const CancelDashboardContainer: React.FC = () => {
       if (noteIds.length > 0) {
         setRecallingNoteId(Number(noteIds[0]));
         // consume the notes on blockchain level
-        const txId = await consumeNoteByIDs(AccountId.fromBech32(walletAddress), noteIds);
+        const txId = await consumeNoteByIDs(walletAddress, noteIds);
 
         await recallBatch({
           items: [
@@ -330,10 +329,7 @@ export const CancelDashboardContainer: React.FC = () => {
             //   AccountId.fromBech32(recallingNote.sender),
             // );
 
-            const txId = await consumeNoteByID(
-              AccountId.fromBech32(recallingNote.sender),
-              recallingNote.noteId.toString(),
-            );
+            const txId = await consumeNoteByID(recallingNote.sender, recallingNote.noteId.toString());
 
             // recall on server
             await recallBatch({

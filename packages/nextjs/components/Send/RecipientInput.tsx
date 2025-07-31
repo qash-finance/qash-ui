@@ -2,7 +2,6 @@
 import * as React from "react";
 import { ActionButton } from "../Common/ActionButton";
 import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { AccountId } from "@demox-labs/miden-sdk";
 
 interface RecipientInputProps {
   onChooseRecipient: () => void;
@@ -39,12 +38,7 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
               validate: (value: string) => {
                 if (!value) return true; // Don't show error when empty
                 if (!value.startsWith("mt")) return "Address must start with 'mt'";
-                try {
-                  AccountId.fromBech32(value);
-                  return true;
-                } catch (error) {
-                  return "Invalid recipient address";
-                }
+                if (value.length < 36) return "Address must be at least 36 characters";
               },
             })}
             type="text"

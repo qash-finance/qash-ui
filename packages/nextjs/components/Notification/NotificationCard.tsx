@@ -78,7 +78,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                 href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm"
+                className="flex items-center gap-2 text-white text-sm w-fit"
               >
                 <span>View on explorer</span>
                 <svg
@@ -112,7 +112,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                 href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm"
+                className="flex items-center gap-2 text-white text-sm w-fit"
               >
                 <span>View on explorer</span>
                 <svg
@@ -147,7 +147,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                 href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm"
+                className="flex items-center gap-2 text-white text-sm w-fit"
               >
                 <span>View on explorer</span>
                 <svg

@@ -7,9 +7,7 @@ import { MODAL_IDS } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
-import { NoteType as MidenNoteType, OutputNotesArray } from "@demox-labs/miden-sdk";
 import { toast } from "react-hot-toast";
-import { AccountId } from "@demox-labs/miden-sdk";
 import { createP2IDENote } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useAccountContext } from "@/contexts/AccountProvider";
@@ -28,7 +26,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
 import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
-import { CustomNoteType } from "@/types/note";
+import { CustomNoteType, WrappedNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
@@ -104,8 +102,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   // Debounced address validation
   const validateAddress = useCallback((address: string) => {
     try {
-      AccountId.fromBech32(address);
-      return true;
+      if (address.startsWith("mt")) {
+        return true;
+      }
+      // address need to be at least 36 characters
+      if (address.length < 36) {
+        return false;
+      }
+      return false;
     } catch (error) {
       return false;
     }
@@ -179,14 +183,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         return;
       }
 
-      // check if recipient address is valid bech32
-      try {
-        console.log("RECIPIENT ADDRESS", recipientAddress);
-        AccountId.fromBech32(recipientAddress);
-      } catch (error) {
+      if (!validateAddress(recipientAddress)) {
         toast.dismiss();
-        console.log(error);
-
         toast.error("Invalid recipient address");
         return;
       }
@@ -202,13 +200,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       if (amount <= 0) {
         toast.dismiss();
         toast.error("Amount must be greater than 0");
-        return;
-      }
-
-      try {
-        AccountId.fromBech32(recipientAddress);
-      } catch (error) {
-        toast.error("Invalid recipient address");
         return;
       }
 
@@ -238,9 +229,9 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
 
             // Create AccountId objects once to avoid aliasing issues
-            const senderAccountId = AccountId.fromBech32(walletAddress);
-            const recipientAccountId = AccountId.fromBech32(recipientAddress);
-            const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
+            const senderAccountId = walletAddress;
+            const recipientAccountId = recipientAddress;
+            const faucetAccountId = selectedToken.faucetId;
 
             // create note
             const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
@@ -248,14 +239,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               recipientAccountId,
               faucetAccountId,
               Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
-              isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
+              isPrivateTransaction ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
               recallHeight,
             );
 
             const noteId = note.id().toString();
 
             // submit transaction to miden
-            const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
+            const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
 
             // submit transaction to server
             const response = await sendSingleTransaction({
@@ -329,9 +320,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       }
 
       // check if recipient address is valid bech32
-      try {
-        AccountId.fromBech32(recipientAddress);
-      } catch (error) {
+      if (!validateAddress(recipientAddress)) {
         toast.dismiss();
         toast.error("Invalid recipient address");
         return;
@@ -472,12 +461,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                     validate: (value: string) => {
                       if (!value) return true; // Don't show error when empty
                       if (!value.startsWith("mt")) return "Address must start with 'mt'";
-                      try {
-                        AccountId.fromBech32(value);
-                        return true;
-                      } catch (error) {
-                        return "Invalid recipient address";
-                      }
+                      if (value.length < 36) return "Address must be at least 36 characters";
+                      return true;
                     },
                   })}
                   autoComplete="off"

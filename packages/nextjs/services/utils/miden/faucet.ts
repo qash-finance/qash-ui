@@ -1,14 +1,13 @@
 "use client";
-import { Account, AccountId, TransactionResult, WebClient } from "@demox-labs/miden-sdk";
 import { importAndGetAccount } from "./account";
 import { FaucetMetadata } from "@/types/faucet";
 import { NODE_ENDPOINT } from "../constant";
 
 /// @param symbol can't exceed 6 characters
 /// @param decimals can't exceed 12
-export async function deployFaucet(symbol: string, decimals: number, maxSupply: number): Promise<Account> {
+export async function deployFaucet(symbol: string, decimals: number, maxSupply: number): Promise<any> {
   try {
-    const { AccountStorageMode } = await import("@demox-labs/miden-sdk");
+    const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
     const client = await WebClient.createClient(NODE_ENDPOINT);
     const faucet = await client.newFaucet(AccountStorageMode.public(), false, symbol, decimals, BigInt(maxSupply));
     return faucet;
@@ -17,15 +16,19 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
   }
 }
 
-export async function mintToken(accountId: AccountId, faucetId: AccountId, amount: bigint): Promise<TransactionResult> {
+export async function mintToken(account: string, faucet: string, amount: bigint): Promise<any> {
   try {
+    const { NoteType, WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+
     const client = await WebClient.createClient(NODE_ENDPOINT);
-    const { NoteType } = await import("@demox-labs/miden-sdk");
+
+    const accountId = AccountId.fromBech32(account);
+    const faucetId = AccountId.fromBech32(faucet);
 
     // import faucet
-    const faucet = await importAndGetAccount(faucetId);
+    const faucetAccount = await importAndGetAccount(faucetId.toBech32());
 
-    const mintTxRequest = client.newMintTransactionRequest(accountId, faucet.id(), NoteType.Public, amount);
+    const mintTxRequest = client.newMintTransactionRequest(accountId, faucetAccount.id(), NoteType.Public, amount);
     const txResult = await client.newTransaction(faucetId, mintTxRequest);
     await client.submitTransaction(txResult);
     return txResult;
@@ -73,7 +76,7 @@ function decodeFeltToSymbol(encodedFelt: number): string {
 
 const faucetMetadataCache = new Map<string, Promise<FaucetMetadata>>();
 
-export const getFaucetMetadata = async (faucetId: AccountId): Promise<FaucetMetadata> => {
+export const getFaucetMetadata = async (faucetId: string): Promise<FaucetMetadata> => {
   const faucetIdStr = faucetId.toString();
 
   // Check if we already have this metadata cached or being fetched

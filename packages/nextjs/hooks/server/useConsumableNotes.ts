@@ -3,7 +3,6 @@ import { getConsumable as getConsumableNotesFromServer } from "@/services/api/tr
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWalletAuth } from "./useWalletAuth";
 import { getConsumableNotes } from "@/services/utils/miden/note";
-import { ConsumableNoteRecord } from "@demox-labs/miden-sdk";
 import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { ConsumableNote } from "@/types/transaction";
@@ -53,7 +52,7 @@ export function useConsumableNotes() {
         })),
       }));
 
-      const notes: ConsumableNoteRecord[] = await getConsumableNotes(walletAddress!);
+      const notes: any[] = await getConsumableNotes(walletAddress!);
 
       const consumableNotes: PartialConsumableNote[] = await Promise.all(
         notes.map(async note => {
@@ -66,8 +65,8 @@ export function useConsumableNotes() {
           const assetPromises = noteDetails
             .assets()
             .fungibleAssets()
-            .map(async asset => {
-              const metadata = await getFaucetMetadata(asset.faucetId());
+            .map(async (asset: any) => {
+              const metadata = await getFaucetMetadata(asset.faucetId().toBech32());
               return {
                 faucetId: asset.faucetId().toBech32(),
                 amount: asset.amount().toString(),
@@ -90,29 +89,28 @@ export function useConsumableNotes() {
         }),
       );
 
-      // filter consumableNotes
-      const filteredConsumableNotes = consumableNotes.filter(note => {
-        // if note is in recallableTxs, dont include it
-        if (consumableNotesFromServer.recallableTxs.some(tx => tx.noteId === note.id)) {
-          return false;
-        }
-        return true;
-      });
+      // filterout the sender and recipient are the same
+      const filteredConsumableNotes = consumableNotes.filter(note => note.sender !== note.recipient);
 
-      return [...filteredConsumableNotes, ...consumablePrivateNotes];
+      const returnNotes = [...filteredConsumableNotes, ...consumablePrivateNotes];
+
+      // remove the same note.id
+      const filteredNotes = returnNotes.filter(
+        (note, index, self) => index === self.findIndex(t => t.id.toLowerCase() === note.id.toLowerCase()),
+      );
+      return filteredNotes;
     },
     enabled: !!walletAddress,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
+    refetchInterval: 60000, // Refetch every 60 second
     refetchOnWindowFocus: true, // Refetch when window gains focus
     refetchOnMount: true, // Always refetch on mount
   });
 
   // Force fresh fetch by invalidating cache
   const forceFetch = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ["consumable-notes", walletAddress],
-    });
+    await refetch();
   };
 
   return {

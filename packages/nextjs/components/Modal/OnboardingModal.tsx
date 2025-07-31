@@ -9,7 +9,6 @@ import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/s
 import { ActionButton } from "../Common/ActionButton";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { mintToken } from "@/services/utils/miden/faucet";
-import { AccountId } from "@demox-labs/miden-sdk";
 import toast from "react-hot-toast";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 
@@ -32,11 +31,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
       toast.loading("Minting...");
 
       // mint qash token to user
-      const txId = await mintToken(
-        AccountId.fromBech32(walletAddress),
-        AccountId.fromBech32(QASH_TOKEN_ADDRESS),
-        BigInt(10 * 10 ** QASH_TOKEN_DECIMALS),
-      );
+      const txId = await mintToken(walletAddress, QASH_TOKEN_ADDRESS, BigInt(10 * 10 ** QASH_TOKEN_DECIMALS));
       toast.dismiss();
       toast.success(
         <div>

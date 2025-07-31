@@ -1,5 +1,4 @@
 "use client";
-import { AccountId } from "@demox-labs/miden-sdk";
 import { getAccountAssets } from "@/services/utils/miden/account";
 import { AssetWithMetadata } from "@/types/faucet";
 import {
@@ -33,17 +32,6 @@ interface AccountData {
 // Function to fetch assets and notes
 const fetchAccountData = async (walletAddress: string | null): Promise<AccountData> => {
   if (!walletAddress || walletAddress.trim() === "") {
-    return {
-      assets: [defaultQashToken],
-      isAccountDeployed: true,
-      accountBalance: "0",
-    };
-  }
-
-  let accountId;
-  try {
-    accountId = AccountId.fromBech32(walletAddress);
-  } catch (error) {
     return {
       assets: [defaultQashToken],
       isAccountDeployed: true,
@@ -112,6 +100,7 @@ export function useAccount() {
     await queryClient.invalidateQueries({
       queryKey: ["account-data", walletAddress],
     });
+    await refetchAssets();
   };
 
   const defaultData: AccountData = {

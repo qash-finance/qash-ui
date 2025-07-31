@@ -176,7 +176,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
           </section>
 
           {/* Address List */}
-          <section className="flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0]">
+          <section className="overflow-x-auto flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0]">
             <h2 className="text-base tracking-tighter leading-5 text-white">
               Your address book ({(filteredGroupedAddressBooks[activeTab] as AddressBook[])?.length || 0})
             </h2>

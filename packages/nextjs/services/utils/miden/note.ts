@@ -1,36 +1,20 @@
 "use client";
-import {
-  AccountId,
-  Felt,
-  NoteRecipient,
-  NoteMetadata,
-  Note,
-  NoteInputs,
-  NoteTag,
-  NoteType,
-  Rpo256,
-  FeltArray,
-  Word,
-  NoteExecutionHint,
-  OutputNote,
-  NoteAssets,
-  FungibleAsset,
-  TransactionRequestBuilder,
-  NoteScript,
-  NoteAndArgsArray,
-  NoteAndArgs,
-  WebClient,
-} from "@demox-labs/miden-sdk";
+
 import { PartialConsumableNote } from "@/types/faucet";
 import { NODE_ENDPOINT } from "../constant";
+import { BatchTransaction } from "@/services/store/batchTransactions";
+import { WrappedNoteType } from "@/types/note";
 
 // **************** GET METHODS ********************
 
 export async function getConsumableNotes(accountId: string) {
   try {
+    const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
     const notes = await client.getConsumableNotes(AccountId.fromBech32(accountId));
+
     return notes;
   } catch (error) {
     console.log("ERROR GETTING CONSUMABLE NOTES", error);
@@ -41,22 +25,24 @@ export async function getConsumableNotes(accountId: string) {
 // **************** CREATE METHODS ********************
 
 export async function createP2IDNote(
-  sender: AccountId,
-  receiver: AccountId,
-  faucet: AccountId,
+  sender: string,
+  receiver: string,
+  faucet: string,
   amount: number,
-  noteType: NoteType,
+  noteType: WrappedNoteType,
 ) {
-  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt } = await import("@demox-labs/miden-sdk");
+  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt, AccountId, NoteType } = await import(
+    "@demox-labs/miden-sdk"
+  );
 
   const serialNumbers = await randomSerialNumbers();
 
   return OutputNote.full(
     Note.createP2IDNote(
-      sender,
-      receiver,
-      new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]),
-      noteType,
+      AccountId.fromBech32(sender),
+      AccountId.fromBech32(receiver),
+      new NoteAssets([new FungibleAsset(AccountId.fromBech32(faucet), BigInt(amount))]),
+      noteType == WrappedNoteType.PUBLIC ? NoteType.Public : NoteType.Private,
       Word.newFromFelts(serialNumbers),
       new Felt(BigInt(0)),
     ),
@@ -64,39 +50,45 @@ export async function createP2IDNote(
 }
 
 export async function createP2IDENote(
-  sender: AccountId,
-  receiver: AccountId,
-  faucet: AccountId,
+  sender: string,
+  receiver: string,
+  faucet: string,
   amount: number,
-  noteType: NoteType,
+  noteType: WrappedNoteType,
   recallHeight: number,
-): Promise<[OutputNote, string[], number]> {
-  const client = await WebClient.createClient(NODE_ENDPOINT);
+): Promise<[any, string[], number]> {
+  try {
+    const { OutputNote, WebClient } = await import("@demox-labs/miden-sdk");
 
-  const serialNumbers = await randomSerialNumbers();
-  const serialNumbersCopy = serialNumbers.map(felt => felt.toString());
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+    const serialNumbers = await randomSerialNumbers();
+    const serialNumbersCopy = serialNumbers.map(felt => felt.toString());
 
-  // get current height
-  const currentHeight = await client.getSyncHeight();
-  recallHeight = currentHeight + recallHeight;
+    // get current height
+    const currentHeight = await client.getSyncHeight();
+    recallHeight = currentHeight + recallHeight;
 
-  const note = await customCreateP2IDENote(
-    sender,
-    receiver,
-    amount,
-    faucet,
-    recallHeight,
-    0,
-    noteType,
-    0,
-    serialNumbers,
-  );
+    const note = await customCreateP2IDENote(
+      sender,
+      receiver,
+      amount,
+      faucet,
+      recallHeight,
+      0,
+      noteType,
+      0,
+      serialNumbers,
+    );
 
-  return [OutputNote.full(note), serialNumbersCopy, recallHeight];
+    return [OutputNote.full(note), serialNumbersCopy, recallHeight];
+  } catch (error) {
+    throw new Error("Failed to create P2IDENote");
+    console.log(error);
+  }
 }
 
 export async function consumeAllUnauthenticatedNotes(
-  accountId: AccountId,
+  account: string,
   notes: {
     isPrivate: boolean;
     noteId: string;
@@ -104,17 +96,21 @@ export async function consumeAllUnauthenticatedNotes(
   }[],
 ) {
   try {
+    const { WebClient, AccountId, Felt, NoteAndArgs, Note, TransactionRequestBuilder, NoteAndArgsArray } = await import(
+      "@demox-labs/miden-sdk"
+    );
+
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
-    const inputNotes: NoteAndArgs[] = [];
+    const inputNotes = [];
 
     // loop through the notes
     for (const noteInfo of notes) {
       if (noteInfo.isPrivate) {
         // Create AccountId objects once and reuse them to avoid aliasing issues
-        const senderAccountId = AccountId.fromBech32(noteInfo?.partialNote?.sender!);
-        const recipientAccountId = AccountId.fromBech32(noteInfo?.partialNote?.recipient!);
-        const faucetAccountId = AccountId.fromBech32(noteInfo?.partialNote?.assets[0].faucetId!);
+        const senderAccountId = noteInfo?.partialNote?.sender!;
+        const recipientAccountId = noteInfo?.partialNote?.recipient!;
+        const faucetAccountId = noteInfo?.partialNote?.assets[0].faucetId!;
 
         const note = await customCreateP2IDENote(
           senderAccountId,
@@ -123,7 +119,7 @@ export async function consumeAllUnauthenticatedNotes(
           faucetAccountId,
           noteInfo?.partialNote?.recallableHeight!,
           0,
-          noteInfo?.partialNote?.private ? NoteType.Private : NoteType.Public,
+          noteInfo?.partialNote?.private ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
           0,
           noteInfo?.partialNote?.serialNumber.map(felt => new Felt(BigInt(felt)))!,
         );
@@ -143,6 +139,8 @@ export async function consumeAllUnauthenticatedNotes(
       .withUnauthenticatedInputNotes(new NoteAndArgsArray(inputNotes))
       .build();
 
+    const accountId = AccountId.fromBech32(account);
+
     const txResult = await client.newTransaction(accountId, transactionRequest);
     await client.submitTransaction(txResult);
 
@@ -152,14 +150,18 @@ export async function consumeAllUnauthenticatedNotes(
   }
 }
 
-export async function consumeUnauthenticatedNote(accountId: AccountId, partialNote: PartialConsumableNote) {
+export async function consumeUnauthenticatedNote(account: string, partialNote: PartialConsumableNote) {
   try {
+    const { WebClient, AccountId, Felt, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs } = await import(
+      "@demox-labs/miden-sdk"
+    );
+
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
     // Create AccountId objects once and reuse them to avoid aliasing issues
-    const senderAccountId = AccountId.fromBech32(partialNote.sender);
-    const recipientAccountId = AccountId.fromBech32(partialNote.recipient);
-    const faucetAccountId = AccountId.fromBech32(partialNote.assets[0].faucetId);
+    const senderAccountId = partialNote.sender;
+    const recipientAccountId = partialNote.recipient;
+    const faucetAccountId = partialNote.assets[0].faucetId;
 
     const note = await customCreateP2IDENote(
       senderAccountId,
@@ -168,7 +170,7 @@ export async function consumeUnauthenticatedNote(accountId: AccountId, partialNo
       faucetAccountId,
       partialNote.recallableHeight,
       0,
-      partialNote.private ? NoteType.Private : NoteType.Public,
+      partialNote.private ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
       0,
       partialNote.serialNumber.map(felt => new Felt(BigInt(felt))),
     );
@@ -176,6 +178,8 @@ export async function consumeUnauthenticatedNote(accountId: AccountId, partialNo
     const transactionRequest = new TransactionRequestBuilder()
       .withUnauthenticatedInputNotes(new NoteAndArgsArray([new NoteAndArgs(note)]))
       .build();
+
+    const accountId = AccountId.fromBech32(account);
 
     const txResult = await client.newTransaction(accountId, transactionRequest);
     await client.submitTransaction(txResult);
@@ -186,10 +190,15 @@ export async function consumeUnauthenticatedNote(accountId: AccountId, partialNo
   }
 }
 
-export async function consumeNoteByID(accountId: AccountId, noteId: string) {
+export async function consumeNoteByID(account: string, noteId: string) {
   try {
+    const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+
     const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest([noteId]);
+
+    const accountId = AccountId.fromBech32(account);
+
     const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
 
@@ -199,10 +208,14 @@ export async function consumeNoteByID(accountId: AccountId, noteId: string) {
   }
 }
 
-export async function consumeNoteByIDs(accountId: AccountId, noteIds: string[]) {
+export async function consumeNoteByIDs(account: string, noteIds: string[]) {
   try {
+    const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+
     const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
+    const accountId = AccountId.fromBech32(account);
+
     const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
 
@@ -213,11 +226,29 @@ export async function consumeNoteByIDs(accountId: AccountId, noteIds: string[]) 
 }
 
 export async function createGiftNote(
-  creator: AccountId,
-  offeredAsset: FungibleAsset,
-  secret: [Felt, Felt, Felt, Felt],
-  serialNumber: [Felt, Felt, Felt, Felt],
+  creator: string,
+  offeredAsset: any,
+  secret: [number, number, number, number],
+  serialNumber: [number, number, number, number],
 ) {
+  const {
+    WebClient,
+    OutputNote,
+    NoteType,
+    NoteTag,
+    AccountId,
+    Rpo256,
+    Felt,
+    FeltArray,
+    NoteInputs,
+    NoteMetadata,
+    NoteExecutionHint,
+    NoteRecipient,
+    NoteAssets,
+    Word,
+    Note,
+  } = await import("@demox-labs/miden-sdk");
+
   const client = await WebClient.createClient(NODE_ENDPOINT);
 
   const giftNote = `
@@ -315,23 +346,71 @@ export async function createGiftNote(
 
   const noteScript = client.compileNoteScript(giftNote);
   const noteType = NoteType.Private;
-  const giftTag = NoteTag.fromAccountId(creator);
+  const giftTag = NoteTag.fromAccountId(AccountId.fromBech32(creator));
   // hash the secret
-  const secretHash = Rpo256.hashElements(new FeltArray(secret));
+  const secretHash = Rpo256.hashElements(new FeltArray(secret.map(felt => new Felt(BigInt(felt)))));
 
   // prepare note
-  const noteInput = new NoteInputs(new FeltArray(secretHash.toWord() as unknown as Felt[]));
-  const noteMetadata = new NoteMetadata(creator, noteType, giftTag, NoteExecutionHint.always(), new Felt(BigInt(0)));
-  const noteRecipient = new NoteRecipient(Word.newFromFelts(serialNumber), noteScript, noteInput);
+  const noteInput = new NoteInputs(new FeltArray(secretHash.toWord() as any));
+  const noteMetadata = new NoteMetadata(
+    AccountId.fromBech32(creator),
+    noteType,
+    giftTag,
+    NoteExecutionHint.always(),
+    new Felt(BigInt(0)),
+  );
+  const noteRecipient = new NoteRecipient(
+    Word.newFromFelts(serialNumber.map(felt => new Felt(BigInt(felt)))),
+    noteScript,
+    noteInput,
+  );
   const noteAssets = new NoteAssets([offeredAsset]);
   const note = new Note(noteAssets, noteMetadata, noteRecipient);
 
   return OutputNote.full(note);
 }
 
+export async function createBatchNote(
+  caller: string,
+  transactions: (Omit<BatchTransaction, "createdAt"> & { createdAt: Date })[],
+) {
+  try {
+    const batch = [];
+    const noteIds: string[] = [];
+    const serialNumbers: string[][] = [];
+    const recallableHeights: number[] = [];
+    // Process each transaction
+    for (const transaction of transactions) {
+      console.log(transaction);
+      const amount = parseFloat(transaction.amount);
+      const recallHeight = transaction.recallableHeight;
+      // Create note for transaction
+      const [note, noteSerialNumbers, calculatedRecallHeight] = await createP2IDENote(
+        caller,
+        transaction.recipient,
+        transaction.tokenAddress,
+        Math.round(amount * Math.pow(10, transaction.tokenMetadata.decimals)),
+        transaction.isPrivate ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
+        recallHeight,
+      );
+      batch.push(note);
+      noteIds.push(note.id().toString());
+      serialNumbers.push(noteSerialNumbers);
+      recallableHeights.push(calculatedRecallHeight);
+    }
+
+    return { batch, noteIds, serialNumbers, recallableHeights };
+  } catch (error) {
+    throw new Error("Failed to create batch note");
+    console.log(error);
+  }
+}
+
 // **************** HELPER METHODS ********************
 
-async function randomSerialNumbers(): Promise<Felt[]> {
+async function randomSerialNumbers(): Promise<any[]> {
+  const { Felt } = await import("@demox-labs/miden-sdk");
+
   const randomBytes = new Uint32Array(4);
   crypto.getRandomValues(randomBytes);
 
@@ -339,31 +418,58 @@ async function randomSerialNumbers(): Promise<Felt[]> {
 }
 
 export async function customCreateP2IDENote(
-  sender: AccountId,
-  receiver: AccountId,
+  sender: string,
+  receiver: string,
   amount: number,
-  faucet: AccountId,
+  faucet: string,
   recallHeight: number,
   timelockHeight: number,
-  noteType: NoteType,
+  noteType: WrappedNoteType,
   aux: number,
-  serialNumber: Felt[],
+  serialNumber: any[],
 ) {
+  const {
+    AccountId,
+    NoteScript,
+    NoteType,
+    NoteInputs,
+    FeltArray,
+    Felt,
+    NoteRecipient,
+    Word,
+    NoteTag,
+    NoteMetadata,
+    NoteExecutionHint,
+    NoteAssets,
+    FungibleAsset,
+    Note,
+  } = await import("@demox-labs/miden-sdk");
+
+  const senderId = AccountId.fromBech32(sender);
+  const receiverId = AccountId.fromBech32(receiver);
+  const faucetId = AccountId.fromBech32(faucet);
+
   const p2ideNoteScript = NoteScript.p2ide();
 
   const p2ideInputs = new NoteInputs(
     new FeltArray([
-      receiver.suffix(),
-      receiver.prefix(),
+      receiverId.suffix(),
+      receiverId.prefix(),
       new Felt(BigInt(recallHeight)),
       new Felt(BigInt(timelockHeight)),
     ]),
   );
 
   const noteRecipient = new NoteRecipient(Word.newFromFelts(serialNumber), p2ideNoteScript, p2ideInputs);
-  const noteTag = NoteTag.fromAccountId(receiver);
-  const noteMetadata = new NoteMetadata(sender, noteType, noteTag, NoteExecutionHint.always(), new Felt(BigInt(aux)));
-  const noteAssets = new NoteAssets([new FungibleAsset(faucet, BigInt(amount))]);
+  const noteTag = NoteTag.fromAccountId(receiverId);
+  const noteMetadata = new NoteMetadata(
+    senderId,
+    noteType == WrappedNoteType.PUBLIC ? NoteType.Public : NoteType.Private,
+    noteTag,
+    NoteExecutionHint.always(),
+    new Felt(BigInt(aux)),
+  );
+  const noteAssets = new NoteAssets([new FungibleAsset(faucetId, BigInt(amount))]);
 
   const note = new Note(noteAssets, noteMetadata, noteRecipient);
   return note;

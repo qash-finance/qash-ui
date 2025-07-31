@@ -18,10 +18,10 @@ import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
 import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
-import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
-import { MidenSdkProvider, useInitAndPollSyncState } from "@/contexts/MidenSdkProvider";
+import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
+import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 
 interface ClientLayoutProps {
   children: ReactNode;

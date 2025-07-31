@@ -7,7 +7,6 @@ import { CreateAddressCard } from "./CreateAddressCard";
 import { useCreateAddressBook, useGetAddressBooks } from "@/services/api/address-book";
 import { AddressBookDto } from "@/types/address-book";
 import toast from "react-hot-toast";
-import { Account } from "@demox-labs/miden-sdk";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 const ANIMATION_DURATION = 500;
