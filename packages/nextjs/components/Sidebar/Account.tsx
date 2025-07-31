@@ -14,7 +14,7 @@ enum SelectedWallet {
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
-  const { walletAddress, setIsConnected, disconnect } = useWalletState(state => state);
+  const { walletAddress, setIsConnected } = useWalletState(state => state);
   const { disconnectWallet } = useWalletAuth();
 
   const [isBlurred, setIsBlurred] = useState(false);

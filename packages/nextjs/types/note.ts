@@ -9,3 +9,8 @@ export enum NoteStatus {
   RECALLED = "recalled",
   CONSUMED = "consumed",
 }
+
+export enum WrappedNoteType {
+  PUBLIC = "public",
+  PRIVATE = "private",
+}

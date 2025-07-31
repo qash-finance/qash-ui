@@ -7,6 +7,7 @@ import { CreateAddressCard } from "./CreateAddressCard";
 import { useCreateAddressBook, useGetAddressBooks } from "@/services/api/address-book";
 import { AddressBookDto } from "@/types/address-book";
 import toast from "react-hot-toast";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 const ANIMATION_DURATION = 500;
 
@@ -44,7 +45,7 @@ const NewFolder = ({
 }: {
   reveal: boolean;
   toggleNewFolder: () => void;
-  handleCreateAddressBook: (data: { name: string; address: string; category: string }) => void;
+  handleCreateAddressBook: (data: { name: string; address: string; category: string }) => Promise<boolean>;
   register: any;
   watch: any;
 }) => {
@@ -94,7 +95,7 @@ const NewFolder = ({
           pointerEvents: reveal ? "auto" : "none",
         }}
       >
-        <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category })} />
+        <CreateAddressCard onSave={async data => await handleCreateAddressBook({ ...data, category })} />
       </div>
 
       <img
@@ -152,8 +153,12 @@ const Folder = ({ reveal, onClick, category }: { reveal: boolean; onClick: () =>
 };
 
 export function AddressBookContainer() {
+  // **************** Custom Hooks *******************
+  const { walletAddress, isConnected } = useWalletConnect();
   const { data: addressBooks } = useGetAddressBooks();
   const { mutate: createAddressBook } = useCreateAddressBook();
+
+  // **************** Local State *******************
   const [folderStates, setFolderStates] = useState<boolean[]>([]);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const isAnyFolderOpen = folderStates.some(state => state) || newFolderOpen;
@@ -168,21 +173,25 @@ export function AddressBookContainer() {
       category: "",
     },
   });
-  // Group address books by category
+  // Group address books by category and sort by createdAt
   const groupedAddressBooks = useMemo(() => {
-    if (!addressBooks) return {};
+    if (!addressBooks || !walletAddress || !isConnected) return {};
 
-    return addressBooks.reduce((groups: Record<string, any[]>, addressBook: any) => {
-      const category = addressBook.category;
+    return addressBooks.reduce((groups: Record<string, any[]>, categoryData: any) => {
+      const category = categoryData.name; // Use 'name' as category from the new structure
       if (!groups[category]) {
         groups[category] = [];
       }
-      groups[category].push(addressBook);
+      // Add all addressBooks from this category, sorted by createdAt
+      const sortedAddressBooks = (categoryData.addressBooks || []).sort(
+        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      groups[category].push(...sortedAddressBooks);
       return groups;
     }, {});
-  }, [addressBooks]);
+  }, [addressBooks, walletAddress, isConnected]);
 
-  // Create folders based on categories
+  // Create folders based on categories, sorted by createdAt
   const folders = useMemo(() => {
     return Object.keys(groupedAddressBooks)
       .sort()
@@ -219,7 +228,7 @@ export function AddressBookContainer() {
     setFolderStates(new Array(folders.length).fill(false)); // Close all regular folders
   };
 
-  const handleCreateAddressBook = async (data: AddressBookDto) => {
+  const handleCreateAddressBook = async (data: AddressBookDto): Promise<boolean> => {
     const name = data.name.trim();
     const category = data.category.trim();
     const address = data.address.trim();
@@ -227,74 +236,87 @@ export function AddressBookContainer() {
 
     if (category === "") {
       toast.error("Category is required");
-      return;
+      return false;
     }
 
     // Prevent duplicate name in the same category
-    const nameExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.name === name);
+    const nameExistsInCategory = addressBooks?.some(
+      (categoryData: any) =>
+        categoryData.name === category && categoryData.addressBooks.some((ab: any) => ab.name === name),
+    );
     if (nameExistsInCategory) {
       toast.error("Name already exists in this category");
-      return;
+      return false;
     }
 
     // Prevent duplicate address in the same category
-    const addressExistsInCategory = addressBooks?.some((ab: any) => ab.category === category && ab.address === address);
+    const addressExistsInCategory = addressBooks?.some(
+      (categoryData: any) =>
+        categoryData.name === category && categoryData.addressBooks.some((ab: any) => ab.address === address),
+    );
     if (addressExistsInCategory) {
       toast.error("Address already exists in this category");
-      return;
+      return false;
     }
 
-    createAddressBook(
-      { name, category, address, token },
-      {
-        onSuccess: data => {
-          toast.success("Address book created successfully");
+    return new Promise(resolve => {
+      createAddressBook(
+        { name, category, address, token },
+        {
+          onSuccess: data => {
+            toast.success("Address book created successfully");
 
-          // Reset the form
-          setValue("category", "");
+            // Reset the form
+            setValue("category", "");
 
-          // Auto open the folder for the new address book
-          // Check if this is a new category by looking at current folders
-          const existingFolderIndex = folders.findIndex(folder => folder.category === category);
-          console.log("🚀 ~ handleCreateAddressBook ~ existingFolderIndex:", existingFolderIndex);
+            // Auto open the folder for the new address book
+            // Check if this is a new category by looking at current folders
+            const existingFolderIndex = folders.findIndex(folder => folder.category === category);
 
-          if (existingFolderIndex !== -1) {
-            // Existing category - open that folder
-            setFolderStates(prev => prev.map((state, index) => (index === existingFolderIndex ? true : false)));
-          } else {
-            // New category - the folders array will be updated by the memo when addressBooks changes
-            // We need to wait for the next render cycle to find the new folder index
-            setTimeout(() => {
-              const updatedFolders = Object.keys(
-                addressBooks
-                  ? [...addressBooks, data].reduce((groups: Record<string, any[]>, addressBook: any) => {
-                      const cat = addressBook.category;
-                      if (!groups[cat]) {
-                        groups[cat] = [];
-                      }
-                      groups[cat].push(addressBook);
-                      return groups;
-                    }, {})
-                  : {},
-              ).sort();
-              const newFolderIndex = updatedFolders.findIndex(folder => folder === category);
-              if (newFolderIndex !== -1) {
-                setFolderStates(prev => {
-                  const newStates = new Array(updatedFolders.length).fill(false);
-                  newStates[newFolderIndex] = true;
-                  return newStates;
-                });
-              }
-            }, 0);
-          }
-          setNewFolderOpen(false);
+            if (existingFolderIndex !== -1) {
+              // Existing category - open that folder
+              setFolderStates(prev => prev.map((state, index) => (index === existingFolderIndex ? true : false)));
+            } else {
+              // New category - the folders array will be updated by the memo when addressBooks changes
+              // We need to wait for the next render cycle to find the new folder index
+              setTimeout(() => {
+                const updatedFolders = Object.keys(
+                  addressBooks
+                    ? [...addressBooks, { name: category, addressBooks: [data] }].reduce(
+                        (groups: Record<string, any[]>, categoryData: any) => {
+                          const cat = categoryData.name;
+                          if (!groups[cat]) {
+                            groups[cat] = [];
+                          }
+                          groups[cat].push(...categoryData.addressBooks);
+                          return groups;
+                        },
+                        {},
+                      )
+                    : {},
+                ).sort();
+                const newFolderIndex = updatedFolders.findIndex(folder => folder === category);
+                if (newFolderIndex !== -1) {
+                  setFolderStates(prev => {
+                    const newStates = new Array(updatedFolders.length).fill(false);
+                    newStates[newFolderIndex] = true;
+                    return newStates;
+                  });
+                }
+              }, 0);
+            }
+            setNewFolderOpen(false);
+            resolve(true);
+          },
+          onError: ({ response }: any) => {
+            const errorMessage = response.data.message || "Failed to create address book";
+            console.log(errorMessage);
+            toast.error(errorMessage);
+            resolve(false);
+          },
         },
-        onError: (error: any) => {
-          console.log(error);
-          toast.error("Failed to create address book");
-        },
-      },
-    );
+      );
+    });
   };
 
   return (
@@ -318,7 +340,9 @@ export function AddressBookContainer() {
               {folder.addressBooks.map((addressBook: any, index: number) => (
                 <AddressCard key={addressBook.id || index} addressBook={addressBook} />
               ))}
-              <CreateAddressCard onSave={data => handleCreateAddressBook({ ...data, category: folder.category })} />
+              <CreateAddressCard
+                onSave={async data => await handleCreateAddressBook({ ...data, category: folder.category })}
+              />
             </>
           )}
         </div>

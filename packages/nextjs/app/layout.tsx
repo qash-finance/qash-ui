@@ -3,8 +3,6 @@ import { Geist, Geist_Mono, Barlow } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "../components/ClientLayout";
 import localFont from "next/font/local";
-import { AccountProvider } from "@/contexts/AccountProvider";
-import { AuthProvider } from "@/services/auth/context";
 
 const repetitionScrolling = localFont({
   src: "../public/fonts/repet___.ttf",

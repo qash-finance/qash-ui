@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
-  // Ensure WASM files are handled properly
   async headers() {
     return [
       {

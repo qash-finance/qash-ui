@@ -7,8 +7,11 @@ import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { toast } from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import { consumeAllNotes, consumePrivateNote, consumePublicNote } from "@/services/utils/miden/note";
-import { AccountId } from "@demox-labs/miden-sdk";
+import {
+  consumeAllUnauthenticatedNotes,
+  consumeUnauthenticatedNote,
+  consumeNoteByID,
+} from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
@@ -19,6 +22,8 @@ import useConsumeNotes from "@/hooks/server/useConsume";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
+import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
+import useConsumePublicNotes from "@/hooks/server/useConsumePublicNotes";
 
 const mockData = [
   {
@@ -41,7 +46,7 @@ const mockData = [
   },
 ];
 
-const HeaderColumns = ["Amount", "From", "Date/Time", "Action"];
+const HeaderColumns = ["Amount", "From", "Action"];
 
 const TableHeader = ({
   columns,
@@ -56,7 +61,7 @@ const TableHeader = ({
     <thead>
       <tr className="bg-[#181818] ">
         <th className=" text-center text-sm font-medium text-neutral-400 rounded-tl-lg py-2">
-          <input type="checkbox" className="w-4 h-4 mt-1" checked={allChecked} onChange={onCheckAll} />
+          <CustomCheckbox checked={allChecked} onChange={onCheckAll} />
         </th>
         {columns.map((column, index) => (
           <th
@@ -95,7 +100,7 @@ const TableRow = ({
   return (
     <tr className="bg-[#1E1E1E] border-b border-zinc-800 last:border-b-0 hover:bg-[#292929]">
       <td className="px-2 py-2 border-r border-zinc-800 text-center">
-        <input type="checkbox" className="w-4 h-4" checked={checked} onChange={onCheck} />
+        <CustomCheckbox checked={checked} onChange={onCheck} />
       </td>
       <td className="px-2 py-2 border-r border-zinc-800 min-w-[300px]">
         <div className="flex justify-center items-center gap-2">
@@ -127,15 +132,7 @@ const TableRow = ({
           </span>
         </div>
       </td>
-      <td className="px-2 py-2 border-r border-zinc-800 text-center">
-        <span className="text-white  font-medium">
-          {new Date(dateTime).toLocaleString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </span>
-      </td>
+
       <td className="px-2 py-2 text-center">
         <div className="flex items-center justify-center gap-2">
           <ActionButton text="Receive" onClick={() => onClaim()} disabled={disabled} />
@@ -158,13 +155,15 @@ export const PendingRecieveContainer: React.FC = () => {
     isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
-
+  const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
+  console.log("consumableNotesFromServer", consumableNotesFromServer);
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-
+  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
+  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
@@ -207,18 +206,40 @@ export const PendingRecieveContainer: React.FC = () => {
         // if private or recallableHeight > 0, we need to update on server
         if (!note.private && note.recallableHeight > 0) {
           // public + recallable
-          await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
+          const txId = await consumeNoteByID(walletAddress, note.id);
           // consume on server level
-          await consumeNotes([note.id]);
+          await consumeNotes([
+            {
+              noteId: note.id,
+              txId: txId,
+            },
+          ]);
         } else if (note.private && note.recallableHeight > 0) {
           // private + recallable
-          await consumePrivateNote(AccountId.fromBech32(walletAddress), note);
+          const txId = await consumeUnauthenticatedNote(walletAddress, note);
           // consume on server level
-          await consumeNotes([note.id]);
+          await consumeNotes([
+            {
+              noteId: note.id,
+              txId: txId,
+            },
+          ]);
         }
       } else {
         // dont need to update server
-        await consumePublicNote(AccountId.fromBech32(walletAddress), note.id);
+        const txId = await consumeNoteByID(walletAddress, note.id);
+        await consumePublicNotes([
+          {
+            sender: note.sender,
+            recipient: note.recipient,
+            amount: Number(
+              formatUnits(BigInt(Math.round(Number(note.assets[0].amount))), note.assets[0].metadata?.decimals),
+            ),
+            tokenId: note.assets[0].faucetId,
+            tokenName: note.assets[0].metadata?.symbol,
+            txId: txId,
+          },
+        ]);
       }
       setClaiming(false);
       toast.dismiss();
@@ -246,8 +267,8 @@ export const PendingRecieveContainer: React.FC = () => {
       setClaiming(true);
 
       // consume on network level
-      await consumeAllNotes(
-        AccountId.fromBech32(walletAddress),
+      const txId = await consumeAllUnauthenticatedNotes(
+        walletAddress,
         checkedRows.map(idx => ({
           isPrivate: consumableNotes[idx].private,
           noteId: consumableNotes[idx].id,
@@ -256,7 +277,12 @@ export const PendingRecieveContainer: React.FC = () => {
       );
       console.log(checkedRows);
       // consume on server level
-      await consumeNotes(checkedRows.map(idx => consumableNotes[idx].id));
+      await consumeNotes(
+        checkedRows.map(idx => ({
+          noteId: consumableNotes[idx].id,
+          txId: txId,
+        })),
+      );
 
       // get all private
       setClaiming(false);

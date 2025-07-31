@@ -3,8 +3,8 @@ import * as React from "react";
 import { ActionButton } from "../Common/ActionButton";
 import { CreateNewGroupModalProps, SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { ModalHeader } from "../Common/ModalHeader";
 import BaseModal from "./BaseModal";
+import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 
 interface AddressItemProps {
   name: string;
@@ -75,13 +75,10 @@ function AddressItem({ name, address, isSelected = true, onToggle }: AddressItem
       onClick={onToggle}
     >
       <span className="relative flex justify-center items-center p-0.5 w-5 h-5 rounded-md border-solid bg-blend-luminosity bg-stone-50 bg-opacity-30 border-[0.42px] border-white border-opacity-40 cursor-pointer">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={isSelected}
-          onChange={e => e.stopPropagation()}
-          className="appearance-none w-full h-full absolute left-0 top-0 z-10 cursor-pointer rounded-md"
+          onChange={() => onToggle?.()}
           aria-label={`${isSelected ? "Unselect" : "Select"} ${name}`}
-          style={{ margin: 0 }}
         />
         {isSelected && (
           <span className="absolute left-0 top-0 w-full h-full flex items-center justify-center pointer-events-none">

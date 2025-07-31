@@ -1,25 +1,23 @@
 "use client";
-import { Account, AccountId, FungibleAsset } from "@demox-labs/miden-sdk";
-import { useClient } from "../../../hooks/web3/useClient";
 import { getFaucetMetadata } from "./faucet";
-import { AssetWithMetadata, FaucetMetadata } from "@/types/faucet";
+import { AssetWithMetadata } from "@/types/faucet";
+import { NODE_ENDPOINT } from "../constant";
 
 export async function deployAccount(isPublic: boolean) {
-  const { getClient } = useClient();
-  const client = await getClient();
-  const { AccountStorageMode } = await import("@demox-labs/miden-sdk");
+  const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
 
+  const client = await WebClient.createClient(NODE_ENDPOINT);
   const account = await client.newWallet(isPublic ? AccountStorageMode.public() : AccountStorageMode.private(), true);
   return account;
 }
 
 export async function getAccountById(accountId: string) {
   if (typeof window === "undefined") throw new Error("getAccountById can only be used in the browser");
-  const { getClient } = useClient();
 
   try {
-    const client = await getClient();
-    const { AccountId } = await import("@demox-labs/miden-sdk");
+    const { AccountId, WebClient } = await import("@demox-labs/miden-sdk");
+
+    const client = await WebClient.createClient(NODE_ENDPOINT);
 
     // Try to get account from client
     let id;
@@ -41,18 +39,10 @@ export async function getAccountById(accountId: string) {
 }
 
 export const getAccountAssets = async (address: string): Promise<AssetWithMetadata[]> => {
-  let accountId;
   try {
-    accountId = AccountId.fromBech32(address);
-  } catch (error) {
-    console.error("Invalid address format:", address, error);
-    return [];
-  }
+    let account = await importAndGetAccount(address);
 
-  try {
-    let account = await importAndGetAccount(accountId);
-
-    const accountAssets: FungibleAsset[] = account.vault().fungibleAssets();
+    const accountAssets = account.vault().fungibleAssets();
 
     // Process assets sequentially to avoid Rust memory aliasing issues
     const assetsWithMetadata = [];
@@ -62,7 +52,7 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
         // get token metadata
         const faucet = asset.faucetId();
 
-        const metadata = await getFaucetMetadata(faucet);
+        const metadata = await getFaucetMetadata(faucet.toBech32());
         assetsWithMetadata.push({
           faucetId: asset.faucetId().toBech32(),
           amount: asset.amount().toString(),
@@ -82,11 +72,14 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
   }
 };
 
-export const importAndGetAccount = async (accountId: AccountId): Promise<Account> => {
+export const importAndGetAccount = async (account: string): Promise<any> => {
+  const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+
   // Create a promise for this account import
   const importPromise = (async () => {
-    const { getClient } = useClient();
-    const client = await getClient();
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+
+    const accountId = AccountId.fromBech32(account);
 
     let accountContract = await client.getAccount(accountId);
 
@@ -95,7 +88,6 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
 
       try {
         await client.importAccountById(accountId);
-        await client.syncState();
         accountContract = await client.getAccount(accountId);
         if (!accountContract) {
           throw new Error(`Account not found after import: ${accountId}`);
@@ -109,4 +101,50 @@ export const importAndGetAccount = async (accountId: AccountId): Promise<Account
   })();
 
   return importPromise;
+};
+
+export const getAccounts = async () => {
+  const { WebClient } = await import("@demox-labs/miden-sdk");
+
+  const client = await WebClient.createClient(NODE_ENDPOINT);
+
+  const accounts = await client.getAccounts();
+
+  // for each account, we use getAccount, if fail, means we dont own the account
+  const accountsWeOwn = await Promise.all(
+    accounts.filter(async account => {
+      try {
+        const readAccount = await client.getAccount(account.id());
+        if (!readAccount) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }),
+  );
+
+  return accountsWeOwn.map(account => account.id().toBech32());
+};
+
+export const exportAccounts = async () => {
+  try {
+    const { WebClient } = await import("@demox-labs/miden-sdk");
+
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+
+    const store = await client.exportStore();
+    return store;
+  } catch (error) {
+    console.error("Failed to export account:", error);
+    throw new Error("Failed to export account");
+  }
+};
+
+export const importAccount = async (store: string) => {
+  const { WebClient } = await import("@demox-labs/miden-sdk");
+
+  const client = await WebClient.createClient(NODE_ENDPOINT);
+  await client.forceImportStore(store);
 };

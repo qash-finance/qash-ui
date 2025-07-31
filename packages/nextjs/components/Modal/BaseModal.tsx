@@ -6,6 +6,7 @@ type BaseModalProps = {
   onClose: () => void;
   title: string;
   icon?: string;
+  actionButtonIcon?: string;
   zIndex?: number;
   children: React.ReactNode;
 };

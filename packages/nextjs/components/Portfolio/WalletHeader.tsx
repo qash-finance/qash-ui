@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getAccountById } from "@/services/utils/miden/account";
-import { AccountId } from "@demox-labs/miden-sdk";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
+import { BALANCE_VISIBILITY_KEY } from "@/services/utils/constant";
 
 export function WalletHeader() {
   // **************** Custom Hooks *******************
@@ -19,7 +18,7 @@ export function WalletHeader() {
 
   useEffect(() => {
     // Load balance visibility preference from localStorage
-    const storedVisibility = localStorage.getItem("balanceVisibility");
+    const storedVisibility = localStorage.getItem(BALANCE_VISIBILITY_KEY);
     if (storedVisibility !== null) {
       setIsBalanceVisible(storedVisibility === "true");
     }
@@ -32,7 +31,7 @@ export function WalletHeader() {
   const toggleBalanceVisibility = () => {
     const newVisibility = !isBalanceVisible;
     setIsBalanceVisible(newVisibility);
-    localStorage.setItem("balanceVisibility", newVisibility.toString());
+    localStorage.setItem(BALANCE_VISIBILITY_KEY, newVisibility.toString());
   };
 
   const displayBalance = () => {

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { WalletAuthApi, ApiError } from "./api";
 import { WalletCrypto, KeyPair } from "./crypto";
 import { AuthStorage, StoredAuth, StoredKey } from "./storage";
+import { AUTH_EXPIRATION_HOURS, AUTH_REFRESH_INTERVAL } from "../utils/constant";
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -35,7 +36,7 @@ export function AuthProvider({
   children,
   apiBaseUrl,
   autoRefresh = true,
-  refreshInterval = 15 * 60 * 1000, // 15 minutes instead of 5
+  refreshInterval = AUTH_REFRESH_INTERVAL,
 }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
@@ -124,6 +125,7 @@ export function AuthProvider({
 
       const existingKey = AuthStorage.getKey(walletAddress);
       if (existingKey && !AuthStorage.isSessionExpired(existingKey.expiresAt)) {
+        console.log("DID I EXPIRED?");
         keyPair = existingKey.keyPair;
         publicKey = existingKey.publicKey;
       } else {
@@ -157,7 +159,7 @@ export function AuthProvider({
           challengeResponse,
           deviceFingerprint,
           deviceType,
-          expirationHours: 720, // 30 days
+          expirationHours: AUTH_EXPIRATION_HOURS, // 30 days
         });
 
         // Store key for future use
@@ -165,7 +167,7 @@ export function AuthProvider({
           walletAddress,
           keyPair,
           publicKey,
-          expiresAt: new Date(Date.now() + 720 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(Date.now() + AUTH_EXPIRATION_HOURS * 60 * 60 * 1000).toISOString(),
           deviceFingerprint,
           createdAt: new Date().toISOString(),
         };

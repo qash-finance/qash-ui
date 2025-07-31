@@ -3,8 +3,6 @@ import React, { useState, useEffect } from "react";
 import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import { useRouter, usePathname } from "next/navigation";
-import { useModal } from "@/contexts/ModalManagerProvider";
-import { useWalletState } from "@/services/store";
 import { FloatingActionButton } from "../Common/FloatingActionButton";
 
 interface NavProps {
@@ -90,8 +88,6 @@ export const actionItems = [
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
-  const { openModal, isModalOpen } = useModal();
-  const { walletAddress } = useWalletState(state => state);
   const [renderFab, setRenderFab] = useState(false);
 
   const [action, setActions] = useState(actionItems);
@@ -110,27 +106,6 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
       })),
     );
   }, [pathname]);
-
-  useEffect(() => {
-    if (!walletAddress) return;
-
-    // Check if user has deployed accounts and hasn't claimed QASH
-    // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-    // if (deployedAccounts) {
-    //   try {
-    //     const accounts = JSON.parse(deployedAccounts);
-    //     const account = Object.values(accounts)[0] as any;
-    //     const hasClaimQASH = account.hasClaimQASH;
-
-    //     //Only open toast if user hasn't claimed QASH
-    //     if (!hasClaimQASH) {
-    //       setRenderFab(true);
-    //     }
-    //   } catch (error) {
-    //     console.error("Error parsing deployed accounts:", error);
-    //   }
-    // }
-  }, [walletAddress]);
 
   // **************** Handlers ****************
   const handleActionItemClick = (sectionIndex: number, itemIndex: number) => {
@@ -162,7 +137,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           {/* Logo */}
           <header
             className={`flex max-w-full leading-tight justify-items-start gap-2 cursor-pointer`}
-            onClick={() => router.push("/dashboard/pending-recieve")}
+            onClick={() => router.push("/dashboard/pending-receive")}
           >
             <img src="/qash-logo.svg" alt="Qash Logo" className="w-20" />
             <div className="flex items-center justify-start px-3 border-gradient ">

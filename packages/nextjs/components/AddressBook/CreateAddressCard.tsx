@@ -12,12 +12,13 @@ import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 export const CreateAddressCard = ({
   onSave,
 }: {
-  onSave: (data: { name: string; address: string; token?: string }) => void;
+  onSave: (data: { name: string; address: string; token?: string }) => Promise<boolean>;
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<{ name: string; address: string; token?: string }>();
   const { openModal } = useModal();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
@@ -29,12 +30,16 @@ export const CreateAddressCard = ({
     }
   };
 
-  const handleSave = (data: { name: string; address: string; token?: string }) => {
-    onSave({ ...data, token: selectedToken?.faucetId });
+  const handleSave = async (data: { name: string; address: string; token?: string }) => {
+    const success = await onSave({ ...data, token: selectedToken?.faucetId });
+    if (success) {
+      reset();
+      setSelectedToken(null);
+    }
   };
 
   return (
-    <div className="flex flex-col gap-2 w-[250px] bg-[#292929] rounded-2xl p-2">
+    <form className="flex flex-col gap-2 w-[250px] bg-[#292929] rounded-2xl p-2">
       <div className="flex flex-row gap-2 items-center">
         <img src="/plus-icon.svg" alt="folder" className="w-12 h-12 rounded-xl" />
         <div className="flex flex-col gap-1">
@@ -96,6 +101,6 @@ export const CreateAddressCard = ({
           <img src="/arrow/filled-arrow-down.svg" alt="token" className="w-4 h-4" style={{ filter: "brightness(0)" }} />
         </div>
       </div>
-    </div>
+    </form>
   );
 };

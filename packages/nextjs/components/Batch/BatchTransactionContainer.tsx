@@ -1,10 +1,11 @@
 "use client";
 import * as React from "react";
 import { TransactionItem } from "./TransactionItem";
-import { EmptyBatch } from "./EmptyBatch";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ActionButton } from "../Common/ActionButton";
-import { useBatchTransactions } from "@/services/store/batchTransactions";
+import { BatchTransaction, useBatchTransactions } from "@/services/store/batchTransactions";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS } from "@/types/modal";
 
 interface BatchTransactionContainerProps {
   isLoading: boolean;
@@ -12,16 +13,36 @@ interface BatchTransactionContainerProps {
   onConfirm?: () => void;
 }
 
+export const EmptyBatch = () => {
+  return (
+    <div className="flex flex-col gap-2 items-center justify-center w-full h-full bg-[#292929] rounded-b-2xl mb-3">
+      <img src="/sidebar/gift.gif" alt="empty-batch" className="w-16 h-16 grayscale" />
+      <span className="text-base leading-5 text-[#93989F]">No transactions found</span>
+    </div>
+  );
+};
+
 export function BatchTransactionContainer({
   isLoading,
   onRemoveTransaction,
   onConfirm,
 }: BatchTransactionContainerProps) {
   // **************** Custom Hooks *******************
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
-  const { getBatchTransactions, removeTransaction } = useBatchTransactions();
+  const { walletAddress, isConnected } = useWalletConnect();
+  const { removeTransaction } = useBatchTransactions();
+  const { openModal } = useModal();
 
-  const transactions = walletAddress ? getBatchTransactions(walletAddress) : [];
+  // Subscribe directly to the store state for automatic reactivity
+  const allTransactions = useBatchTransactions(state => state.transactions);
+  const transactions = React.useMemo(() => {
+    if (walletAddress && isConnected && allTransactions[walletAddress]) {
+      return allTransactions[walletAddress].map(tx => ({
+        ...tx,
+        createdAt: new Date(tx.createdAt),
+      }));
+    }
+    return [];
+  }, [walletAddress, isConnected, allTransactions]);
 
   const handleRemoveTransaction = (transactionId: string) => {
     if (!walletAddress) return;
@@ -30,8 +51,8 @@ export function BatchTransactionContainer({
   };
 
   return (
-    <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-zinc-900 w-[600px] h-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
-      <div className="flex flex-col gap-1.5 items-center self-stretch rounded-2xl bg-zinc-800 h-full">
+    <main className="flex flex-col gap-1 items-start p-2 rounded-2xl bg-[#1B1B1B] w-[600px] h-[600px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[503px] max-sm:p-1.5 max-sm:w-full max-sm:rounded-2xl">
+      <div className="flex bg-[#292929] flex-col items-center self-stretch rounded-2xl h-full">
         {/* Header */}
         <header className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#3D3D3D] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-t-2xl">
           <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
@@ -51,8 +72,8 @@ export function BatchTransactionContainer({
         </header>
 
         {/* Transaction list - Now with fixed height and scrollable */}
-        <div className="flex-1 w-full overflow-hidden">
-          {transactions.length > 0 ? (
+        {transactions.length > 0 ? (
+          <div className="max-h-[470px] mt-2 flex-1 w-full overflow-hidden">
             <section className="flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0 h-full overflow-y-auto">
               {transactions.map(transaction => (
                 <TransactionItem
@@ -65,31 +86,31 @@ export function BatchTransactionContainer({
                 />
               ))}
             </section>
-          ) : (
-            <div className="h-full">
-              <EmptyBatch />
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        {isConnected ? (
-          <footer className="flex gap-2 items-start self-stretch p-2 bg-zinc-800 rounded-b-2xl">
-            <ActionButton
-              text="Confirm & Sign"
-              buttonType="submit"
-              className="w-full h-10"
-              onClick={onConfirm}
-              loading={isLoading}
-              disabled={transactions.length === 0}
-            />
-          </footer>
-        ) : (
-          <div className="relative w-full p-2 bg-zinc-800 rounded-b-2xl">
-            <ActionButton text="Connect Wallet" buttonType="submit" className="w-full h-10" onClick={handleConnect} />
           </div>
+        ) : (
+          <EmptyBatch />
         )}
       </div>
+      {/* Footer */}
+      {isConnected ? (
+        <ActionButton
+          text="Confirm & Sign"
+          buttonType="submit"
+          className="mt-2 w-full h-10"
+          onClick={onConfirm}
+          loading={isLoading}
+          disabled={transactions.length === 0}
+        />
+      ) : (
+        <ActionButton
+          text="Connect Wallet"
+          buttonType="submit"
+          className="mt-1 w-full h-10"
+          onClick={() => {
+            openModal(MODAL_IDS.CONNECT_WALLET);
+          }}
+        />
+      )}
     </main>
   );
 }

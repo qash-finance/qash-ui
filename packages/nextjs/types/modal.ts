@@ -8,7 +8,14 @@ import NewRequestModal from "@/components/Modal/NewRequestModal";
 import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
 import Portfolio from "@/components/Portfolio/Portfolio";
 import OnboardingModal from "@/components/Modal/OnboardingModal";
+import ConnectWalletModal from "@/components/Modal/ConnectWallet/ConnectWalletModal";
+import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
+import Notification from "@/components/Notification/Notification";
 import { AssetWithMetadata } from "./faucet";
+import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
+import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
+import { BatchTransaction } from "@/services/store/batchTransactions";
+import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -21,6 +28,12 @@ export const MODAL_IDS = {
   CREATE_CUSTOM_QR: "CREATE_CUSTOM_QR",
   PORTFOLIO: "PORTFOLIO",
   ONBOARDING: "ONBOARDING",
+  CONNECT_WALLET: "CONNECT_WALLET",
+  TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
+  IMPORT_WALLET: "IMPORT_WALLET",
+  BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
+  NOTIFICATION: "NOTIFICATION",
+  BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -67,6 +80,34 @@ export interface PortfolioModalProps extends BaseModalProps {}
 
 export interface OnboardingModalProps extends BaseModalProps {}
 
+export interface ConnectWalletModalProps extends BaseModalProps {}
+
+export interface TransactionOverviewModalProps extends BaseModalProps {
+  amount?: string;
+  accountName?: string;
+  accountAddress?: string;
+  recipientName?: string;
+  recipientAddress?: string;
+  transactionType?: string;
+  cancellableTime?: string;
+  message?: string;
+  onConfirm?: () => void;
+  tokenAddress?: string;
+  tokenSymbol?: string;
+}
+
+export interface BatchTransactionOverviewModalProps extends BaseModalProps {
+  sender: string;
+  transactions: BatchTransaction[];
+  onConfirm?: () => Promise<void>;
+}
+
+export interface ImportWalletModalProps extends BaseModalProps {}
+
+export interface BatchTransactionsModalProps extends BaseModalProps {}
+
+export interface NotificationModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -78,6 +119,12 @@ export type ModalPropsMap = {
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModalProps;
   [MODAL_IDS.PORTFOLIO]: PortfolioModalProps;
   [MODAL_IDS.ONBOARDING]: OnboardingModalProps;
+  [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModalProps;
+  [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModalProps;
+  [MODAL_IDS.IMPORT_WALLET]: ImportWalletModalProps;
+  [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModalProps;
+  [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
+  [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -93,4 +140,10 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_CUSTOM_QR]: CreateCustomQRModal,
   [MODAL_IDS.PORTFOLIO]: Portfolio,
   [MODAL_IDS.ONBOARDING]: OnboardingModal,
+  [MODAL_IDS.CONNECT_WALLET]: ConnectWalletModal,
+  [MODAL_IDS.TRANSACTION_OVERVIEW]: TransactionOverviewModal,
+  [MODAL_IDS.IMPORT_WALLET]: ImportWalletModal,
+  [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModal,
+  [MODAL_IDS.NOTIFICATION]: Notification,
+  [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
 } as const;

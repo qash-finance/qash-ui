@@ -1,4 +1,4 @@
-import { ConsumableNote, SendTransactionDto } from "@/types/transaction";
+import { ConsumableNote, ConsumePublicTransactionDto, RecallRequestDto, SendTransactionDto } from "@/types/transaction";
 import { apiServerWithAuth } from "./index";
 
 const getConsumable = async () => {
@@ -24,14 +24,27 @@ const sendBatchTransaction = async (transaction: SendTransactionDto[]) => {
   return response;
 };
 
-const consumeTransactions = async (transactionIds: string[]) => {
-  const response = await apiServerWithAuth.putData("/transactions/consume", transactionIds);
+const consumeTransactions = async (noteIds: { noteId: string; txId: string }[]) => {
+  const response = await apiServerWithAuth.putData("/transactions/consume", noteIds);
   return response;
 };
 
-const recallBatch = async (transactionIds: string[]) => {
-  const response = await apiServerWithAuth.putData("/transactions/recall", transactionIds);
+const consumePublicTransactions = async (noteIds: ConsumePublicTransactionDto[]) => {
+  const response = await apiServerWithAuth.putData("/transactions/consume-public", noteIds);
   return response;
 };
 
-export { getConsumable, getRecallable, sendSingleTransaction, sendBatchTransaction, consumeTransactions, recallBatch };
+const recallBatch = async (recallRequest: RecallRequestDto) => {
+  const response = await apiServerWithAuth.putData("/transactions/recall", recallRequest);
+  return response;
+};
+
+export {
+  getConsumable,
+  getRecallable,
+  sendSingleTransaction,
+  sendBatchTransaction,
+  consumeTransactions,
+  consumePublicTransactions,
+  recallBatch,
+};

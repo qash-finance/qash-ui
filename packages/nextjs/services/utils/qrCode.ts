@@ -1,7 +1,5 @@
 import QRCodeStyling, { Options } from "qr-code-styling";
-import { AnyToken } from "@/types/faucet";
-
-const QR_STORAGE_KEY = "custom_qr_codes";
+import { QR_STORAGE_KEY } from "./constant";
 
 export interface CustomQRData {
   id: string;
@@ -80,23 +78,35 @@ export const generateQRName = (tokenSymbol: string, amount?: string): string => 
   return tokenSymbol;
 };
 
-export const generateQRData = (tokenAddress: string, amount?: string, message?: string): string => {
-  const data: any = {
-    tokenAddress,
-    type: "payment_request",
-  };
+export const generateQRData = (tokenAddress: string, amount?: string, message?: string, recipient?: string): string => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = new URL("/send", baseUrl);
+
+  // Add payment request parameters
+  url.searchParams.set("tokenAddress", tokenAddress);
 
   if (amount && parseFloat(amount) > 0) {
-    data.amount = amount;
+    url.searchParams.set("amount", amount);
   }
 
   if (message && message.trim()) {
-    data.message = message.trim();
+    url.searchParams.set("message", message.trim());
   }
 
-  return JSON.stringify(data);
+  if (recipient) {
+    url.searchParams.set("recipient", recipient);
+  }
+
+  return url.toString();
 };
 
 const generateId = (): string => {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+};
+
+// Test function to verify URL generation
+export const testQRDataGeneration = () => {
+  const testUrl = generateQRData("mt1q...", "10.5", "Test payment");
+  console.log("Generated QR URL:", testUrl);
+  return testUrl;
 };

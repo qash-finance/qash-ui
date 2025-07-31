@@ -9,6 +9,7 @@ interface ActionButtonProps {
   onClick?: () => void;
   className?: string;
   buttonType?: "button" | "submit" | "reset";
+  icon?: string;
 }
 
 const BUTTON_STYLES = {
@@ -58,6 +59,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   onClick,
   className = "",
   buttonType = "button",
+  icon,
 }) => {
   const isDisabled = disabled || loading;
   const buttonStyle = BUTTON_STYLES[type];
@@ -91,7 +93,14 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       disabled={isDisabled}
       onClick={onClick}
     >
-      {loading ? <img src="/loading-square.gif" alt="loading" className="w-6 h-6" /> : text}
+      {loading ? (
+        <img src="/loading-square.gif" alt="loading" className="w-6 h-6" />
+      ) : (
+        <div className="flex items-center gap-1">
+          {icon && <img src={icon} alt="icon" className="w-4 h-4" />}
+          <span>{text}</span>
+        </div>
+      )}
     </button>
   );
 };

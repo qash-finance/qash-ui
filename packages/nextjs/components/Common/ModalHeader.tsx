@@ -1,4 +1,5 @@
 import React from "react";
+import { ActionButton } from "./ActionButton";
 
 interface ModalHeaderProps {
   title: string;
@@ -17,7 +18,9 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({ title, onClose, icon }
           {title}
         </h1>
       </div>
-      <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />
+      <div className="flex items-center gap-5">
+        <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />
+      </div>
     </header>
   );
 };

@@ -3,16 +3,26 @@ import { usePathname } from "next/navigation";
 import TabContainer from "./TabContainer";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
+import { useGetNotificationsInfinite } from "@/services/api/notification";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 export const Title = () => {
   const { openModal } = useModal();
   const pathname = usePathname();
+  const { walletAddress, isConnected } = useWalletConnect();
+
+  // Calculate unread count
+  const { data } = useGetNotificationsInfinite(walletAddress, 20);
+  const unreadCount = data?.pages
+    ? data.pages.flatMap(page => page.notifications).filter((item: any) => item.status === "UNREAD").length
+    : 0;
+
   let title;
   switch (pathname) {
     case "/send":
       title = "Send tokens";
       break;
-    case "/dashboard/pending-recieve":
+    case "/dashboard/pending-receive":
       title = "Dashboard";
       break;
     case "/dashboard/pending-request":
@@ -47,7 +57,7 @@ export const Title = () => {
   }
 
   const dashboardTabs = [
-    { id: "pending-recieve", label: "Recieve", href: "/dashboard/pending-recieve" },
+    { id: "pending-receive", label: "Receive", href: "/dashboard/pending-receive" },
     {
       id: "pending-request",
       label: "Payment Request",
@@ -69,9 +79,8 @@ export const Title = () => {
       </div>
 
       <button
-        className={`portfolio-button font-barlow font-bold transition-colors cursor-pointer bg-white hover:bg-white/80 flex flex-row gap-1 items-center justify-center`}
+        className={`portfolio-button font-barlow font-bold transition-colors cursor-pointer bg-white hover:bg-white/80 flex flex-row gap-1 items-center justify-center px-3.5 py-1.5`}
         style={{
-          padding: "6px 10px 8px 10px",
           borderRadius: "10px",
           fontWeight: "500",
           letterSpacing: "-0.084px",
@@ -81,9 +90,19 @@ export const Title = () => {
         }}
         onClick={() => openModal(MODAL_IDS.PORTFOLIO)}
       >
-        <img src="/modal/coin-icon.gif" alt="coin-icon" className="w-5 h-5 mx-1" />
+        <img src="/modal/coin-icon.gif" alt="coin-icon" className="w-5 h-5 " />
         PORTFOLIO
       </button>
+
+      <div
+        className="relative flex flex-row gap-2 justify-center items-center w-15 h-[50px] bg-[#292929] rounded-lg cursor-pointer"
+        onClick={() => openModal(MODAL_IDS.NOTIFICATION)}
+      >
+        <img src="/notification/notification.gif" alt="bell" className="w-7 h-7" />
+        {isConnected && unreadCount > 0 && (
+          <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-[#FF2323] rounded-full" />
+        )}
+      </div>
     </div>
   );
 };

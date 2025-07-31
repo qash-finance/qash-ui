@@ -1,10 +1,10 @@
-import { consumeTransactions, sendBatchTransaction, sendSingleTransaction } from "@/services/api/transaction";
+import { consumeTransactions } from "@/services/api/transaction";
 import { useMutation } from "@tanstack/react-query";
 
 const useConsumeNotes = () => {
   return useMutation({
-    mutationFn: async (transactionIds: string[]) => {
-      const response = await consumeTransactions(transactionIds);
+    mutationFn: async (noteIds: { noteId: string; txId: string }[]) => {
+      const response = await consumeTransactions(noteIds);
       return response;
     },
   });

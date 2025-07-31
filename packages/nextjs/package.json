@@ -21,6 +21,8 @@
     "axios": "^1.9.0",
     "blo": "^2.0.0",
     "git": "link:github.com:demox-labs/miden-wallet-adapter.git",
+    "immer": "^10.1.1",
+    "lodash": "^4.17.21",
     "miden-wallet-adapter-reactui": "link:@demox-labs/miden-wallet-adapter-reactui",
     "next": "15.3.1",
     "qr-code-styling": "^1.9.2",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/lodash": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

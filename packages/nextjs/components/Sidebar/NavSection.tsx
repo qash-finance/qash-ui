@@ -1,5 +1,5 @@
 "use client";
-import * as React from "react";
+import React, { useState } from "react";
 
 interface NavItemData {
   icon: string;
@@ -28,12 +28,10 @@ interface NavItemProps {
 
 const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabled = false, onClick }) => {
   const baseClasses = "flex gap-1.5 items-center p-2.5 w-full whitespace-nowrap rounded-xl transition-colors";
-  const activeClasses = "font-semibold text-white rounded-xl";
-  const inactiveClasses = "text-neutral-500 hover:bg-neutral-800";
   const cursorClasses = disabled ? "cursor-not-allowed" : "cursor-pointer";
 
-  const [gifKey, setGifKey] = React.useState(0);
-  const [hovered, setHovered] = React.useState(false);
+  const [gifKey, setGifKey] = useState(0);
+  const [hovered, setHovered] = useState(false);
 
   const handleClick = () => {
     if (disabled) return;
@@ -42,11 +40,11 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
     onClick?.();
   };
 
-  const showActiveStyle = (isActive || hovered) && !disabled;
+  const showActiveStyle = isActive || hovered;
 
   return (
     <button
-      className={`${baseClasses} ${cursorClasses} ${isActive ? activeClasses : inactiveClasses} focus:outline-none active:border-[#191919]`}
+      className={`${baseClasses} ${cursorClasses} font-semibold text-white rounded-xl focus:outline-none active:border-[#191919]`}
       style={
         showActiveStyle
           ? {
@@ -56,15 +54,12 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive = false, disabl
           : undefined
       }
       onMouseEnter={() => {
-        if (!disabled) {
-          setHovered(true);
-          setGifKey(prev => prev + 1); // force reload gif on hover
-        }
+        setHovered(true);
+        setGifKey(prev => prev + 1); // force reload gif on hover
       }}
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
       type="button"
-      disabled={disabled}
     >
       <img
         src={`${icon}?key=${gifKey}`}

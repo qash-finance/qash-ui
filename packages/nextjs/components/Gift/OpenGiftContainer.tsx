@@ -7,7 +7,11 @@ const OpenGiftContainer = () => {
   return (
     <div className="flex w-full h-full justify-center items-center flex-col">
       <div className="relative">
-        <img src="/gift/flower.png" alt="" className="absolute rotate-[10deg] w-40 h-40 z-10" aria-hidden="true" />
+        {!isOpen ? (
+          <img src="/gift/gift-box.svg" alt="" className="absolute w-40 h-40 z-10" aria-hidden="true" />
+        ) : (
+          <img src="/gift/vault.svg" alt="" className="absolute w-40 h-40 z-10" aria-hidden="true" />
+        )}
         <img src="/gift/flower.png" alt="" className="rotate-[99deg] blur-[45px] w-40 h-40" aria-hidden="true" />
       </div>
       {!isOpen ? (

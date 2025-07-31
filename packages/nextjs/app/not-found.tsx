@@ -70,7 +70,7 @@ export default function NotFound() {
               <div className="flex-1 text-left ">
                 <p className="leading-none">{item.label}</p>
               </div>
-              <img alt="" className="w-4 h-4" src="/arrow/filled-arrow-up-right.svg" />
+              <img alt="" className="w-4 h-4" src="/arrow/thin-arrow-up-right.svg" />
             </Link>
           ))}
       </div>
@@ -87,13 +87,13 @@ export default function NotFound() {
       <div className="absolute right-4 top-[15px] w-[119px] flex flex-col gap-1.5">
         {[
           {
-            handle: "@q3x_finance",
-            link: "https://x.com/q3x_finance",
+            handle: "@qash_finance",
+            link: "https://x.com/qash_finance",
             icon: "/social/twitter.svg",
             height: "14.118px",
           },
-          { handle: "@q3x", link: "https://github.com/q3x", icon: "/social/github.svg", height: "14.694px" },
-          { handle: "@q3xfinance", link: "https://t.me/q3xfinance", icon: "/social/telegram.svg", height: "16.579px" },
+          { handle: "@qash", link: "https://github.com/q3x", icon: "/social/github.svg", height: "14.694px" },
+          // { handle: "@q3xfinance", link: "https://t.me/q3xfinance", icon: "/social/telegram.svg", height: "16.579px" },
         ].map(social => (
           <div key={social.link} className="flex items-center gap-1 h-[19.344px] w-full">
             <div className="flex-1 font-['Neue_Montreal:Regular',_sans-serif] text-[#191919] text-[15px] text-left">

@@ -3309,6 +3309,7 @@ __metadata:
     "@reactour/tour": ^3.8.0
     "@tailwindcss/postcss": ^4
     "@tanstack/react-query": ^5.81.5
+    "@types/lodash": ^4
     "@types/node": ^20
     "@types/react": ^19
     "@types/react-dom": ^19
@@ -3316,6 +3317,8 @@ __metadata:
     axios: ^1.9.0
     blo: ^2.0.0
     git: "link:github.com:demox-labs/miden-wallet-adapter.git"
+    immer: ^10.1.1
+    lodash: ^4.17.21
     miden-wallet-adapter-reactui: "link:@demox-labs/miden-wallet-adapter-reactui"
     next: 15.3.1
     prettier: ^3.5.3
@@ -4275,6 +4278,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: e009a2bfb50e90ca9b7c6e8f648f8464067271fd99116f881073fa6fa76dc8d0133181dd65e6614d5fb1220d671d67b0124aef7d97dc02d7e342ab143a47779d
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4":
+  version: 4.17.20
+  resolution: "@types/lodash@npm:4.17.20"
+  checksum: dc7bb4653514dd91117a4c4cec2c37e2b5a163d7643445e4757d76a360fabe064422ec7a42dde7450c5e7e0e7e678d5e6eae6d2a919abcddf581d81e63e63839
   languageName: node
   linkType: hard
 
@@ -9233,6 +9243,13 @@ __metadata:
   bin:
     image-size: bin/image-size.js
   checksum: 8601ddd4edc1db16f097f5cf585c23214e29c3b8f4d8a8f8d59b8e3bae2338c8a5073236bfff421d8541091a98a38b802ed049203c745286a69d1aac4e5bc4c7
+  languageName: node
+  linkType: hard
+
+"immer@npm:^10.1.1":
+  version: 10.1.1
+  resolution: "immer@npm:10.1.1"
+  checksum: 07c67970b7d22aded73607193d84861bf786f07d47f7d7c98bb10016c7a88f6654ad78ae1e220b3c623695b133aabbf24f5eb8d9e8060cff11e89ccd81c9c10b
   languageName: node
   linkType: hard
 

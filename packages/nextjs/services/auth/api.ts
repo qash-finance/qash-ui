@@ -1,4 +1,3 @@
-import { WalletCrypto } from "./crypto";
 import { AuthStorage } from "./storage";
 
 export interface InitiateAuthRequest {

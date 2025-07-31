@@ -12,7 +12,11 @@ import {
   GenerateReportDto,
 } from "../types/analytics";
 import { AnalyticsService, getBrowserInfo, createTimeTracker } from "../services/api/analytics";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import {
+  ANALYTICS_SESSION_ID_KEY,
+  ANALYTICS_SESSION_START_KEY,
+  ANALYTICS_USER_ADDRESS_KEY,
+} from "@/services/utils/constant";
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
 
@@ -22,8 +26,6 @@ interface AnalyticsProviderProps {
 }
 
 export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) {
-  const { publicKey } = useWallet();
-
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userAddress, setUserAddress] = useState<string | null>(null);
   const [isTracking, setIsTracking] = useState(false);
@@ -33,13 +35,11 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
 
   const router = useRouter();
 
-  // Initialize analytics and handle session management
   useEffect(() => {
     const initAnalytics = async () => {
       try {
-        // Check if there's an existing session in localStorage
-        const existingSessionId = localStorage.getItem("analytics_session_id");
-        const sessionStartTime = localStorage.getItem("analytics_session_start");
+        const existingSessionId = localStorage.getItem(ANALYTICS_SESSION_ID_KEY);
+        const sessionStartTime = localStorage.getItem(ANALYTICS_SESSION_START_KEY);
         const sessionTimeout = config.sessionTimeout || 30; // 30 minutes default
 
         if (existingSessionId && sessionStartTime) {
@@ -47,18 +47,15 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
           const timeoutMs = sessionTimeout * 60 * 1000;
 
           if (timeDiff < timeoutMs) {
-            // Session is still valid
             setSessionId(existingSessionId);
             setIsTracking(true);
             return;
           } else {
-            // Session expired, clean up
-            localStorage.removeItem("analytics_session_id");
-            localStorage.removeItem("analytics_session_start");
+            localStorage.removeItem(ANALYTICS_SESSION_ID_KEY);
+            localStorage.removeItem(ANALYTICS_SESSION_START_KEY);
           }
         }
 
-        // Auto-start session if enabled
         if (config.enableAutoTracking) {
           await startSession();
         }
@@ -70,7 +67,6 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
     initAnalytics();
   }, [config.enableAutoTracking, config.sessionTimeout]);
 
-  // Handle page tracking
   useEffect(() => {
     if (!config.enablePageTracking || !sessionId) return;
 
@@ -78,7 +74,6 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
       const currentPath = window.location.pathname;
       if (!userAddress) return;
 
-      // Track previous page view with time spent
       if (currentPage && currentPage !== currentPath) {
         trackPageView({
           page: currentPage,
@@ -88,11 +83,9 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
         }).catch(console.error);
       }
 
-      // Set new page and reset timer
       setCurrentPage(currentPath);
       setPageTimeTracker(createTimeTracker());
 
-      // Track new page view
       trackPageView({
         page: currentPath,
         sessionId,
@@ -100,7 +93,6 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
       }).catch(console.error);
     };
 
-    // Track initial page
     const initialPath = window.location.pathname;
     setCurrentPage(initialPath);
     trackPageView({
@@ -116,17 +108,14 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
       return originalPush.apply(router, args);
     };
 
-    // Clean up on unmount
     return () => {
       router.push = originalPush;
     };
   }, [sessionId, userAddress, currentPage, config.enablePageTracking, pageTimeTracker, router]);
 
-  // Handle beforeunload event to track final page time
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (currentPage && sessionId) {
-        // Use sendBeacon for reliability during page unload
         const data = {
           page: currentPage,
           sessionId,
@@ -158,12 +147,11 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
         setUserAddress(address || null);
         setIsTracking(true);
 
-        // Store session info in localStorage
-        localStorage.setItem("analytics_session_id", newSessionId);
-        localStorage.setItem("analytics_session_start", Date.now().toString());
+        localStorage.setItem(ANALYTICS_SESSION_ID_KEY, newSessionId);
+        localStorage.setItem(ANALYTICS_SESSION_START_KEY, Date.now().toString());
 
         if (address) {
-          localStorage.setItem("analytics_user_address", address);
+          localStorage.setItem(ANALYTICS_USER_ADDRESS_KEY, address);
         }
       } catch (error) {
         console.error("Failed to start analytics session:", error);
@@ -181,10 +169,9 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
       setUserAddress(null);
       setIsTracking(false);
 
-      // Clean up localStorage
-      localStorage.removeItem("analytics_session_id");
-      localStorage.removeItem("analytics_session_start");
-      localStorage.removeItem("analytics_user_address");
+      localStorage.removeItem(ANALYTICS_SESSION_ID_KEY);
+      localStorage.removeItem(ANALYTICS_SESSION_START_KEY);
+      localStorage.removeItem(ANALYTICS_USER_ADDRESS_KEY);
     } catch (error) {
       console.error("Failed to end analytics session:", error);
     }
