@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTour } from "@reactour/tour";
+import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 
 type Step = "init" | "creating" | "final";
 
@@ -463,7 +464,12 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                 text="Continue"
                 onClick={() => {
                   onClose();
-                  setIsOpen(true);
+
+                  // if first time, then open this
+                  const isTourSkipped = localStorage.getItem(TOUR_SKIPPED_KEY);
+                  if (!isTourSkipped) {
+                    setIsOpen(true);
+                  }
                 }}
                 className="flex-1 w-full"
               />

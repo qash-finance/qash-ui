@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
 import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -159,6 +160,7 @@ export const CancelDashboardContainer: React.FC = () => {
 
   const { mutateAsync: recallBatch } = useRecall();
   const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { isConnected } = useWalletConnect();
 
   // **************** Local State *******************
   const [countdown, setCountdown] = React.useState("00H:00M:00S");
@@ -171,15 +173,19 @@ export const CancelDashboardContainer: React.FC = () => {
     if (!recallableNotes?.nextRecallTime) return;
 
     const updateCountdown = () => {
-      const date = new Date(recallableNotes.nextRecallTime);
-      const now = new Date();
-      let diff = Math.max(0, date.getTime() - now.getTime());
-      const hours = String(Math.floor(diff / 3600000)).padStart(2, "0");
-      diff %= 3600000;
-      const minutes = String(Math.floor(diff / 60000)).padStart(2, "0");
-      diff %= 60000;
-      const seconds = String(Math.floor(diff / 1000)).padStart(2, "0");
-      setCountdown(`${hours}H:${minutes}M:${seconds}S`);
+      if (isConnected) {
+        const date = new Date(recallableNotes.nextRecallTime);
+        const now = new Date();
+        let diff = Math.max(0, date.getTime() - now.getTime());
+        const hours = String(Math.floor(diff / 3600000)).padStart(2, "0");
+        diff %= 3600000;
+        const minutes = String(Math.floor(diff / 60000)).padStart(2, "0");
+        diff %= 60000;
+        const seconds = String(Math.floor(diff / 1000)).padStart(2, "0");
+        setCountdown(`${hours}H:${minutes}M:${seconds}S`);
+      } else {
+        setCountdown("00H:00M:00S");
+      }
     };
 
     // Initial update
@@ -189,7 +195,7 @@ export const CancelDashboardContainer: React.FC = () => {
     const intervalId = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(intervalId);
-  }, [recallableNotes?.nextRecallTime]);
+  }, [recallableNotes?.nextRecallTime, isConnected]);
 
   // **************** Local State *******************
   const readyToCancelHeaders = ["Amount", "To", "Date/Time", "Action"];

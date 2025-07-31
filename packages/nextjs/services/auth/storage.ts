@@ -1,4 +1,5 @@
-import { KeyPair } from './crypto';
+import { MIDEN_WALLET_AUTH_KEY, MIDEN_WALLET_KEYS_KEY } from "../utils/constant";
+import { KeyPair } from "./crypto";
 
 export interface StoredAuth {
   walletAddress: string;
@@ -18,20 +19,17 @@ export interface StoredKey {
 }
 
 export class AuthStorage {
-  private static readonly STORAGE_KEY = 'miden_wallet_auth';
-  private static readonly KEYS_STORAGE_KEY = 'miden_wallet_keys';
-
   /**
    * Store authentication data
    */
   static storeAuth(auth: StoredAuth): void {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const encrypted = this.encrypt(JSON.stringify(auth));
-        localStorage.setItem(this.STORAGE_KEY, encrypted);
+        localStorage.setItem(MIDEN_WALLET_AUTH_KEY, encrypted);
       }
     } catch (error) {
-      console.error('Failed to store auth:', error);
+      console.error("Failed to store auth:", error);
     }
   }
 
@@ -40,8 +38,8 @@ export class AuthStorage {
    */
   static getAuth(): StoredAuth | null {
     try {
-      if (typeof window !== 'undefined') {
-        const encrypted = localStorage.getItem(this.STORAGE_KEY);
+      if (typeof window !== "undefined") {
+        const encrypted = localStorage.getItem(MIDEN_WALLET_AUTH_KEY);
         if (encrypted) {
           const decrypted = this.decrypt(encrypted);
           return JSON.parse(decrypted);
@@ -49,7 +47,7 @@ export class AuthStorage {
       }
       return null;
     } catch (error) {
-      console.error('Failed to retrieve auth:', error);
+      console.error("Failed to retrieve auth:", error);
       this.clearAuth();
       return null;
     }
@@ -60,11 +58,11 @@ export class AuthStorage {
    */
   static clearAuth(): void {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(this.STORAGE_KEY);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(MIDEN_WALLET_AUTH_KEY);
       }
     } catch (error) {
-      console.error('Failed to clear auth:', error);
+      console.error("Failed to clear auth:", error);
     }
   }
 
@@ -73,14 +71,14 @@ export class AuthStorage {
    */
   static storeKey(walletAddress: string, keyData: StoredKey): void {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const keys = this.getKeys();
         keys[walletAddress] = keyData;
         const encrypted = this.encrypt(JSON.stringify(keys));
-        localStorage.setItem(this.KEYS_STORAGE_KEY, encrypted);
+        localStorage.setItem(MIDEN_WALLET_KEYS_KEY, encrypted);
       }
     } catch (error) {
-      console.error('Failed to store key:', error);
+      console.error("Failed to store key:", error);
     }
   }
 
@@ -92,7 +90,7 @@ export class AuthStorage {
       const keys = this.getKeys();
       return keys[walletAddress] || null;
     } catch (error) {
-      console.error('Failed to retrieve key:', error);
+      console.error("Failed to retrieve key:", error);
       return null;
     }
   }
@@ -102,8 +100,8 @@ export class AuthStorage {
    */
   static getKeys(): Record<string, StoredKey> {
     try {
-      if (typeof window !== 'undefined') {
-        const encrypted = localStorage.getItem(this.KEYS_STORAGE_KEY);
+      if (typeof window !== "undefined") {
+        const encrypted = localStorage.getItem(MIDEN_WALLET_KEYS_KEY);
         if (encrypted) {
           const decrypted = this.decrypt(encrypted);
           return JSON.parse(decrypted);
@@ -111,7 +109,7 @@ export class AuthStorage {
       }
       return {};
     } catch (error) {
-      console.error('Failed to retrieve keys:', error);
+      console.error("Failed to retrieve keys:", error);
       return {};
     }
   }
@@ -121,14 +119,14 @@ export class AuthStorage {
    */
   static removeKey(walletAddress: string): void {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const keys = this.getKeys();
         delete keys[walletAddress];
         const encrypted = this.encrypt(JSON.stringify(keys));
-        localStorage.setItem(this.KEYS_STORAGE_KEY, encrypted);
+        localStorage.setItem(MIDEN_WALLET_KEYS_KEY, encrypted);
       }
     } catch (error) {
-      console.error('Failed to remove key:', error);
+      console.error("Failed to remove key:", error);
     }
   }
 
@@ -137,11 +135,11 @@ export class AuthStorage {
    */
   static clearKeys(): void {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(this.KEYS_STORAGE_KEY);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(MIDEN_WALLET_KEYS_KEY);
       }
     } catch (error) {
-      console.error('Failed to clear keys:', error);
+      console.error("Failed to clear keys:", error);
     }
   }
 
@@ -156,7 +154,7 @@ export class AuthStorage {
       const buffer = 60 * 1000;
       return now.getTime() > expiry.getTime() - buffer;
     } catch (error) {
-      console.error('Failed to check session expiry:', error);
+      console.error("Failed to check session expiry:", error);
       return true;
     }
   }
@@ -169,7 +167,7 @@ export class AuthStorage {
       // Simple base64 encoding - in production, use proper encryption
       return btoa(data);
     } catch (error) {
-      console.error('Failed to encrypt data:', error);
+      console.error("Failed to encrypt data:", error);
       return data;
     }
   }
@@ -182,7 +180,7 @@ export class AuthStorage {
       // Simple base64 decoding - in production, use proper decryption
       return atob(data);
     } catch (error) {
-      console.error('Failed to decrypt data:', error);
+      console.error("Failed to decrypt data:", error);
       return data;
     }
   }

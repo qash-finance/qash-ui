@@ -249,9 +249,15 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                 notification
               </h1>
               <div className="bg-[#ff4444] flex items-center justify-center px-4 py-1 rounded-[51px] shrink-0">
-                <span className="font-['Barlow:SemiBold',_sans-serif] text-white text-[15px] tracking-[-0.45px] leading-[1.2]">
-                  {unreadCount}+
-                </span>
+                {isConnected ? (
+                  <span className="font-['Barlow:SemiBold',_sans-serif] text-white text-[15px] tracking-[-0.45px] leading-[1.2]">
+                    {unreadCount}+
+                  </span>
+                ) : (
+                  <span className="font-['Barlow:SemiBold',_sans-serif] text-white text-[15px] tracking-[-0.45px] leading-[1.2]">
+                    0
+                  </span>
+                )}
               </div>
             </div>
           </div>

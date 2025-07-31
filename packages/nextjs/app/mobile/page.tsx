@@ -15,11 +15,11 @@ const socialLinks = [
     link: "https://github.com/q3x",
     icon: "/social/github.svg",
   },
-  {
-    handle: "@q3xfinance",
-    link: "https://t.me/q3xfinance",
-    icon: "/social/telegram.svg",
-  },
+  // {
+  //   handle: "@q3xfinance",
+  //   link: "https://t.me/q3xfinance",
+  //   icon: "/social/telegram.svg",
+  // },
 ];
 
 export default function MobilePage() {
@@ -29,10 +29,6 @@ export default function MobilePage() {
     const isMobileDevice = mobileRegex.test(userAgent) || window.innerWidth <= 768;
 
     if (isMobileDevice) {
-      toast("This app is designed for desktop use. Please visit on a desktop computer for the full experience.", {
-        duration: 4000,
-        icon: "💻",
-      });
     } else {
       window.location.href = "/";
     }

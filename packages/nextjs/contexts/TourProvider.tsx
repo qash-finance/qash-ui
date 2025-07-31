@@ -3,8 +3,8 @@
 import { ReactNode, useState, useEffect } from "react";
 import { StepType, TourProvider, useTour } from "@reactour/tour";
 import { ActionButton } from "@/components/Common/ActionButton";
+import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 
-const TOUR_KEY = "tour_skipped";
 type ArrowDirection = "up" | "down" | "left" | "right";
 
 // Shared popover styles to avoid repetition
@@ -64,13 +64,13 @@ const TourStepContent = ({ text, arrowDirection }: { text: string; arrowDirectio
   const { setIsOpen, setCurrentStep, currentStep } = useTour();
 
   const handleSkip = () => {
-    localStorage.setItem(TOUR_KEY, "true");
+    localStorage.setItem(TOUR_SKIPPED_KEY, "true");
     setIsOpen(false);
   };
 
   const handleNext = () => {
     if (currentStep === steps.length - 1) {
-      localStorage.setItem(TOUR_KEY, "true");
+      localStorage.setItem(TOUR_SKIPPED_KEY, "true");
       setIsOpen(false);
     } else {
       setCurrentStep(currentStep + 1);
@@ -246,12 +246,12 @@ export const TourProviderWrapper = ({ children }: TourProviderWrapperProps) => {
       }}
       onClickMask={({ setIsOpen }) => {
         // Save to localStorage when user clicks outside to skip
-        localStorage.setItem(TOUR_KEY, "true");
+        localStorage.setItem(TOUR_SKIPPED_KEY, "true");
         setIsOpen(false);
       }}
       onClickClose={({ setIsOpen }) => {
         // Save to localStorage when user clicks close button
-        localStorage.setItem(TOUR_KEY, "true");
+        localStorage.setItem(TOUR_SKIPPED_KEY, "true");
         setIsOpen(false);
       }}
       styles={{

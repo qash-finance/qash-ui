@@ -18,7 +18,7 @@ export default function BatchPage() {
   // **************** Custom Hooks *******************
   const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { getBatchTransactions, clearBatch } = useBatchTransactions();
-  const { mutate: sendBatchTransaction } = useSendBatchTransaction();
+  const { mutateAsync: sendBatchTransaction } = useSendBatchTransaction();
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const { openModal } = useModal();
 
@@ -74,7 +74,7 @@ export default function BatchPage() {
             AccountId.fromBech32(walletAddress),
           );
           // submit transaction to server
-          sendBatchTransaction(
+          await sendBatchTransaction(
             transactions.map((transaction, index) => ({
               assets: [
                 {
@@ -94,9 +94,11 @@ export default function BatchPage() {
               transactionId: txId,
             })),
           );
+
           clearBatch(walletAddress);
           await forceRefetchRecallablePayment();
           await forceRefetchAssets();
+          setIsLoading(false);
           toast.dismiss();
           toast.success("Batch transactions processed successfully");
         },

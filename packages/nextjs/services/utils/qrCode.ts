@@ -1,7 +1,5 @@
 import QRCodeStyling, { Options } from "qr-code-styling";
-import { AnyToken } from "@/types/faucet";
-
-const QR_STORAGE_KEY = "custom_qr_codes";
+import { QR_STORAGE_KEY } from "./constant";
 
 export interface CustomQRData {
   id: string;

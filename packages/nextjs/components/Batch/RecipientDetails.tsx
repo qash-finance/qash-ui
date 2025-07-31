@@ -33,7 +33,7 @@ export function RecipientDetails({ recipient, isPrivate, isAddress }: RecipientD
           </span>
         </div>
         {isPrivate && (
-          <div className="flex gap-1 justify-center items-center px-2 py-1.5 rounded-xl bg-neutral-600">
+          <div className="flex gap-1 justify-center items-center px-2 py-1 rounded-xl bg-neutral-600">
             <span className="text-sm tracking-tight leading-5 text-white">Private</span>
           </div>
         )}

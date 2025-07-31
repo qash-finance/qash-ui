@@ -12,6 +12,11 @@ import {
   GenerateReportDto,
 } from "../types/analytics";
 import { AnalyticsService, getBrowserInfo, createTimeTracker } from "../services/api/analytics";
+import {
+  ANALYTICS_SESSION_ID_KEY,
+  ANALYTICS_SESSION_START_KEY,
+  ANALYTICS_USER_ADDRESS_KEY,
+} from "@/services/utils/constant";
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
 
@@ -33,8 +38,8 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
   useEffect(() => {
     const initAnalytics = async () => {
       try {
-        const existingSessionId = localStorage.getItem("analytics_session_id");
-        const sessionStartTime = localStorage.getItem("analytics_session_start");
+        const existingSessionId = localStorage.getItem(ANALYTICS_SESSION_ID_KEY);
+        const sessionStartTime = localStorage.getItem(ANALYTICS_SESSION_START_KEY);
         const sessionTimeout = config.sessionTimeout || 30; // 30 minutes default
 
         if (existingSessionId && sessionStartTime) {
@@ -46,8 +51,8 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
             setIsTracking(true);
             return;
           } else {
-            localStorage.removeItem("analytics_session_id");
-            localStorage.removeItem("analytics_session_start");
+            localStorage.removeItem(ANALYTICS_SESSION_ID_KEY);
+            localStorage.removeItem(ANALYTICS_SESSION_START_KEY);
           }
         }
 
@@ -142,11 +147,11 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
         setUserAddress(address || null);
         setIsTracking(true);
 
-        localStorage.setItem("analytics_session_id", newSessionId);
-        localStorage.setItem("analytics_session_start", Date.now().toString());
+        localStorage.setItem(ANALYTICS_SESSION_ID_KEY, newSessionId);
+        localStorage.setItem(ANALYTICS_SESSION_START_KEY, Date.now().toString());
 
         if (address) {
-          localStorage.setItem("analytics_user_address", address);
+          localStorage.setItem(ANALYTICS_USER_ADDRESS_KEY, address);
         }
       } catch (error) {
         console.error("Failed to start analytics session:", error);
@@ -164,9 +169,9 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
       setUserAddress(null);
       setIsTracking(false);
 
-      localStorage.removeItem("analytics_session_id");
-      localStorage.removeItem("analytics_session_start");
-      localStorage.removeItem("analytics_user_address");
+      localStorage.removeItem(ANALYTICS_SESSION_ID_KEY);
+      localStorage.removeItem(ANALYTICS_SESSION_START_KEY);
+      localStorage.removeItem(ANALYTICS_USER_ADDRESS_KEY);
     } catch (error) {
       console.error("Failed to end analytics session:", error);
     }

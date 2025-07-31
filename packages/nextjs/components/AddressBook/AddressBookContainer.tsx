@@ -8,6 +8,7 @@ import { useCreateAddressBook, useGetAddressBooks } from "@/services/api/address
 import { AddressBookDto } from "@/types/address-book";
 import toast from "react-hot-toast";
 import { Account } from "@demox-labs/miden-sdk";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 const ANIMATION_DURATION = 500;
 
@@ -153,8 +154,12 @@ const Folder = ({ reveal, onClick, category }: { reveal: boolean; onClick: () =>
 };
 
 export function AddressBookContainer() {
+  // **************** Custom Hooks *******************
+  const { walletAddress, isConnected } = useWalletConnect();
   const { data: addressBooks } = useGetAddressBooks();
   const { mutate: createAddressBook } = useCreateAddressBook();
+
+  // **************** Local State *******************
   const [folderStates, setFolderStates] = useState<boolean[]>([]);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const isAnyFolderOpen = folderStates.some(state => state) || newFolderOpen;
@@ -171,7 +176,7 @@ export function AddressBookContainer() {
   });
   // Group address books by category and sort by createdAt
   const groupedAddressBooks = useMemo(() => {
-    if (!addressBooks) return {};
+    if (!addressBooks || !walletAddress || !isConnected) return {};
 
     return addressBooks.reduce((groups: Record<string, any[]>, categoryData: any) => {
       const category = categoryData.name; // Use 'name' as category from the new structure
@@ -185,7 +190,7 @@ export function AddressBookContainer() {
       groups[category].push(...sortedAddressBooks);
       return groups;
     }, {});
-  }, [addressBooks]);
+  }, [addressBooks, walletAddress, isConnected]);
 
   // Create folders based on categories, sorted by createdAt
   const folders = useMemo(() => {
@@ -254,15 +259,6 @@ export function AddressBookContainer() {
       toast.error("Address already exists in this category");
       return false;
     }
-
-    //AccountBech32 validation
-    // try {
-    //   //@ts-ignore
-    //   Account.fromBech32(address);
-    // } catch (error) {
-    //   toast.error("Invalid address");
-    //   return false;
-    // }
 
     return new Promise(resolve => {
       createAddressBook(

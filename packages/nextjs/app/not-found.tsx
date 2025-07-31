@@ -93,7 +93,7 @@ export default function NotFound() {
             height: "14.118px",
           },
           { handle: "@qash", link: "https://github.com/q3x", icon: "/social/github.svg", height: "14.694px" },
-          { handle: "@q3xfinance", link: "https://t.me/q3xfinance", icon: "/social/telegram.svg", height: "16.579px" },
+          // { handle: "@q3xfinance", link: "https://t.me/q3xfinance", icon: "/social/telegram.svg", height: "16.579px" },
         ].map(social => (
           <div key={social.link} className="flex items-center gap-1 h-[19.344px] w-full">
             <div className="flex-1 font-['Neue_Montreal:Regular',_sans-serif] text-[#191919] text-[15px] text-left">

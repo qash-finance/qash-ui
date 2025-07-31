@@ -9,7 +9,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 export const Title = () => {
   const { openModal } = useModal();
   const pathname = usePathname();
-  const { walletAddress } = useWalletConnect();
+  const { walletAddress, isConnected } = useWalletConnect();
 
   // Calculate unread count
   const { data } = useGetNotificationsInfinite(walletAddress, 20);
@@ -99,7 +99,9 @@ export const Title = () => {
         onClick={() => openModal(MODAL_IDS.NOTIFICATION)}
       >
         <img src="/notification/notification.gif" alt="bell" className="w-7 h-7" />
-        {unreadCount > 0 && <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-[#FF2323] rounded-full" />}
+        {isConnected && unreadCount > 0 && (
+          <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-[#FF2323] rounded-full" />
+        )}
       </div>
     </div>
   );

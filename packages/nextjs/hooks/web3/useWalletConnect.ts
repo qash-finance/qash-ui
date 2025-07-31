@@ -1,11 +1,8 @@
 "use client";
 import { useWalletState } from "@/services/store";
+import { LAST_CONNECTED_KEY, WALLET_ADDRESSES_KEY } from "@/services/utils/constant";
 import { deployAccount, importAccount } from "@/services/utils/miden/account";
 import toast from "react-hot-toast";
-
-// Utility functions for managing wallet addresses and last connected
-const WALLET_ADDRESSES_KEY = "miden-wallet-addresses";
-const LAST_CONNECTED_KEY = "miden-last-connected-address";
 
 const getStoredWalletAddresses = (): string[] => {
   if (typeof window === "undefined") return [];

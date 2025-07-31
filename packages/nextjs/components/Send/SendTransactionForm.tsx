@@ -79,7 +79,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
   // **************** Custom Hooks *******************
   const { openModal, isModalOpen } = useModal();
-  const { handleConnect, isConnected } = useWalletConnect();
+  const { isConnected } = useWalletConnect();
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
   const { addTransaction } = useBatchTransactions(state => state);

@@ -3,7 +3,7 @@ import * as React from "react";
 import { TransactionItem } from "./TransactionItem";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ActionButton } from "../Common/ActionButton";
-import { useBatchTransactions } from "@/services/store/batchTransactions";
+import { BatchTransaction, useBatchTransactions } from "@/services/store/batchTransactions";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 
@@ -13,7 +13,7 @@ interface BatchTransactionContainerProps {
   onConfirm?: () => void;
 }
 
-const EmptyBatch = () => {
+export const EmptyBatch = () => {
   return (
     <div className="flex flex-col gap-2 items-center justify-center w-full h-full bg-[#292929] rounded-b-2xl mb-3">
       <img src="/sidebar/gift.gif" alt="empty-batch" className="w-16 h-16 grayscale" />
@@ -29,10 +29,20 @@ export function BatchTransactionContainer({
 }: BatchTransactionContainerProps) {
   // **************** Custom Hooks *******************
   const { walletAddress, isConnected } = useWalletConnect();
-  const { getBatchTransactions, removeTransaction } = useBatchTransactions();
+  const { removeTransaction } = useBatchTransactions();
   const { openModal } = useModal();
 
-  const transactions = walletAddress ? getBatchTransactions(walletAddress) : [];
+  // Subscribe directly to the store state for automatic reactivity
+  const allTransactions = useBatchTransactions(state => state.transactions);
+  const transactions = React.useMemo(() => {
+    if (walletAddress && isConnected && allTransactions[walletAddress]) {
+      return allTransactions[walletAddress].map(tx => ({
+        ...tx,
+        createdAt: new Date(tx.createdAt),
+      }));
+    }
+    return [];
+  }, [walletAddress, isConnected, allTransactions]);
 
   const handleRemoveTransaction = (transactionId: string) => {
     if (!walletAddress) return;
@@ -95,7 +105,7 @@ export function BatchTransactionContainer({
         <ActionButton
           text="Connect Wallet"
           buttonType="submit"
-          className="w-full h-10"
+          className="mt-1 w-full h-10"
           onClick={() => {
             openModal(MODAL_IDS.CONNECT_WALLET);
           }}
