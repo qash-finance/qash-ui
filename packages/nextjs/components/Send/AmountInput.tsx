@@ -21,7 +21,6 @@ export const AmountInput: React.FC<AmountInputProps> = ({
   setValue,
 }) => {
   const handlePercentageSelect = (percentage: number | "MAX") => {
-    console.log("Percentage button clicked:", percentage, "Available balance:", availableBalance);
     let newAmount: number;
     if (percentage === "MAX") {
       newAmount = availableBalance;
@@ -32,7 +31,6 @@ export const AmountInput: React.FC<AmountInputProps> = ({
     // Round to the token's decimal places
     const roundedAmount = Number(newAmount.toFixed(selectedToken.metadata.decimals));
 
-    console.log("Setting amount to:", roundedAmount);
     setValue("amount", roundedAmount);
   };
 
@@ -46,7 +44,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
             min: { value: 0, message: "Amount must be greater than 0" },
           })}
           autoComplete="off"
-          className="text-white opacity-20 text-center outline-none"
+          className="text-white text-center outline-none"
           placeholder="0.00"
           type="number"
           inputMode="decimal"

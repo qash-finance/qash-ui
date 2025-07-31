@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import { StatusCard } from "./StatusCard";
-import { Table } from "../../Common/Table";
 import { ActionButton } from "../../Common/ActionButton";
 import { CustomCheckbox } from "../../Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";

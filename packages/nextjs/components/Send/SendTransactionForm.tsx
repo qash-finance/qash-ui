@@ -26,7 +26,6 @@ import {
   MIDEN_EXPLORER_URL,
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
-import { useGetAddressBooks } from "@/services/api/address-book";
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
 import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType } from "@/types/note";
