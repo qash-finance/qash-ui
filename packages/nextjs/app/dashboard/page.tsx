@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function DashboardPage() {
-  redirect("/dashboard/pending-recieve");
+  redirect("/dashboard/pending-receive");
 }

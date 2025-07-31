@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useCallback } from "react";
 import { AmountInput } from "./AmountInput";
-import { RecipientInput } from "./RecipientInput";
 import { TransactionOptions } from "./TransactionOptions";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
@@ -23,8 +22,8 @@ import {
   QASH_TOKEN_DECIMALS,
   QASH_TOKEN_MAX_SUPPLY,
   BLOCK_TIME,
-  BUTTON_STYLES,
   REFETCH_DELAY,
+  MIDEN_EXPLORER_URL,
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
 import { useGetAddressBooks } from "@/services/api/address-book";
@@ -54,7 +53,6 @@ interface SendTransactionFormValues {
 }
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
-  const { data: addressBooks } = useGetAddressBooks();
   const searchParams = useSearchParams();
   const recipientParam = searchParams?.get("recipient") || "";
   const recipientNameParam = searchParams?.get("name") || "";
@@ -175,9 +173,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
 
     try {
-      setIsSending(true);
-      toast.loading("Sending transaction...");
-
       // check if amount > balance
       if (amount > parseFloat(selectedToken.amount)) {
         toast.dismiss();
@@ -210,49 +205,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         toast.error("Amount must be greater than 0");
         return;
       }
-
-      // each block is 5 seconds, calculate recall height
-      const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
-
-      // Create AccountId objects once to avoid aliasing issues
-      const senderAccountId = AccountId.fromBech32(walletAddress);
-      const recipientAccountId = AccountId.fromBech32(recipientAddress);
-      const faucetAccountId = AccountId.fromBech32(selectedToken.faucetId);
-
-      // create note
-      const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
-        senderAccountId,
-        recipientAccountId,
-        faucetAccountId,
-        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
-        isPrivateTransaction ? MidenNoteType.Private : MidenNoteType.Public,
-        recallHeight,
-      );
-
-      const noteId = note.id().toString();
-
-      // submit transaction to miden
-      const txId = await submitTransactionWithOwnOutputNotes(new OutputNotesArray([note]), senderAccountId);
-
-      // submit transaction to server
-      const response = await sendSingleTransaction({
-        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
-        private: isPrivateTransaction,
-        recipient: recipientAddress,
-        recallable: true,
-        recallableTime: new Date(Date.now() + recallableTime * 1000),
-        recallableHeight: calculatedRecallHeight,
-        serialNumber: serialNumbers,
-        noteType: CustomNoteType.P2IDR,
-        noteId: noteId,
-      });
-
-      // refetch assets
-      // call refetch assets 5 seconds later
-      setTimeout(() => {
-        forceRefetchAssets();
-        forceRefetchRecallablePayment();
-      }, REFETCH_DELAY);
 
       try {
         AccountId.fromBech32(recipientAddress);
@@ -319,6 +271,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               serialNumber: serialNumbers,
               noteType: CustomNoteType.P2IDR,
               noteId: noteId,
+              transactionId: txId,
             });
 
             // refetch assets
@@ -334,7 +287,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                 <div>
                   Transaction sent successfully, view transaction on{" "}
                   <a
-                    href={`https://testnet.midenscan.com/tx/${txId}`}
+                    href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline"
@@ -344,6 +297,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                 </div>,
               );
               reset();
+              setRecipientName("");
             }
           } catch (error) {
             toast.dismiss();
@@ -412,6 +366,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
       toast.success("Transaction added to batch successfully");
       reset();
+      setRecipientName("");
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to add transaction to batch");

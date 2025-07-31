@@ -6,12 +6,12 @@ import { ActionButton } from "@/components/Common/ActionButton";
 // Social media data
 const socialLinks = [
   {
-    handle: "@q3x_finance",
-    link: "https://x.com/q3x_finance",
+    handle: "@qash_finance",
+    link: "https://x.com/qash_finance",
     icon: "/social/twitter.svg",
   },
   {
-    handle: "@q3x",
+    handle: "@qash",
     link: "https://github.com/q3x",
     icon: "/social/github.svg",
   },

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { OnboardingModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
+import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { ActionButton } from "../Common/ActionButton";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { mintToken } from "@/services/utils/miden/faucet";
@@ -16,6 +17,8 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
   // **************** Custom Hooks *******************
   const { walletAddress } = useWalletAuth();
   const { forceFetch: forceRefetchConsumableNotes } = useConsumableNotes();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // **************** Local State *******************
   const [loading, setLoading] = useState(false);
@@ -38,12 +41,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
       toast.success(
         <div>
           Mint successfully, view transaction on{" "}
-          <a
-            href={`https://testnet.midenscan.com/tx/${txId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
+          <a href={`${MIDEN_EXPLORER_URL}/tx/${txId}`} target="_blank" rel="noopener noreferrer" className="underline">
             Miden Explorer
           </a>
         </div>,
@@ -53,13 +51,12 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
       setTimeout(async () => {
         try {
           await forceRefetchConsumableNotes();
-
+        } catch (error) {
           // Retry after additional delay if needed
           setTimeout(async () => {
             await forceRefetchConsumableNotes();
             toast.dismiss();
           }, 3000);
-        } catch (error) {
           console.error("Error refetching notes:", error);
         }
       }, 2000);
@@ -116,6 +113,9 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
             <ActionButton
               text="Ready to Claim!"
               onClick={() => {
+                if (pathname !== "/dashboard/pending-receive") {
+                  router.push("/dashboard/pending-receive");
+                }
                 onClose();
                 setSuccess(false);
               }}

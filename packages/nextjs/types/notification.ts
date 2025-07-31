@@ -32,3 +32,18 @@ export interface NotificationResponse {
   limit: number;
   totalPages: number;
 }
+
+export interface NotificationCardType {
+  id: number;
+  type: NotificationType;
+  title: string;
+  subtitle: string;
+  time: string;
+  amount: string;
+  tokenAddress: string;
+  tokenName: string;
+  address: string;
+  recipientCount: number;
+  isRead: boolean;
+  transactionId: string;
+}

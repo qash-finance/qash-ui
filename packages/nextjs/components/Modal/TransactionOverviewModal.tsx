@@ -72,13 +72,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
             <div className="text-white text-[14px] font-medium tracking-[0.07px] leading-[20px]">{cancellableTime}</div>
           </div>
 
-          {/* Message Row */}
-          <div className="bg-[#292929] flex flex-col gap-[9px] px-3 py-2.5 rounded-lg w-full">
-            <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Message</div>
-            <div className="text-white text-[14px] font-medium leading-[20px]">{message}</div>
-          </div>
-
-          <div className="flex gap-2 w-full">
+          <div className="mt-3 flex gap-2 w-full">
             <ActionButton text="Cancel" type="neutral" onClick={onClose} className="flex-1" />
             <ActionButton
               text="Confirm and Send"

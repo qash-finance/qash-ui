@@ -24,6 +24,7 @@ import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
+import useConsumePublicNotes from "@/hooks/server/useConsumePublicNotes";
 
 const mockData = [
   {
@@ -163,6 +164,7 @@ export const PendingRecieveContainer: React.FC = () => {
     isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
+  const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
 
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
@@ -212,18 +214,40 @@ export const PendingRecieveContainer: React.FC = () => {
         // if private or recallableHeight > 0, we need to update on server
         if (!note.private && note.recallableHeight > 0) {
           // public + recallable
-          await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
+          const txId = await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
           // consume on server level
-          await consumeNotes([note.id]);
+          await consumeNotes([
+            {
+              noteId: note.id,
+              txId: txId,
+            },
+          ]);
         } else if (note.private && note.recallableHeight > 0) {
           // private + recallable
-          await consumeUnauthenticatedNote(AccountId.fromBech32(walletAddress), note);
+          const txId = await consumeUnauthenticatedNote(AccountId.fromBech32(walletAddress), note);
           // consume on server level
-          await consumeNotes([note.id]);
+          await consumeNotes([
+            {
+              noteId: note.id,
+              txId: txId,
+            },
+          ]);
         }
       } else {
         // dont need to update server
-        await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
+        const txId = await consumeNoteByID(AccountId.fromBech32(walletAddress), note.id);
+        await consumePublicNotes([
+          {
+            sender: note.sender,
+            recipient: note.recipient,
+            amount: Number(
+              formatUnits(BigInt(Math.round(Number(note.assets[0].amount))), note.assets[0].metadata?.decimals),
+            ),
+            tokenId: note.assets[0].faucetId,
+            tokenName: note.assets[0].metadata?.symbol,
+            txId: txId,
+          },
+        ]);
       }
       setClaiming(false);
       toast.dismiss();
@@ -251,7 +275,7 @@ export const PendingRecieveContainer: React.FC = () => {
       setClaiming(true);
 
       // consume on network level
-      await consumeAllUnauthenticatedNotes(
+      const txId = await consumeAllUnauthenticatedNotes(
         AccountId.fromBech32(walletAddress),
         checkedRows.map(idx => ({
           isPrivate: consumableNotes[idx].private,
@@ -261,7 +285,12 @@ export const PendingRecieveContainer: React.FC = () => {
       );
       console.log(checkedRows);
       // consume on server level
-      await consumeNotes(checkedRows.map(idx => consumableNotes[idx].id));
+      await consumeNotes(
+        checkedRows.map(idx => ({
+          noteId: consumableNotes[idx].id,
+          txId: txId,
+        })),
+      );
 
       // get all private
       setClaiming(false);

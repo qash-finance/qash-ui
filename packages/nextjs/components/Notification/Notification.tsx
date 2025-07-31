@@ -3,14 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { NotificationModalProps } from "@/types/modal";
-import NotificationCard, { NotificationType } from "./NotificationCard";
+import NotificationCard from "./NotificationCard";
+import { NotificationType } from "@/types/notification";
 import { useSocket } from "@/contexts/SocketProvider";
 import { useGetNotificationsInfinite, useMarkNotificationAsRead } from "@/services/api/notification";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { NotificationCardType, NotificationResponseDto } from "@/types/notification";
 
 const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) => {
-  const { walletAddress } = useWalletConnect();
+  const { walletAddress, isConnected } = useWalletConnect();
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeTab, setActiveTab] = useState<"unread" | "all">("unread");
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -19,14 +21,12 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
   const socket = socketContext?.socket;
   const queryClient = useQueryClient();
 
-  // API integration
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetNotificationsInfinite(
     walletAddress,
     20,
   );
   const markAsReadMutation = useMarkNotificationAsRead();
 
-  // Calculate unread count from API data
   useEffect(() => {
     if (data?.pages) {
       const allNotifications = data.pages.flatMap(page => page.notifications);
@@ -43,7 +43,6 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     }
   }, [isOpen]);
 
-  // Set up WebSocket event listeners for real-time updates
   useEffect(() => {
     if (!socket) return;
 
@@ -168,7 +167,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
       case "CLAIM":
         return NotificationType.CLAIM;
       case "REFUND":
-        return NotificationType.REFUNDED;
+        return NotificationType.REFUND;
       case "BATCH_SEND":
         return NotificationType.BATCH_SEND;
       case "WALLET_CREATE":
@@ -179,18 +178,20 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
   };
 
   // Convert server notification to client format
-  const convertNotification = (notification: any) => {
+  const convertNotification = (notification: NotificationResponseDto): NotificationCardType => {
     return {
       id: notification.id,
-      type: convertNotificationType(notification.type),
+      type: convertNotificationType(notification.type) as NotificationType,
       title: notification.title,
       subtitle: notification.message,
       time: new Date(notification.createdAt).toLocaleString(),
       amount: notification.metadata?.amount,
-      token: notification.metadata?.token,
-      address: notification.metadata?.address,
+      tokenAddress: notification.metadata?.tokenId,
+      tokenName: notification.metadata?.tokenName,
+      address: notification.metadata?.recipient,
       recipientCount: notification.metadata?.recipientCount,
       isRead: notification.status === "READ",
+      transactionId: notification.metadata?.transactionId,
     };
   };
 
@@ -291,16 +292,16 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
 
             {/* Notification List */}
             <div className="flex flex-col gap-1 w-full overflow-y-auto h-full my-2">
-              {isLoading ? (
+              {!isConnected ? (
+                <div className="flex items-center justify-center py-8">
+                  <span className="text-[#989898] text-sm">Please connect your wallet to view notifications</span>
+                </div>
+              ) : isLoading || error ? (
                 <div className="flex items-center justify-center py-8">
                   <span className="text-[#989898] text-sm">Loading notifications...</span>
                 </div>
-              ) : error ? (
-                <div className="flex items-center justify-center py-8">
-                  <span className="text-[#ff4444] text-sm">Failed to load notifications</span>
-                </div>
               ) : filteredNotifications.length > 0 ? (
-                filteredNotifications.map((notification: any) => (
+                filteredNotifications.map((notification: NotificationCardType) => (
                   <NotificationCard
                     key={notification.id}
                     type={notification.type}
@@ -308,10 +309,12 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                     subtitle={notification.subtitle}
                     time={notification.time}
                     amount={notification.amount}
-                    token={notification.token}
+                    tokenAddress={notification.tokenAddress}
+                    tokenName={notification.tokenName}
                     address={notification.address}
                     recipientCount={notification.recipientCount}
                     isRead={notification.isRead}
+                    txId={notification.transactionId}
                     onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
                   />
                 ))

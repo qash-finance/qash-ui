@@ -9,6 +9,7 @@ export const BLOCK_TIME = 5; // seconds
 export const NODE_ENDPOINT = process.env.NEXT_PUBLIC_NODE_ENDPOINT || "https://rpc.testnet.miden.io:443";
 export const REFETCH_DELAY = 6000;
 export const SYNC_STATE_INTERVAL = 3000;
+export const MIDEN_EXPLORER_URL = "https://testnet.midenscan.com";
 
 // **************** AUTH *******************
 export const AUTH_EXPIRATION_HOURS = 720; // 30 days

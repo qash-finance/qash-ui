@@ -137,7 +137,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           {/* Logo */}
           <header
             className={`flex max-w-full leading-tight justify-items-start gap-2 cursor-pointer`}
-            onClick={() => router.push("/dashboard/pending-recieve")}
+            onClick={() => router.push("/dashboard/pending-receive")}
           >
             <img src="/qash-logo.svg" alt="Qash Logo" className="w-20" />
             <div className="flex items-center justify-start px-3 border-gradient ">

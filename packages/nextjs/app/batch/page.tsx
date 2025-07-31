@@ -69,7 +69,10 @@ export default function BatchPage() {
             recallableHeights.push(calculatedRecallHeight);
           }
           // Submit transaction to blockchain
-          await submitTransactionWithOwnOutputNotes(new OutputNotesArray(batch), AccountId.fromBech32(walletAddress));
+          const txId = await submitTransactionWithOwnOutputNotes(
+            new OutputNotesArray(batch),
+            AccountId.fromBech32(walletAddress),
+          );
           // submit transaction to server
           sendBatchTransaction(
             transactions.map((transaction, index) => ({
@@ -88,6 +91,7 @@ export default function BatchPage() {
               serialNumber: serialNumbers[index],
               noteType: transaction.noteType,
               noteId: noteIds[index],
+              transactionId: txId,
             })),
           );
           clearBatch(walletAddress);

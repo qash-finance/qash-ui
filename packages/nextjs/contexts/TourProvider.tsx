@@ -127,21 +127,19 @@ const steps: StepType[] = [
   // Welcome step - centered on screen
   {
     selector: "#empty-state", // This is pointing to nothing
-    content: (
-      <TourStepContent text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
-    ),
+    content: <TourStepContent text="Welcome to Qash! This guide will walk you through the app and its features." />,
     position: "center",
     highlightedSelectors: [],
   },
   // Sidebar
   {
     selector: ".sidebar",
-    content: <TourStepContent text="This is the sidebar" arrowDirection="left" />,
+    content: <TourStepContent text="You can navigate through the app using the sidebar." arrowDirection="left" />,
   },
   // Dashboard
   {
     selector: ".dashboard-tab",
-    content: <TourStepContent text="This is the dashboard tab" arrowDirection="up" />,
+    content: <TourStepContent text="Quick access to your payments and assets here." arrowDirection="up" />,
     styles: {
       popover: base => ({
         ...base,
@@ -152,8 +150,8 @@ const steps: StepType[] = [
     },
   },
   {
-    selector: ".dashboard-tab #pending-recieve",
-    content: <TourStepContent text="This is the receive tab" arrowDirection="up" />,
+    selector: ".dashboard-tab #pending-receive",
+    content: <TourStepContent text="This tab shows all the payments you can claim." arrowDirection="up" />,
     styles: {
       popover: base => ({
         ...base,
@@ -165,7 +163,12 @@ const steps: StepType[] = [
   },
   {
     selector: ".dashboard-tab #pending-request",
-    content: <TourStepContent text="This is the payment request tab" arrowDirection="up" />,
+    content: (
+      <TourStepContent
+        text="This is the tab that allows to you send payment request to others and accept payments from them. (Coming soon)"
+        arrowDirection="up"
+      />
+    ),
     styles: {
       popover: base => ({
         ...base,
@@ -177,13 +180,18 @@ const steps: StepType[] = [
   },
   {
     selector: ".dashboard-tab #cancel-transaction",
-    content: <TourStepContent text="This is the cancel payment tab" arrowDirection="up" />,
+    content: (
+      <TourStepContent
+        text="All transactions from Qash can be cancelled after the deadline! This is the tab to cancel your transactions."
+        arrowDirection="up"
+      />
+    ),
     position: "bottom",
     styles: {
       popover: base => ({
         ...base,
         ...sharedPopoverStyles,
-        left: Number(base.left) + 300,
+        left: Number(base.left) - 100,
         top: Number(base.top) + 60,
       }),
     },
@@ -191,7 +199,7 @@ const steps: StepType[] = [
   // Portfolio
   {
     selector: ".portfolio-button",
-    content: <TourStepContent text="This is the portfolio tab" arrowDirection="right" />,
+    content: <TourStepContent text="Access all your holdings here." arrowDirection="right" />,
     styles: {
       popover: base => ({
         ...base,
@@ -203,25 +211,20 @@ const steps: StepType[] = [
   // Receive Address
   {
     selector: ".receive-address",
-    content: <TourStepContent text="This is the receive address tab" arrowDirection="right" />,
+    content: (
+      <TourStepContent text="Quick share your address with others to receive payments." arrowDirection="right" />
+    ),
     position: "left",
   },
   // Pending To Receive
   {
     selector: ".pending-to-receive",
-    content: <TourStepContent text="This is the pending to receive tab" arrowDirection="up" />,
+    content: <TourStepContent text="This section will show all the payments you can claim." arrowDirection="up" />,
   },
   // Fab Free Token
   {
     selector: ".fab-free-token",
-    content: <TourStepContent text="This is the free token floating action button" />,
-  },
-  // End of tour
-  {
-    selector: "#empty-state", // This is pointing to nothing
-    content: <TourStepContent text="Thats all for now" />,
-    position: "center",
-    highlightedSelectors: [],
+    content: <TourStepContent text="No tokens? No problem! You can claim free tokens here." />,
   },
 ];
 

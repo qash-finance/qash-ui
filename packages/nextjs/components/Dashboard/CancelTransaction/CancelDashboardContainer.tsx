@@ -7,7 +7,7 @@ import { CustomCheckbox } from "../../Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { formatAddress } from "@/services/utils/miden/address";
-import { QASH_TOKEN_ADDRESS, REFETCH_DELAY } from "@/services/utils/constant";
+import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS, REFETCH_DELAY } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
 import { RecallableNote, RecallableNoteType } from "@/types/transaction";
@@ -222,7 +222,6 @@ export const CancelDashboardContainer: React.FC = () => {
   const handleCancelAll = async () => {
     try {
       toast.loading("Cancelling transactions...");
-
       // Process each checked note
       // for (const idx of checkedRows) {
       //   const note = recallableNotes?.recallableItems[idx];
@@ -256,29 +255,33 @@ export const CancelDashboardContainer: React.FC = () => {
       // notesId to consume
       const noteIds = notes.map(note => note?.noteId).filter(noteId => noteId !== undefined);
 
-      // consume the notes on blockchain level
-      await consumeNoteByIDs(AccountId.fromBech32(walletAddress), noteIds);
+      if (noteIds.length > 0) {
+        setRecallingNoteId(Number(noteIds[0]));
+        // consume the notes on blockchain level
+        const txId = await consumeNoteByIDs(AccountId.fromBech32(walletAddress), noteIds);
 
-      await recallBatch({
-        items: [
-          ...notes
-            .filter(note => note != undefined)
-            .map(note => ({
-              type: RecallableNoteType.TRANSACTION,
-              id: note.id,
-            })),
-        ],
-      });
+        await recallBatch({
+          items: [
+            ...notes
+              .filter(note => note != undefined)
+              .map(note => ({
+                type: RecallableNoteType.TRANSACTION,
+                id: note.id,
+              })),
+          ],
+          txId: txId,
+        });
 
-      // refetch recallable notes
-      await refetchRecallableNotes();
+        // refetch recallable notes
+        await refetchRecallableNotes();
 
-      // refetch assets
-      setTimeout(() => {
-        forceRefetchAssets();
-      }, REFETCH_DELAY);
+        // refetch assets
+        setTimeout(() => {
+          forceRefetchAssets();
+        }, REFETCH_DELAY);
 
-      setCheckedRows([]);
+        setCheckedRows([]);
+      }
 
       toast.dismiss();
       toast.success("All selected transactions cancelled successfully");
@@ -335,6 +338,7 @@ export const CancelDashboardContainer: React.FC = () => {
                   id: recallingNote.id,
                 },
               ],
+              txId: txId,
             });
 
             // refetch recallable notes
@@ -345,7 +349,7 @@ export const CancelDashboardContainer: React.FC = () => {
               <div>
                 Transaction sent successfully, view transaction on{" "}
                 <a
-                  href={`https://testnet.midenscan.com/tx/${txId}`}
+                  href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline"

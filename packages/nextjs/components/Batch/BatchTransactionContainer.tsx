@@ -28,7 +28,7 @@ export function BatchTransactionContainer({
   onConfirm,
 }: BatchTransactionContainerProps) {
   // **************** Custom Hooks *******************
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
+  const { walletAddress, isConnected } = useWalletConnect();
   const { getBatchTransactions, removeTransaction } = useBatchTransactions();
   const { openModal } = useModal();
 

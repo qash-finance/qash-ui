@@ -22,7 +22,7 @@ export const Title = () => {
     case "/send":
       title = "Send tokens";
       break;
-    case "/dashboard/pending-recieve":
+    case "/dashboard/pending-receive":
       title = "Dashboard";
       break;
     case "/dashboard/pending-request":
@@ -57,7 +57,7 @@ export const Title = () => {
   }
 
   const dashboardTabs = [
-    { id: "pending-recieve", label: "Recieve", href: "/dashboard/pending-recieve" },
+    { id: "pending-receive", label: "Receive", href: "/dashboard/pending-receive" },
     {
       id: "pending-request",
       label: "Payment Request",
@@ -98,7 +98,7 @@ export const Title = () => {
         className="relative flex flex-row gap-2 justify-center items-center w-15 h-[50px] bg-[#292929] rounded-lg cursor-pointer"
         onClick={() => openModal(MODAL_IDS.NOTIFICATION)}
       >
-        <img src="/notification/bell.svg" alt="bell" className="w-5 h-5" />
+        <img src="/notification/notification.gif" alt="bell" className="w-7 h-7" />
         {unreadCount > 0 && <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-[#FF2323] rounded-full" />}
       </div>
     </div>
