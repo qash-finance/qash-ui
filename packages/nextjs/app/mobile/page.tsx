@@ -10,11 +10,11 @@ const socialLinks = [
     link: "https://x.com/qash_finance",
     icon: "/social/twitter.svg",
   },
-  {
-    handle: "@qash",
-    link: "https://github.com/q3x",
-    icon: "/social/github.svg",
-  },
+  // {
+  //   handle: "@qash",
+  //   link: "https://github.com/q3x",
+  //   icon: "/social/github.svg",
+  // },
   // {
   //   handle: "@q3xfinance",
   //   link: "https://t.me/q3xfinance",
@@ -75,14 +75,14 @@ export default function MobilePage() {
 
         {/* Action Buttons Container */}
         <div className="mt-8 flex w-[300px] flex-row gap-[7px]">
-          <ActionButton text="Back to home" onClick={handleBackToHome} type="neutral" className="flex-1 h-10" />
+          {/* <ActionButton text="Back to home" onClick={handleBackToHome} type="neutral" className="flex-1 h-10" /> */}
           <ActionButton text="Copy link" onClick={handleCopyLink} className="flex-1 h-10" />
         </div>
       </div>
 
       {/* Footer */}
       <div className="flex justify-center pb-[34px]">
-        <div className="flex w-[329px] flex-row items-center justify-between text-center">
+        <div className="flex w-[329px] flex-row items-center justify-center text-center">
           {socialLinks.map((social, index) => (
             <div key={social.link} className="flex items-center gap-2">
               <span
