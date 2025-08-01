@@ -123,12 +123,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             <TourProviderWrapper>
               <SocketProvider>
                 <ModalProvider>
-                  <AuthProvider
-                    apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                    autoRefresh={true}
-                    refreshInterval={AUTH_REFRESH_INTERVAL}
-                  >
-                    <AnalyticsProvider config={analyticsConfig}>
+                  <AnalyticsProvider config={analyticsConfig}>
+                    <AuthProvider
+                      apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                      autoRefresh={true}
+                      refreshInterval={AUTH_REFRESH_INTERVAL}
+                    >
                       <AccountProvider>
                         {/* <ConnectWalletButton /> */}
                         <ModalManager />
@@ -158,8 +158,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         <FloatingActionButton imgSrc="/token/qash.svg" />
                         <Background />
                       </AccountProvider>
-                    </AnalyticsProvider>
-                  </AuthProvider>
+                    </AuthProvider>
+                  </AnalyticsProvider>
                 </ModalProvider>
               </SocketProvider>
             </TourProviderWrapper>

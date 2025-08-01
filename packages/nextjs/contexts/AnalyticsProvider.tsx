@@ -34,8 +34,6 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
   const [pageTimeTracker, setPageTimeTracker] = useState(() => createTimeTracker());
   const [currentPage, setCurrentPage] = useState<string>("");
 
-  const { walletAddress } = useWalletAuth();
-
   const router = useRouter();
 
   useEffect(() => {
@@ -60,7 +58,7 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
         }
 
         if (config.enableAutoTracking) {
-          await startSession(walletAddress || undefined);
+          await startSession();
         }
       } catch (error) {
         console.error("Failed to initialize analytics:", error);
