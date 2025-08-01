@@ -1,6 +1,7 @@
 node_modules
 packages/nextjs/node_modules
-packages/foundry/node_modules ## add all the relevant packages
+packages/foundry/node_modules
+packages/docs/node_modules
 npm-debug.log
 Dockerfile*
 docker-compose*
