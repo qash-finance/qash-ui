@@ -275,7 +275,26 @@ export const PendingRecieveContainer: React.FC = () => {
           partialNote: consumableNotes[idx],
         })),
       );
-      console.log(checkedRows);
+
+      // loop through the transactions being consume, and if the transaction is public (non recallable + non private), call consume public notes
+      for (const id of checkedRows) {
+        const note = consumableNotes[id];
+        if (!note.private && note.recallableHeight < 0) {
+          await consumePublicNotes([
+            {
+              sender: note.sender,
+              recipient: note.recipient,
+              amount: Number(
+                formatUnits(BigInt(Math.round(Number(note.assets[0].amount))), note.assets[0].metadata?.decimals),
+              ),
+              tokenId: note.assets[0].faucetId,
+              tokenName: note.assets[0].metadata?.symbol,
+              txId: txId,
+            },
+          ]);
+        }
+      }
+
       // consume on server level
       await consumeNotes(
         checkedRows.map(idx => ({

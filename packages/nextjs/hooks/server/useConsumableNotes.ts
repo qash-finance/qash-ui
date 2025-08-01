@@ -110,6 +110,7 @@ export function useConsumableNotes() {
 
   // Force fresh fetch by invalidating cache
   const forceFetch = async () => {
+    queryClient.invalidateQueries({ queryKey: ["consumable-notes", walletAddress] });
     await refetch();
   };
 
