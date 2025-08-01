@@ -211,3 +211,7 @@ input:-moz-autofill:active {
   display: block;
 }
 /************ Custom Checkbox ************/
+
+.gift-background {
+  background: linear-gradient(180deg, #a4f3fd 0%, #cff8ff 100%);
+}

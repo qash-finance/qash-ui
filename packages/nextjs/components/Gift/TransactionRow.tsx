@@ -58,7 +58,7 @@ export const TransactionRow: React.FC<TransactionRowProps> = ({
           {link}
         </div>
         <button
-          className={`flex gap-1.5 justify-center items-center px-2 py-1 bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors ${
+          className={`flex items-center gap-1.5 justify-center items-center px-2 py-1.5 bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors ${
             isOpened ? "bg-[#1F3E69]" : "bg-blue-600"
           }`}
           onClick={handleCopy}

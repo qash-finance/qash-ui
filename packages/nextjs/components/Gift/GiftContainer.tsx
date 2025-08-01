@@ -38,7 +38,7 @@ export const GiftContainer: React.FC<GiftContainerProps> = ({
   };
 
   return (
-    <main className="flex flex-col gap-4 items-center self-stretch p-4 rounded-xl bg-neutral-900 flex-[1_0_0] max-md:p-3 max-sm:p-2">
+    <main className="flex flex-col gap-4 items-center self-stretch p-4 rounded-2xl bg-[#121212] flex-[1_0_0] max-md:p-3 max-sm:p-2">
       <div className="flex gap-4 justify-center items-start self-stretch flex-[1_0_0] max-md:flex-col max-md:gap-3">
         <GiftCreationForm
           onGenerateLink={handleGenerateLink}

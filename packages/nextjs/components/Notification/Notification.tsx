@@ -211,7 +211,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
   return (
     <div
       data-tour="portfolio-section"
-      className="portfolio fixed inset-0 flex items-center justify-end z-[100] pointer-events-auto"
+      className="relativportfolio fixed inset-0 flex items-center justify-end z-[150] pointer-events-auto"
     >
       {/* Overlay */}
       <div
