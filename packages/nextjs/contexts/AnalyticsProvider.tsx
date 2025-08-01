@@ -17,6 +17,7 @@ import {
   ANALYTICS_SESSION_START_KEY,
   ANALYTICS_USER_ADDRESS_KEY,
 } from "@/services/utils/constant";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
 
@@ -32,6 +33,8 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
   const [analyticsService] = useState(() => new AnalyticsService(config));
   const [pageTimeTracker, setPageTimeTracker] = useState(() => createTimeTracker());
   const [currentPage, setCurrentPage] = useState<string>("");
+
+  const { walletAddress } = useWalletAuth();
 
   const router = useRouter();
 
@@ -57,7 +60,7 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
         }
 
         if (config.enableAutoTracking) {
-          await startSession();
+          await startSession(walletAddress || undefined);
         }
       } catch (error) {
         console.error("Failed to initialize analytics:", error);
