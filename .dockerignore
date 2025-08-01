@@ -1,0 +1,27 @@
+node_modules
+packages/nextjs/node_modules
+packages/foundry/node_modules ## add all the relevant packages
+npm-debug.log
+Dockerfile*
+docker-compose*
+.dockerignore
+.git
+.gitignore
+.gitmodules
+.lintstagedrc.js
+TODO.md
+README.md
+CONTRIBUTING.md
+LICENSE
+.vscode
+.next
+.github
+*.swp
+/scripts
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
