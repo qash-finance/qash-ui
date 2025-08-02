@@ -30,7 +30,7 @@ const barlow = Barlow({
 });
 export const metadata: Metadata = {
   title: "Qash",
-  description: "Qash",
+  description: "Manage your cash on-chain with privacy",
   icons: {
     icon: "/qash-icon.svg",
   },
