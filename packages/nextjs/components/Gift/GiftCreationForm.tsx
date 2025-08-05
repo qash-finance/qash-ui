@@ -55,7 +55,7 @@ export const GiftCreationForm: React.FC = () => {
   const handleTokenSelect = (token: AssetWithMetadata) => {
     setSelectedToken(token);
 
-    if (token.metadata.symbol === "QASH") {
+    if (token.metadata.symbol === QASH_TOKEN_SYMBOL) {
       const qashTokenAddress = require("@/services/utils/constant").QASH_TOKEN_ADDRESS;
       setSelectedTokenAddress(qashTokenAddress);
     } else {
@@ -108,7 +108,7 @@ export const GiftCreationForm: React.FC = () => {
             const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
 
             // create gift note
-            const [outputNote, serialNumber] = await createGiftNote(
+            const [outputNote, serialNumber, hashSecret] = await createGiftNote(
               walletAddress,
               selectedToken.faucetId,
               parsedAmount,

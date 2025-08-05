@@ -33,7 +33,7 @@ const OpenGiftContainer = () => {
       const secret = stringToSecretArray(giftDetail?.secretNumber!);
       console.log("stringToSecretArray", secret);
       // consume the gift
-      const [note, _] = await createGiftNote(
+      const [note, _, hashedSecret] = await createGiftNote(
         giftDetail?.sender!,
         giftDetail?.assets[0].faucetId!,
         BigInt(giftDetail?.assets[0].amount!),
