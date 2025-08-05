@@ -211,3 +211,64 @@ input:-moz-autofill:active {
   display: block;
 }
 /************ Custom Checkbox ************/
+
+/************ Table Scrollbar ************/
+/* Table scrollbar styling */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+.overflow-x-auto::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+/* Firefox scrollbar styling */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #404040 #1a1a1a;
+}
+
+/* Table specific scrollbar */
+.table-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+.table-scrollbar::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+.table-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #404040 #1a1a1a;
+}
+/************ Table Scrollbar ************/

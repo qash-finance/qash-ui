@@ -47,7 +47,16 @@ export interface SelectTokenModalProps extends BaseModalProps {
   onTokenSelect?: (token: AssetWithMetadata | null) => void;
 }
 
-export interface SendModalProps extends BaseModalProps {}
+export interface SendModalProps extends BaseModalProps {
+  pendingRequestId: number;
+
+  recipient?: string;
+  recipientName?: string;
+  amount?: string;
+  message?: string;
+  tokenAddress?: string;
+  tokenSymbol?: string;
+}
 
 export interface SelectRecipientModalProps extends BaseModalProps {
   onSave?: (address: string, name: string) => void;
@@ -72,7 +81,9 @@ export interface CreateNewGroupModalProps extends BaseModalProps {
   onSave?: () => void;
 }
 
-export interface NewRequestModalProps extends BaseModalProps {}
+export interface NewRequestModalProps extends BaseModalProps {
+  recipient?: string;
+}
 
 export interface CreateCustomQRModalProps extends BaseModalProps {}
 

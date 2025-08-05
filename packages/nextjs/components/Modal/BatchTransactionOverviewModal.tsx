@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import { BatchTransactionOverviewModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
@@ -15,14 +15,13 @@ export function BatchTransactionOverviewModal({
 }: ModalProp<BatchTransactionOverviewModalProps>) {
   const { sender, onConfirm } = props;
   const { openModal } = useModal();
-  if (!isOpen) return null;
 
   const { walletAddress } = useWalletConnect();
 
   // Subscribe directly to the store state for automatic reactivity
   const allTransactions = useBatchTransactions(state => state.transactions);
 
-  const transactions = React.useMemo(() => {
+  const transactions = useMemo(() => {
     if (walletAddress && allTransactions[walletAddress]) {
       return allTransactions[walletAddress].map(tx => ({
         ...tx,
@@ -32,7 +31,7 @@ export function BatchTransactionOverviewModal({
     return [];
   }, [walletAddress, allTransactions]);
 
-  const transactionTypes = React.useMemo(() => {
+  const transactionTypes = useMemo(() => {
     if (transactions.length > 0) {
       const hasPrivate = transactions.some(transaction => transaction.isPrivate);
       const hasPublic = transactions.some(transaction => !transaction.isPrivate);
@@ -45,7 +44,7 @@ export function BatchTransactionOverviewModal({
     return [];
   }, [transactions]);
 
-  const cancellableTimes = React.useMemo(() => {
+  const cancellableTimes = useMemo(() => {
     if (transactions.length > 0) {
       return [
         ...new Set(
@@ -127,7 +126,7 @@ export function BatchTransactionOverviewModal({
                 onConfirm?.();
                 onClose();
               }}
-              disabled={transactions.length === 0}
+              // disabled={transactions.length === 0}
             />
           </div>
         </div>

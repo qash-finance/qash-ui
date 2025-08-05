@@ -10,6 +10,7 @@ import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTour } from "@reactour/tour";
 import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
+import { usePathname, useRouter } from "next/navigation";
 
 type Step = "init" | "creating" | "final";
 
@@ -51,6 +52,8 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
   const { openModal } = useModal();
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
   const { connectWallet: authenticateWallet } = useWalletAuth();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // **************** Local State *******************
   const [currentStep, setCurrentStep] = useState<Step>("init");
@@ -472,6 +475,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                   // if first time, then open this
                   const isTourSkipped = localStorage.getItem(TOUR_SKIPPED_KEY);
                   if (!isTourSkipped) {
+                    pathname !== "/" && router.push("/");
                     setIsOpen(true);
                   }
                 }}

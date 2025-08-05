@@ -124,7 +124,7 @@ export function Table({
   actionRenderer,
   columnWidths = {},
 }: TableProps) {
-  const defaultTableClass = "overflow-x-auto rounded-lg border border-zinc-800";
+  const defaultTableClass = "overflow-x-auto table-scrollbar rounded-lg border border-zinc-800";
 
   return (
     <div className={`${defaultTableClass} ${className}`}>

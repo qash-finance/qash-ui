@@ -51,10 +51,7 @@ const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
           className="flex relative flex-col shrink-0 justify-center items-center self-stretch px-2 py-0 rounded-2xl bg-black w-[42px] cursor-pointer"
           onClick={handleClose}
         >
-          <button
-            className="flex absolute justify-center items-center w-7 h-7 left-[7px] top-[398px]"
-            aria-label="Close"
-          >
+          <button className="flex absolute justify-center items-center w-7 h-7 top-1/2" aria-label="Close">
             <img src="/close-icon.svg" alt="close-icon" className="w-7 h-7" />
           </button>
         </nav>

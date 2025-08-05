@@ -12,6 +12,7 @@ export interface NotificationCardProps {
   tokenAddress?: string;
   tokenName?: string;
   address?: string;
+  payee?: string;
   recipientCount?: number;
   isRead?: boolean;
   txId?: string;
@@ -27,6 +28,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   tokenAddress,
   tokenName,
   address,
+  payee,
   recipientCount,
   isRead = false,
   txId,
@@ -55,6 +57,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return <img src="/arrow/thin-double-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
       case NotificationType.WALLET_CREATE:
         return <img src="/notification/wallet.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.REQUEST_PAYMENT:
+        return <img src="/notification/request-payment.svg" alt="send" className="w-6 h-6" />;
       default:
         return null;
     }
@@ -175,6 +179,20 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               {amount} {tokenName} ({formatAddress(tokenAddress || "")})
             </span>{" "}
             in total to <span className="text-white">{recipientCount} accounts</span>
+          </span>
+        );
+      case NotificationType.REQUEST_PAYMENT:
+        // Use the address prop which contains the payee from metadata
+        const payeeAddress = payee || "";
+        const isPayeeAddress = payeeAddress.length > 20; // Assume addresses are longer than names
+        const formattedPayee = isPayeeAddress ? formatAddress(payeeAddress) : payeeAddress;
+
+        return (
+          <span className={titleStyles}>
+            <span className="text-white">{formattedPayee}</span> has requested you to transfer{" "}
+            <span className="text-[#1e8fff]">
+              {amount} {tokenName}
+            </span>
           </span>
         );
       case NotificationType.WALLET_CREATE:

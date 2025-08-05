@@ -62,8 +62,6 @@ export const Title = () => {
       id: "pending-request",
       label: "Payment Request",
       href: "/dashboard/pending-request",
-      disabled: true,
-      className: "cursor-not-allowed",
     },
     { id: "cancel-transaction", label: "Cancel Payment", href: "/dashboard/cancel-transaction" },
   ];

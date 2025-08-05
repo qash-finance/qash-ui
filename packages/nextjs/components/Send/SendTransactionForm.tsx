@@ -3,7 +3,7 @@ import React, { useState, useCallback } from "react";
 import { AmountInput } from "./AmountInput";
 import { TransactionOptions } from "./TransactionOptions";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS } from "@/types/modal";
+import { MODAL_IDS, SendModalProps } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
@@ -30,6 +30,7 @@ import { CustomNoteType, WrappedNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
+import { useAcceptRequest } from "@/services/api/request-payment";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -49,13 +50,33 @@ interface SendTransactionFormValues {
   message?: string;
 }
 
-export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
+export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalProps> = ({
+  activeTab,
+  onTabChange,
+  ...props
+}) => {
+  // **************** Custom Hooks *******************
   const searchParams = useSearchParams();
-  const recipientParam = searchParams?.get("recipient") || "";
-  const recipientNameParam = searchParams?.get("name") || "";
-  const tokenAddressParam = searchParams?.get("tokenAddress") || "";
-  const amountParam = searchParams?.get("amount") || "";
-  const messageParam = searchParams?.get("message") || "";
+  const { openModal, isModalOpen } = useModal();
+  const { isConnected } = useWalletConnect();
+  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
+  const { addTransaction } = useBatchTransactions(state => state);
+  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
+  const { mutateAsync: acceptRequest } = useAcceptRequest();
+
+  // Check if component is being used as a modal
+  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
+
+  // Get initial data based on usage mode
+  // If modal: use props data, else: use URL search params
+  const recipientParam = isSendModalOpen ? props.recipient || "" : searchParams?.get("recipient") || "";
+  const recipientNameParam = isSendModalOpen ? props.recipientName || "" : searchParams?.get("name") || ""; // Modal doesn't have name param
+  const tokenAddressParam = isSendModalOpen ? props.tokenAddress || "" : searchParams?.get("tokenAddress") || "";
+  const amountParam = isSendModalOpen ? props.amount || "" : searchParams?.get("amount") || "";
+  const messageParam = isSendModalOpen ? props.message || "" : searchParams?.get("message") || "";
+
+  // **************** Form Hooks *******************
   const {
     register,
     handleSubmit,
@@ -73,16 +94,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       message: messageParam || "",
     },
   });
-
-  // **************** Custom Hooks *******************
-  const { openModal, isModalOpen } = useModal();
-  const { isConnected } = useWalletConnect();
-  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
-  const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
-  const { addTransaction } = useBatchTransactions(state => state);
-  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
-
-  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
@@ -288,6 +299,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               );
               reset();
               setRecipientName("");
+
+              if (props.pendingRequestId) {
+                await acceptRequest({ id: props.pendingRequestId, txid: txId });
+              }
             }
           } catch (error) {
             toast.dismiss();

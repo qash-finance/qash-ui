@@ -4,6 +4,7 @@ export enum NotificationType {
   REFUND = "REFUND",
   BATCH_SEND = "BATCH_SEND",
   WALLET_CREATE = "WALLET_CREATE",
+  REQUEST_PAYMENT = "REQUEST_PAYMENT",
 }
 
 export enum NotificationStatus {
@@ -43,6 +44,7 @@ export interface NotificationCardType {
   tokenAddress: string;
   tokenName: string;
   address: string;
+  payee: string;
   recipientCount: number;
   isRead: boolean;
   transactionId: string;

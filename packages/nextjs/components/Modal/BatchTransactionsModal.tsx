@@ -5,8 +5,9 @@ import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import { TransactionItem } from "../Batch/TransactionItem";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
-import BaseModal from "./BatchTransactionOverview/BaseModal";
+// import BaseModal from "./BatchTransactionOverview/BaseModal";
 import { EmptyBatch } from "../Batch/BatchTransactionContainer";
+import BaseModal from "./BaseModal";
 
 export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTransactionsModalProps>) {
   const { removeTransaction } = useBatchTransactions();
@@ -47,7 +48,7 @@ export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTrans
       onClose={onClose}
       title="Back to batch transaction overview"
       icon="/arrow/chevron-left.svg"
-      onBack={handleBackToOverview}
+      onClickIcon={onClose}
     >
       <div className="bg-[#292929] pt-2 flex flex-col gap-1 items-center self-stretch rounded-2xl h-full w-[600px]">
         {transactions.length == 0 ? (
