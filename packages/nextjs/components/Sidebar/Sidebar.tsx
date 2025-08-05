@@ -148,8 +148,31 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           {/* Action */}
           <NavSections sections={action} onItemClick={handleActionItemClick} />
         </div>
+
         {/* Connect/Account section */}
-        <Connect />
+        <div className="h-[250px] flex flex-col justify-end gap-3">
+          <div className="w-full flex gap-2 px-5 ">
+            <div
+              onClick={() => {
+                // open new window
+                window.open("https://forms.gle/i1uV5uUVaWYoHSXN7", "_blank");
+              }}
+              className="cursor-pointer flex items-center justify-center w-13 h-10 bg-[#292929] rounded-lg transition-all duration-200 group-hover:bg-[#3a3a3a] group-hover:scale-105"
+            >
+              <img src="/sidebar/plus.svg" alt="" />
+            </div>
+            <div
+              onClick={() => {
+                // open new window
+                window.open("https://forms.gle/i1uV5uUVaWYoHSXN7", "_blank");
+              }}
+              className="flex items-center cursor-pointer bg-[#292929] w-full px-3 rounded-lg transition-all duration-200 group-hover:bg-[#3a3a3a] group-hover:scale-105"
+            >
+              <span className="text-base  text-[#989898]">Give Feedback</span>
+            </div>
+          </div>
+          <Connect />
+        </div>
       </div>
       {renderFab && <FloatingActionButton imgSrc="/qash-icon.svg" />}
     </nav>
