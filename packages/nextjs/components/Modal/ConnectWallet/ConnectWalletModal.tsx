@@ -346,12 +346,16 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
               </div>
             )}
             <div className="flex flex-row gap-2">
-              <ActionButton text="Export" type="neutral" onClick={handleExportWallet} className="flex-1" />
+              {accounts.length > 0 && (
+                <ActionButton text="Export" type="neutral" onClick={handleExportWallet} className="flex-1" />
+              )}
               <ActionButton
                 text="Import"
+                type={accounts.length > 0 ? undefined : "neutral"}
                 onClick={() => openModal(MODAL_IDS.IMPORT_WALLET, { onImport: handleImportFromModal })}
                 className="flex-1"
               />
+              {accounts.length == 0 && <ActionButton text="Create" onClick={handleCreateClick} className="flex-1" />}
             </div>
           </div>
         );
