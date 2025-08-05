@@ -190,6 +190,38 @@ export async function consumeUnauthenticatedNote(account: string, partialNote: P
   }
 }
 
+export async function consumeUnauthenticatedGiftNote(
+  account: string,
+  note: any,
+  secret: [number, number, number, number],
+) {
+  try {
+    const { WebClient, AccountId, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Word, Felt } = await import(
+      "@demox-labs/miden-sdk"
+    );
+
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+
+    const transactionRequest = new TransactionRequestBuilder()
+      .withUnauthenticatedInputNotes(
+        new NoteAndArgsArray([
+          new NoteAndArgs(note, Word.newFromFelts(secret.map(felt => new Felt(BigInt(felt))).reverse())),
+        ]),
+      )
+      .build();
+
+    const accountId = AccountId.fromBech32(account);
+
+    const txResult = await client.newTransaction(accountId, transactionRequest);
+    await client.submitTransaction(txResult);
+
+    return txResult.executedTransaction().id().toHex();
+  } catch (err) {
+    console.log(err);
+    throw new Error("Failed to consume notes");
+  }
+}
+
 export async function consumeNoteByID(account: string, noteId: string) {
   try {
     const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
@@ -227,10 +259,11 @@ export async function consumeNoteByIDs(account: string, noteIds: string[]) {
 
 export async function createGiftNote(
   creator: string,
-  offeredAsset: any,
+  faucetId: string,
+  amount: bigint,
   secret: [number, number, number, number],
-  serialNumber: [number, number, number, number],
-) {
+  serialNumber?: [number, number, number, number],
+): Promise<[any, any[]]> {
   const {
     WebClient,
     OutputNote,
@@ -247,6 +280,7 @@ export async function createGiftNote(
     NoteAssets,
     Word,
     Note,
+    FungibleAsset,
   } = await import("@demox-labs/miden-sdk");
 
   const client = await WebClient.createClient(NODE_ENDPOINT);
@@ -359,15 +393,18 @@ export async function createGiftNote(
     NoteExecutionHint.always(),
     new Felt(BigInt(0)),
   );
+  const generatedSerialNumber = serialNumber ? serialNumber : ((await randomSerialNumbers()) as any[]);
+  const serialNumberString = generatedSerialNumber.map(felt => felt.toString());
+
   const noteRecipient = new NoteRecipient(
-    Word.newFromFelts(serialNumber.map(felt => new Felt(BigInt(felt)))),
+    Word.newFromFelts(serialNumberString.map(felt => new Felt(BigInt(felt)))),
     noteScript,
     noteInput,
   );
-  const noteAssets = new NoteAssets([offeredAsset]);
+  const noteAssets = new NoteAssets([new FungibleAsset(AccountId.fromBech32(faucetId), BigInt(amount))]);
   const note = new Note(noteAssets, noteMetadata, noteRecipient);
 
-  return OutputNote.full(note);
+  return [serialNumber ? note : OutputNote.full(note), serialNumberString];
 }
 
 export async function createBatchNote(
@@ -415,6 +452,35 @@ async function randomSerialNumbers(): Promise<any[]> {
   crypto.getRandomValues(randomBytes);
 
   return Array.from(randomBytes).map(value => new Felt(BigInt(value)));
+}
+
+export async function generateSecret(): Promise<[number, number, number, number]> {
+  const randomBytes = new Uint32Array(4);
+  crypto.getRandomValues(randomBytes);
+
+  return Array.from(randomBytes) as [number, number, number, number];
+}
+
+export function secretArrayToString(secret: [number, number, number, number]): string {
+  const uint32Array = new Uint32Array(secret);
+
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(uint32Array.buffer)));
+
+  return base64;
+}
+
+export function stringToSecretArray(secretString: string): [number, number, number, number] {
+  const uint8Array = new Uint8Array(
+    atob(secretString)
+      .split("")
+      .map(char => char.charCodeAt(0)),
+  );
+
+  // Convert to Uint32Array
+  const uint32Array = new Uint32Array(uint8Array.buffer);
+
+  // Convert to array of 4 numbers
+  return Array.from(uint32Array) as [number, number, number, number];
 }
 
 export async function customCreateP2IDENote(

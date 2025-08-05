@@ -16,6 +16,8 @@ import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
 import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
+import GiftTransactionOverviewModal from "@/components/Modal/GiftTransactionOverviewModal";
+import GIftSharingModal from "@/components/Modal/GIftSharingModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -30,10 +32,12 @@ export const MODAL_IDS = {
   ONBOARDING: "ONBOARDING",
   CONNECT_WALLET: "CONNECT_WALLET",
   TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
+  GIFT_TRANSACTION_OVERVIEW: "GIFT_TRANSACTION_OVERVIEW",
   IMPORT_WALLET: "IMPORT_WALLET",
   BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
   NOTIFICATION: "NOTIFICATION",
   BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
+  GIFT_SHARING: "GIFT_SHARING",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -108,6 +112,20 @@ export interface BatchTransactionsModalProps extends BaseModalProps {}
 
 export interface NotificationModalProps extends BaseModalProps {}
 
+export interface GiftTransactionOverviewModalProps extends BaseModalProps {
+  amount?: string;
+  accountAddress?: string;
+  transactionType?: string;
+  cancellableTime?: string;
+  onConfirm?: () => void;
+  tokenAddress?: string;
+  tokenSymbol?: string;
+}
+
+export interface GiftSharingModalProps extends BaseModalProps {
+  giftLink: string;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -125,6 +143,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModalProps;
   [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
+  [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModalProps;
+  [MODAL_IDS.GIFT_SHARING]: GiftSharingModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -146,4 +166,6 @@ export const modalRegistry = {
   [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModal,
   [MODAL_IDS.NOTIFICATION]: Notification,
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
+  [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModal,
+  [MODAL_IDS.GIFT_SHARING]: GIftSharingModal,
 } as const;

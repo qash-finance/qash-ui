@@ -131,7 +131,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   };
 
   return (
-    <nav className="sidebar overflow-hidden pt-3.5 rounded-lg bg-neutral-900 max-w-[400px] h-screen">
+    <nav className="sidebar overflow-hidden pt-3.5 rounded-lg bg-neutral-900 h-screen w-full">
       <div className="flex flex-col justify-between h-full">
         <div className="px-3.5 w-full">
           {/* Logo */}

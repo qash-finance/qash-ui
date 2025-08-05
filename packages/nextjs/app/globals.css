@@ -215,3 +215,46 @@ input:-moz-autofill:active {
 .gift-background {
   background: linear-gradient(180deg, #a4f3fd 0%, #cff8ff 100%);
 }
+
+.font-complain {
+  font-family: "Complain", sans-serif;
+  /* border: 3px solid #ffc629; */
+}
+
+.gift-text {
+  text-align: center;
+  text-shadow: 7px 4px 0 #ffc629;
+  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-color: #ffc629;
+  font-family: Complain;
+  font-size: 50px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -1.44px;
+}
+
+/* Custom scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
