@@ -33,7 +33,7 @@ const BUTTON_STYLES = {
     },
     disabled: {
       bg: "bg-[#8B5A5A]/70",
-      shadow: "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset",
+      shadow: "0px 0px 0px 1px #D70000, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #D70000 inset",
       color: "#8E8E8E",
     },
   },

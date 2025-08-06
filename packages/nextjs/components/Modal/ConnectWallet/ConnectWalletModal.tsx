@@ -11,6 +11,8 @@ import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTour } from "@reactour/tour";
 import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 import { usePathname, useRouter } from "next/navigation";
+import { useCreateDefaultGroup, useCreateGroup } from "@/services/api/group-payment";
+import { CreateGroupDto } from "@/types/group-payment";
 
 type Step = "init" | "creating" | "final";
 
@@ -52,6 +54,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
   const { openModal } = useModal();
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
   const { connectWallet: authenticateWallet } = useWalletAuth();
+  const { mutate: createGroup } = useCreateDefaultGroup();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -104,6 +107,28 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
     }
   }, [isOpen]);
 
+  // Function to create default "Quick Share" group
+  const createQuickShareGroup = async () => {
+    try {
+      const quickShareGroup: CreateGroupDto = {
+        name: "Quick Share",
+        members: [], // Add the new account as a member
+      };
+
+      createGroup(quickShareGroup, {
+        onSuccess: () => {
+          console.log("Default Quick Share group created successfully");
+        },
+        onError: error => {
+          console.error("Failed to create default Quick Share group:", error);
+          // Don't show error toast to user as this is a background operation
+        },
+      });
+    } catch (error) {
+      console.error("Error creating default Quick Share group:", error);
+    }
+  };
+
   const handleCreateClick = async () => {
     setCurrentStep("creating");
     setIsImporting(false);
@@ -126,6 +151,8 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       // Authenticate the newly created wallet
       try {
         await authenticateWallet(accountId);
+        // Create default "Quick Share" group after successful authentication
+        await createQuickShareGroup();
       } catch (error) {
         console.error("Failed to authenticate new wallet:", error);
         // Continue anyway since wallet was created successfully
@@ -499,6 +526,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       actionButtonIcon="/plus.png"
       currentStep={currentStep}
       handleCreateClick={handleCreateClick}
+      showCreateButton={accounts.length > 0 && currentStep === "init"}
     >
       {renderStepContent()}
     </BaseModal>

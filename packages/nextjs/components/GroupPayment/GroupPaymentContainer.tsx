@@ -1,34 +1,37 @@
 "use client";
-import * as React from "react";
+import React, { useState } from "react";
 import { GroupCard } from "./GroupCard";
 import { PaymentDetails } from "./PaymentDetails";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
+import { useGetAllGroups } from "@/services/api/group-payment";
+import { Group } from "@/types/group-payment";
+import { ActionButton } from "../Common/ActionButton";
+
+interface EmptyStateProps {
+  message: string;
+}
+
+const EmptyState: React.FC<EmptyStateProps> = ({ message }) => (
+  <div className="w-full h-[110px] flex items-center justify-center bg-[#292929] rounded-xl flex-col gap-2">
+    <img src="/sidebar/group-payment.gif" alt="No group" className="w-8 h-8" style={{ filter: "grayscale(1)" }} />
+    <div className="text-[#7C7C7C]">{message}</div>
+  </div>
+);
 
 const GroupPaymentContainer: React.FC = () => {
   const { openModal } = useModal();
-  const groupsData = [
-    {
+  const { data: groups, isLoading, error } = useGetAllGroups();
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+
+  // Transform API groups data to match GroupCard props
+  const groupsData =
+    groups?.map(group => ({
+      id: group.id,
       imageSrc: "/group-payment/default-group-payment-avatar.svg",
-      title: "Best Friends",
-      memberCount: 7,
-    },
-    {
-      imageSrc: "/group-payment/default-group-payment-avatar.svg",
-      title: "Lunch order at company",
-      memberCount: 5,
-    },
-    {
-      imageSrc: "/group-payment/default-group-payment-avatar.svg",
-      title: "Concert GD",
-      memberCount: 36,
-    },
-    {
-      imageSrc: "/group-payment/default-group-payment-avatar.svg",
-      title: "Korea Travelling 2025",
-      memberCount: 5,
-    },
-  ];
+      title: group.name,
+      memberCount: group.members.length,
+    })) || [];
 
   return (
     <main className="overflow-hidden self-stretch px-4 pt-5 pb-4 rounded-2xl bg-neutral-950 w-full">
@@ -37,45 +40,46 @@ const GroupPaymentContainer: React.FC = () => {
           <div className="flex gap-1.5 items-center text-white">
             <h1 className="self-stretch my-auto text-lg font-medium leading-none text-center text-white">Your group</h1>
             <div className=" bg-neutral-700 rounded-full">
-              <span className="px-2 py-1 text-white">4</span>
+              <span className="px-2 py-1 text-white">{groupsData.length}</span>
             </div>
           </div>
-          <button
-            className={`font-barlow font-medium text-sm transition-colors cursor-pointer bg-white text-blue-600 h-8`}
-            style={{
-              padding: "6px 10px 8px 10px",
-              borderRadius: "10px",
-              fontSize: "13px",
-              fontWeight: "500",
-              letterSpacing: "-0.084px",
-              lineHeight: "100%",
-              boxShadow:
-                "0px 0px 0px 1px #0059FF, 0px 1px 3px 0px rgba(9, 65, 143, 0.20), 0px -2.4px 0px 0px #0059FF inset",
-            }}
-            onClick={() => {
-              openModal(MODAL_IDS.CREATE_NEW_GROUP);
-            }}
-          >
-            New group
-          </button>
+          <ActionButton
+            text="New group"
+            type="neutral"
+            onClick={() => openModal(MODAL_IDS.CREATE_NEW_GROUP)}
+            className="h-10"
+          />
         </header>
 
-        <section className="flex overflow-hidden gap-2.5 items-start mt-2.5 w-full max-md:max-w-full">
-          {groupsData.map((group, index) => (
-            <GroupCard key={index} imageSrc={group.imageSrc} title={group.title} memberCount={group.memberCount} />
-          ))}
+        <section className="flex overflow-x-auto gap-2.5 items-start mt-2.5 w-full max-md:max-w-full">
+          {isLoading ? (
+            <EmptyState message="Loading groups..." />
+          ) : error ? (
+            <EmptyState message="Error loading groups" />
+          ) : groupsData.length === 0 ? (
+            <EmptyState message="No group" />
+          ) : (
+            groupsData.map(group => (
+              <GroupCard
+                key={group.id}
+                imageSrc={group.imageSrc}
+                title={group.title}
+                memberCount={group.memberCount}
+                onClick={() => {
+                  if (!groups) return;
+
+                  const selectedGroup: Group | undefined = groups.find(g => g.id === group.id);
+                  if (selectedGroup) setSelectedGroup(selectedGroup);
+                }}
+              />
+            ))
+          )}
         </section>
       </div>
 
       <section className="flex-1 mt-2 w-full max-md:max-w-full h-[74%]">
         <h2 className="text-lg font-medium leading-none text-white max-md:max-w-full">Quick share</h2>
-        <PaymentDetails
-          amount="7,000"
-          perPersonAmount="1,400"
-          groupName="Lunch order at company"
-          memberCount={5}
-          shareLink="http://q3x.io/redpacket"
-        />
+        <PaymentDetails selectedGroup={selectedGroup} groups={groups || []} />
       </section>
     </main>
   );

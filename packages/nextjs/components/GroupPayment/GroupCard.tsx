@@ -6,9 +6,10 @@ interface GroupCardProps {
   imageSrc: string;
   title: string;
   memberCount: number;
+  onClick: () => void;
 }
 
-export const GroupCard: React.FC<GroupCardProps> = ({ imageSrc, title, memberCount }) => {
+export const GroupCard: React.FC<GroupCardProps> = ({ imageSrc, title, memberCount, onClick }) => {
   return (
     <div className="flex overflow-x-auto flex-col p-3 rounded-xl bg-stone-900 min-w-60">
       <div className="flex gap-2.5 items-center self-start">
@@ -19,7 +20,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({ imageSrc, title, memberCou
         </div>
       </div>
       <hr className="my-2" />
-      <ActionButton text="Choose group" onClick={() => {}} className="h-8" />
+      <ActionButton text="Choose group" onClick={onClick} className="h-8" />
     </div>
   );
 };

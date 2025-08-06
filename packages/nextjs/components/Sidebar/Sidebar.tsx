@@ -62,7 +62,7 @@ export const actionItems = [
         label: "Group Payment",
         isActive: false,
         link: SidebarLink.GroupPayment,
-        disabled: true,
+        disabled: false,
       },
     ],
   },

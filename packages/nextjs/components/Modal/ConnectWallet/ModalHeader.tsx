@@ -1,5 +1,5 @@
 import React from "react";
-import { ActionButton } from "../Common/ActionButton";
+import { ActionButton } from "../../Common/ActionButton";
 
 interface ModalHeaderProps {
   title: string;
@@ -8,6 +8,7 @@ interface ModalHeaderProps {
   actionButtonIcon?: string;
   handleCreateClick?: () => void;
   currentStep?: string;
+  showCreateButton?: boolean;
 }
 
 export const ModalHeader: React.FC<ModalHeaderProps> = ({
@@ -17,6 +18,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
   actionButtonIcon,
   handleCreateClick,
   currentStep,
+  showCreateButton = false,
 }) => {
   return (
     <header className="flex justify-between items-center self-stretch pt-2.5 pr-2.5 pb-2 pl-4 border-b border-solid bg-zinc-800 rounded-t-2xl border-b-neutral-900 max-sm:py-2 max-sm:pr-2 max-sm:pl-3">
@@ -29,7 +31,7 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
         </h1>
       </div>
       <div className="flex items-center gap-5">
-        {currentStep == "init" && (
+        {showCreateButton && (
           <ActionButton text="Create new wallet" icon={actionButtonIcon} onClick={handleCreateClick} />
         )}
         <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />

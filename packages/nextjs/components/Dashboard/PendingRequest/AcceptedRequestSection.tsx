@@ -22,8 +22,8 @@ export const AcceptedRequestSection: React.FC<AcceptedRequestSectionProps> = ({ 
     const formattedDate = formatDate(new Date(request.createdAt));
 
     // Truncate the payer address for display
-    const truncatedPayer =
-      request.payer.length > 10 ? `${request.payer.slice(0, 6)}...${request.payer.slice(-4)}` : request.payer;
+    const truncatedPayee =
+      request.payee.length > 10 ? `${request.payee.slice(0, 6)}...${request.payee.slice(-4)}` : request.payee;
 
     const statusText = request.status === RequestPaymentStatus.ACCEPTED ? "Succeed" : "Failed";
 
@@ -36,8 +36,9 @@ export const AcceptedRequestSection: React.FC<AcceptedRequestSectionProps> = ({ 
       ),
       Message: <div className="flex gap-1 items-center w-full justify-center text-white">{request.message}</div>,
       "Request From": (
-        <div className="bg-[#363636] bg-opacity-10 rounded-full w-fit px-2 mx-auto flex items-center justify-center">
-          <span className="text-xs font-medium tracking-tight leading-4 text-white text-center">{truncatedPayer}</span>
+        <div className="bg-[#363636] bg-opacity-10 rounded-full w-fit px-2 mx-auto flex items-center justify-center gap-2 py-1">
+          {request.isGroupPayment && <img src="/sidebar/group-payment.gif" alt="Group" className="w-4 h-4 grayscale" />}
+          <span className="text-xs font-medium tracking-tight leading-4 text-white text-center">{truncatedPayee}</span>
         </div>
       ),
       "Date/Time": (

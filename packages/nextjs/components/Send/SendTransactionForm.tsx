@@ -53,6 +53,7 @@ interface SendTransactionFormValues {
 export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalProps> = ({
   activeTab,
   onTabChange,
+  onClose,
   ...props
 }) => {
   // **************** Custom Hooks *******************
@@ -75,6 +76,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const tokenAddressParam = isSendModalOpen ? props.tokenAddress || "" : searchParams?.get("tokenAddress") || "";
   const amountParam = isSendModalOpen ? props.amount || "" : searchParams?.get("amount") || "";
   const messageParam = isSendModalOpen ? props.message || "" : searchParams?.get("message") || "";
+  const isGroupPaymentParam = isSendModalOpen ? props.isGroupPayment : false;
+  console.log("🚀 ~ SendTransactionForm ~ isGroupPaymentParam:", isGroupPaymentParam);
 
   // **************** Form Hooks *******************
   const {
@@ -302,6 +305,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
 
               if (props.pendingRequestId) {
                 await acceptRequest({ id: props.pendingRequestId, txid: txId });
+                onClose();
               }
             }
           } catch (error) {
@@ -444,10 +448,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             selectedToken={selectedToken}
             onTokenSelect={handleTokenSelect}
             tokenAddress={selectedTokenAddress}
+            disabled={isGroupPaymentParam}
           />
         </header>
 
         <AmountInput
+          disabled={isGroupPaymentParam}
           selectedToken={selectedToken}
           availableBalance={Number(
             formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
@@ -491,6 +497,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
               <ActionButton
                 text="Remove"
                 type="deny"
+                disabled={isGroupPaymentParam}
                 onClick={() => {
                   setRecipientName("");
                   setValue("recipientAddress", "");

@@ -272,3 +272,51 @@ input:-moz-autofill:active {
   scrollbar-color: #404040 #1a1a1a;
 }
 /************ Table Scrollbar ************/
+
+/************ Hide Horizontal Scrollbar ************/
+/* Hide horizontal scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide horizontal scrollbar for Firefox */
+.overflow-x-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Universal horizontal scrollbar hiding */
+.hide-scrollbar-x::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar-x {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Hide all scrollbars */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+/************ Hide Horizontal Scrollbar ************/
+
+/* Custom pulse animation for table rows */
+@keyframes pulse-hover {
+  0%,
+  100% {
+    background-color: #1e1e1e;
+  }
+  50% {
+    background-color: #292929;
+  }
+}
+
+.animate-pulse-hover {
+  animation: pulse-hover 2s ease-in-out infinite;
+}

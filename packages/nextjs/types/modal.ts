@@ -16,6 +16,7 @@ import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
 import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
+import GroupLinkModal from "@/components/Modal/GroupLinkModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -34,6 +35,7 @@ export const MODAL_IDS = {
   BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
   NOTIFICATION: "NOTIFICATION",
   BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
+  GROUP_LINK: "GROUP_LINK",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -56,6 +58,7 @@ export interface SendModalProps extends BaseModalProps {
   message?: string;
   tokenAddress?: string;
   tokenSymbol?: string;
+  isGroupPayment?: boolean;
 }
 
 export interface SelectRecipientModalProps extends BaseModalProps {
@@ -77,9 +80,7 @@ export interface TransactionDetailModalProps extends BaseModalProps {
   onCopyLink?: () => void;
 }
 
-export interface CreateNewGroupModalProps extends BaseModalProps {
-  onSave?: () => void;
-}
+export interface CreateNewGroupModalProps extends BaseModalProps {}
 
 export interface NewRequestModalProps extends BaseModalProps {
   recipient?: string;
@@ -119,6 +120,8 @@ export interface BatchTransactionsModalProps extends BaseModalProps {}
 
 export interface NotificationModalProps extends BaseModalProps {}
 
+export interface GroupLinkModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -136,6 +139,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModalProps;
   [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
+  [MODAL_IDS.GROUP_LINK]: GroupLinkModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -157,4 +161,5 @@ export const modalRegistry = {
   [MODAL_IDS.BATCH_TRANSACTION_OVERVIEW]: BatchTransactionOverviewModal,
   [MODAL_IDS.NOTIFICATION]: Notification,
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
+  [MODAL_IDS.GROUP_LINK]: GroupLinkModal,
 } as const;

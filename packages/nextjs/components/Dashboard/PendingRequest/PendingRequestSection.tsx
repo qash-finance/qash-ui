@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { CellContent, Table } from "@/components/Common/Table";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useModal } from "@/contexts/ModalManagerProvider";
@@ -12,95 +12,168 @@ interface PendingRequestSectionProps {
   pendingRequests?: RequestPayment[];
 }
 
-const headers = ["Amount", "Message", "Request From", "Date/Time"];
+const HEADERS = ["Amount", "Message", "Request From", "Date/Time"];
+const COLUMN_WIDTHS = { "0": "10%", "1": "35%", "2": "10%", "3": "10%", "4": "15%" } as const;
+const DEFAULT_TOKEN_SYMBOL = "QASH";
+const ADDRESS_TRUNCATE_LENGTH = { start: 6, end: 4 } as const;
+
+// Helper function to truncate address
+const truncateAddress = (address: string): string => {
+  if (address.length <= 10) return address;
+  return `${address.slice(0, ADDRESS_TRUNCATE_LENGTH.start)}...${address.slice(-ADDRESS_TRUNCATE_LENGTH.end)}`;
+};
+
+// Helper function to get token symbol
+const getTokenSymbol = (request: RequestPayment): string => {
+  const token = Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
+  return token?.metadata?.symbol || DEFAULT_TOKEN_SYMBOL;
+};
 
 export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pendingRequests = [] }) => {
   const { openModal } = useModal();
   const { mutate: denyRequest } = useDenyRequest();
   const { data: addressBooks } = useGetAddressBooks();
 
-  const findRecipientName = useCallback(
-    (address: string) => {
-      if (!addressBooks) return undefined;
+  // Memoized URL parameters
+  const urlParams = useMemo(() => {
+    if (typeof window === "undefined") return {};
 
-      for (const category of addressBooks) {
-        const addressBook = category.addressBooks?.find(book => book.address === address);
-        if (addressBook) return addressBook.name;
-      }
-      return undefined;
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    return {
+      isGroupPayment: urlSearchParams.get("isGroupPayment"),
+      groupPaymentId: urlSearchParams.get("groupPaymentId"),
+    };
+  }, []); // Empty dependency array since URL doesn't change during component lifecycle
+
+  // Memoized address book lookup map for better performance
+  const addressBookMap = useMemo(() => {
+    if (!addressBooks) return new Map<string, string>();
+
+    const map = new Map<string, string>();
+    addressBooks.forEach(category => {
+      category.addressBooks?.forEach(book => {
+        map.set(book.address, book.name);
+      });
+    });
+    return map;
+  }, [addressBooks]);
+
+  // Check if current row should have pulse animation
+  const shouldPulse = useCallback(
+    (request: RequestPayment) => {
+      return (
+        pendingRequests.length > 0 &&
+        urlParams.isGroupPayment === "true" &&
+        urlParams.groupPaymentId &&
+        String(request.groupPaymentId) === urlParams.groupPaymentId
+      );
     },
-    [addressBooks],
+    [urlParams.isGroupPayment, urlParams.groupPaymentId, pendingRequests.length],
+  );
+
+  const findRecipientName = useCallback(
+    (address: string): string | undefined => addressBookMap.get(address),
+    [addressBookMap],
   );
 
   const actionRenderer = useCallback(
     (rowData: Record<string, CellContent>, index: number) => {
-      // Access the original request data through the index
       const request = pendingRequests[index];
+      if (request?.status !== "pending") return null;
+
       const recipientName = findRecipientName(request.payee);
-      const status = request?.status;
+      const token = Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
+
+      const handleAccept = () => {
+        openModal<SendModalProps>(MODAL_IDS.SEND, {
+          pendingRequestId: request.id,
+          recipient: request.payee,
+          recipientName,
+          amount: request.amount,
+          message: request.message,
+          tokenAddress: token?.faucetId,
+          isGroupPayment: request.isGroupPayment,
+        });
+      };
+
+      const handleDeny = () => denyRequest(request.id);
 
       return (
         <div className="flex gap-1 items-center justify-center">
-          {status === "pending" && (
-            <>
-              <ActionButton text="Deny" type="deny" className="flex-1" onClick={() => denyRequest(request.id)} />
-              <ActionButton
-                text="Accept"
-                className="flex-1"
-                onClick={() =>
-                  openModal<SendModalProps>(MODAL_IDS.SEND, {
-                    pendingRequestId: request.id,
-                    recipient: request.payee,
-                    recipientName: recipientName,
-                    amount: request.amount,
-                    message: request.message,
-                    tokenAddress: request.tokens[0].faucetId,
-                  })
-                }
-              />
-            </>
-          )}
+          <ActionButton text="Deny" type="deny" className="flex-1" onClick={handleDeny} />
+          <ActionButton text="Accept" className="flex-1" onClick={handleAccept} />
         </div>
       );
     },
-    [pendingRequests, openModal, findRecipientName],
+    [pendingRequests, openModal, findRecipientName, denyRequest],
   );
 
-  const data = pendingRequests.map(request => {
-    // Get the first token for display (assuming single token for now)
-    const token = request.tokens && Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
-    const symbol = token?.metadata?.symbol || "QASH";
-    const amount = request.amount;
+  // Memoized data transformation for better performance
+  const data = useMemo(
+    () =>
+      pendingRequests.map(request => {
+        const symbol = getTokenSymbol(request);
+        const formattedDate = formatDate(new Date(request.createdAt));
+        const truncatedPayee = truncateAddress(request.payee);
 
-    // Format the date
-    const formattedDate = formatDate(new Date(request.createdAt));
+        return {
+          Amount: (
+            <div className="flex gap-1 items-center">
+              <img src={`/token/${symbol.toLowerCase()}.svg`} alt={symbol.toLowerCase()} className="w-4 h-4" />
+              <span className="text-base tracking-tight leading-5 text-center text-white max-sm:text-sm">
+                {request.amount}
+              </span>
+            </div>
+          ),
+          Message: <div className="flex gap-1 items-center w-full justify-center text-white">{request.message}</div>,
+          "Request From": (
+            <div className="bg-[#363636] bg-opacity-10 rounded-full w-fit px-2 mx-auto flex items-center justify-center gap-2 py-1">
+              {request.isGroupPayment && (
+                <img src="/sidebar/group-payment.gif" alt="Group" className="w-4 h-4 grayscale" />
+              )}
+              <span className="text-xs font-medium tracking-tight leading-4 text-white text-center">
+                {truncatedPayee}
+              </span>
+            </div>
+          ),
+          "Date/Time": (
+            <span className="text-sm tracking-tight leading-4 text-stone-300 max-sm:text-xs">{formattedDate}</span>
+          ),
+          status: request.status,
+        };
+      }),
+    [pendingRequests],
+  );
 
-    // Truncate the payer address for display
-    const truncatedPayee =
-      request.payee.length > 10 ? `${request.payee.slice(0, 6)}...${request.payee.slice(-4)}` : request.payee;
+  // Custom row class function for pulse animation
+  const getRowClassName = useCallback(
+    (rowData: Record<string, CellContent>, index: number): string => {
+      const originalRequest = pendingRequests[index];
+      return originalRequest && shouldPulse(originalRequest) ? "animate-pulse-hover" : "";
+    },
+    [pendingRequests, shouldPulse],
+  );
 
-    return {
-      Amount: (
-        <div className="flex gap-1 items-center">
-          <img src={`/token/${symbol.toLowerCase()}.svg`} alt={symbol.toLowerCase()} className="w-4 h-4" />
-          <span className="text-base tracking-tight leading-5 text-center text-white max-sm:text-sm">{amount}</span>
+  if (data.length === 0) {
+    return (
+      <>
+        <header className="flex flex-col gap-2 justify-center items-start w-full">
+          <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+            Pending payment request
+          </h2>
+          <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+            Once you accept, you're committing to send the amount to the request address
+          </p>
+        </header>
+        <div className="flex flex-col items-center justify-center py-8 bg-[#1E1E1E] rounded-lg">
+          <p className="text-stone-300 text-sm">No pending requests</p>
         </div>
-      ),
-      Message: <div className="flex gap-1 items-center w-full justify-center text-white">{request.message}</div>,
-      "Request From": (
-        <div className="bg-[#363636] bg-opacity-10 rounded-full w-fit px-2 mx-auto flex items-center justify-center">
-          <span className="text-xs font-medium tracking-tight leading-4 text-white text-center">{truncatedPayee}</span>
-        </div>
-      ),
-      "Date/Time": (
-        <span className="text-sm tracking-tight leading-4 text-stone-300 max-sm:text-xs">{formattedDate}</span>
-      ),
-      status: request.status,
-    };
-  });
+      </>
+    );
+  }
 
   return (
-    <React.Fragment>
+    <>
       <header className="flex flex-col gap-2 justify-center items-start w-full">
         <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
           Pending payment request
@@ -109,19 +182,16 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
           Once you accept, you're committing to send the amount to the request address
         </p>
       </header>
-      {data.length > 0 ? (
+      <div className="max-h-[230px] overflow-y-auto">
         <Table
-          headers={headers}
+          headers={HEADERS}
           data={data}
           actionColumn={true}
           actionRenderer={actionRenderer}
-          columnWidths={{ "0": "10%", "1": "35%", "2": "10%", "3": "10%", "4": "15%" }}
+          columnWidths={COLUMN_WIDTHS}
+          rowClassName={getRowClassName}
         />
-      ) : (
-        <div className="flex flex-col items-center justify-center py-8 bg-[#1E1E1E] rounded-lg">
-          <p className="text-stone-300 text-sm">No pending requests</p>
-        </div>
-      )}
-    </React.Fragment>
+      </div>
+    </>
   );
 };
