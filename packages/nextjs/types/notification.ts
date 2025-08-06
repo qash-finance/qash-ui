@@ -4,6 +4,8 @@ export enum NotificationType {
   REFUND = "REFUND",
   BATCH_SEND = "BATCH_SEND",
   WALLET_CREATE = "WALLET_CREATE",
+  GIFT_SEND = "GIFT_SEND",
+  GIFT_OPEN = "GIFT_OPEN",
 }
 
 export enum NotificationStatus {
@@ -46,4 +48,5 @@ export interface NotificationCardType {
   recipientCount: number;
   isRead: boolean;
   transactionId: string;
+  giftOpener: string;
 }

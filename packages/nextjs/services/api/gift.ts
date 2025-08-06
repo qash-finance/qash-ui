@@ -6,6 +6,11 @@ const sendGift = async (gift: SendGiftDto) => {
   return response;
 };
 
+const openGift = async (secret: string, txId: string) => {
+  const response = await apiServerWithAuth.putData(`/gift/open`, { txId, secret });
+  return response.data;
+};
+
 const getGiftDashboard = async () => {
   const response = await apiServerWithAuth.get(`/gift/dashboard`);
   return response.data as GiftDashboardDto;
@@ -16,4 +21,4 @@ const getGiftDetail = async (secretNumber: string) => {
   return response.data as Gift;
 };
 
-export { sendGift, getGiftDashboard, getGiftDetail };
+export { sendGift, getGiftDashboard, getGiftDetail, openGift };

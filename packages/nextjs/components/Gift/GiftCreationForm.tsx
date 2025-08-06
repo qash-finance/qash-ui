@@ -22,6 +22,7 @@ import { createGiftNote, generateSecret, secretArrayToString } from "@/services/
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
 import useSendGift from "@/hooks/server/useSendGift";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 // import { TokenSelector } from "./TokenSelector";
 
 export const GiftCreationForm: React.FC = () => {
@@ -31,6 +32,7 @@ export const GiftCreationForm: React.FC = () => {
   const { isConnected } = useWalletConnect();
   const { mutate: sendGift } = useSendGift();
   const { forceFetch: forceRefetchGiftDashboard } = useGiftDashboard();
+  const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
 
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
@@ -108,12 +110,14 @@ export const GiftCreationForm: React.FC = () => {
             const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
 
             // create gift note
-            const [outputNote, serialNumber, hashSecret] = await createGiftNote(
+            const [outputNote, serialNumber] = await createGiftNote(
               walletAddress,
               selectedToken.faucetId,
               parsedAmount,
               secret,
             );
+
+            console.log("serialNumber", serialNumber);
 
             // submit transaction
             const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
@@ -122,7 +126,6 @@ export const GiftCreationForm: React.FC = () => {
 
             // turn secret to string
             const secretString = secretArrayToString(secret);
-            console.log("secret", secret, secretString);
 
             await sendGift({
               assets: [
@@ -148,6 +151,7 @@ export const GiftCreationForm: React.FC = () => {
             // refetch everything
             await forceRefetchAssets();
             await forceRefetchGiftDashboard();
+            await forceRefetchRecallableNotes();
 
             // reset current amount
             setCurrentAmount(0);

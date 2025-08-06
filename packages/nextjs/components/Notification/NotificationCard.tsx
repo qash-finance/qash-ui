@@ -15,6 +15,7 @@ export interface NotificationCardProps {
   recipientCount?: number;
   isRead?: boolean;
   txId?: string;
+  giftOpener?: string;
   onClick?: () => void;
 }
 
@@ -30,6 +31,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   recipientCount,
   isRead = false,
   txId,
+  giftOpener,
   onClick,
 }) => {
   // Common styles
@@ -46,6 +48,10 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   const getIcon = () => {
     switch (type) {
       case NotificationType.SEND:
+        return <img src="/arrow/thin-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.GIFT_SEND:
+        return <img src="/arrow/thin-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.GIFT_OPEN:
         return <img src="/arrow/thin-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
       case NotificationType.CLAIM:
         return <img src="/arrow/thin-arrow-down-short.svg" alt="send" className="w-6 h-6" />;
@@ -67,11 +73,80 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return (
           <div>
             <span className={titleStyles}>
-              {title}{" "}
+              {title} for{" "}
               <span className="text-[#1e8fff]">
                 {amount} {tokenName} ({formatAddress(tokenAddress || "")})
               </span>{" "}
               to {formatAddress(address || "")}
+            </span>
+            <div className="my-1.5">
+              <a
+                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white text-sm w-fit"
+              >
+                <span>View on explorer</span>
+                <svg
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        );
+      case NotificationType.GIFT_SEND:
+        return (
+          <div>
+            <span className={titleStyles}>
+              {title} for{" "}
+              <span className="text-[#1e8fff]">
+                {amount} {tokenName}
+              </span>{" "}
+            </span>
+            <div className="my-1.5">
+              <a
+                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white text-sm w-fit"
+              >
+                <span>View on explorer</span>
+                <svg
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        );
+      case NotificationType.GIFT_OPEN:
+        return (
+          <div>
+            <span className={titleStyles}>
+              {title}{" "}
+              <span className="text-[#1e8fff]">
+                {amount} {tokenName}
+              </span>{" "}
+              by {formatAddress(giftOpener || "")}
             </span>
             <div className="my-1.5">
               <a

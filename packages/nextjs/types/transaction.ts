@@ -81,6 +81,7 @@ export interface RecallableNote {
   sender: string;
   serialNumber: string[];
   status: NoteStatus;
+  secretNumber?: string;
 }
 
 export interface ConsumePublicTransactionDto {

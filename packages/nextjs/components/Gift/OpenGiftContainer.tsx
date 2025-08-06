@@ -13,14 +13,20 @@ import {
 } from "@/services/utils/miden/note";
 import { MIDEN_EXPLORER_URL } from "@/services/utils/constant";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import useOpenGift from "@/hooks/server/useOpenGift";
 
 const OpenGiftContainer = () => {
+  // **************** Pathname Hooks *******************
   const searchParams = useSearchParams();
   const encodedCode = searchParams.get("code");
   const code = encodedCode ? decodeURIComponent(encodedCode) : "";
+
+  // **************** Custom Hooks *******************
   const { walletAddress } = useWalletConnect();
   const { data: giftDetail, isLoading: isLoadingGiftDetail } = useGiftDetail(code);
+  const { mutateAsync: openGift } = useOpenGift();
 
+  // **************** Local State *******************
   const [isOpen, setIsOpen] = useState(false);
   const [isDropping, setIsDropping] = useState(false);
   const [showGif, setShowGif] = useState(false);
@@ -31,12 +37,11 @@ const OpenGiftContainer = () => {
     try {
       // decode secret number back to array of 4 numbers
       const secret = stringToSecretArray(giftDetail?.secretNumber!);
-      console.log("stringToSecretArray", secret);
       // consume the gift
-      const [note, _, hashedSecret] = await createGiftNote(
+      const [note, _] = await createGiftNote(
         giftDetail?.sender!,
         giftDetail?.assets[0].faucetId!,
-        BigInt(giftDetail?.assets[0].amount!),
+        BigInt(Number(giftDetail?.assets[0].amount!) * 10 ** giftDetail?.assets[0].metadata.decimals!),
         secret,
         giftDetail?.serialNumber?.map(Number) as [number, number, number, number],
       );
@@ -51,7 +56,12 @@ const OpenGiftContainer = () => {
         </div>,
       );
 
-      // console.log(txId);
+      // call server endpoint to update gift status
+      await openGift({
+        secret: code,
+        txId,
+      });
+
       setIsDropping(true);
       setShowGif(true);
       setShowBlackBg(true);

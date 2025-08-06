@@ -86,7 +86,7 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
                 assets={gift.assets[0]}
                 dateTime={gift.createdAt}
                 link={`${window.location.origin}/gift/open-gift?code=${encodeURIComponent(gift.secretNumber)}`}
-                isOpened={gift.status === NoteStatus.CONSUMED}
+                isOpened={gift.status != NoteStatus.PENDING}
                 onCopyLink={onCopyLink}
               />
             ))}

@@ -220,6 +220,44 @@ export async function consumeUnauthenticatedGiftNote(
   }
 }
 
+export async function consumeUnauthenticatedGiftNotes(
+  account: string,
+  notes: any[],
+  secrets: [number, number, number, number][],
+) {
+  try {
+    const { WebClient, AccountId, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Word, Felt } = await import(
+      "@demox-labs/miden-sdk"
+    );
+
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+
+    // create notes
+    let inputNotes = [];
+
+    for (let i = 0; i < notes.length; i++) {
+      const note = notes[i];
+      const secret = secrets[i];
+      const noteAndArg = new NoteAndArgs(note, Word.newFromFelts(secret.map(felt => new Felt(BigInt(felt)))));
+      inputNotes.push(noteAndArg);
+    }
+
+    const transactionRequest = new TransactionRequestBuilder()
+      .withUnauthenticatedInputNotes(new NoteAndArgsArray(inputNotes))
+      .build();
+
+    const accountId = AccountId.fromBech32(account);
+
+    const txResult = await client.newTransaction(accountId, transactionRequest);
+    await client.submitTransaction(txResult);
+
+    return txResult.executedTransaction().id().toHex();
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to consume notes");
+  }
+}
+
 export async function consumeNoteByID(account: string, noteId: string) {
   try {
     const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
@@ -245,7 +283,6 @@ export async function consumeNoteByIDs(account: string, noteIds: string[]) {
     const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
     const accountId = AccountId.fromBech32(account);
-
     const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
 
@@ -261,7 +298,7 @@ export async function createGiftNote(
   amount: bigint,
   secret: [number, number, number, number],
   serialNumber?: [number, number, number, number],
-): Promise<[any, any[], any]> {
+): Promise<[any, any[]]> {
   const {
     WebClient,
     OutputNote,
@@ -291,8 +328,8 @@ export async function createGiftNote(
 
   // hash the secret
   const secretFelts = secret.map(felt => new Felt(BigInt(felt)));
-  const secretFeltsCopy = secret.map(felt => new Felt(BigInt(felt)));
 
+  // todo: put hash to note inputs
   const paddedSecretArray = [
     new Felt(BigInt(0)),
     new Felt(BigInt(0)),
@@ -300,19 +337,9 @@ export async function createGiftNote(
     new Felt(BigInt(0)),
     ...secretFelts,
   ];
-  const paddedSecretArrayCopy = [
-    new Felt(BigInt(0)),
-    new Felt(BigInt(0)),
-    new Felt(BigInt(0)),
-    new Felt(BigInt(0)),
-    ...secretFeltsCopy,
-  ];
-
-  const secretHash = Rpo256.hashElements(new FeltArray(paddedSecretArray));
-  const secretHashCopy = Rpo256.hashElements(new FeltArray(paddedSecretArrayCopy));
 
   // prepare note
-  const noteInput = new NoteInputs(new FeltArray(secretHash.toWord() as any));
+  const noteInput = new NoteInputs(new FeltArray(secretFelts));
   const noteMetadata = new NoteMetadata(
     AccountId.fromBech32(creator),
     noteType,
@@ -331,7 +358,7 @@ export async function createGiftNote(
   const noteAssets = new NoteAssets([new FungibleAsset(AccountId.fromBech32(faucetId), BigInt(amount))]);
   const note = new Note(noteAssets, noteMetadata, noteRecipient);
 
-  return [serialNumber ? note : OutputNote.full(note), serialNumberString, secretHashCopy.toWord()];
+  return [serialNumber ? note : OutputNote.full(note), serialNumberString];
 }
 
 export async function createBatchNote(

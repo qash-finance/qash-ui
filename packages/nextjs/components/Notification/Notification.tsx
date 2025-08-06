@@ -159,29 +159,11 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     }
   };
 
-  // Convert server notification type to client type
-  const convertNotificationType = (serverType: string): NotificationType => {
-    switch (serverType) {
-      case "SEND":
-        return NotificationType.SEND;
-      case "CLAIM":
-        return NotificationType.CLAIM;
-      case "REFUND":
-        return NotificationType.REFUND;
-      case "BATCH_SEND":
-        return NotificationType.BATCH_SEND;
-      case "WALLET_CREATE":
-        return NotificationType.WALLET_CREATE;
-      default:
-        return NotificationType.SEND;
-    }
-  };
-
   // Convert server notification to client format
   const convertNotification = (notification: NotificationResponseDto): NotificationCardType => {
     return {
       id: notification.id,
-      type: convertNotificationType(notification.type) as NotificationType,
+      type: notification.type,
       title: notification.title,
       subtitle: notification.message,
       time: new Date(notification.createdAt).toLocaleString(),
@@ -192,6 +174,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
       recipientCount: notification.metadata?.recipientCount,
       isRead: notification.status === "READ",
       transactionId: notification.metadata?.transactionId,
+      giftOpener: notification.metadata?.caller,
     };
   };
 
@@ -321,6 +304,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                     recipientCount={notification.recipientCount}
                     isRead={notification.isRead}
                     txId={notification.transactionId}
+                    giftOpener={notification.giftOpener}
                     onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
                   />
                 ))
