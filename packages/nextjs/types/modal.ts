@@ -18,6 +18,10 @@ import { BatchTransaction } from "@/services/store/batchTransactions";
 import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
 import GiftTransactionOverviewModal from "@/components/Modal/GiftTransactionOverviewModal";
 import GIftSharingModal from "@/components/Modal/GIftSharingModal";
+import GenerateGiftModal from "@/components/Modal/GenerateGiftModal";
+import ValidatingModal from "@/components/Modal/ValidatingModal";
+import SuccessModal from "@/components/Modal/Status/SuccessModal";
+import FailModal from "@/components/Modal/Status/FailModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -38,6 +42,10 @@ export const MODAL_IDS = {
   NOTIFICATION: "NOTIFICATION",
   BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
   GIFT_SHARING: "GIFT_SHARING",
+  GENERATE_GIFT: "GENERATE_GIFT",
+  VALIDATING: "VALIDATING",
+  SUCCESS: "SUCCESS",
+  FAIL: "FAIL",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -126,6 +134,18 @@ export interface GiftSharingModalProps extends BaseModalProps {
   giftLink: string;
 }
 
+export interface GenerateGiftModalProps extends BaseModalProps {
+  onGiftGeneration?: () => Promise<string>;
+}
+
+export interface ValidatingModalProps extends BaseModalProps {}
+
+export interface SuccessModalProps extends BaseModalProps {}
+
+export interface FailModalProps extends BaseModalProps {
+  tryAgain?: () => Promise<void>;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -145,6 +165,10 @@ export type ModalPropsMap = {
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
   [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModalProps;
   [MODAL_IDS.GIFT_SHARING]: GiftSharingModalProps;
+  [MODAL_IDS.GENERATE_GIFT]: GenerateGiftModalProps;
+  [MODAL_IDS.VALIDATING]: ValidatingModalProps;
+  [MODAL_IDS.SUCCESS]: SuccessModalProps;
+  [MODAL_IDS.FAIL]: FailModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -168,4 +192,8 @@ export const modalRegistry = {
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
   [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModal,
   [MODAL_IDS.GIFT_SHARING]: GIftSharingModal,
+  [MODAL_IDS.GENERATE_GIFT]: GenerateGiftModal,
+  [MODAL_IDS.VALIDATING]: ValidatingModal,
+  [MODAL_IDS.SUCCESS]: SuccessModal,
+  [MODAL_IDS.FAIL]: FailModal,
 } as const;

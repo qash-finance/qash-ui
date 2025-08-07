@@ -420,12 +420,22 @@ export function secretArrayToString(secret: [number, number, number, number]): s
 
   const base64 = btoa(String.fromCharCode(...new Uint8Array(uint32Array.buffer)));
 
-  return base64;
+  // Convert to URL-safe base64 by replacing + with - and / with _
+  // This prevents issues when the secret is used in URLs where + gets converted to space
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 export function stringToSecretArray(secretString: string): [number, number, number, number] {
+  // Convert from URL-safe base64 back to standard base64
+  let base64 = secretString.replace(/-/g, "+").replace(/_/g, "/");
+
+  // Add padding if needed
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+
   const uint8Array = new Uint8Array(
-    atob(secretString)
+    atob(base64)
       .split("")
       .map(char => char.charCodeAt(0)),
   );

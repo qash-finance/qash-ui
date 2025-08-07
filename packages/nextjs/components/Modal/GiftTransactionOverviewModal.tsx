@@ -9,13 +9,24 @@ import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
-export function GiftTransactionOverviewModal({ isOpen, onClose, ...props }: ModalProp<TransactionOverviewModalProps>) {
+export function GiftTransactionOverviewModal({
+  isOpen,
+  onClose,
+  zIndex,
+  ...props
+}: ModalProp<TransactionOverviewModalProps>) {
   const { amount, accountAddress, transactionType, cancellableTime, onConfirm, tokenAddress, tokenSymbol } = props;
 
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Gift Transaction Overview" icon="/modal/coin-icon.gif">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Gift Transaction Overview"
+      icon="/modal/coin-icon.gif"
+      zIndex={zIndex}
+    >
       <div className="flex flex-col gap-1 p-2 bg-[#1E1E1E] rounded-b-2xl w-[520px]">
         {/* Amount Section */}
         <div className="bg-[#292929] flex flex-col h-[180px] items-center justify-center py-3 rounded-lg w-full">

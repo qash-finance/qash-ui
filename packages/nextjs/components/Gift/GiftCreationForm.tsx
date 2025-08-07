@@ -1,9 +1,8 @@
 "use client";
 
-import * as React from "react";
+import React, { useState, useEffect } from "react";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
-import { useState } from "react";
 import {
   QASH_TOKEN_ADDRESS,
   QASH_TOKEN_DECIMALS,
@@ -48,7 +47,7 @@ export const GiftCreationForm: React.FC = () => {
   const [currentAmount, setCurrentAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const defaultToken = getDefaultSelectedToken(assets);
     setSelectedToken(defaultToken);
     setSelectedTokenAddress(defaultToken.faucetId);
@@ -72,7 +71,7 @@ export const GiftCreationForm: React.FC = () => {
     setCurrentAmount(newAmount);
   };
 
-  const handleGenerateLink = () => {
+  const handleGenerateLink = async () => {
     if (isConnected) {
       // format amount
       const formattedAmount = formatUnits(
@@ -99,71 +98,74 @@ export const GiftCreationForm: React.FC = () => {
         tokenAddress: selectedToken.faucetId,
         tokenSymbol: selectedToken.metadata.symbol,
         onConfirm: async () => {
-          try {
-            setIsLoading(true);
-            toast.loading("Generating gift...");
+          // Open the GenerateGiftModal with the gift generation logic
+          openModal(MODAL_IDS.GENERATE_GIFT, {
+            onGiftGeneration: async () => {
+              try {
+                setIsLoading(true);
+                toast.loading("Generating gift...");
 
-            // generate secret
-            const secret = await generateSecret();
+                // generate secret
+                const secret = await generateSecret();
 
-            // parse current amount with decimals
-            const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
+                // parse current amount with decimals
+                const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
 
-            // create gift note
-            const [outputNote, serialNumber] = await createGiftNote(
-              walletAddress,
-              selectedToken.faucetId,
-              parsedAmount,
-              secret,
-            );
+                // create gift note
+                const [outputNote, serialNumber] = await createGiftNote(
+                  walletAddress,
+                  selectedToken.faucetId,
+                  parsedAmount,
+                  secret,
+                );
 
-            console.log("serialNumber", serialNumber);
+                console.log("serialNumber", serialNumber);
 
-            // submit transaction
-            const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
+                // submit transaction
+                const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
 
-            // submit to server
+                // submit to server
 
-            // turn secret to string
-            const secretString = secretArrayToString(secret);
+                // turn secret to string
+                const secretString = secretArrayToString(secret);
 
-            await sendGift({
-              assets: [
-                {
-                  faucetId: selectedToken.faucetId,
-                  amount: currentAmount.toString(),
-                  metadata: selectedToken.metadata,
-                },
-              ],
-              serialNumber: serialNumber,
-              secretNumber: secretString,
-              txId: txId,
-            });
+                sendGift({
+                  assets: [
+                    {
+                      faucetId: selectedToken.faucetId,
+                      amount: currentAmount.toString(),
+                      metadata: selectedToken.metadata,
+                    },
+                  ],
+                  serialNumber: serialNumber,
+                  secretNumber: secretString,
+                  txId: txId,
+                });
 
-            // current domain + /gift/open-gift/id
-            const giftLink = `${window.location.origin}/gift/open-gift?code=${secretString}`;
+                // current domain + /gift/open-gift/id
+                const giftLink = `${window.location.origin}/gift/open-gift?code=${encodeURIComponent(secretString)}`;
 
-            // open success modal for quick share with the link
-            openModal(MODAL_IDS.GIFT_SHARING, {
-              giftLink,
-            });
+                // refetch everything
+                await forceRefetchAssets();
+                await forceRefetchGiftDashboard();
+                await forceRefetchRecallableNotes();
 
-            // refetch everything
-            await forceRefetchAssets();
-            await forceRefetchGiftDashboard();
-            await forceRefetchRecallableNotes();
+                // reset current amount
+                setCurrentAmount(0);
+                toast.dismiss();
+                toast.success("Gift created successfully");
 
-            // reset current amount
-            setCurrentAmount(0);
-            toast.dismiss();
-            toast.success("Gift created successfully");
-          } catch (error) {
-            toast.dismiss();
-            toast.error("Failed to create gift");
-            console.error(error);
-          } finally {
-            setIsLoading(false);
-          }
+                return giftLink;
+              } catch (error) {
+                toast.dismiss();
+                toast.error("Failed to create gift");
+                console.error(error);
+                throw error; // Re-throw to let the modal handle the error
+              } finally {
+                setIsLoading(false);
+              }
+            },
+          });
         },
       });
     } else {
@@ -218,6 +220,7 @@ export const GiftCreationForm: React.FC = () => {
           text="Generate link gift"
           onClick={handleGenerateLink}
           className="mt-2 w-full h-10"
+          disabled={currentAmount <= 0}
         />
       )}
     </div>

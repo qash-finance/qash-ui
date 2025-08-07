@@ -23,17 +23,17 @@ interface GiftStatisticsProps {
 
 export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) => {
   const { data: giftDashboard, isLoading: isLoadingGiftDashboard } = useGiftDashboard();
-  console.log("giftDashboard", giftDashboard);
+  console.log("🚀 ~ GiftStatistics ~ giftDashboard:", giftDashboard);
   return (
-    <div className="h-full flex flex-col rounded-xl bg-[#1E1E1E] flex-1">
+    <div className="flex flex-col rounded-xl bg-[#1E1E1E] flex-1 h-full">
       {isLoadingGiftDashboard ? (
         <div className="w-full h-[150px] px-10 mt-5">
           <SkeletonLoading />
         </div>
       ) : (
-        <div className="h-full flex flex-col">
+        <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex flex-col gap-2.5 p-4 pb-3">
+          <div className="flex flex-col gap-2.5 p-4 pb-3 flex-shrink-0">
             <div className="flex flex-col gap-2">
               <h2 className="text-lg font-medium text-white">Gift sent</h2>
               <p className="text-base text-neutral-500 leading-5">
@@ -71,26 +71,33 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
           </div>
 
           {/* Warning Message */}
-          <div className="mb-2 px-4">
+          <div className="mb-2 px-4 flex-shrink-0">
             <div className="py-2 px-3.5  text-amber-500 bg-amber-900/30 rounded-md backdrop-blur-sm text-center sm:text-base text-sm leading-5">
               Anyone with the link can get the fund. Do not share it publicly, be careful!
             </div>
           </div>
 
           {/* Transaction List */}
-          <div className="pb-2 max-h-[60%] overflow-y-scroll self-stretch h-full flex flex-col px-4 md:gap-1.5 gap-2 custom-scrollbar">
-            {giftDashboard?.gifts.map((gift, index) => (
-              <TransactionRow
-                id={(index + 1).toString()}
-                key={gift.secretNumber}
-                assets={gift.assets[0]}
-                dateTime={gift.createdAt}
-                link={`${window.location.origin}/gift/open-gift?code=${encodeURIComponent(gift.secretNumber)}`}
-                isOpened={gift.status != NoteStatus.PENDING}
-                onCopyLink={onCopyLink}
-              />
-            ))}
-          </div>
+          {giftDashboard && giftDashboard?.gifts.length > 0 ? (
+            <div className="flex flex-col gap-1 overflow-y-auto px-4 h-[500px]">
+              {giftDashboard.gifts.map((gift, index) => (
+                <TransactionRow
+                  id={(index + 1).toString()}
+                  key={gift.secretNumber}
+                  assets={gift.assets[0]}
+                  dateTime={gift.createdAt}
+                  link={`${window.location.origin}/gift/open-gift?code=${encodeURIComponent(gift.secretNumber)}`}
+                  isOpened={gift.status != NoteStatus.PENDING}
+                  onCopyLink={onCopyLink}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2">
+              <img src="/gift/open-gift-icon.svg" alt="open-gift-icon" className="w-25 h-25" />
+              <span className="text-[#7C7C7C]">No gifts found</span>
+            </div>
+          )}
         </div>
       )}
     </div>
