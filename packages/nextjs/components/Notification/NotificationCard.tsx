@@ -39,8 +39,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   const iconContainerStyles = "bg-[#066eff] rounded-lg size-10 relative shrink-0";
   const iconWrapperStyles = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-6 overflow-hidden";
   const contentStyles = "flex flex-col gap-1 grow text-left leading-none min-w-0";
-  const titleStyles = "font-['Barlow:Medium',_sans-serif] text-white text-sm tracking-[-0.16px] leading-[20px]";
-  const subtitleStyles = "font-['Barlow:Regular',_sans-serif] text-[#dcdcdc] leading-[20px]";
+  const titleStyles = "font-['Barlow:Medium',_sans-serif] text-white tracking-[-0.16px] leading-[20px]";
+  const subtitleStyles = "font-['Barlow:Regular',_sans-serif] text-sm text-[#DCDCDC] leading-[20px]";
   const timeStyles = "font-['Barlow:Regular',_sans-serif] text-[#989898] text-[13px] tracking-[-0.13px] leading-[1.1]";
   const dotStyles = "size-2.5 shrink-0";
 
@@ -61,6 +61,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return <img src="/arrow/thin-double-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
       case NotificationType.WALLET_CREATE:
         return <img src="/notification/wallet.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.GIFT_CLAIM:
+        return <img src="/notification/gift-claim.svg" alt="send" className="w-5 h-5" />;
       default:
         return null;
     }
@@ -256,8 +258,20 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return (
           <div className="flex flex-col gap-1 w-full text-sm tracking-[-0.16px]">
             <span className="font-['Barlow:Medium',_sans-serif] text-white leading-[20px]">{title}</span>
-            {subtitle && <span className={subtitleStyles}>{subtitle}</span>}
+            {subtitle && <span className={subtitleStyles}>{subtitle}.</span>}
           </div>
+        );
+      case NotificationType.GIFT_CLAIM:
+        return (
+          <>
+            <span className={titleStyles}>{title}</span>
+            <span className={subtitleStyles}>
+              You’ve successfully claimed{" "}
+              <span className="text-[#1e8fff]">
+                {amount} {tokenName}.
+              </span>
+            </span>
+          </>
         );
       default:
         return <span className={titleStyles}>{title}</span>;

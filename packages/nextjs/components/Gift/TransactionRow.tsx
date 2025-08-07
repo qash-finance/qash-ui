@@ -91,6 +91,7 @@ export const TransactionRow: React.FC<TransactionRowProps> = ({
             isOpened ? "bg-[#1F3E69]" : "bg-blue-600"
           }`}
           onClick={handleCopy}
+          disabled={isOpened}
         >
           <span className={`text-sm font-medium tracking-tight leading-4 text-white`}>Copy link</span>
           <img src="/copy-icon.svg" alt="copy" className="w-4 h-4" style={{ filter: "invert(1) brightness(1000%)" }} />

@@ -6,6 +6,7 @@ export enum NotificationType {
   WALLET_CREATE = "WALLET_CREATE",
   GIFT_SEND = "GIFT_SEND",
   GIFT_OPEN = "GIFT_OPEN",
+  GIFT_CLAIM = "GIFT_CLAIM",
 }
 
 export enum NotificationStatus {
