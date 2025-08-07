@@ -4,9 +4,9 @@ import { GroupLinkModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 
-export function GroupLinkModal({ isOpen, onClose, zIndex, ...props }: ModalProp<GroupLinkModalProps>) {
+export function GroupLinkModal({ isOpen, onClose, zIndex, link }: ModalProp<GroupLinkModalProps>) {
   const [copied, setCopied] = useState(false);
-  const groupLink = "http://q3x.io/groupofdaisy";
+  const groupLink = `${process.env.NEXT_PUBLIC_APP_URL}/quick-send?quickShareCode=${link}`;
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(groupLink);
@@ -24,13 +24,7 @@ export function GroupLinkModal({ isOpen, onClose, zIndex, ...props }: ModalProp<
           <div className="bg-[#292929] rounded-lg p-0 py-3 h-[280px] flex flex-col items-center justify-center relative">
             {/* Background decoration */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-[156px] h-[39px] opacity-20">
-                <img
-                  src="http://localhost:3845/assets/cb649c4358a92b5321444834565f364413e96c18.svg"
-                  alt=""
-                  className="w-full h-full"
-                />
-              </div>
+              <img src="/modal/3d-cube-background.svg" alt="" className="w-full h-full" />
             </div>
 
             {/* 3D Cube Image */}

@@ -5,6 +5,7 @@ import {
   CreateGroupDto,
   CreateGroupPaymentDto,
   CreateDefaultGroupDto,
+  CreateQuickSharePaymentDto,
   Group,
   GroupPayment,
   GroupPaymentsResponse,
@@ -45,7 +46,7 @@ const useGetAllGroups = () => {
   });
 };
 
-const useGetGroupPayments = (groupId: number) => {
+const useGetGroupPayments = (groupId?: number) => {
   return useQuery({
     queryKey: ["group-payments", groupId],
     queryFn: async () => {
@@ -157,6 +158,41 @@ const useCreateGroupPayment = () => {
   });
 };
 
+const useCreateQuickSharePayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateQuickSharePaymentDto) => {
+      return apiClient.postData<{ code: string }>("/group-payment/quick-share/create-payment", data);
+    },
+    onSuccess: (response: { code: string }) => {
+      // Find the "Quick Share" group and update its payments cache
+      const groups = queryClient.getQueryData<Group[]>(["groups"]);
+      if (groups) {
+        const quickShareGroup = groups.find(group => group.name === "Quick Share");
+        if (quickShareGroup) {
+          // Invalidate the quick share group's payments to refetch latest data
+          queryClient.invalidateQueries({ queryKey: ["group-payments", quickShareGroup.id] });
+        }
+      }
+    },
+  });
+};
+
+const useAddMemberToQuickShare = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ code, userAddress }: { code: string; userAddress: string }) => {
+      return apiClient.patchData(`/group-payment/quick-share/${code}/add-member`, { userAddress });
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries when a member is added
+      queryClient.invalidateQueries({ queryKey: ["payment-by-link"] });
+    },
+  });
+};
+
 export {
   useGetAllGroups,
   useGetGroupPayments,
@@ -164,4 +200,6 @@ export {
   useCreateGroup,
   useCreateDefaultGroup,
   useCreateGroupPayment,
+  useCreateQuickSharePayment,
+  useAddMemberToQuickShare,
 };

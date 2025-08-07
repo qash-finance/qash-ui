@@ -62,6 +62,21 @@ export interface PaymentByLinkResponse {
   amount: string;
   perMember: number;
   linkCode: string;
+  status: "pending" | "completed";
+  ownerAddress: string;
+  memberStatuses: MemberStatus[];
+  totalMembers: number;
+  paidMembers: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateQuickSharePaymentDto {
+  tokens: AssetWithMetadata[];
+  amount: string;
+  memberCount: number;
+}
+
+export interface UpdateQuickShareMemberDto {
+  userAddress: string;
 }

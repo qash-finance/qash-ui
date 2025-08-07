@@ -14,7 +14,7 @@ import {
   QASH_TOKEN_SYMBOL,
 } from "@/services/utils/constant";
 import { Group } from "@/types/group-payment";
-import { useCreateGroupPayment, useGetGroupPayments } from "@/services/api/group-payment";
+import { useCreateGroupPayment, useCreateQuickSharePayment, useGetGroupPayments } from "@/services/api/group-payment";
 import { toast } from "react-hot-toast";
 
 interface GroupPaymentFormData {
@@ -40,6 +40,9 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
   });
   const [generateLink, setGenerateLink] = useState(false);
 
+  // Treat "Quick Share" as no group selected
+  const isQuickShare = selectedGroup?.name === "Quick Share";
+
   //*************** React Hook Form ***************
   const {
     register,
@@ -59,27 +62,27 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
 
   //*************** React Hooks ***************
   const { mutate: createGroupPayment } = useCreateGroupPayment();
-  const { data: groupPayments, isLoading: isGroupPaymentsLoading } = useGetGroupPayments(selectedGroup?.id || 0);
-  console.log("🚀 ~ PaymentDetails ~ groupPayments:", groupPayments);
+  const { data: groupPayments, isLoading: isGroupPaymentsLoading } = useGetGroupPayments(selectedGroup?.id);
+  const { mutate: createQuickSharePayment } = useCreateQuickSharePayment();
   const { openModal } = useModal();
 
   //*************** Effects ***************
   useEffect(() => {
-    if (selectedGroup) {
+    if (!isQuickShare && selectedGroup) {
       setValue("numberOfPeople", selectedGroup.members.length);
     } else {
       setValue("numberOfPeople", undefined);
     }
-  }, [selectedGroup, setValue]);
+  }, [isQuickShare, selectedGroup, setValue]);
 
   //*************** Calculations ***************
-  const numberOfPeople = selectedGroup ? selectedGroup.members.length : watchedNumberOfPeople;
+  const numberOfPeople = !isQuickShare && selectedGroup ? selectedGroup.members.length : watchedNumberOfPeople;
   const amountPerPerson =
     watchedAmount && numberOfPeople && numberOfPeople > 0 ? (watchedAmount / numberOfPeople).toFixed(2) : "0.00";
 
   //*************** Handlers ***************
   const onSubmit = (data: GroupPaymentFormData) => {
-    if (!selectedGroup) return;
+    if (isQuickShare || !selectedGroup) return;
     if (!amountPerPerson) return;
     if (!data.amount) return;
 
@@ -106,8 +109,30 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
     );
   };
 
-  const handleGenerateLink = () => {
-    openModal(MODAL_IDS.GROUP_LINK);
+  const handleGenerateLink = (data: GroupPaymentFormData) => {
+    if (!amountPerPerson) return;
+    if (!data.amount) return;
+
+    const { amount } = data;
+    const tokens = [selectedToken];
+
+    createQuickSharePayment(
+      {
+        amount: amount.toString(),
+        memberCount: Number(numberOfPeople),
+        tokens,
+      },
+      {
+        onSuccess: res => {
+          toast.success("Quick share payment created successfully");
+          setValue("amount", undefined);
+          openModal(MODAL_IDS.GROUP_LINK, { link: res.code });
+        },
+        onError: () => {
+          toast.error("Failed to create quick share payment");
+        },
+      },
+    );
   };
 
   return (
@@ -116,7 +141,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
       <div className="flex flex-col p-2 rounded-xl bg-zinc-900 flex-1 min-w-60">
         {/* Header */}
         <div className="flex gap-5 justify-between items-center px-3.5 py-2 w-full text-white bg-[#2D2D2D] rounded-t-xl">
-          <span className="text-base leading-none">{selectedGroup ? "Group sharing" : "Quick sharing"}</span>
+          <span className="text-base leading-none">{isQuickShare ? "Quick sharing" : "Group sharing"}</span>
           <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
         </div>
         {/* Main Payment Display */}
@@ -154,7 +179,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
 
         {/* Group Info Card */}
         <div className="flex items-center gap-2.5 py-2.5 px-3 mt-1 w-full text-base leading-none text-white rounded-xl bg-zinc-800">
-          {selectedGroup ? (
+          {!isQuickShare ? (
             <>
               <img
                 className="rounded-full w-10 h-10"
@@ -162,9 +187,9 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
                 alt="Group icon"
               />
               <div className="flex-1">
-                <span className="text-white ">{selectedGroup.name}</span>
+                <span className="text-white ">{selectedGroup?.name}</span>
               </div>
-              <span className="text-right text-white text-lg">{selectedGroup.members.length}</span>
+              <span className="text-right text-white text-lg">{selectedGroup?.members?.length}</span>
             </>
           ) : (
             <div className="flex flex-col gap-2 w-full">
@@ -230,27 +255,18 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
         </div>
 
         {/* Link Generation Section */}
-        {generateLink ? (
-          <div className="pt-2 mt-1 w-full">
-            <div className="flex items-center gap-2 px-2 py-2 w-full bg-blue-600 rounded-xl">
-              <span className="flex-1 text-base font-medium leading-none text-white truncate">
-                https://qash.io/group/1234567890
-                {/* Payment Per Person Card */}
-              </span>
-              <button className="flex items-center gap-1.5 px-2 py-1 text-sm font-semibold tracking-tight leading-tight bg-white rounded-[10px] text-zinc-800 hover:bg-gray-100 transition-colors">
-                <span>Copy link</span>
-                <img src="copy-icon.svg" className="w-3.5 h-3.5 object-contain" alt="Copy icon" />
-              </button>
-            </div>
-          </div>
-        ) : selectedGroup ? (
+        {!isQuickShare && selectedGroup ? (
           <ActionButton
             onClick={handleSubmit(onSubmit)}
             text="Create group payment"
             className="h-[45px] mt-2 text-md"
           />
         ) : (
-          <ActionButton onClick={handleSubmit(onSubmit)} text="Generate link" className="h-[45px] mt-2 text-md" />
+          <ActionButton
+            onClick={handleSubmit(handleGenerateLink)}
+            text="Generate link"
+            className="h-[45px] mt-2 text-md"
+          />
         )}
       </div>
 
@@ -267,7 +283,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
             </p>
           </div>
           {/* Payment Progress */}
-          {!selectedGroup && (
+          {(isQuickShare || !selectedGroup) && (
             <div
               className="bg-[#7c7c7c] flex items-center gap-1 px-2 py-1 pr-4 rounded-full w-fit"
               data-name="Payment Progress Container"
@@ -308,8 +324,14 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
                     <ActionButton
                       text="Copy link"
                       onClick={() => {
-                        const link = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/pending-request?isGroupPayment=true&groupPaymentId=${payment.id}`;
-                        navigator.clipboard.writeText(link);
+                        if (isQuickShare) {
+                          const quickShareLink = `${process.env.NEXT_PUBLIC_APP_URL}/quick-send?quickShareCode=${payment.linkCode}`;
+                          navigator.clipboard.writeText(quickShareLink);
+                        } else {
+                          const groupPaymentLink = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/pending-request?isGroupPayment=true&groupPaymentId=${payment.id}`;
+                          navigator.clipboard.writeText(groupPaymentLink);
+                        }
+
                         toast.success("Link copied to clipboard");
                       }}
                     />

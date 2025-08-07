@@ -120,7 +120,9 @@ export interface BatchTransactionsModalProps extends BaseModalProps {}
 
 export interface NotificationModalProps extends BaseModalProps {}
 
-export interface GroupLinkModalProps extends BaseModalProps {}
+export interface GroupLinkModalProps extends BaseModalProps {
+  link: string;
+}
 
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;

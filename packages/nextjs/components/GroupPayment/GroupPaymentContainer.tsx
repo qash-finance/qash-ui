@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { GroupCard } from "./GroupCard";
 import { PaymentDetails } from "./PaymentDetails";
 import { useModal } from "@/contexts/ModalManagerProvider";
@@ -24,14 +24,26 @@ const GroupPaymentContainer: React.FC = () => {
   const { data: groups, isLoading, error } = useGetAllGroups();
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
-  // Transform API groups data to match GroupCard props
+  // Auto-select "Quick Share" group when groups are loaded
+  useEffect(() => {
+    if (groups && groups.length > 0) {
+      const quickShareGroup = groups.find(group => group.name === "Quick Share");
+      if (quickShareGroup) {
+        setSelectedGroup(quickShareGroup);
+      }
+    }
+  }, [groups]);
+
+  // Transform API groups data to match GroupCard props, excluding "Quick Share" group
   const groupsData =
-    groups?.map(group => ({
-      id: group.id,
-      imageSrc: "/group-payment/default-group-payment-avatar.svg",
-      title: group.name,
-      memberCount: group.members.length,
-    })) || [];
+    groups
+      ?.filter(group => group.name !== "Quick Share")
+      .map(group => ({
+        id: group.id,
+        imageSrc: "/group-payment/default-group-payment-avatar.svg",
+        title: group.name,
+        memberCount: group.members.length,
+      })) || [];
 
   return (
     <main className="overflow-hidden self-stretch px-4 pt-5 pb-4 rounded-2xl bg-neutral-950 w-full">
