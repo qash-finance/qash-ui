@@ -16,6 +16,8 @@ import { Table, CellContent } from "@/components/Common/Table";
 import { useCreateGroup } from "@/services/api/group-payment";
 import { toast } from "react-hot-toast";
 import { CreateGroupDto } from "@/types/group-payment";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
+import { AccountId } from "@demox-labs/miden-sdk";
 
 interface AddressItemProps {
   name: string;
@@ -50,11 +52,12 @@ function AddressItem({ name, address, isSelected = false, onToggle }: AddressIte
 
 export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<CreateNewGroupModalProps>) {
   // **************** Custom Hooks *******************
-  const { register, watch, reset } = useForm();
+  const { register, getValues, setValue } = useForm();
   const { data: addressBooks, refetch: refetchAddressBooks } = useGetAddressBooks();
   const { isConnected } = useWalletConnect();
   const queryClient = useQueryClient();
   const { mutate: createGroup } = useCreateGroup();
+  const { walletAddress } = useWalletAuth();
 
   // **************** Local State *******************
   const [groupName, setGroupName] = useState("");
@@ -63,7 +66,6 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
   const [selectedAddressDetails, setSelectedAddressDetails] = useState<
     Map<string, { address: AddressBook; category: string }>
   >(new Map());
-  const search = watch("search");
 
   // Group address books by category
   const groupedAddressBooks = useMemo(() => {
@@ -78,21 +80,8 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
     }, {});
   }, [addressBooks, isConnected]);
 
-  // Filter address books by search term
-  const filteredGroupedAddressBooks = useMemo(() => {
-    if (!search || !groupedAddressBooks) return groupedAddressBooks;
-
-    const filtered: Record<string, AddressBook[]> = {};
-    Object.keys(groupedAddressBooks).forEach(category => {
-      const filteredInCategory = (groupedAddressBooks[category] || []).filter((ab: AddressBook) =>
-        ab.name.toLowerCase().includes(search.toLowerCase()),
-      );
-      if (filteredInCategory.length > 0) {
-        filtered[category] = filteredInCategory;
-      }
-    });
-    return filtered;
-  }, [groupedAddressBooks, search]);
+  // No search filter; use grouped address books directly
+  const filteredGroupedAddressBooks = useMemo(() => groupedAddressBooks, [groupedAddressBooks]);
 
   // Tabs = categories (use filtered results when searching)
   const categories = useMemo(() => Object.keys(filteredGroupedAddressBooks), [filteredGroupedAddressBooks]);
@@ -112,16 +101,9 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
   }, [categories, activeTab]);
 
   useEffect(() => {
-    if (search && categories.length > 0) {
-      // If current active tab doesn't exist in filtered results, switch to first available
-      if (!categories.includes(activeTab)) {
-        setActiveTab(categories[0]);
-      }
-    } else if (!search && categories.length > 0 && !activeTab) {
-      // Reset to first category when search is cleared
-      setActiveTab(categories[0]);
-    }
-  }, [search, categories, activeTab]);
+    if (categories.length > 0 && !activeTab) setActiveTab(categories[0]);
+    if (categories.length > 0 && !categories.includes(activeTab)) setActiveTab(categories[0]);
+  }, [categories, activeTab]);
 
   useEffect(() => {
     if (isConnected) {
@@ -134,9 +116,59 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
       setSelectedAddresses(new Set());
       setSelectedAddressDetails(new Map());
       setGroupName("");
-      reset(); // Clear search form
+      setValue("manualAddress", "");
     }
-  }, [isConnected, refetchAddressBooks, queryClient, reset]);
+  }, [isConnected, refetchAddressBooks, queryClient, setValue]);
+
+  // Add manual address handler
+  const handleAddManualAddress = () => {
+    const manualAddress = (getValues("manualAddress") as string | undefined)?.trim() || "";
+    if (!manualAddress) {
+      toast.error("Enter an address");
+      return;
+    }
+    // Prevent duplicates by address
+    const isDuplicate = Array.from(selectedAddressDetails.values()).some(
+      item => item.address.address === manualAddress,
+    );
+    if (isDuplicate) {
+      toast.error("Address already added");
+      return;
+    }
+
+    if (walletAddress === manualAddress) {
+      toast.error("You cannot add yourself to the group");
+      return;
+    }
+
+    try {
+      AccountId.fromBech32(manualAddress);
+    } catch (error) {
+      toast.error("Invalid address");
+      return;
+    }
+
+    const category = "Manual";
+    const addressBookEntry: AddressBook = {
+      name: manualAddress,
+      address: manualAddress,
+      userAddress: "",
+    } as AddressBook;
+    const uniqueId = `${category}:${addressBookEntry.address}:${addressBookEntry.name}`;
+
+    setSelectedAddresses(prev => {
+      const next = new Set(prev);
+      next.add(uniqueId);
+      return next;
+    });
+    setSelectedAddressDetails(prev => {
+      const next = new Map(prev);
+      next.set(uniqueId, { address: addressBookEntry, category });
+      return next;
+    });
+
+    setValue("manualAddress", "");
+  };
 
   //*******************************************************
   //******************* Handlers ***************************
@@ -196,7 +228,11 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
   // Format data for the table
   const tableData = selectedAddressesDetails.map((addressDetail, index) => ({
     No: <span className="text-white font-medium">{(index + 1).toString()}</span>,
-    "Remembered Name": <span className="text-stone-300 truncate">{addressDetail.name}</span>,
+    "Remembered Name": (
+      <span className="text-stone-300 block truncate max-w-[100px] mx-auto text-center" title={addressDetail.name}>
+        {addressDetail.name}
+      </span>
+    ),
     Address: <span className="text-white font-medium truncate">{formatAddress(addressDetail.address)}</span>,
   }));
 
@@ -242,12 +278,11 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
       <div
         className="
           flex flex-col items-center rounded-b-2xl border border-solid bg-[#1E1E1E] border-zinc-800
-          max-h-[600px] w-[600px] overflow-y-auto
-          
+          max-h-[700px] w-[500px] overflow-y-auto
         "
       >
         {/* Main */}
-        <main className="flex flex-col gap-3 items-start self-stretch p-1.5 flex-[1_0_0]">
+        <main className="flex flex-col gap-3 items-start self-stretch p-1.5">
           <input
             type="text"
             placeholder="Enter group name"
@@ -256,16 +291,15 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
             className="tracking-tight leading-5 text-3xl text-white max-md:text-base bg-transparent border-none outline-none placeholder-[#7C7C7C] w-full"
           />
 
-          {/* Search Input */}
-          <section className="flex flex-col gap-1.5 items-start self-stretch px-1 py-0 rounded-xl bg-zinc-800">
-            <div className="flex relative gap-2.5 items-center self-stretch px-3.5 py-3.5 rounded-lg backdrop-blur-[2px] max-sm:p-3">
-              <input
-                type="text"
-                placeholder="Search addresses"
-                className="text-base tracking-tight leading-5 flex-[1_0_0] text-neutral-600 max-md:text-base bg-transparent border-none outline-none placeholder-neutral-600"
-                {...register("search")}
-              />
-            </div>
+          {/* Address Bar */}
+          <section className="flex items-center gap-2 self-stretch px-4 py-2 rounded-xl bg-zinc-800">
+            <input
+              type="text"
+              placeholder="Enter address"
+              className="text-base tracking-tight leading-5 flex-[1_0_0] text-white max-md:text-base bg-transparent border-none outline-none placeholder-neutral-600"
+              {...register("manualAddress")}
+            />
+            <ActionButton text="Add" onClick={handleAddManualAddress} />
           </section>
 
           {/* Address List */}
@@ -283,7 +317,7 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
                   onClick={() => {
                     setActiveTab(cat);
                   }}
-                  className={`flex gap-2.5 items-center px-4 py-2.5 rounded-3xl max-sm:px-3 max-sm:py-2 cursor-pointer ${
+                  className={`outline-none flex gap-2.5 items-center px-4 py-2.5 rounded-3xl max-sm:px-3 max-sm:py-2 cursor-pointer ${
                     activeTab === cat ? "bg-[#066EFF] text-black" : "bg-zinc-800 text-white"
                   }`}
                 >
@@ -308,16 +342,12 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
                 })}
               </div>
             ) : (
-              <Empty
-                icon="/no-request-icon.svg"
-                title={search ? "No matching addresses" : "No addresses"}
-                className="h-full"
-              />
+              <Empty icon="/no-request-icon.svg" title="No addresses" className="h-full" />
             )}
 
             <h2 className="text-base tracking-tighter leading-5 text-white">Selected ({selectedAddresses.size})</h2>
             {selectedAddressesDetails.length > 0 ? (
-              <div className="w-full max-h-[170px] overflow-y-auto">
+              <div className="w-full max-h-[170px] overflow-y-auto min-h-[100px]">
                 <Table headers={tableHeaders} data={tableData} actionColumn={true} actionRenderer={actionRenderer} />
               </div>
             ) : (

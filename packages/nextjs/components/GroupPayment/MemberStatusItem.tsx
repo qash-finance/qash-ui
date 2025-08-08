@@ -12,10 +12,16 @@ interface MemberStatusItemProps {
 export const MemberStatusItem: React.FC<MemberStatusItemProps> = ({ memberStatus, amount, tokenSymbol }) => {
   const { data: addressBooks } = useGetAddressBooks();
 
-  const statusStyles =
-    memberStatus.status === "paid"
-      ? "text-[#6CFF85] bg-[#304B36] bg-opacity-20"
-      : "text-white bg-[#4D4D4D] bg-opacity-20";
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case "paid":
+        return "text-[#6CFF85] bg-[#304B36] bg-opacity-20";
+      case "denied":
+        return "text-white bg-red-500 bg-opacity-20";
+      case "pending":
+        return "text-white bg-[#4D4D4D] bg-opacity-20";
+    }
+  };
 
   const formatAddress = (address: string) => {
     if (address.length <= 12) return address;
@@ -64,9 +70,11 @@ export const MemberStatusItem: React.FC<MemberStatusItemProps> = ({ memberStatus
       {/* Right side - Status */}
       <div className="col-span-2 flex items-center justify-end">
         <div
-          className={`px-2 py-1 text-xs font-medium tracking-tight rounded-2xl w-[60px] text-center ${statusStyles}`}
+          className={`px-2 py-1 text-xs font-medium tracking-tight rounded-2xl w-[60px] text-center ${getStatusStyles(
+            memberStatus.status,
+          )}`}
         >
-          {memberStatus.status === "paid" ? "Paid" : "Pending"}
+          {memberStatus.status === "paid" ? "Paid" : memberStatus.status === "denied" ? "Denied" : "Pending"}
         </div>
       </div>
     </div>

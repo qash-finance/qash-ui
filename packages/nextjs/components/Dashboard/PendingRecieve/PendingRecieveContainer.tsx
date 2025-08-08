@@ -19,11 +19,11 @@ import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
+import useConsumePublicNotes from "@/hooks/server/useConsumePublicNotes";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
-import useConsumePublicNotes from "@/hooks/server/useConsumePublicNotes";
 
 const mockData = [
   {
@@ -238,6 +238,8 @@ export const PendingRecieveContainer: React.FC = () => {
             tokenId: note.assets[0].faucetId,
             tokenName: note.assets[0].metadata?.symbol,
             txId: txId,
+            noteId: note.id,
+            requestPaymentId: consumableNotes.find(n => n.id === note.id)?.requestPaymentId,
           },
         ]);
       }
@@ -290,6 +292,8 @@ export const PendingRecieveContainer: React.FC = () => {
               tokenId: note.assets[0].faucetId,
               tokenName: note.assets[0].metadata?.symbol,
               txId: txId,
+              noteId: note.id,
+              requestPaymentId: consumableNotes.find(n => n.id === note.id)?.requestPaymentId,
             },
           ]);
         }

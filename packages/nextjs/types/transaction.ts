@@ -29,6 +29,7 @@ export interface SendTransactionDto {
   noteType: CustomNoteType;
   noteId: string;
   transactionId: string;
+  requestPaymentId?: number;
 }
 
 export interface ConsumableNote {
@@ -90,4 +91,6 @@ export interface ConsumePublicTransactionDto {
   tokenId: string;
   tokenName: string;
   txId: string;
+  requestPaymentId?: number;
+  noteId: string;
 }

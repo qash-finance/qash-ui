@@ -62,7 +62,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const { isConnected } = useWalletConnect();
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
-  const { addTransaction } = useBatchTransactions(state => state);
+  const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const { mutateAsync: acceptRequest } = useAcceptRequest();
 
@@ -77,6 +77,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const amountParam = isSendModalOpen ? props.amount || "" : searchParams?.get("amount") || "";
   const messageParam = isSendModalOpen ? props.message || "" : searchParams?.get("message") || "";
   const isGroupPaymentParam = isSendModalOpen ? props.isGroupPayment : false;
+  const isRequestPaymentParam = isSendModalOpen ? props.isRequestPayment : false;
 
   // **************** Form Hooks *******************
   const {
@@ -234,6 +235,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         tokenAddress: selectedToken.faucetId,
         tokenSymbol: selectedToken.metadata.symbol,
         onConfirm: async () => {
+          if (onClose && props.onTransactionConfirmed) {
+            await props.onTransactionConfirmed();
+            onClose();
+          }
+
           try {
             setIsSending(true);
             toast.loading("Sending transaction...");
@@ -275,6 +281,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
               noteType: CustomNoteType.P2IDR,
               noteId: noteId,
               transactionId: txId,
+              requestPaymentId: props.pendingRequestId,
             });
 
             // refetch assets
@@ -302,9 +309,26 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
               reset();
               setRecipientName("");
 
+              // If this transaction exists in batch, remove it
+              try {
+                if (walletAddress) {
+                  const batchTransactions = getBatchTransactions(walletAddress);
+                  const matchedTransactions = batchTransactions.filter(tx => {
+                    if (props.pendingRequestId != null) return tx.pendingRequestId === props.pendingRequestId;
+                    return (
+                      tx.tokenAddress === selectedToken.faucetId &&
+                      tx.amount === amount.toString() &&
+                      tx.recipient === recipientAddress &&
+                      tx.isPrivate === isPrivateTransaction &&
+                      tx.recallableTime === recallableTime
+                    );
+                  });
+                  matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
+                }
+              } catch (_) {}
+
               if (props.pendingRequestId) {
                 await acceptRequest({ id: props.pendingRequestId, txid: txId });
-                onClose();
               }
             }
           } catch (error) {
@@ -368,11 +392,13 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         recallableHeight: Math.floor(recallableTime / BLOCK_TIME),
         recallableTime: recallableTime,
         noteType: CustomNoteType.P2IDR,
+        pendingRequestId: props.pendingRequestId,
       });
 
       toast.success("Transaction added to batch successfully");
       reset();
       setRecipientName("");
+      onClose();
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to add transaction to batch");
@@ -382,10 +408,36 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
 
   const handleFormSubmit = async (data: SendTransactionFormValues) => {
     if (isSubmittingAsBatch) {
-      handleAddToBatch(data);
+      await handleAddToBatch(data);
     } else {
       await handleSendTransaction(data);
     }
+  };
+
+  // ********************************************
+  // **************** Render *******************
+  // ********************************************
+  const renderRecipientInputButton = () => {
+    if (isGroupPaymentParam || isRequestPaymentParam) {
+      return null;
+    }
+
+    return (
+      <>
+        {watch("recipientAddress") && validateAddress(watch("recipientAddress")) ? (
+          <ActionButton
+            text="Remove"
+            type="deny"
+            onClick={() => {
+              setRecipientName("");
+              setValue("recipientAddress", "");
+            }}
+          />
+        ) : (
+          <ActionButton text="Choose" onClick={handleChooseRecipient} />
+        )}
+      </>
+    );
   };
 
   return (
@@ -447,12 +499,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             selectedToken={selectedToken}
             onTokenSelect={handleTokenSelect}
             tokenAddress={selectedTokenAddress}
-            disabled={isGroupPaymentParam}
+            disabled={isGroupPaymentParam || isRequestPaymentParam}
           />
         </header>
 
         <AmountInput
-          disabled={isGroupPaymentParam}
+          disabled={isGroupPaymentParam || isRequestPaymentParam}
           selectedToken={selectedToken}
           availableBalance={Number(
             formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
@@ -492,19 +544,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                 />
               </div>
             </div>
-            {watch("recipientAddress") && validateAddress(watch("recipientAddress")) ? (
-              <ActionButton
-                text="Remove"
-                type="deny"
-                disabled={isGroupPaymentParam}
-                onClick={() => {
-                  setRecipientName("");
-                  setValue("recipientAddress", "");
-                }}
-              />
-            ) : (
-              <ActionButton text="Choose" onClick={handleChooseRecipient} />
-            )}
+            {renderRecipientInputButton()}
           </div>
 
           {watch("recipientAddress") && !validateAddress(watch("recipientAddress")) && (
@@ -528,14 +568,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                 {getValues("recipientAddress")}
               </span>
             </div>
-            <ActionButton
-              text="Remove"
-              type="deny"
-              onClick={() => {
-                setRecipientName("");
-                setValue("recipientAddress", "");
-              }}
-            />
+            {isRequestPaymentParam || isGroupPaymentParam ? null : (
+              <ActionButton
+                text="Remove"
+                type="deny"
+                onClick={() => {
+                  setRecipientName("");
+                  setValue("recipientAddress", "");
+                }}
+              />
+            )}
           </div>
         </section>
       )}

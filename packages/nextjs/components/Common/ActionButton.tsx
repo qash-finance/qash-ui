@@ -61,7 +61,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   buttonType = "button",
   icon,
 }) => {
-  const isDisabled = disabled || loading;
+  const isDisabled = disabled;
   const buttonStyle = BUTTON_STYLES[type];
   const currentStyle = isDisabled ? buttonStyle.disabled : buttonStyle.enabled;
 
@@ -80,7 +80,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
 
   const buttonClasses = useMemo(() => {
     const baseClasses = "font-barlow font-medium transition-colors";
-    const stateClasses = isDisabled ? "cursor-not-allowed" : "cursor-pointer";
+    const stateClasses = isDisabled || loading ? "cursor-not-allowed" : "cursor-pointer";
 
     return `${baseClasses} ${stateClasses} ${currentStyle.bg} ${className}`.trim();
   }, [isDisabled, loading, currentStyle.bg, className]);

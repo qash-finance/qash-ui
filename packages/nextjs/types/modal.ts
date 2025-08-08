@@ -59,6 +59,8 @@ export interface SendModalProps extends BaseModalProps {
   tokenAddress?: string;
   tokenSymbol?: string;
   isGroupPayment?: boolean;
+  isRequestPayment?: boolean;
+  onTransactionConfirmed?: () => Promise<void>;
 }
 
 export interface SelectRecipientModalProps extends BaseModalProps {

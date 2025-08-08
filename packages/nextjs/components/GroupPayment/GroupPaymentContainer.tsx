@@ -7,6 +7,8 @@ import { MODAL_IDS } from "@/types/modal";
 import { useGetAllGroups } from "@/services/api/group-payment";
 import { Group } from "@/types/group-payment";
 import { ActionButton } from "../Common/ActionButton";
+import { DEFAULT_AVATAR_ADDRESS } from "@/services/utils/constant";
+import { blo } from "blo";
 
 interface EmptyStateProps {
   message: string;
@@ -40,7 +42,7 @@ const GroupPaymentContainer: React.FC = () => {
       ?.filter(group => group.name !== "Quick Share")
       .map(group => ({
         id: group.id,
-        imageSrc: "/group-payment/default-group-payment-avatar.svg",
+        imageSrc: blo(DEFAULT_AVATAR_ADDRESS),
         title: group.name,
         memberCount: group.members.length,
       })) || [];
@@ -77,11 +79,20 @@ const GroupPaymentContainer: React.FC = () => {
                 imageSrc={group.imageSrc}
                 title={group.title}
                 memberCount={group.memberCount}
+                selected={selectedGroup?.id === group.id}
                 onClick={() => {
                   if (!groups) return;
 
-                  const selectedGroup: Group | undefined = groups.find(g => g.id === group.id);
-                  if (selectedGroup) setSelectedGroup(selectedGroup);
+                  // Toggle select/deselect
+                  if (selectedGroup?.id === group.id) {
+                    // Deselect to Quick Share (treated as no specific group)
+                    const quickShare = groups.find(g => g.name === "Quick Share") || null;
+                    setSelectedGroup(quickShare);
+                    return;
+                  }
+
+                  const found = groups.find(g => g.id === group.id);
+                  if (found) setSelectedGroup(found);
                 }}
               />
             ))
@@ -91,7 +102,11 @@ const GroupPaymentContainer: React.FC = () => {
 
       <section className="flex-1 mt-2 w-full max-md:max-w-full h-[74%]">
         <h2 className="text-lg font-medium leading-none text-white max-md:max-w-full">Quick share</h2>
-        <PaymentDetails selectedGroup={selectedGroup} groups={groups || []} />
+        <PaymentDetails
+          selectedGroup={selectedGroup}
+          groups={groups || []}
+          onGroupSelect={group => setSelectedGroup(group)}
+        />
       </section>
     </main>
   );

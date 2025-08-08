@@ -29,7 +29,7 @@ export interface Group {
 export interface MemberStatus {
   id: number;
   memberAddress: string;
-  status: "pending" | "paid";
+  status: "pending" | "paid" | "denied";
   paidAt: string | null;
   createdAt: string;
   updatedAt: string;

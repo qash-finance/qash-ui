@@ -52,7 +52,7 @@ const NewFolder = ({
   const category = watch("category");
 
   return (
-    <div className="relative w-[150px] h-full z-10">
+    <div className="relative w-[150px] h-full z-10 shrink-0">
       <div className="absolute z-20 left-1/2 bottom-10 translate-x-[-50%] cursor-pointer" onClick={toggleNewFolder}>
         <img
           src="/address-book/folder.svg"
@@ -118,7 +118,7 @@ const NewFolder = ({
 
 const Folder = ({ reveal, onClick, category }: { reveal: boolean; onClick: () => void; category: string }) => {
   return (
-    <div className="relative w-[150px] h-full">
+    <div className="relative w-[150px] h-full shrink-0">
       <div className="absolute z-20 left-1/2 bottom-10 translate-x-[-50%] cursor-pointer" onClick={onClick}>
         <img
           src="/address-book/folder.svg"
@@ -348,8 +348,8 @@ export function AddressBookContainer() {
         </div>
       ))}
 
-      <div className="relative w-full h-full overflow-hidden">
-        <div className="absolute bottom-0 w-full flex justify-center gap-8">
+      <div className="relative w-full h-full">
+        <div className="absolute bottom-0 w-full flex justify-center gap-8 overflow-x-auto h-full">
           {folders.map((folder, index) => (
             <Folder
               key={folder.id}

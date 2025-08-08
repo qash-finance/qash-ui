@@ -41,7 +41,7 @@ export function useConsumableNotes() {
         id: note.noteId,
         sender: note.sender,
         recipient: note.recipient,
-        private: true,
+        private: note.private,
         recallableHeight: note.recallableHeight,
         recallableTime: note.recallableTime,
         serialNumber: note.serialNumber,
@@ -92,7 +92,8 @@ export function useConsumableNotes() {
       // filterout the sender and recipient are the same
       const filteredConsumableNotes = consumableNotes.filter(note => note.sender !== note.recipient);
 
-      const returnNotes = [...filteredConsumableNotes, ...consumablePrivateNotes];
+      // Prefer server-enriched notes (which include recallable metadata) when IDs collide
+      const returnNotes = [...consumablePrivateNotes, ...filteredConsumableNotes];
 
       // remove the same note.id
       const filteredNotes = returnNotes.filter(

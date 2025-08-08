@@ -17,11 +17,12 @@ import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { CreateRequestPaymentDto } from "@/types/request-payment";
 import { useCreatePendingRequest } from "@/services/api/request-payment";
 import { toast } from "react-hot-toast";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 interface RequestFormData {
   amount: string;
   message: string;
-  recipientAddress: string;
+  recipientAddress?: string;
 }
 
 export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalProp<NewRequestModalProps>) {
@@ -40,6 +41,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
 
   // **************** Hooks *******************
   const { walletAddress } = useWalletAuth();
+  const { isConnected, handleConnect } = useWalletConnect();
   const { openModal } = useModal();
   const { mutate: createRequestPayment } = useCreatePendingRequest();
   const {
@@ -53,8 +55,8 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
   } = useForm<RequestFormData>({
     defaultValues: {
       amount: undefined,
-      message: "",
-      recipientAddress: "",
+      message: undefined,
+      recipientAddress: undefined,
     },
   });
 
@@ -63,7 +65,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
     if (recipient) {
       setValue("recipientAddress", recipient, { shouldValidate: true });
     } else {
-      setValue("recipientAddress", "", { shouldValidate: true });
+      setValue("recipientAddress", undefined, { shouldValidate: true });
     }
   }, [recipient]);
 
@@ -83,6 +85,18 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
       return;
     }
 
+    if (!data.recipientAddress) {
+      toast.error("Please select a recipient");
+      setIsLoading(false);
+      return;
+    }
+
+    if (walletAddress === data.recipientAddress) {
+      toast.error("You cannot request from yourself");
+      setIsLoading(false);
+      return;
+    }
+
     const createRequestPaymentDto: CreateRequestPaymentDto = {
       payer: data.recipientAddress,
       payee: walletAddress,
@@ -94,8 +108,8 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
     createRequestPayment(createRequestPaymentDto, {
       onSuccess: () => {
         toast.success("Request created successfully");
-        reset();
         onClose();
+        reset();
       },
       onError: () => {
         toast.error("Failed to create request");
@@ -105,8 +119,9 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
   };
 
   // Debounced address validation
-  const validateAddress = useCallback((address: string) => {
+  const validateAddress = useCallback((address?: string) => {
     try {
+      if (!address) return false;
       if (address.startsWith("mt")) {
         return true;
       }
@@ -124,7 +139,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Create New Request" icon="/modal/coin-icon.gif" zIndex={zIndex}>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-0">
+      <form className="flex flex-col gap-0">
         <div className="flex flex-col rounded-b-2xl border border-solid bg-[#1E1E1E] border-zinc-800 max-h-[800px] overflow-y-auto w-[550px] p-2">
           {/* Amount */}
           <div
@@ -155,7 +170,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                   },
                 })}
                 autoComplete="off"
-                className="text-white opacity-20 text-center outline-none"
+                className="text-white text-center outline-none"
                 placeholder="0.00"
                 type="number"
                 min="0"
@@ -185,7 +200,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                     <label className="text-base leading-none text-center text-white">From</label>
                     <input
                       {...register("recipientAddress", {
-                        validate: (value: string) => {
+                        validate: (value?: string) => {
                           if (!value) return true; // Don't show error when empty
                           if (!value.startsWith("mt")) return "Address must start with 'mt'";
                           if (value.length < 36) return "Address must be at least 36 characters";
@@ -205,7 +220,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                     type="deny"
                     onClick={() => {
                       setRecipientName("");
-                      setValue("recipientAddress", "");
+                      setValue("recipientAddress", undefined);
                     }}
                   />
                 ) : (
@@ -239,7 +254,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                   type="deny"
                   onClick={() => {
                     setRecipientName("");
-                    setValue("recipientAddress", "");
+                    setValue("recipientAddress", undefined);
                   }}
                 />
               </div>
@@ -265,7 +280,11 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                     value: 200,
                     message: "Message cannot exceed 200 characters",
                   },
+                  required: "Message is required",
                 })}
+                style={{
+                  resize: "none",
+                }}
                 className="text-white opacity-20 outline-none text-base"
                 placeholder="Your message"
                 rows={5}
@@ -276,7 +295,22 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
 
           <div className="flex flex-row w-full gap-2 mt-2">
             <ActionButton text="Cancel" onClick={onClose} type="neutral" className="flex-1" loading={isLoading} />
-            <ActionButton text="Send Request" buttonType="submit" className="flex-3/4" loading={isLoading} />
+            {isConnected ? (
+              <ActionButton
+                text="Send Request"
+                onClick={handleSubmit(onSubmit)}
+                className="flex-3/4"
+                loading={isLoading}
+              />
+            ) : (
+              <ActionButton
+                text="Connect Wallet"
+                onClick={() => {
+                  handleConnect();
+                }}
+                className="flex-3/4"
+              />
+            )}
           </div>
         </div>
       </form>

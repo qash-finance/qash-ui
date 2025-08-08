@@ -3,6 +3,7 @@ import * as React from "react";
 import toast from "react-hot-toast";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { useAccountContext } from "@/contexts/AccountProvider";
+import { ActionButton } from "@/components/Common/ActionButton";
 
 export const RequestLinkSection: React.FC = () => {
   const { openModal } = useModal();
@@ -18,31 +19,25 @@ export const RequestLinkSection: React.FC = () => {
             people who have this link can request a payment from you
           </p>
         </div>
-        <button className="flex gap-1.5 justify-end items-center px-3 py-2.5 bg-white rounded-3xl border-solid cursor-pointer border-[0.567px] border-white border-opacity-40 max-sm:justify-center max-sm:self-stretch">
-          <span
-            className="text-base font-medium tracking-tight leading-5 text-right text-blue-600"
-            onClick={() => {
-              openModal(MODAL_IDS.NEW_REQUEST, { recipient: null });
-            }}
-          >
-            New request
-          </span>
-        </button>
+        <ActionButton
+          text="New request"
+          type="neutral"
+          onClick={() => openModal(MODAL_IDS.NEW_REQUEST, { recipient: null })}
+          className="h-[40px] text-md"
+        />
       </div>
-      <div className="flex justify-between items-center self-stretch py-2 pr-2 pl-4 bg-blue-600 rounded-full max-md:flex-col max-md:gap-2 max-md:p-3 max-sm:p-2">
+      <div className="flex justify-between items-center self-stretch py-2 pr-2 pl-4 bg-blue-600 rounded-xl max-md:flex-col max-md:gap-2 max-md:p-3 max-sm:p-2">
         <span className="text-lg font-medium leading-5 text-white max-md:text-base max-md:text-center max-sm:text-sm max-sm:break-all">
           {link}
         </span>
-        <button className="flex gap-1.5 justify-end items-center px-4 py-2.5 bg-white rounded-full border-solid cursor-pointer border-[0.567px] border-white border-opacity-40">
-          <span
-            className="text-base font-medium tracking-tight leading-5 text-right text-blue-600"
-            onClick={() => {
-              navigator.clipboard.writeText(link);
-              toast.success("Link copied to clipboard");
-            }}
-          >
-            Copy link
-          </span>
+        <button
+          className="flex items-center px-2 py-1.5 bg-white rounded-lg border-solid cursor-pointer border-[0.567px] border-white border-opacity-40"
+          onClick={() => {
+            navigator.clipboard.writeText(link);
+            toast.success("Link copied to clipboard");
+          }}
+        >
+          <img src="/copy-icon.svg" alt="Copy link" className="scale-110" />
         </button>
       </div>
     </section>

@@ -4,6 +4,7 @@ import { RequestPayment, RequestPaymentStatus } from "@/types/request-payment";
 import { formatDate } from "@/services/utils/formatDate";
 import { StatusBadge } from "@/components/Common/StatusBadge";
 import { MIDEN_EXPLORER_URL } from "@/services/utils/constant";
+import { Empty } from "@/components/Common/Empty";
 
 interface AcceptedRequestSectionProps {
   acceptedRequests?: RequestPayment[];
@@ -62,6 +63,22 @@ export const AcceptedRequestSection: React.FC<AcceptedRequestSectionProps> = ({ 
     };
   });
 
+  if (data.length === 0) {
+    return (
+      <>
+        <header className="flex flex-col gap-2 justify-center items-start w-full">
+          <h2 className="text-lg font-medium leading-5 text-center text-white max-sm:text-base">
+            Accepted payment request
+          </h2>
+          <p className="self-stretch text-base tracking-tight leading-5 text-neutral-500 max-sm:text-sm">
+            This is a list of requests you have accepted.
+          </p>
+        </header>
+        <Empty title="No accepted requests" />
+      </>
+    );
+  }
+
   return (
     <React.Fragment>
       <header className="flex flex-col gap-2 justify-center items-start w-full">
@@ -72,17 +89,11 @@ export const AcceptedRequestSection: React.FC<AcceptedRequestSectionProps> = ({ 
           This is a list of requests you have accepted.
         </p>
       </header>
-      {data.length > 0 ? (
-        <Table
-          headers={headers}
-          data={data}
-          columnWidths={{ "0": "10%", "1": "35%", "2": "10%", "3": "10%", "4": "5%", "5": "5%" }}
-        />
-      ) : (
-        <div className="flex flex-col items-center justify-center py-8 bg-[#1E1E1E] rounded-lg">
-          <p className="text-stone-300 text-sm">No accepted requests</p>
-        </div>
-      )}
+      <Table
+        headers={headers}
+        data={data}
+        columnWidths={{ "0": "10%", "1": "35%", "2": "10%", "3": "10%", "4": "5%", "5": "5%" }}
+      />
     </React.Fragment>
   );
 };

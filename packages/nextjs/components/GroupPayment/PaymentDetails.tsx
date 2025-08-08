@@ -16,6 +16,8 @@ import {
 import { Group } from "@/types/group-payment";
 import { useCreateGroupPayment, useCreateQuickSharePayment, useGetGroupPayments } from "@/services/api/group-payment";
 import { toast } from "react-hot-toast";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 
 interface GroupPaymentFormData {
   amount?: number;
@@ -25,9 +27,74 @@ interface GroupPaymentFormData {
 interface PaymentDetailsProps {
   selectedGroup: Group | null;
   groups: Group[];
+  onGroupSelect?: (group: Group) => void;
 }
 
-export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, groups }) => {
+interface GroupDropdownProps {
+  selectedGroup: Group | null;
+  groups: Group[];
+  onChange: (group: Group) => void;
+}
+
+const GroupDropdown: React.FC<GroupDropdownProps> = ({ selectedGroup, groups, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownIcon = "http://localhost:3845/assets/b279656339a45b206e605f09341820102483e5b8.svg";
+
+  // Ensure Quick Share appears at the top if it exists
+  const sortedGroups = [...groups].sort((a, b) => {
+    if (a.name === "Quick Share") return -1;
+    if (b.name === "Quick Share") return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const handleSelect = (group: Group) => {
+    onChange(group);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" onBlur={() => setIsOpen(false)} tabIndex={0}>
+      {/* Button */}
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(o => !o)}
+        className="bg-[#0c0c0c] flex items-center justify-between gap-2 h-[34px] px-2.5 py-1.5 rounded-lg text-white min-w-[160px]"
+      >
+        <span className="text-[16px] tracking-[-0.48px] leading-none overflow-hidden text-ellipsis whitespace-nowrap">
+          {selectedGroup?.name || "Select group"}
+        </span>
+        <span className="inline-flex items-center justify-center w-4 h-4">
+          <img src={dropdownIcon} alt="Open" className={`w-[15.9px] h-[15.9px] ${isOpen ? "rotate-180" : ""}`} />
+        </span>
+      </button>
+
+      {/* Options */}
+      {isOpen && (
+        <div
+          role="listbox"
+          className="absolute z-10 mt-1 w-full bg-[#0c0c0c] rounded-xl p-[2px] shadow-lg flex flex-col gap-1 max-h-60 overflow-y-auto"
+        >
+          {sortedGroups.map(group => (
+            <button
+              key={group.id}
+              role="option"
+              aria-selected={group.id === selectedGroup?.id}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => handleSelect(group)}
+              className="bg-[#292929] w-full text-left text-white text-[14px] tracking-[-0.42px] p-2 rounded-lg hover:bg-[#3a3a3a] flex items-center"
+            >
+              <span className="truncate">{group.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, groups, onGroupSelect }) => {
   //*************** Local State ***************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
     amount: "0",
@@ -38,10 +105,9 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
       maxSupply: QASH_TOKEN_MAX_SUPPLY,
     },
   });
-  const [generateLink, setGenerateLink] = useState(false);
 
   // Treat "Quick Share" as no group selected
-  const isQuickShare = selectedGroup?.name === "Quick Share";
+  const isQuickShare = selectedGroup?.name === "Quick Share" || !selectedGroup;
 
   //*************** React Hook Form ***************
   const {
@@ -62,6 +128,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
 
   //*************** React Hooks ***************
   const { mutate: createGroupPayment } = useCreateGroupPayment();
+  const { isConnected, handleConnect } = useWalletConnect();
   const { data: groupPayments, isLoading: isGroupPaymentsLoading } = useGetGroupPayments(selectedGroup?.id);
   const { mutate: createQuickSharePayment } = useCreateQuickSharePayment();
   const { openModal } = useModal();
@@ -135,13 +202,27 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
     );
   };
 
+  const renderButton = () => {
+    if (!isConnected) {
+      return <ActionButton onClick={handleConnect} text="Connect wallet" className="h-[45px] mt-2 text-md" />;
+    }
+
+    return !isQuickShare && selectedGroup ? (
+      <ActionButton onClick={handleSubmit(onSubmit)} text="Create group payment" className="h-[45px] mt-2 text-md" />
+    ) : (
+      <ActionButton onClick={handleSubmit(handleGenerateLink)} text="Generate link" className="h-[45px] mt-2 text-md" />
+    );
+  };
+
   return (
     <div className="flex flex-1 gap-2.5 mt-2.5 rounded-xl h-full max-md:max-w-full">
       {/* Left Panel - Payment Details */}
       <div className="flex flex-col p-2 rounded-xl bg-zinc-900 flex-1 min-w-60">
         {/* Header */}
-        <div className="flex gap-5 justify-between items-center px-3.5 py-2 w-full text-white bg-[#2D2D2D] rounded-t-xl">
-          <span className="text-base leading-none">{isQuickShare ? "Quick sharing" : "Group sharing"}</span>
+        <div className="flex gap-3 justify-between items-center px-3.5 py-2 w-full text-white bg-[#2D2D2D] rounded-t-xl">
+          <div className="flex items-center gap-3">
+            <span className="text-base leading-none">{isQuickShare ? "Quick sharing" : "Group sharing"}</span>
+          </div>
           <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
         </div>
         {/* Main Payment Display */}
@@ -255,23 +336,15 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
         </div>
 
         {/* Link Generation Section */}
-        {!isQuickShare && selectedGroup ? (
-          <ActionButton
-            onClick={handleSubmit(onSubmit)}
-            text="Create group payment"
-            className="h-[45px] mt-2 text-md"
-          />
-        ) : (
-          <ActionButton
-            onClick={handleSubmit(handleGenerateLink)}
-            text="Generate link"
-            className="h-[45px] mt-2 text-md"
-          />
-        )}
+        {renderButton()}
       </div>
 
       {/* Right Panel - Payment Container */}
-      <div className="flex-2/6 p-4 rounded-xl bg-zinc-800 min-w-60 h-full overflow-y-auto">
+      <div
+        className={`flex-2/6 p-4 rounded-xl bg-zinc-800 min-w-60 h-full ${
+          groupPayments && Object.keys(groupPayments).length > 0 ? "overflow-y-auto" : ""
+        }`}
+      >
         {/* <TabContainer tabs={groups.map(group => ({ id: group, label: group }))} className="w-full" /> */}
 
         {/* Header Section */}
@@ -283,17 +356,8 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
             </p>
           </div>
           {/* Payment Progress */}
-          {(isQuickShare || !selectedGroup) && (
-            <div
-              className="bg-[#7c7c7c] flex items-center gap-1 px-2 py-1 pr-4 rounded-full w-fit"
-              data-name="Payment Progress Container"
-            >
-              <div className="bg-[#0c0c0c] flex items-center px-2 py-1 rounded-full" data-name="Progress Counter">
-                <span className=" text-white text-xs leading-5">0/12</span>
-              </div>
-              <span className=" font-medium text-white text-[15px] leading-5">Transferred</span>
-            </div>
-          )}
+          {/* Figma-styled dropdown */}
+          <GroupDropdown selectedGroup={selectedGroup} groups={groups} onChange={group => onGroupSelect?.(group)} />
         </div>
 
         {/* Transaction Sections */}
@@ -304,7 +368,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
           </div>
         ) : groupPayments && Object.keys(groupPayments).length > 0 ? (
           Object.entries(groupPayments).map(([date, payments]) => (
-            <section key={date} className="mt-3 w-full bg-[#1E1E1E] p-2 rounded-xl">
+            <section key={date} className="mt-3 w-full bg-[#1E1E1E] p-2 rounded-xl ">
               {payments.map(payment => (
                 <div key={payment.id}>
                   <div className="flex flex-row justify-between items-center mb-2">
@@ -337,18 +401,20 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
                     />
                   </div>
                   {/* Member Statuses */}
-                  {payment.memberStatuses && payment.memberStatuses.length > 0 && (
-                    <div className=" space-y-1">
-                      {payment.memberStatuses.map(memberStatus => (
-                        <MemberStatusItem
-                          key={memberStatus.id}
-                          memberStatus={memberStatus}
-                          amount={payment.perMember}
-                          tokenSymbol={payment.tokens[0]?.metadata?.symbol || "QASH"}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <div className="mb-2">
+                    {payment.memberStatuses && payment.memberStatuses.length > 0 && (
+                      <div className=" space-y-1">
+                        {payment.memberStatuses.map(memberStatus => (
+                          <MemberStatusItem
+                            key={memberStatus.id}
+                            memberStatus={memberStatus}
+                            amount={payment.perMember}
+                            tokenSymbol={payment.tokens[0]?.metadata?.symbol || "QASH"}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </section>

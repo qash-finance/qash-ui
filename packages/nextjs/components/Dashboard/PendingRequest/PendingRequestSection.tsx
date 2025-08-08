@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { CellContent, Table } from "@/components/Common/Table";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useModal } from "@/contexts/ModalManagerProvider";
@@ -7,6 +7,7 @@ import { RequestPayment } from "@/types/request-payment";
 import { formatDate } from "@/services/utils/formatDate";
 import { useDenyRequest } from "@/services/api/request-payment";
 import { useGetAddressBooks } from "@/services/api/address-book";
+import { Empty } from "@/components/Common/Empty";
 
 interface PendingRequestSectionProps {
   pendingRequests?: RequestPayment[];
@@ -78,6 +79,7 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
 
   const actionRenderer = useCallback(
     (rowData: Record<string, CellContent>, index: number) => {
+      const [isConfirming, setIsConfirming] = useState(false);
       const request = pendingRequests[index];
       if (request?.status !== "pending") return null;
 
@@ -93,15 +95,23 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
           message: request.message,
           tokenAddress: token?.faucetId,
           isGroupPayment: request.isGroupPayment,
+          isRequestPayment: true,
+          onTransactionConfirmed: async () => {
+            setIsConfirming(true);
+          },
         });
       };
 
-      const handleDeny = () => denyRequest(request.id);
-
       return (
         <div className="flex gap-1 items-center justify-center">
-          <ActionButton text="Deny" type="deny" className="flex-1" onClick={handleDeny} />
-          <ActionButton text="Accept" className="flex-1" onClick={handleAccept} />
+          {!isConfirming ? (
+            <>
+              <ActionButton text="Deny" type="deny" className="flex-1" onClick={() => denyRequest(request.id)} />
+              <ActionButton text="Accept" className="flex-1" onClick={handleAccept} />
+            </>
+          ) : (
+            <ActionButton text="..." loading className="flex-1 h-8" />
+          )}
         </div>
       );
     },
@@ -165,9 +175,7 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
             Once you accept, you're committing to send the amount to the request address
           </p>
         </header>
-        <div className="flex flex-col items-center justify-center py-8 bg-[#1E1E1E] rounded-lg">
-          <p className="text-stone-300 text-sm">No pending requests</p>
-        </div>
+        <Empty title="No pending requests" />
       </>
     );
   }
