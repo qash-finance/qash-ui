@@ -176,6 +176,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
       recipientCount: notification.metadata?.recipientCount,
       isRead: notification.status === "READ",
       transactionId: notification.metadata?.transactionId,
+      giftOpener: notification.metadata?.caller,
     };
   };
 
@@ -195,7 +196,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
   return (
     <div
       data-tour="portfolio-section"
-      className="portfolio fixed inset-0 flex items-center justify-end z-[100] pointer-events-auto"
+      className="relativportfolio fixed inset-0 flex items-center justify-end z-[150] pointer-events-auto"
     >
       {/* Overlay */}
       <div
@@ -303,6 +304,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                     recipientCount={notification.recipientCount}
                     isRead={notification.isRead}
                     txId={notification.transactionId}
+                    giftOpener={notification.giftOpener}
                     onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
                   />
                 ))

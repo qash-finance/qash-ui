@@ -24,6 +24,7 @@ import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 
 const mockData = [
   {
@@ -154,9 +155,10 @@ export const PendingRecieveContainer: React.FC = () => {
     error: errorConsumableNotesFromServer,
     isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
+  const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
-  console.log("consumableNotesFromServer", consumableNotesFromServer);
+
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
@@ -251,6 +253,8 @@ export const PendingRecieveContainer: React.FC = () => {
       setConsumableNotes(prev => prev.filter(n => n.id !== note.id));
       // Also update checked rows if this note was checked
       setCheckedRows(prev => prev.filter(index => consumableNotes[index]?.id !== note.id));
+
+      await forceRefetchRecallableNotes();
     } catch (error) {
       console.error("Error consuming note:", error);
       toast.dismiss();
@@ -318,6 +322,8 @@ export const PendingRecieveContainer: React.FC = () => {
       setConsumableNotes(prev => prev.filter(note => !claimedNoteIds.includes(note.id)));
       // Clear the checked rows
       setCheckedRows([]);
+
+      await forceRefetchRecallableNotes();
     } catch (error) {
       console.error("Error consuming notes:", error);
       toast.dismiss();

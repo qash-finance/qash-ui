@@ -132,11 +132,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                       <AccountProvider>
                         {/* <ConnectWalletButton /> */}
                         <ModalManager />
-                        <div className="flex flex-row h-screen">
-                          <div className="w-1/6">
+                        <div className="flex flex-row">
+                          <div className="fixed w-1/6">
                             <Sidebar />
                           </div>
-                          <div className="w-5/6">
+                          <div className="ml-[16.6%] w-5/6 h-screen max-h-[1980px]">
                             <div className="p-[24px]">
                               <Title />
                             </div>

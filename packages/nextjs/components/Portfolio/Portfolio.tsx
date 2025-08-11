@@ -29,7 +29,7 @@ const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
   return (
     <div
       data-tour="portfolio-section"
-      className="portfolio fixed inset-0 flex items-center justify-end z-[100] pointer-events-auto"
+      className="portfolio fixed inset-0 flex items-center justify-end z-[150] pointer-events-auto"
     >
       {/* Overlay */}
       <div

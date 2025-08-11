@@ -17,6 +17,12 @@ import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOv
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
 import GroupLinkModal from "@/components/Modal/GroupLinkModal";
+import GiftTransactionOverviewModal from "@/components/Modal/GiftTransactionOverviewModal";
+import GIftSharingModal from "@/components/Modal/GIftSharingModal";
+import GenerateGiftModal from "@/components/Modal/GenerateGiftModal";
+import ValidatingModal from "@/components/Modal/ValidatingModal";
+import SuccessModal from "@/components/Modal/Status/SuccessModal";
+import FailModal from "@/components/Modal/Status/FailModal";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -31,11 +37,17 @@ export const MODAL_IDS = {
   ONBOARDING: "ONBOARDING",
   CONNECT_WALLET: "CONNECT_WALLET",
   TRANSACTION_OVERVIEW: "TRANSACTION_OVERVIEW",
+  GIFT_TRANSACTION_OVERVIEW: "GIFT_TRANSACTION_OVERVIEW",
   IMPORT_WALLET: "IMPORT_WALLET",
   BATCH_TRANSACTION_OVERVIEW: "BATCH_TRANSACTION_OVERVIEW",
   NOTIFICATION: "NOTIFICATION",
   BATCH_TRANSACTIONS: "BATCH_TRANSACTIONS",
   GROUP_LINK: "GROUP_LINK",
+  GIFT_SHARING: "GIFT_SHARING",
+  GENERATE_GIFT: "GENERATE_GIFT",
+  VALIDATING: "VALIDATING",
+  SUCCESS: "SUCCESS",
+  FAIL: "FAIL",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -126,6 +138,32 @@ export interface GroupLinkModalProps extends BaseModalProps {
   link: string;
 }
 
+export interface GiftTransactionOverviewModalProps extends BaseModalProps {
+  amount?: string;
+  accountAddress?: string;
+  transactionType?: string;
+  cancellableTime?: string;
+  onConfirm?: () => void;
+  tokenAddress?: string;
+  tokenSymbol?: string;
+}
+
+export interface GiftSharingModalProps extends BaseModalProps {
+  giftLink: string;
+}
+
+export interface GenerateGiftModalProps extends BaseModalProps {
+  onGiftGeneration?: () => Promise<string>;
+}
+
+export interface ValidatingModalProps extends BaseModalProps {}
+
+export interface SuccessModalProps extends BaseModalProps {}
+
+export interface FailModalProps extends BaseModalProps {
+  tryAgain?: () => Promise<void>;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -144,6 +182,12 @@ export type ModalPropsMap = {
   [MODAL_IDS.NOTIFICATION]: NotificationModalProps;
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModalProps;
   [MODAL_IDS.GROUP_LINK]: GroupLinkModalProps;
+  [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModalProps;
+  [MODAL_IDS.GIFT_SHARING]: GiftSharingModalProps;
+  [MODAL_IDS.GENERATE_GIFT]: GenerateGiftModalProps;
+  [MODAL_IDS.VALIDATING]: ValidatingModalProps;
+  [MODAL_IDS.SUCCESS]: SuccessModalProps;
+  [MODAL_IDS.FAIL]: FailModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -166,4 +210,10 @@ export const modalRegistry = {
   [MODAL_IDS.NOTIFICATION]: Notification,
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
   [MODAL_IDS.GROUP_LINK]: GroupLinkModal,
+  [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModal,
+  [MODAL_IDS.GIFT_SHARING]: GIftSharingModal,
+  [MODAL_IDS.GENERATE_GIFT]: GenerateGiftModal,
+  [MODAL_IDS.VALIDATING]: ValidatingModal,
+  [MODAL_IDS.SUCCESS]: SuccessModal,
+  [MODAL_IDS.FAIL]: FailModal,
 } as const;
