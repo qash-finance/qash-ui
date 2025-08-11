@@ -12,7 +12,9 @@ export const useSocket = () => {
   return useContext(SocketContext);
 };
 
-const socketDefaultUrl = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL : "http://localhost:3001";
+const socketDefaultUrl = process.env.NEXT_PUBLIC_SERVER_URL
+  ? process.env.NEXT_PUBLIC_SERVER_URL
+  : "http://localhost:3001";
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);

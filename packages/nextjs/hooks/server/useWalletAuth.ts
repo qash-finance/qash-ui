@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/services/auth/context";
 import { AuthenticatedApiClient } from "@/services/api";
+import { useSessionManager } from "./useAnalytics";
 
 export interface WalletAuthHook {
   // Auth state
@@ -27,6 +28,7 @@ export interface WalletAuthHook {
 
 export function useWalletAuth(): WalletAuthHook {
   const auth = useAuth();
+  const session = useSessionManager();
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Combine auth error with local error
@@ -50,7 +52,9 @@ export function useWalletAuth(): WalletAuthHook {
       try {
         setLocalError(null);
         await auth.login(walletAddress);
+        await session.loginUser(walletAddress);
       } catch (error) {
+        await session.logoutUser();
         const errorMessage = error instanceof Error ? error.message : "Connection failed";
         setLocalError(errorMessage);
         throw error;
@@ -63,6 +67,7 @@ export function useWalletAuth(): WalletAuthHook {
     try {
       setLocalError(null);
       await auth.logout();
+      await session.logoutUser();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Disconnection failed";
       setLocalError(errorMessage);

@@ -54,7 +54,7 @@ export function ImportWalletModal({
     });
 
     if (validFiles.length === 0) {
-      toast.error("Please select a valid .xlsx, .csv, or .json file");
+      toast.error("Please select a valid .json file");
       return;
     }
 
@@ -189,7 +189,7 @@ export function ImportWalletModal({
           </div>
 
           <h3 className="text-xl font-medium text-white mb-2">Choose file or Drag & Drop it here.</h3>
-          <p className="text-gray-400 mb-3">Only support .xlsx, csv format (1 file only)</p>
+          <p className="text-gray-400 mb-3">Only support .json (1 file only)</p>
 
           <ActionButton
             text="Upload File"
@@ -227,8 +227,7 @@ export function ImportWalletModal({
               </div>
             </div>
             <p className="text-sm text-white leading-5">
-              Tooltips are user-triggered messages that provide additional information about a page element or feature.
-              Although tooltips aren't new to the web, they are often incorrectly implemented.
+              Be aware that importing account will replace all your existing accounts!
             </p>
           </div>
         </div>

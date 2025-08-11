@@ -75,7 +75,6 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
 export const importAndGetAccount = async (account: string): Promise<any> => {
   const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
 
-  // Create a promise for this account import
   const importPromise = (async () => {
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
@@ -93,7 +92,6 @@ export const importAndGetAccount = async (account: string): Promise<any> => {
           throw new Error(`Account not found after import: ${accountId}`);
         }
       } catch (error) {
-        // Remove from cache if import failed
         throw error;
       }
     }

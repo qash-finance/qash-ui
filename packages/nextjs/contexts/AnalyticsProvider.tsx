@@ -17,6 +17,7 @@ import {
   ANALYTICS_SESSION_START_KEY,
   ANALYTICS_USER_ADDRESS_KEY,
 } from "@/services/utils/constant";
+import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
 
