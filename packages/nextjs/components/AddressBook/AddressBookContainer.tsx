@@ -84,11 +84,9 @@ const NewFolder = ({
       />
 
       <div
-        className="transition-all"
+        className="transition-all absolute left-1/2 bottom-1/2 translate-x-[-50%] translate-y-[-50%] z-50"
         style={{
-          position: "absolute",
-          left: "55%",
-          transform: reveal ? "translate(-50%, -500%)" : "translate(-50%, -200%)",
+          transform: !reveal ? "translate(0%, -50%)" : "translate(0%, 50%)",
           opacity: reveal ? 1 : 0,
           zIndex: 50,
           transitionDuration: `${ANIMATION_DURATION}ms`,

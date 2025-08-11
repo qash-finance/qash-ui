@@ -41,7 +41,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
 
   // **************** Hooks *******************
   const { walletAddress } = useWalletAuth();
-  const { isConnected, handleConnect } = useWalletConnect();
+  const { isConnected } = useWalletConnect();
   const { openModal } = useModal();
   const { mutate: createRequestPayment } = useCreatePendingRequest();
   const {
@@ -306,7 +306,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
               <ActionButton
                 text="Connect Wallet"
                 onClick={() => {
-                  handleConnect();
+                  openModal(MODAL_IDS.CONNECT_WALLET);
                 }}
                 className="flex-3/4"
               />

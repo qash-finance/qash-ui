@@ -148,11 +148,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return (
           <div>
             <span className={titleStyles}>
-              {title}{" "}
+              Gift worth
               <span className="text-[#1e8fff]">
                 {amount} {tokenName}
               </span>{" "}
-              by {formatAddress(giftOpener || "")}
+              opened by {formatAddress(giftOpener || "")}
             </span>
             <div className="my-1.5">
               <a

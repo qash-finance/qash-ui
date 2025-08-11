@@ -2,7 +2,7 @@
 import React from "react";
 import { TransactionOverviewModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
+import BaseModal from "../BaseModal";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { formatAddress } from "@/services/utils/miden/address";
 import { blo } from "blo";

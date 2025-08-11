@@ -10,6 +10,7 @@ interface ActionButtonProps {
   className?: string;
   buttonType?: "button" | "submit" | "reset";
   icon?: string;
+  iconPosition?: "left" | "right";
 }
 
 const BUTTON_STYLES = {
@@ -60,6 +61,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   className = "",
   buttonType = "button",
   icon,
+  iconPosition = "left",
 }) => {
   const isDisabled = disabled;
   const buttonStyle = BUTTON_STYLES[type];
@@ -97,8 +99,13 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         <img src="/loading-square.gif" alt="loading" className="w-6 h-6" />
       ) : (
         <div className="flex items-center gap-1">
-          {icon && <img src={icon} alt="icon" className="w-4 h-4" />}
+          {icon && iconPosition === "left" && (
+            <img src={icon} alt="icon" className="w-4 h-4" style={{ filter: "invert(1) brightness(1000%)" }} />
+          )}
           <span>{text}</span>
+          {icon && iconPosition === "right" && (
+            <img src={icon} alt="icon" className="w-4 h-4" style={{ filter: "invert(1) brightness(1000%)" }} />
+          )}
         </div>
       )}
     </button>

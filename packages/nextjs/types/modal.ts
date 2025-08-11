@@ -3,7 +3,7 @@ import SendModal from "@/components/Modal/SendModal";
 import SelectRecipientModal from "@/components/Modal/SelectRecipientModal";
 import SetupModulesModal from "@/components/Modal/SetupModulesModal";
 import TransactionDetailModal from "@/components/Modal/TransactionDetailModal";
-import CreateNewGroupModal from "@/components/Modal/CreateNewGroupModal";
+import CreateNewGroupModal from "@/components/Modal/Group/CreateNewGroupModal";
 import NewRequestModal from "@/components/Modal/NewRequestModal";
 import CreateCustomQRModal from "@/components/Modal/CreateCustomQRModal";
 import Portfolio from "@/components/Portfolio/Portfolio";
@@ -13,16 +13,19 @@ import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModa
 import Notification from "@/components/Notification/Notification";
 import { AssetWithMetadata } from "./faucet";
 import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
-import BatchTransactionOverviewModal from "@/components/Modal/BatchTransactionOverviewModal";
+import BatchTransactionOverviewModal from "@/components/Modal/Batch/BatchTransactionOverviewModal";
 import { BatchTransaction } from "@/services/store/batchTransactions";
-import BatchTransactionsModal from "@/components/Modal/BatchTransactionsModal";
-import GroupLinkModal from "@/components/Modal/GroupLinkModal";
-import GiftTransactionOverviewModal from "@/components/Modal/GiftTransactionOverviewModal";
-import GIftSharingModal from "@/components/Modal/GIftSharingModal";
-import GenerateGiftModal from "@/components/Modal/GenerateGiftModal";
+import BatchTransactionsModal from "@/components/Modal/Batch/BatchTransactionsModal";
+import GroupLinkModal from "@/components/Modal/Group/GroupLinkModal";
+import GiftTransactionOverviewModal from "@/components/Modal/Gift/GiftTransactionOverviewModal";
+import GiftSharingModal from "@/components/Modal/Gift/GiftSharingModal";
+import GenerateGiftModal from "@/components/Modal/Gift/GenerateGiftModal";
 import ValidatingModal from "@/components/Modal/ValidatingModal";
 import SuccessModal from "@/components/Modal/Status/SuccessModal";
 import FailModal from "@/components/Modal/Status/FailModal";
+import DeleteGroupModal from "@/components/Modal/Group/DeleteGroupModal";
+import EditGroupModal from "@/components/Modal/Group/EditGroupModal";
+import { Group } from "./group-payment";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -48,6 +51,8 @@ export const MODAL_IDS = {
   VALIDATING: "VALIDATING",
   SUCCESS: "SUCCESS",
   FAIL: "FAIL",
+  DELETE_GROUP: "DELETE_GROUP",
+  EDIT_GROUP: "EDIT_GROUP",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -164,6 +169,17 @@ export interface FailModalProps extends BaseModalProps {
   tryAgain?: () => Promise<void>;
 }
 
+export interface EditGroupModalProps extends BaseModalProps {
+  group: Group & { memberAddressBooks: { address: string; name?: string }[] };
+}
+
+export interface DeleteGroupModalProps extends BaseModalProps {
+  groupName?: string;
+  onDelete?: () => Promise<void> | void;
+}
+
+// Removed duplicate empty interface declaration for EditGroupModalProps
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -188,6 +204,9 @@ export type ModalPropsMap = {
   [MODAL_IDS.VALIDATING]: ValidatingModalProps;
   [MODAL_IDS.SUCCESS]: SuccessModalProps;
   [MODAL_IDS.FAIL]: FailModalProps;
+  [MODAL_IDS.DELETE_GROUP]: DeleteGroupModalProps;
+  [MODAL_IDS.EDIT_GROUP]: EditGroupModalProps;
+  // Extend when wiring into registry
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -211,9 +230,11 @@ export const modalRegistry = {
   [MODAL_IDS.BATCH_TRANSACTIONS]: BatchTransactionsModal,
   [MODAL_IDS.GROUP_LINK]: GroupLinkModal,
   [MODAL_IDS.GIFT_TRANSACTION_OVERVIEW]: GiftTransactionOverviewModal,
-  [MODAL_IDS.GIFT_SHARING]: GIftSharingModal,
+  [MODAL_IDS.GIFT_SHARING]: GiftSharingModal,
   [MODAL_IDS.GENERATE_GIFT]: GenerateGiftModal,
   [MODAL_IDS.VALIDATING]: ValidatingModal,
   [MODAL_IDS.SUCCESS]: SuccessModal,
   [MODAL_IDS.FAIL]: FailModal,
+  [MODAL_IDS.DELETE_GROUP]: DeleteGroupModal,
+  [MODAL_IDS.EDIT_GROUP]: EditGroupModal,
 } as const;

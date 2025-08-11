@@ -9,6 +9,7 @@ import { Group } from "@/types/group-payment";
 import { ActionButton } from "../Common/ActionButton";
 import { DEFAULT_AVATAR_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
+import { useGetAddressBooks } from "@/services/api/address-book";
 
 interface EmptyStateProps {
   message: string;
@@ -24,6 +25,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ message }) => (
 const GroupPaymentContainer: React.FC = () => {
   const { openModal } = useModal();
   const { data: groups, isLoading, error } = useGetAllGroups();
+  const { data: addressBooks } = useGetAddressBooks();
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
   // Auto-select "Quick Share" group when groups are loaded
@@ -43,8 +45,9 @@ const GroupPaymentContainer: React.FC = () => {
       .map(group => ({
         id: group.id,
         imageSrc: blo(DEFAULT_AVATAR_ADDRESS),
-        title: group.name,
+        name: group.name,
         memberCount: group.members.length,
+        members: group.members,
       })) || [];
 
   return (
@@ -77,7 +80,7 @@ const GroupPaymentContainer: React.FC = () => {
               <GroupCard
                 key={group.id}
                 imageSrc={group.imageSrc}
-                title={group.title}
+                title={group.name}
                 memberCount={group.memberCount}
                 selected={selectedGroup?.id === group.id}
                 onClick={() => {
@@ -94,6 +97,7 @@ const GroupPaymentContainer: React.FC = () => {
                   const found = groups.find(g => g.id === group.id);
                   if (found) setSelectedGroup(found);
                 }}
+                onEdit={() => openModal(MODAL_IDS.EDIT_GROUP, { group: group })}
               />
             ))
           )}

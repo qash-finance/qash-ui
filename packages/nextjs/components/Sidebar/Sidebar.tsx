@@ -56,7 +56,7 @@ export const actionItems = [
     items: [
       { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send, disabled: false },
       { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch, disabled: false },
-      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: true },
+      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: false },
       {
         icon: "/sidebar/group-payment.gif",
         label: "Group Payment",

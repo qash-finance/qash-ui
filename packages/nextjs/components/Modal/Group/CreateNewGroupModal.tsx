@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { ActionButton } from "../Common/ActionButton";
+import { ActionButton } from "../../Common/ActionButton";
 import { CreateNewGroupModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
+import BaseModal from "../BaseModal";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 import { useGetAddressBooks } from "@/services/api/address-book";
 import { AddressBook } from "@/types/address-book";
-import { Empty } from "../Common/Empty";
+import { Empty } from "../../Common/Empty";
 import { useForm } from "react-hook-form";
 import { formatAddress } from "@/services/utils/miden/address";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
@@ -148,13 +148,16 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
       return;
     }
 
+    const randomName = "QashFam-" + Math.random().toString(36).substring(2, 15);
+
     const category = "Manual";
     const addressBookEntry: AddressBook = {
-      name: manualAddress,
+      name: randomName,
       address: manualAddress,
       userAddress: "",
     } as AddressBook;
-    const uniqueId = `${category}:${addressBookEntry.address}:${addressBookEntry.name}`;
+    // Use a stable unique id that does NOT include the (editable) name
+    const uniqueId = `${category}:${addressBookEntry.address}`;
 
     setSelectedAddresses(prev => {
       const next = new Set(prev);
@@ -176,7 +179,8 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
 
   // Handle select toggle (multiple select for group creation)
   const handleToggleAddress = (addressBook: AddressBook, category: string) => {
-    const uniqueId = `${category}:${addressBook.address}:${addressBook.name}`;
+    // Stable id: category + address
+    const uniqueId = `${category}:${addressBook.address}`;
 
     setSelectedAddresses(prev => {
       const newSet = new Set(prev);
@@ -226,24 +230,45 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
   };
 
   // Format data for the table
-  const tableData = selectedAddressesDetails.map((addressDetail, index) => ({
-    No: <span className="text-white font-medium">{(index + 1).toString()}</span>,
-    "Remembered Name": (
-      <span className="text-stone-300 block truncate max-w-[100px] mx-auto text-center" title={addressDetail.name}>
-        {addressDetail.name}
-      </span>
-    ),
-    Address: <span className="text-white font-medium truncate">{formatAddress(addressDetail.address)}</span>,
-  }));
+  const tableData = selectedAddressesDetails.map((addressDetail, index) => {
+    // Derive stable unique id for this row based on the stored map entry
+    const uniqueId = Array.from(selectedAddressDetails.entries()).find(
+      ([_key, value]) => value.address === addressDetail,
+    )?.[0];
+    return {
+      No: <span className="text-white font-medium">{(index + 1).toString()}</span>,
+      "Remembered Name": (
+        <input
+          type="text"
+          placeholder="Enter name"
+          className="text-white text-[16px] tracking-[-0.32px] leading-none w-full outline-none text-center"
+          value={addressDetail.name}
+          onChange={e =>
+            setSelectedAddressDetails(
+              prev =>
+                new Map(
+                  Array.from(prev.entries()).map(([key, value]) =>
+                    key === uniqueId
+                      ? [key, { ...value, address: { ...value.address, name: e.target.value } }]
+                      : [key, value],
+                  ),
+                ),
+            )
+          }
+        />
+      ),
+      Address: <span className="text-white font-medium truncate">{formatAddress(addressDetail.address)}</span>,
+    };
+  });
 
   // Save handler
   const handleSave = () => {
     if (groupName.trim() && selectedAddresses.size > 0) {
-      const members = Array.from(selectedAddresses).map(uniqueId => {
-        // Extract just the address from the format "category:address:name"
-        const parts = uniqueId.split(":");
-        return parts[1]; // Return just the address part
-      });
+      // Build members from the selected details map to include the latest edited names
+      const members = Array.from(selectedAddressDetails.values()).map(({ address }) => ({
+        address: address.address,
+        name: address.name,
+      }));
 
       const groupData: CreateGroupDto = {
         name: groupName.trim(),
@@ -329,7 +354,7 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
             {(filteredGroupedAddressBooks[activeTab] as AddressBook[])?.length > 0 ? (
               <div className="flex flex-col gap-1.5 items-start self-stretch p-1 rounded-xl bg-[#313131] overflow-y-auto max-h-[133px]">
                 {(filteredGroupedAddressBooks[activeTab] as AddressBook[])?.map((ab: AddressBook) => {
-                  const uniqueId = `${activeTab}:${ab.address}:${ab.name}`;
+                  const uniqueId = `${activeTab}:${ab.address}`;
                   return (
                     <AddressItem
                       key={uniqueId}

@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { MODAL_IDS, GenerateGiftModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
+import BaseModal from "../BaseModal";
 import toast from "react-hot-toast";
-import { LoadingBar } from "../Common/LoadingBar";
+import { LoadingBar } from "../../Common/LoadingBar";
+import { ActionButton } from "@/components/Common/ActionButton";
 
 type Step = "generating" | "created";
 
@@ -81,13 +82,23 @@ export function GenerateGiftModal({ isOpen, onClose, zIndex, ...props }: ModalPr
                 <div className="relative flex-1 flex items-center justify-center text-white overflow-hidden">
                   <div className="flex flex-col items-center gap-2 relative z-10">
                     <div className="relative">
-                      <img src="/modal/blue-gift.gif" alt="Loading" className="w-30 h-30 z-20 relative" />
+                      <img
+                        src="/modal/blue-gift.gif"
+                        alt="Loading"
+                        className="w-30 h-30 z-20 relative"
+                        draggable={false}
+                      />
                     </div>
                     <span className="text-2xl font-bold">Generating your gift...</span>
                     <span className="text-sm">Please wait while we prepare your gift.</span>
                   </div>
-                  <img src="/modal/blue-spotlight.png" alt="Spotlight" className="absolute top-0  z-5" />
-                  <img src="/modal/grid-wall.svg" alt="Grid wall" className="absolute bottom-0 z-0" />
+                  <img
+                    src="/modal/blue-spotlight.png"
+                    alt="Spotlight"
+                    className="absolute top-0  z-5"
+                    draggable={false}
+                  />
+                  <img src="/modal/grid-wall.svg" alt="Grid wall" className="absolute bottom-0 z-0" draggable={false} />
                 </div>
               </div>
             </div>
@@ -113,7 +124,7 @@ export function GenerateGiftModal({ isOpen, onClose, zIndex, ...props }: ModalPr
               >
                 <div className="relative flex-1 flex items-center justify-center text-white overflow-hidden">
                   <div className="flex flex-col items-center gap-2 relative z-10">
-                    <img src="/modal/gift-created.svg" alt="Loading" className="scale-100" />
+                    <img src="/modal/gift-created.svg" alt="Loading" className="scale-100" draggable={false} />
                     <span className="text-2xl font-bold">Gift created successfully</span>
                     <span className="text-[#989898] text-sm">Share it now and make someone's day!</span>
                   </div>
@@ -124,21 +135,15 @@ export function GenerateGiftModal({ isOpen, onClose, zIndex, ...props }: ModalPr
               <span className="flex-3 text-[#066EFF] text-ellipsis overflow-hidden whitespace-nowrap w-full">
                 {giftLink}
               </span>
-              <button
-                className={`flex-1 flex flex-row items-center gap-1.5 justify-center px-3 py-2 bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors`}
-                onClick={() => {
-                  navigator.clipboard.writeText(giftLink);
+              <ActionButton
+                text="Copy link"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(giftLink);
                   toast.success("Link copied to clipboard");
                 }}
-              >
-                <span className={`text-sm font-medium tracking-tight leading-4 text-white`}>Copy link</span>
-                <img
-                  src="/copy-icon.svg"
-                  alt="copy"
-                  className="w-4 h-4"
-                  style={{ filter: "invert(1) brightness(1000%)" }}
-                />
-              </button>
+                iconPosition="right"
+                icon="/copy-icon.svg"
+              />
             </div>
           </div>
         );

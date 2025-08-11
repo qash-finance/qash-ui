@@ -179,6 +179,52 @@ const useCreateQuickSharePayment = () => {
   });
 };
 
+// *************************************************
+// ******************* PATCH ***********************
+// *************************************************
+
+const useUpdateGroup = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ groupId, data }: { groupId: number; data: CreateGroupDto }) => {
+      return apiClient.patchData<Group>(`/group-payment/group/${groupId}`, data);
+    },
+    onSuccess: (updatedGroup: Group) => {
+      // Update groups cache
+      queryClient.setQueryData(["groups"], (oldData: Group[] | undefined) => {
+        if (!oldData) return [updatedGroup];
+        return oldData.map(g => (g.id === updatedGroup.id ? updatedGroup : g));
+      });
+      // Invalidate related payments
+      queryClient.invalidateQueries({ queryKey: ["group-payments", updatedGroup.id] });
+    },
+  });
+};
+
+// *************************************************
+// ******************* DELETE **********************
+// *************************************************
+
+const useDeleteGroup = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (groupId: number) => {
+      return apiClient.deleteData(`/group-payment/group/${groupId}`);
+    },
+    onSuccess: (_resp, groupId) => {
+      // Remove from groups cache
+      queryClient.setQueryData(["groups"], (oldData: Group[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.filter(g => g.id !== groupId);
+      });
+      // Invalidate related payments
+      queryClient.invalidateQueries({ queryKey: ["group-payments", groupId] });
+    },
+  });
+};
+
 const useAddMemberToQuickShare = () => {
   const queryClient = useQueryClient();
 
@@ -202,4 +248,6 @@ export {
   useCreateGroupPayment,
   useCreateQuickSharePayment,
   useAddMemberToQuickShare,
+  useUpdateGroup,
+  useDeleteGroup,
 };

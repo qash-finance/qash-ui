@@ -23,6 +23,7 @@ import { Empty } from "@/components/Common/Empty";
 import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -162,6 +163,7 @@ export const CancelDashboardContainer: React.FC = () => {
     isLoading: recallableNotesLoading,
     refetch: refetchRecallableNotes,
   } = useRecallableNotes();
+  const { refetch: refetchGiftDashboard } = useGiftDashboard();
 
   console.log("recallableNotes", recallableNotes);
 
@@ -444,6 +446,9 @@ export const CancelDashboardContainer: React.FC = () => {
                 </a>
               </div>,
             );
+
+            // refetch gift dashboard
+            await refetchGiftDashboard();
           } catch (error) {
             console.error("Error recalling note:", error);
             toast.dismiss();

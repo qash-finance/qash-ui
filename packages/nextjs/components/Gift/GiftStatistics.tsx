@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { TransactionRow } from "./TransactionRow";
+import { GiftRow } from "./GiftRow";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 import SkeletonLoading from "../Common/SkeletonLoading";
 import { NoteStatus } from "@/types/note";
@@ -23,7 +23,6 @@ interface GiftStatisticsProps {
 
 export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) => {
   const { data: giftDashboard, isLoading: isLoadingGiftDashboard } = useGiftDashboard();
-  console.log("🚀 ~ GiftStatistics ~ giftDashboard:", giftDashboard);
   return (
     <div className="flex flex-col rounded-xl bg-[#1E1E1E] h-full overflow-hidden">
       {isLoadingGiftDashboard ? (
@@ -81,7 +80,7 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
           {giftDashboard && giftDashboard?.gifts.length > 0 ? (
             <div className="flex flex-col gap-1 overflow-y-auto px-4 flex-1 min-h-0">
               {giftDashboard.gifts.map((gift, index) => (
-                <TransactionRow
+                <GiftRow
                   id={(index + 1).toString()}
                   key={gift.secretNumber}
                   assets={gift.assets[0]}

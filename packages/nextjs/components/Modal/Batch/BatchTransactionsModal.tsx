@@ -2,12 +2,12 @@
 import React from "react";
 import { BatchTransactionsModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
-import { TransactionItem } from "../Batch/TransactionItem";
+import { TransactionItem } from "../../Batch/TransactionItem";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 // import BaseModal from "./BatchTransactionOverview/BaseModal";
-import { EmptyBatch } from "../Batch/BatchTransactionContainer";
-import BaseModal from "./BaseModal";
+import { EmptyBatch } from "../../Batch/BatchTransactionContainer";
+import BaseModal from "../BaseModal";
 
 export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTransactionsModalProps>) {
   const { removeTransaction } = useBatchTransactions();

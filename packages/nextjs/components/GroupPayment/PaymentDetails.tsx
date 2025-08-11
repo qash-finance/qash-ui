@@ -38,7 +38,6 @@ interface GroupDropdownProps {
 
 const GroupDropdown: React.FC<GroupDropdownProps> = ({ selectedGroup, groups, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownIcon = "http://localhost:3845/assets/b279656339a45b206e605f09341820102483e5b8.svg";
 
   // Ensure Quick Share appears at the top if it exists
   const sortedGroups = [...groups].sort((a, b) => {
@@ -66,7 +65,11 @@ const GroupDropdown: React.FC<GroupDropdownProps> = ({ selectedGroup, groups, on
           {selectedGroup?.name || "Select group"}
         </span>
         <span className="inline-flex items-center justify-center w-4 h-4">
-          <img src={dropdownIcon} alt="Open" className={`w-[15.9px] h-[15.9px] ${isOpen ? "rotate-180" : ""}`} />
+          <img
+            src="/arrow/filled-arrow-down.svg"
+            alt="Open"
+            className={`w-[15.9px] h-[15.9px] ${isOpen ? "rotate-180" : ""}`}
+          />
         </span>
       </button>
 
@@ -128,7 +131,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
 
   //*************** React Hooks ***************
   const { mutate: createGroupPayment } = useCreateGroupPayment();
-  const { isConnected, handleConnect } = useWalletConnect();
+  const { isConnected } = useWalletConnect();
   const { data: groupPayments, isLoading: isGroupPaymentsLoading } = useGetGroupPayments(selectedGroup?.id);
   const { mutate: createQuickSharePayment } = useCreateQuickSharePayment();
   const { openModal } = useModal();
@@ -204,7 +207,13 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
 
   const renderButton = () => {
     if (!isConnected) {
-      return <ActionButton onClick={handleConnect} text="Connect wallet" className="h-[45px] mt-2 text-md" />;
+      return (
+        <ActionButton
+          onClick={() => openModal(MODAL_IDS.CONNECT_WALLET)}
+          text="Connect wallet"
+          className="h-[45px] mt-2 text-md"
+        />
+      );
     }
 
     return !isQuickShare && selectedGroup ? (
@@ -294,7 +303,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
                       valueAsNumber: true,
                     })}
                     type="number"
-                    placeholder="2"
+                    placeholder="0"
                     className="flex flex-col text-[#066eff] text-[16px] text-center text-nowrap tracking-[-0.48px] bg-transparent border-none focus:outline-none w-15"
                     min="1"
                     max="999"

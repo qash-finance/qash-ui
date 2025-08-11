@@ -2,12 +2,18 @@ import { AssetWithMetadata } from "./faucet";
 
 export interface CreateGroupDto {
   name: string;
-  members: string[];
+  members: {
+    address: string;
+    name: string;
+  }[];
 }
 
 export interface CreateDefaultGroupDto {
   name: string;
-  members?: string[];
+  members?: {
+    address: string;
+    name?: string;
+  }[];
 }
 
 export interface CreateGroupPaymentDto {
@@ -20,7 +26,10 @@ export interface CreateGroupPaymentDto {
 export interface Group {
   id: number;
   name: string;
-  members: string[];
+  members: {
+    address: string;
+    name: string;
+  }[];
   ownerAddress: string;
   createdAt: string;
   updatedAt: string;

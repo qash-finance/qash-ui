@@ -32,7 +32,7 @@ function formatDateTime(isoString: string): string {
   return `${day}/${month}/${year}, ${hours}:${minutes}`;
 }
 
-export const TransactionRow: React.FC<TransactionRowProps> = ({
+export const GiftRow: React.FC<TransactionRowProps> = ({
   id,
   assets,
   dateTime,
@@ -55,15 +55,18 @@ export const TransactionRow: React.FC<TransactionRowProps> = ({
           <span className="text-sm font-medium leading-4 text-white">{id}</span>
         </div>
       </div>
-      <div className="flex gap-1 items-center flex-[1_0_0]">
-        <img
-          alt={assets.metadata.symbol || "Token"}
-          className="ml-2 w-6 h-6"
-          src={assets.faucetId === QASH_TOKEN_ADDRESS ? "/token/qash.svg" : blo(turnBechToHex(assets.faucetId || ""))}
-        />
-        <span className="text-xl leading-6 text-center text-white">{assets.amount}</span>
+      <div className="flex gap-4 items-center flex-[1_0_0] ">
+        <div className="flex gap-1 items-center">
+          <img
+            alt={assets.metadata.symbol || "Token"}
+            className="ml-2 w-6 h-6"
+            src={assets.faucetId === QASH_TOKEN_ADDRESS ? "/token/qash.svg" : blo(turnBechToHex(assets.faucetId || ""))}
+          />
+          <span className="text-xl leading-6 text-center text-white">{assets.amount}</span>
+        </div>
+
         {isOpened && (
-          <div className="flex gap-0.5 justify-center items-center px-1.5 py-1.5 bg-blend-luminosity bg-[#3F3F3F] bg-opacity-10 rounded-[34px]">
+          <div className="flex gap-0.5 justify-center items-center px-1.5 py-1 bg-blend-luminosity bg-[#3F3F3F] bg-opacity-10 rounded-[34px]">
             <span className="text-xs font-medium tracking-tight leading-4 text-stone-300">Opened</span>
           </div>
         )}

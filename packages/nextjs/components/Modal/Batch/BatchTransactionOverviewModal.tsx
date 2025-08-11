@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import { BatchTransactionOverviewModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
+import BaseModal from "../BaseModal";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { formatAddress } from "@/services/utils/miden/address";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
