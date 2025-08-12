@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { MODAL_IDS, SelectTokenModalProps } from "@/types/modal";
+import { MODAL_IDS, ConnectWalletModalProps } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { ActionButton } from "../../Common/ActionButton";
@@ -11,13 +11,13 @@ import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTour } from "@reactour/tour";
 import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 import { usePathname, useRouter } from "next/navigation";
-import { useCreateDefaultGroup, useCreateGroup } from "@/services/api/group-payment";
+import { useCreateDefaultGroup } from "@/services/api/group-payment";
 import { CreateGroupDto } from "@/types/group-payment";
 import { LoadingBar } from "../../Common/LoadingBar";
 
 type Step = "init" | "creating" | "final";
 
-export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
+export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<ConnectWalletModalProps>) {
   // **************** Custom Hooks *******************
   const { openModal } = useModal();
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
@@ -257,7 +257,15 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                 }}
                 className="flex flex-col gap-4 h-[300px] p-4 rounded-xl"
               >
-                <h2 className="text-neutral-400 text-sm font-medium">Recently Connected Wallets</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-neutral-400 text-sm font-medium">Recently Connected Wallets</h2>
+                  <img
+                    src="/modal/reset-icon.svg"
+                    alt=""
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => openModal(MODAL_IDS.RESET_ACCOUNT)}
+                  />
+                </div>
                 <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
                   {accounts.map((account, index) => (
                     <div
@@ -495,6 +503,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       currentStep={currentStep}
       handleCreateClick={handleCreateClick}
       showCreateButton={accounts.length > 0 && currentStep === "init"}
+      zIndex={zIndex}
     >
       {renderStepContent()}
     </BaseModal>

@@ -24,7 +24,7 @@ const OpenGiftContainer = () => {
   const code = encodedCode ? decodeURIComponent(encodedCode) : "";
 
   // **************** Custom Hooks *******************
-  const { walletAddress } = useWalletConnect();
+  const { walletAddress, isConnected } = useWalletConnect();
   const { data: giftDetail, isLoading: isLoadingGiftDetail } = useGiftDetail(code);
   const { mutateAsync: openGift } = useOpenGift();
   const { openModal, closeModal } = useModal();
@@ -113,12 +113,18 @@ const OpenGiftContainer = () => {
   }, [isLoadingGiftDetail, giftDetail]);
 
   // Show loading state while data is being fetched
-  if (isLoadingGiftDetail || !isLoaded) {
-    return <></>;
-  }
+  // if (isLoadingGiftDetail || !isLoaded) {
+  //   return <></>;
+  // }
 
   return (
-    <div className="min-w-[880px] flex w-full h-full justify-center items-center flex-col max-h-screen overflow-y-hidden relative">
+    <div
+      className="flex w-full h-full justify-center items-center flex-col max-h-screen overflow-y-hidden relative transition-colors duration-700 ease-in-out"
+      style={{
+        backgroundColor: giftDetail?.status === "consumed" || showGif ? "#000000" : "transparent",
+        borderRadius: giftDetail?.status === "consumed" ? "10px" : "",
+      }}
+    >
       {giftDetail?.status !== "consumed" ? (
         <div className="fixed">
           <div className="flex w-full ">
@@ -177,83 +183,42 @@ const OpenGiftContainer = () => {
                 )}
                 {showGif && (
                   <div>
-                    <img
-                      src="/gift/open-gift/gift-open-gif.gif"
-                      alt="Gift opening"
-                      className="relative scale-[130%] z-[50] pointer-events-none"
-                      draggable="false"
-                    />
-                    {showLight && (
-                      <div className="absolute top-[20%] left-[-30%] transform -translate-y-1/2 z-[30] opacity-60 animate-light-height">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="534"
-                          height="461"
-                          viewBox="0 0 534 461"
-                          fill="none"
-                          className="relative z-[40] opacity-80"
-                        >
-                          <g filter="url(#filter0_f_6776_72099)">
-                            <path
-                              d="M95.7842 96L196.353 336.531L243.329 365.306L324.357 343.415L437.927 96.0002L95.7842 96Z"
-                              fill="url(#paint0_linear_6776_72099)"
-                              fillOpacity="0.5"
-                            />
-                          </g>
-                          <defs>
-                            <filter
-                              id="filter0_f_6776_72099"
-                              x="0.184181"
-                              y="0.400002"
-                              width="533.343"
-                              height="460.506"
-                              filterUnits="userSpaceOnUse"
-                              colorInterpolationFilters="sRGB"
-                            >
-                              <feFlood floodOpacity="0" result="BackgroundImageFix" />
-                              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
-                              <feGaussianBlur stdDeviation="20" result="effect1_foregroundBlur_6776_72099" />
-                            </filter>
-                            <linearGradient
-                              id="paint0_linear_6776_72099"
-                              x1="274.078"
-                              y1="81.2104"
-                              x2="274.078"
-                              y2="365.626"
-                              gradientUnits="userSpaceOnUse"
-                            >
-                              <stop stopColor="#FFFB00" stopOpacity="0" />
-                              <stop offset="1" stopColor="#FFFB00" />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                      </div>
-                    )}
+                    <div className="relative top-[70px] scale-170">
+                      <img
+                        src="/gift/open-gift/gift-open-gif.gif"
+                        alt="Gift opening"
+                        className="block pointer-events-none"
+                        draggable="false"
+                      />
+                      <img
+                        src="/gift/open-gift/light-particle.gif"
+                        alt=""
+                        className="absolute top-[120px] inset-0 pointer-events-none mix-blend-color-dodge"
+                        aria-hidden="true"
+                      />
+                    </div>
 
                     {showLight && (
-                      <div className="absolute top-[30%] text-white left-[-25%] transform -translate-y-1/2 z-[40] animate-no-opacity-lightHeight">
-                        <div className="text-white opacity-100 relative z-[50] text-[40px] text-center mb-5 w-[500px] font-bold">
-                          YOU HAVE RECEIVED
-                        </div>
+                      <div className="absolute top-[150px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white z-[40] animate-no-opacity-lightHeight flex flex-col items-center justify-center">
+                        <img src="/gift/open-gift/congrats-text.svg" alt="" className="scale-150" />
+                        <div className="text-white text-[50px] text-center w-[500px] font-bold">YOU HAVE RECEIVED</div>
                         <div
                           style={{
                             textShadow:
                               "-3px -3px 0 #ffc629, -3px 0 0 #ffc629, -3px 3px 0 #ffc629, 0 -3px 0 #ffc629, 0 3px 0 #ffc629, 3px -3px 0 #ffc629, 3px 0 0 #ffc629, 3px 3px 0 #ffc629, -2px -2px 0 #ffc629, -2px 0 0 #ffc629, -2px 2px 0 #ffc629, 0 -2px 0 #ffc629, 0 2px 0 #ffc629, 2px -2px 0 #ffc629, 2px 0 0 #ffc629, 2px 2px 0 #ffc629, -1px -1px 0 #ffc629, -1px 0 0 #ffc629, -1px 1px 0 #ffc629, 0 -1px 0 #ffc629, 0 1px 0 #ffc629, 1px -1px 0 #ffc629, 1px 0 0 #ffc629, 1px 1px 0 #ffc629",
                           }}
-                          className="absolute gift-text translate-x-[-15%] font-complain text-center mb-5 w-[700px] font-bold"
+                          className="gift-text font-complain text-center mb-5 w-[700px] font-bold"
                         >
                           {formatNumberWithCommas(giftDetail?.assets[0].amount)} {giftDetail?.assets[0].metadata.symbol}
                         </div>
-                        <div className="absolute ml-[39%] mt-[17%] w-[100px]">
-                          <ActionButton
-                            text="Go Back"
-                            type="neutral"
-                            className="w-[100px] h-[30px] text-lg"
-                            onClick={() => {
-                              router.push("/");
-                            }}
-                          />
-                        </div>
+                        <ActionButton
+                          text="Go Back"
+                          type="neutral"
+                          className="w-[100px] h-[40px] text-xl"
+                          onClick={() => {
+                            router.push("/");
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -289,26 +254,82 @@ const OpenGiftContainer = () => {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-4">
-          <img src="/gift/open-gift/consumed-gift-text.svg" alt="" className="scale-100" aria-hidden="true" />
+        <div className="flex flex-col items-center justify-center gap-8">
+          <img src="/gift/open-gift/consumed-gift-text.svg" alt="" className="scale-110" aria-hidden="true" />
           <ActionButton
             text="Go Back"
             type="neutral"
-            className="text-2xl font-bold"
+            className="text-xl font-bold"
             onClick={() => {
               router.push("/");
             }}
           />
-          <div className="relative ">
+          <div className="relative top-[10%]">
+            <img src="/gift/open-gift/consumed-gift.svg" alt="" className="scale-125" aria-hidden="true" />
+
+            <img
+              src="/gift/open-gift/gift-box-lit.svg"
+              alt=""
+              className="scale-125 absolute top-0 left-12 pointer-events-none"
+              aria-hidden="true"
+            />
             <img
               src="/gift/open-gift/consumed-gift-light-cone.svg"
               alt=""
-              className="scale-100 absolute top-[-40%] blur-xl pointer-events-none"
+              className="scale-125 absolute top-[-40%] blur-xl pointer-events-none"
               aria-hidden="true"
             />
-            <img src="/gift/open-gift/consumed-gift.svg" alt="" className="scale-100" aria-hidden="true" />
+            <img
+              src="/gift/open-gift/light-particle.gif"
+              alt=""
+              className="scale-125 absolute top-[-30%]  pointer-events-none mix-blend-color-dodge"
+              aria-hidden="true"
+            />
           </div>
         </div>
+      )}
+
+      <div className="absolute bottom-15 right-15 pointer-events-auto">
+        <div
+          className="flex items-center justify-center w-[200px] h-[29px]"
+          aria-hidden="false"
+          style={{
+            background: "url('/gift/open-gift/no-wallet-container.svg') no-repeat center center",
+            backgroundSize: "110% 110%",
+          }}
+        >
+          <div className="flex flex-row items-center gap-1 w-[200px] text-center justify-center">
+            <img src="/gift/open-gift/question-box.gif" alt="Help" className="w-5 h-6 shrink-0" draggable={false} />
+            <p className="text-[#3d3d3d] text-[13px] leading-none tracking-[-0.084px]">
+              <span>No Wallet?</span>
+              <button
+                type="button"
+                onClick={() => openModal(MODAL_IDS.CONNECT_WALLET)}
+                className="underline text-[#066eff] pl-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#066eff] rounded cursor-pointer"
+              >
+                Get it here!
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* If wallet not connected, blur only this container's context */}
+      {!isConnected && (
+        <>
+          <div className="absolute inset-0 pointer-events-auto bg-black/30 backdrop-blur-md rounded-[inherit]" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2  pointer-events-auto text-white text-center flex flex-col items-center justify-center gap-4">
+            <img
+              src="/gift/gift-icon.svg"
+              className="scale-150 filter invert brightness-0 saturate-0"
+              aria-hidden="true"
+            />
+            <span className="text-white text-center text-4xl w-150">
+              You’ll need to connect your wallet to open this gift.
+            </span>
+            <ActionButton text="Connect Wallet" onClick={() => openModal(MODAL_IDS.CONNECT_WALLET)} />
+          </div>
+        </>
       )}
 
       <style jsx>{`

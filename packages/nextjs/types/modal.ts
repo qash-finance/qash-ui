@@ -11,10 +11,8 @@ import OnboardingModal from "@/components/Modal/OnboardingModal";
 import ConnectWalletModal from "@/components/Modal/ConnectWallet/ConnectWalletModal";
 import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
 import Notification from "@/components/Notification/Notification";
-import { AssetWithMetadata } from "./faucet";
 import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
 import BatchTransactionOverviewModal from "@/components/Modal/Batch/BatchTransactionOverviewModal";
-import { BatchTransaction } from "@/services/store/batchTransactions";
 import BatchTransactionsModal from "@/components/Modal/Batch/BatchTransactionsModal";
 import GroupLinkModal from "@/components/Modal/Group/GroupLinkModal";
 import GiftTransactionOverviewModal from "@/components/Modal/Gift/GiftTransactionOverviewModal";
@@ -25,7 +23,10 @@ import SuccessModal from "@/components/Modal/Status/SuccessModal";
 import FailModal from "@/components/Modal/Status/FailModal";
 import DeleteGroupModal from "@/components/Modal/Group/DeleteGroupModal";
 import EditGroupModal from "@/components/Modal/Group/EditGroupModal";
+import ResetAccountModal from "@/components/Modal/ResetAccountModal";
 import { Group } from "./group-payment";
+import { BatchTransaction } from "@/services/store/batchTransactions";
+import { AssetWithMetadata } from "./faucet";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -53,6 +54,7 @@ export const MODAL_IDS = {
   FAIL: "FAIL",
   DELETE_GROUP: "DELETE_GROUP",
   EDIT_GROUP: "EDIT_GROUP",
+  RESET_ACCOUNT: "RESET_ACCOUNT",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -178,6 +180,8 @@ export interface DeleteGroupModalProps extends BaseModalProps {
   onDelete?: () => Promise<void> | void;
 }
 
+export interface ResetAccountModalProps extends BaseModalProps {}
+
 // Removed duplicate empty interface declaration for EditGroupModalProps
 
 export type ModalPropsMap = {
@@ -206,6 +210,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.FAIL]: FailModalProps;
   [MODAL_IDS.DELETE_GROUP]: DeleteGroupModalProps;
   [MODAL_IDS.EDIT_GROUP]: EditGroupModalProps;
+  [MODAL_IDS.RESET_ACCOUNT]: ResetAccountModalProps;
   // Extend when wiring into registry
 };
 
@@ -237,4 +242,5 @@ export const modalRegistry = {
   [MODAL_IDS.FAIL]: FailModal,
   [MODAL_IDS.DELETE_GROUP]: DeleteGroupModal,
   [MODAL_IDS.EDIT_GROUP]: EditGroupModal,
+  [MODAL_IDS.RESET_ACCOUNT]: ResetAccountModal,
 } as const;
