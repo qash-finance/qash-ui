@@ -45,6 +45,7 @@ export function useConsumableNotes() {
         recallableHeight: note.recallableHeight,
         recallableTime: note.recallableTime,
         serialNumber: note.serialNumber,
+        requestPaymentId: note.requestPaymentId,
         assets: note.assets.map(asset => ({
           amount: (Number(asset.amount) * 10 ** asset.metadata.decimals).toString(),
           faucetId: asset.faucetId,
@@ -85,6 +86,7 @@ export function useConsumableNotes() {
             recallableHeight: -1,
             recallableTime: "",
             serialNumber: [],
+            requestPaymentId: note.requestPaymentId,
           };
         }),
       );

@@ -100,4 +100,24 @@ const useDenyRequest = () => {
   });
 };
 
-export { useGetRequests, useCreatePendingRequest, useAcceptRequest, useDenyRequest };
+const useConfirmGroupPaymentRequest = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return apiClient.putData<RequestPayment>(`/request-payment/${id}/confirm-group-payment`);
+    },
+    onSuccess: (updatedRequest: RequestPayment) => {
+      queryClient.setQueryData(["request-payment"], (oldData: RequestPaymentResponse | undefined) => {
+        if (!oldData) return { pending: [], accepted: [] };
+        return {
+          ...oldData,
+          pending: oldData.pending.filter(request => request.id !== updatedRequest.id),
+          accepted: [...oldData.accepted, updatedRequest],
+        };
+      });
+    },
+  });
+};
+
+export { useGetRequests, useCreatePendingRequest, useAcceptRequest, useDenyRequest, useConfirmGroupPaymentRequest };

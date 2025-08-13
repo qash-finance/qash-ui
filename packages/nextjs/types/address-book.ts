@@ -14,6 +14,7 @@ export interface AddressBook {
   name: string;
   address: string;
   token?: string;
+  category?: Category;
 }
 
 export interface AddressBookDto {

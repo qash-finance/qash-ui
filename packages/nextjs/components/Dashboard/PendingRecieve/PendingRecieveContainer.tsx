@@ -25,27 +25,7 @@ import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
-
-const mockData = [
-  {
-    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
-    from: "0xd...s78",
-    dateTime: "25/11/2024, 07:15",
-    action: "Claim",
-  },
-  {
-    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
-    from: "0xd...s78",
-    dateTime: "25/11/2024, 07:15",
-    action: "Claim",
-  },
-  {
-    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
-    from: "0xd...s78",
-    dateTime: "25/11/2024, 07:15",
-    action: "Claim",
-  },
-];
+import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
 
 const HeaderColumns = ["Amount", "From", "Action"];
 
@@ -155,10 +135,11 @@ export const PendingRecieveContainer: React.FC = () => {
     error: errorConsumableNotesFromServer,
     isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
+  console.log("🚀 ~ PendingRecieveContainer ~ consumableNotesFromServer:", consumableNotesFromServer);
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
-
+  const { mutateAsync: confirmGroupPaymentRequest } = useConfirmGroupPaymentRequest();
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
@@ -245,6 +226,11 @@ export const PendingRecieveContainer: React.FC = () => {
           },
         ]);
       }
+
+      if (note.requestPaymentId) {
+        await confirmGroupPaymentRequest(note.requestPaymentId);
+      }
+
       setClaiming(false);
       toast.dismiss();
       toast.success("Payment received successfully");
@@ -414,28 +400,7 @@ export const PendingRecieveContainer: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
-                      {true ? (
-                        <Empty title="No pending receive" />
-                      ) : (
-                        <table className="w-full min-w-[800px]">
-                          <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-                          <tbody>
-                            {mockData.map((row, index) => (
-                              <TableRow
-                                key={`pending-${index}`}
-                                assets={row.assets}
-                                from={row.from}
-                                dateTime={row.dateTime}
-                                action={row.action}
-                                checked={false}
-                                onCheck={() => {}}
-                                onClaim={() => {}}
-                                disabled={claiming}
-                              />
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                      <Empty title="No pending receive" />
                     </div>
                   </React.Fragment>
                 )}

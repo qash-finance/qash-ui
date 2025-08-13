@@ -11,7 +11,28 @@ const useGetAddressBooks = () => {
   return useQuery({
     queryKey: ["address-book"],
     queryFn: async () => {
-      return apiServerWithAuth.getData<Category[]>(`/address-book`);
+      // AddressBook[] with nested category: [{ name, address, token, category: { name } }]
+      const addressBooks = await apiServerWithAuth.getData<AddressBook[]>(`/address-book`);
+
+      // Normalize AddressBook[] with nested category -> Category[]
+      const categoryNameToBooks: Record<string, AddressBook[]> = {};
+      for (const item of addressBooks) {
+        const categoryName: string = item?.category?.name ?? "Uncategorized";
+        if (!categoryNameToBooks[categoryName]) categoryNameToBooks[categoryName] = [];
+
+        const normalized: AddressBook = {
+          userAddress: item.userAddress,
+          name: item.name,
+          address: item.address,
+          token: item.token ?? undefined,
+        };
+        categoryNameToBooks[categoryName].push(normalized);
+      }
+
+      const categories: Category[] = Object.keys(categoryNameToBooks)
+        .sort()
+        .map((name, idx) => ({ id: idx + 1, name, addressBooks: categoryNameToBooks[name] }));
+      return categories;
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,

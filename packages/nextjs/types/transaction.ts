@@ -47,6 +47,7 @@ export interface ConsumableNote {
   createdAt: string;
   updatedAt: string;
   assets: AssetWithMetadata[];
+  requestPaymentId?: number;
 }
 
 export interface RecallRequestDto {
