@@ -22,6 +22,7 @@ import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/tran
 import useSendGift from "@/hooks/server/useSendGift";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
+import { useForm } from "react-hook-form";
 // import { TokenSelector } from "./TokenSelector";
 
 export const GiftCreationForm: React.FC = () => {
@@ -32,6 +33,12 @@ export const GiftCreationForm: React.FC = () => {
   const { mutate: sendGift } = useSendGift();
   const { forceFetch: forceRefetchGiftDashboard } = useGiftDashboard();
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
+  const {
+    register,
+    getValues,
+    setValue,
+    formState: { errors },
+  } = useForm();
 
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
@@ -44,7 +51,6 @@ export const GiftCreationForm: React.FC = () => {
     },
   });
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
-  const [currentAmount, setCurrentAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -67,12 +73,9 @@ export const GiftCreationForm: React.FC = () => {
     }
   };
 
-  const handleAmountChange = (newAmount: number) => {
-    setCurrentAmount(newAmount);
-  };
-
   const handleGenerateLink = async () => {
     if (isConnected) {
+      const { amount: currentAmount } = getValues();
       // format amount
       const formattedAmount = formatUnits(
         BigInt(Math.round(Number(selectedToken.amount))),
@@ -150,10 +153,9 @@ export const GiftCreationForm: React.FC = () => {
                 await forceRefetchGiftDashboard();
                 await forceRefetchRecallableNotes();
 
-                // reset current amount
-                setCurrentAmount(0);
                 toast.dismiss();
                 toast.success("Gift created successfully");
+                setValue("amount", 0);
 
                 return giftLink;
               } catch (error) {
@@ -196,12 +198,18 @@ export const GiftCreationForm: React.FC = () => {
           <div className="flex gap-2.5 justify-center items-center self-stretch">
             <input
               type="number"
-              value={currentAmount === 0 ? "" : currentAmount}
-              onChange={e => handleAmountChange(Number(e.target.value))}
               className="text-5xl font-medium text-center leading-[52.8px] text-neutral-500 max-sm:text-4xl bg-transparent border-none outline-none w-full"
-              min={0}
+              min={0.00001}
               placeholder="0.00"
+              autoComplete="off"
+              {...register("amount", {
+                min: {
+                  value: 0.00001,
+                  message: "Minimum amount is 0.00001",
+                },
+              })}
             />
+            {errors.amount && <p className="text-sm text-red-500">{errors.amount.message as string}</p>}
           </div>
         </div>
       </div>
@@ -220,7 +228,7 @@ export const GiftCreationForm: React.FC = () => {
           text="Generate link gift"
           onClick={handleGenerateLink}
           className="mt-2 w-full h-10"
-          disabled={currentAmount <= 0}
+          disabled={Number(getValues("amount")) <= 0}
         />
       )}
     </div>
