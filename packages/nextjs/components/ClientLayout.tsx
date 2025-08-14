@@ -136,20 +136,17 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                           <div className="fixed w-1/6">
                             <Sidebar />
                           </div>
-                          <div className="ml-[16.6%] w-5/6 h-screen max-h-[1980px]">
-                            <div className="p-[24px]">
-                              <Title />
-                            </div>
+                          <div className="flex flex-col ml-[16.6%] w-5/6 h-screen">
+                            <Title />
+
                             <div
                               style={{
                                 backgroundImage: 'url("/background.svg")',
                                 backgroundSize: "contain",
-                                height: "88%",
                                 backgroundClip: "content-box",
-                                backgroundColor: "#101111", // dark gray (tailwind zinc-900)
-                                // You can tweak the color as needed
+                                backgroundColor: "#101111",
                               }}
-                              className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
+                              className="mx-[24px] mb-[24px] rounded-lg flex justify-center items-center flex-1 overflow-auto"
                             >
                               {children}
                             </div>

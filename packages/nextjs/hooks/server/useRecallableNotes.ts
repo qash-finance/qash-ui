@@ -17,10 +17,10 @@ export function useRecallableNotes() {
     },
     enabled: !!walletAddress,
     staleTime: STALE_TIME,
-    // Only refetch every 5 minutes and when the window is focused
-    refetchInterval: STALE_TIME,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
+    gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
+    refetchInterval: 5000, // Refetch every 5 second
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always refetch on mount
   });
 
   const forceFetch = async () => {

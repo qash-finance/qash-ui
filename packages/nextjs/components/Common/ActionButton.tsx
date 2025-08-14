@@ -70,7 +70,6 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   const buttonStyles = useMemo(
     () => ({
       padding: "6px 10px 8px 10px",
-      borderRadius: "10px",
       fontWeight: "500",
       letterSpacing: "-0.084px",
       lineHeight: "100%",
@@ -81,7 +80,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   );
 
   const buttonClasses = useMemo(() => {
-    const baseClasses = "font-barlow font-medium transition-colors";
+    const baseClasses = "font-barlow font-medium transition-colors rounded-[10px]";
     const stateClasses = isDisabled || loading ? "cursor-not-allowed" : "cursor-pointer";
 
     return `${baseClasses} ${stateClasses} ${currentStyle.bg} ${className}`.trim();

@@ -67,7 +67,7 @@ export const Title = () => {
   ];
 
   return (
-    <div className="flex flex-row gap-2">
+    <div className="flex flex-row gap-2 m-[24px]">
       <div className="w-[100%] px-1 py-2 bg-[#292929] rounded-lg inline-flex justify-between items-center h-[50px]">
         <div className="w-8 h-[0.1px] rotate-90 outline-[2px] outline-[#06FFB4] rounded-full" />
         <div className="font-medium font-['Barlow'] uppercase leading-none text-white text-xl font-bolds flex-1">

@@ -104,7 +104,7 @@ export function useConsumableNotes() {
     enabled: !!walletAddress,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
-    refetchInterval: 60000, // Refetch every 60 second
+    refetchInterval: 5000, // Refetch every 5 second
     refetchOnWindowFocus: true, // Refetch when window gains focus
     refetchOnMount: true, // Always refetch on mount
   });

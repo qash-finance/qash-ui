@@ -398,7 +398,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
       toast.success("Transaction added to batch successfully");
       reset();
       setRecipientName("");
-      onClose();
+
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to add transaction to batch");

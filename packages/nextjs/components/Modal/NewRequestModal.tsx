@@ -285,7 +285,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                 style={{
                   resize: "none",
                 }}
-                className="text-white opacity-20 outline-none text-base"
+                className="text-white outline-none text-base"
                 placeholder="Your message"
                 rows={5}
               />

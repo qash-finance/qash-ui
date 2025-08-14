@@ -16,8 +16,9 @@ import {
 import { Group } from "@/types/group-payment";
 import { useCreateGroupPayment, useCreateQuickSharePayment, useGetGroupPayments } from "@/services/api/group-payment";
 import { toast } from "react-hot-toast";
-import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
+import { useAccountContext } from "@/contexts/AccountProvider";
 
 interface GroupPaymentFormData {
   amount?: number;
@@ -108,6 +109,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
       maxSupply: QASH_TOKEN_MAX_SUPPLY,
     },
   });
+  const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
 
   // Treat "Quick Share" as no group selected
   const isQuickShare = selectedGroup?.name === "Quick Share" || !selectedGroup;
@@ -130,6 +132,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
   const watchedNumberOfPeople = watch("numberOfPeople");
 
   //*************** React Hooks ***************
+  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutate: createGroupPayment } = useCreateGroupPayment();
   const { isConnected } = useWalletConnect();
   const { data: groupPayments, isLoading: isGroupPaymentsLoading } = useGetGroupPayments(selectedGroup?.id);
@@ -144,6 +147,12 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
       setValue("numberOfPeople", undefined);
     }
   }, [isQuickShare, selectedGroup, setValue]);
+
+  useEffect(() => {
+    const defaultToken = getDefaultSelectedToken(assets);
+    setSelectedToken(defaultToken);
+    setSelectedTokenAddress(defaultToken.faucetId);
+  }, [assets]);
 
   //*************** Calculations ***************
   const numberOfPeople = !isQuickShare && selectedGroup ? selectedGroup.members.length : watchedNumberOfPeople;
@@ -232,7 +241,11 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
           <div className="flex items-center gap-3">
             <span className="text-base leading-none">{isQuickShare ? "Quick sharing" : "Group sharing"}</span>
           </div>
-          <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
+          <SelectTokenInput
+            selectedToken={selectedToken}
+            onTokenSelect={setSelectedToken}
+            tokenAddress={selectedToken.faucetId}
+          />
         </div>
         {/* Main Payment Display */}
         <div
