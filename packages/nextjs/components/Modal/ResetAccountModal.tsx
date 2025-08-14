@@ -7,6 +7,7 @@ import BaseModal from "./BaseModal";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { toast } from "react-hot-toast";
+import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 
 export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAccountModalProps>) {
   const { disconnectWallet } = useWalletAuth();
@@ -17,6 +18,7 @@ export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAc
     try {
       indexedDB.deleteDatabase("MidenClientDB");
       localStorage.clear();
+      localStorage.setItem(TOUR_SKIPPED_KEY, "true");
       window.location.reload();
     } catch (error) {
       console.error("Failed to burn wallet:", error);

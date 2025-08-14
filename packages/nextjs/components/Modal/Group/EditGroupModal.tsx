@@ -63,6 +63,12 @@ export function EditGroupModal({ isOpen, onClose, zIndex, group }: ModalProp<Edi
 
   const handleSave = async () => {
     if (!group) return;
+
+    if (members.length === 0) {
+      toast.error("Please add at least one member");
+      return;
+    }
+
     const name = getValues("name") ?? group.name;
     // Persist addresses only for the group update
     const updatedMembers = members.map(m => ({ address: m.address, name: m.name }));

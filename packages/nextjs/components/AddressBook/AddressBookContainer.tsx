@@ -8,6 +8,8 @@ import { useCreateAddressBook, useGetAddressBooks } from "@/services/api/address
 import { AddressBookDto } from "@/types/address-book";
 import toast from "react-hot-toast";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { MODAL_IDS } from "@/types/modal";
+import { useModal } from "@/contexts/ModalManagerProvider";
 
 const ANIMATION_DURATION = 500;
 
@@ -155,7 +157,7 @@ export function AddressBookContainer() {
   const { walletAddress, isConnected } = useWalletConnect();
   const { data: addressBooks } = useGetAddressBooks();
   const { mutate: createAddressBook } = useCreateAddressBook();
-
+  const { openModal } = useModal();
   // **************** Local State *******************
   const [folderStates, setFolderStates] = useState<boolean[]>([]);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -227,6 +229,11 @@ export function AddressBookContainer() {
   };
 
   const handleCreateAddressBook = async (data: AddressBookDto): Promise<boolean> => {
+    if (!isConnected) {
+      openModal(MODAL_IDS.CONNECT_WALLET);
+      return false;
+    }
+
     const name = data.name.trim();
     const category = data.category.trim();
     const address = data.address.trim();

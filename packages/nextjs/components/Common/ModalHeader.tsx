@@ -22,8 +22,14 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({ title, onClose, icon, 
           {title}
         </h1>
       </div>
-      <div className="flex items-center gap-5">
-        <img src="/dark-close-icon.svg" alt="dark-close-icon" className="w-6 h-6 cursor-pointer" onClick={onClose} />
+      <div className="flex items-center gap-5 cursor-pointer">
+        <img
+          src="/dark-close-icon.svg"
+          alt="dark-close-icon"
+          className="w-6 h-6 cursor-pointer"
+          onClick={onClose}
+          draggable={false}
+        />
       </div>
     </header>
   );

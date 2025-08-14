@@ -1,18 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { GroupLinkModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { ActionButton } from "../../Common/ActionButton";
+import { toast } from "react-hot-toast";
 
 export function GroupLinkModal({ isOpen, onClose, zIndex, link }: ModalProp<GroupLinkModalProps>) {
-  const [copied, setCopied] = useState(false);
   const groupLink = `${process.env.NEXT_PUBLIC_APP_URL}/quick-send?quickShareCode=${link}`;
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(groupLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success("Link copied to clipboard");
   };
 
   if (!isOpen) return null;
@@ -24,8 +23,8 @@ export function GroupLinkModal({ isOpen, onClose, zIndex, link }: ModalProp<Grou
         <div className="px-2 pt-1 pb-0">
           <div className="bg-[#292929] rounded-lg p-0 py-3 h-[280px] flex flex-col items-center justify-center relative">
             {/* Background decoration */}
-            <div className="absolute inset-0 flex items-start justify-center -top-15">
-              <img src="/modal/3d-cube-background.svg" alt="" className="w-full h-full" />
+            <div className="absolute inset-0 flex items-start justify-center top-5">
+              <img src="/modal/3d-cube-background.svg" alt="" className="scale-150" />
             </div>
 
             {/* 3D Cube Image */}

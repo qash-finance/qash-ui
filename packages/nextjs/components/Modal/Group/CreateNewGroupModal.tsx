@@ -17,7 +17,6 @@ import { useCreateGroup } from "@/services/api/group-payment";
 import { toast } from "react-hot-toast";
 import { CreateGroupDto } from "@/types/group-payment";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
-import { AccountId } from "@demox-labs/miden-sdk";
 
 interface AddressItemProps {
   name: string;
@@ -121,7 +120,9 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
   }, [isConnected, refetchAddressBooks, queryClient, setValue]);
 
   // Add manual address handler
-  const handleAddManualAddress = () => {
+  const handleAddManualAddress = async () => {
+    const { AccountId } = await import("@demox-labs/miden-sdk");
+
     const manualAddress = (getValues("manualAddress") as string | undefined)?.trim() || "";
     if (!manualAddress) {
       toast.error("Enter an address");
