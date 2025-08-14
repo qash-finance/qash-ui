@@ -37,6 +37,7 @@ export const GiftCreationForm: React.FC = () => {
     register,
     getValues,
     setValue,
+    watch,
     formState: { errors },
   } = useForm();
 
@@ -76,6 +77,15 @@ export const GiftCreationForm: React.FC = () => {
   const handleGenerateLink = async () => {
     if (isConnected) {
       const { amount: currentAmount } = getValues();
+
+      if (!currentAmount) {
+        return toast.error("Invalid amount");
+      }
+
+      if (Number(currentAmount) <= 0) {
+        return toast.error("Invalid amount");
+      }
+
       // format amount
       const formattedAmount = formatUnits(
         BigInt(Math.round(Number(selectedToken.amount))),
@@ -228,7 +238,7 @@ export const GiftCreationForm: React.FC = () => {
           text="Generate link gift"
           onClick={handleGenerateLink}
           className="mt-2 w-full h-10"
-          disabled={Number(getValues("amount")) <= 0}
+          disabled={watch("amount") <= 0}
         />
       )}
     </div>
