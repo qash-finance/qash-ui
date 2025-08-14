@@ -82,10 +82,10 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
               {giftDashboard.gifts.map((gift, index) => (
                 <GiftRow
                   id={(index + 1).toString()}
-                  key={gift.secretNumber}
+                  key={gift.secretHash}
                   assets={gift.assets[0]}
                   dateTime={gift.createdAt}
-                  link={`${window.location.origin}/gift/open-gift?code=${encodeURIComponent(gift.secretNumber)}`}
+                  link={`${window.location.origin}/gift/open-gift?code=${encodeURIComponent(gift.secretHash)}`}
                   isOpened={gift.status != NoteStatus.PENDING}
                   onCopyLink={onCopyLink}
                 />

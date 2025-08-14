@@ -15,7 +15,7 @@ export type Gift = {
   recallableTime: string;
   sender: string;
   serialNumber: string[];
-  secretNumber: string;
+  secretHash: string;
   status: NoteStatus;
   updatedAt: string;
 };

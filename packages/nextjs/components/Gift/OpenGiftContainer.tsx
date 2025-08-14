@@ -55,7 +55,7 @@ const OpenGiftContainer = () => {
 
     try {
       // decode secret number back to array of 4 numbers
-      const secret = stringToSecretArray(giftDetail?.secretNumber!);
+      const secret = stringToSecretArray(giftDetail?.secretHash!);
       // consume the gift
       const [note, _] = await createGiftNote(
         giftDetail?.sender!,

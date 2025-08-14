@@ -305,7 +305,7 @@ export const CancelDashboardContainer: React.FC = () => {
         let secrets = [];
         for (const giftNote of giftNotes) {
           if (giftNote) {
-            const secret = stringToSecretArray(giftNote.secretNumber!);
+            const secret = stringToSecretArray(giftNote.secretHash!);
             secrets.push(secret);
             const [note, _] = await createGiftNote(
               giftNote?.sender!,
@@ -391,7 +391,7 @@ export const CancelDashboardContainer: React.FC = () => {
             let txId = "";
 
             if (recallingNote.isGift) {
-              const secret = stringToSecretArray(recallingNote.secretNumber!);
+              const secret = stringToSecretArray(recallingNote.secretHash!);
 
               // we need to build the note and consume with unanthenticated note
               // build gift note
