@@ -117,220 +117,6 @@ const OpenGiftContainer = () => {
   //   return <></>;
   // }
 
-  const renderGift = () => {
-    switch (giftDetail?.status) {
-      case "consumed":
-        return (
-          <div className="flex flex-col items-center justify-center gap-8">
-            <img src="/gift/open-gift/consumed-gift-text.svg" alt="" className="scale-110" aria-hidden="true" />
-            <ActionButton
-              text="Go Back"
-              type="neutral"
-              className="text-xl font-bold"
-              onClick={() => {
-                router.push("/");
-              }}
-            />
-            <div className="relative top-[10%]">
-              <img src="/gift/open-gift/consumed-gift.svg" alt="" className="scale-125" aria-hidden="true" />
-
-              <img
-                src="/gift/open-gift/gift-box-lit.svg"
-                alt=""
-                className="scale-125 absolute top-0 left-12 pointer-events-none"
-                aria-hidden="true"
-              />
-              <img
-                src="/gift/open-gift/consumed-gift-light-cone.svg"
-                alt=""
-                className="scale-125 absolute top-[-40%] blur-xl pointer-events-none"
-                aria-hidden="true"
-              />
-              <img
-                src="/gift/open-gift/light-particle.gif"
-                alt=""
-                className="scale-125 absolute top-[-30%]  pointer-events-none mix-blend-color-dodge"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-        );
-      case "recalled":
-        return (
-          <div className="flex flex-col items-center justify-center gap-8">
-            <img src="/gift/open-gift/gift-cancelled-text.svg" alt="" className="scale-110" aria-hidden="true" />
-            <ActionButton
-              text="Go Back"
-              type="neutral"
-              className="text-xl font-bold"
-              onClick={() => {
-                router.push("/");
-              }}
-            />
-            <div className="relative top-[10%]">
-              <img src="/gift/open-gift/consumed-gift.svg" alt="" className="scale-125" aria-hidden="true" />
-
-              <img
-                src="/gift/open-gift/gift-box-lit.svg"
-                alt=""
-                className="scale-125 absolute top-0 left-12 pointer-events-none"
-                aria-hidden="true"
-              />
-              <img
-                src="/gift/open-gift/consumed-gift-light-cone.svg"
-                alt=""
-                className="scale-125 absolute top-[-40%] blur-xl pointer-events-none"
-                aria-hidden="true"
-              />
-              <img
-                src="/gift/open-gift/light-particle.gif"
-                alt=""
-                className="scale-125 absolute top-[-30%]  pointer-events-none mix-blend-color-dodge"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <div className="fixed">
-            <div className="flex w-full ">
-              <div
-                className={`w-[20%] mt-[15%] h-full flex items-center justify-center ${isDropping ? "animate-drop-left" : ""}`}
-              >
-                <img
-                  src="/gift/open-gift/gift-1.svg"
-                  alt=""
-                  draggable="false"
-                  style={{
-                    animation: isDropping ? "none" : isLoaded ? "bounce1 1.5s ease-in-out infinite" : "none",
-                  }}
-                  className="scale-[125%]"
-                />
-              </div>
-              <div
-                className={`w-[20%] mt-[20%] flex items-center justify-center ${isDropping ? "animate-drop-top" : ""}`}
-              >
-                <img
-                  src="/gift/open-gift/gift-2.svg"
-                  alt=""
-                  draggable="false"
-                  style={{
-                    animation: isDropping ? "none" : isLoaded ? "bounce2 1.3s ease-in-out infinite" : "none",
-                  }}
-                  className="scale-[125%]"
-                />
-              </div>
-              <div
-                className="w-[30%] mt-[20%] h-full flex items-center justify-center flex-col"
-                onClick={!showGif ? handleGiftClick : undefined}
-              >
-                <div className="flex flex-col justify-center items-center relative">
-                  {!showGif && (
-                    <>
-                      <img
-                        src="/gift/open-gift/received.svg"
-                        alt=""
-                        className="absolute -top-[30%] scale-[200%] z-10"
-                      />
-                      <div className="text-white text-3xl font-bold">Click here</div>
-                      <img
-                        src="/gift/open-gift/gift-arrow-down.gif"
-                        alt=""
-                        className="mb-2 scale-[150%]"
-                        draggable="false"
-                      />
-                    </>
-                  )}
-                  {!showGif && (
-                    <>
-                      <img
-                        src="/gift/open-gift/gift-box.svg"
-                        alt=""
-                        className="cursor-pointer scale-[150%] relative z-10"
-                        draggable="false"
-                      />
-                    </>
-                  )}
-                  {showGif && (
-                    <div>
-                      <div className="relative top-[70px] scale-170">
-                        <img
-                          src="/gift/open-gift/gift-open-gif.gif"
-                          alt="Gift opening"
-                          className="block pointer-events-none"
-                          draggable="false"
-                        />
-                        <img
-                          src="/gift/open-gift/light-particle.gif"
-                          alt=""
-                          className="absolute top-[120px] inset-0 pointer-events-none mix-blend-color-dodge"
-                          aria-hidden="true"
-                        />
-                      </div>
-
-                      {showLight && (
-                        <div className="absolute top-[150px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white z-[40] animate-no-opacity-lightHeight flex flex-col items-center justify-center">
-                          <img src="/gift/open-gift/congrats-text.svg" alt="" className="scale-150" />
-                          <div className="text-white text-[50px] text-center w-[500px] font-bold">
-                            YOU HAVE RECEIVED
-                          </div>
-                          <div
-                            style={{
-                              textShadow:
-                                "-3px -3px 0 #ffc629, -3px 0 0 #ffc629, -3px 3px 0 #ffc629, 0 -3px 0 #ffc629, 0 3px 0 #ffc629, 3px -3px 0 #ffc629, 3px 0 0 #ffc629, 3px 3px 0 #ffc629, -2px -2px 0 #ffc629, -2px 0 0 #ffc629, -2px 2px 0 #ffc629, 0 -2px 0 #ffc629, 0 2px 0 #ffc629, 2px -2px 0 #ffc629, 2px 0 0 #ffc629, 2px 2px 0 #ffc629, -1px -1px 0 #ffc629, -1px 0 0 #ffc629, -1px 1px 0 #ffc629, 0 -1px 0 #ffc629, 0 1px 0 #ffc629, 1px -1px 0 #ffc629, 1px 0 0 #ffc629, 1px 1px 0 #ffc629",
-                            }}
-                            className="gift-text font-complain text-center mb-5 w-[700px] font-bold"
-                          >
-                            {formatNumberWithCommas(giftDetail?.assets[0].amount)}{" "}
-                            {giftDetail?.assets[0].metadata.symbol}
-                          </div>
-                          <ActionButton
-                            text="Go Back"
-                            type="neutral"
-                            className="w-[100px] h-[40px] text-xl"
-                            onClick={() => {
-                              router.push("/");
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div
-                className={`w-[20%] mt-[25%] h-full flex items-center justify-center ${isDropping ? "animate-drop-right" : ""}`}
-              >
-                <img
-                  src="/gift/open-gift/gift-3.svg"
-                  alt=""
-                  draggable="false"
-                  style={{
-                    animation: isDropping ? "none" : isLoaded ? "bounce4 1.4s ease-in-out infinite" : "none",
-                  }}
-                  className="scale-[125%]"
-                />
-              </div>
-              <div
-                className={`w-[20%] mt-[30%] h-full flex items-center justify-center ${isDropping ? "animate-drop-bottom" : ""}`}
-              >
-                <img
-                  src="/gift/open-gift/gift-4.svg"
-                  alt=""
-                  draggable="false"
-                  style={{
-                    animation: isDropping ? "none" : isLoaded ? "bounce5 1.6s ease-in-out infinite" : "none",
-                  }}
-                  className="scale-[125%]"
-                />
-              </div>
-            </div>
-          </div>
-        );
-    }
-  };
-
   return (
     <div
       className="flex w-full h-full justify-center items-center flex-col max-h-screen overflow-y-hidden relative transition-colors duration-700 ease-in-out"
@@ -339,7 +125,227 @@ const OpenGiftContainer = () => {
         borderRadius: giftDetail?.status === "consumed" ? "10px" : "",
       }}
     >
-      {renderGift()}
+      {giftDetail?.status === "pending" ? (
+        <div className="fixed">
+          <div className="flex w-full ">
+            <div
+              className={`w-[20%] mt-[15%] h-full flex items-center justify-center ${isDropping ? "animate-drop-left" : ""}`}
+            >
+              <img
+                src="/gift/open-gift/gift-1.svg"
+                alt=""
+                draggable="false"
+                style={{
+                  animation: isDropping ? "none" : isLoaded ? "bounce1 1.5s ease-in-out infinite" : "none",
+                }}
+                className="scale-[125%]"
+              />
+            </div>
+            <div
+              className={`w-[20%] mt-[20%] flex items-center justify-center ${isDropping ? "animate-drop-top" : ""}`}
+            >
+              <img
+                src="/gift/open-gift/gift-2.svg"
+                alt=""
+                draggable="false"
+                style={{
+                  animation: isDropping ? "none" : isLoaded ? "bounce2 1.3s ease-in-out infinite" : "none",
+                }}
+                className="scale-[125%]"
+              />
+            </div>
+            <div
+              className="w-[30%] mt-[20%] h-full flex items-center justify-center flex-col"
+              onClick={!showGif ? handleGiftClick : undefined}
+            >
+              <div className="flex flex-col justify-center items-center relative">
+                {!showGif && (
+                  <>
+                    <img src="/gift/open-gift/received.svg" alt="" className="absolute -top-[30%] scale-[200%] z-10" />
+                    <div className="text-white text-3xl font-bold">Click here</div>
+                    <img
+                      src="/gift/open-gift/gift-arrow-down.gif"
+                      alt=""
+                      className="mb-2 scale-[150%]"
+                      draggable="false"
+                    />
+                  </>
+                )}
+                {!showGif && (
+                  <>
+                    <img
+                      src="/gift/open-gift/gift-box.svg"
+                      alt=""
+                      className="cursor-pointer scale-[150%] relative z-10"
+                      draggable="false"
+                    />
+                  </>
+                )}
+                {showGif && (
+                  <div>
+                    <div className="relative top-[70px] scale-170">
+                      <img
+                        src="/gift/open-gift/gift-open-gif.gif"
+                        alt="Gift opening"
+                        className="block pointer-events-none"
+                        draggable="false"
+                      />
+                      <img
+                        src="/gift/open-gift/light-particle.gif"
+                        alt=""
+                        className="absolute top-[120px] inset-0 pointer-events-none mix-blend-color-dodge"
+                        aria-hidden="true"
+                      />
+                    </div>
+
+                    {showLight && (
+                      <div className="absolute top-[150px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white z-[40] animate-no-opacity-lightHeight flex flex-col items-center justify-center">
+                        <img src="/gift/open-gift/congrats-text.svg" alt="" className="scale-150" />
+                        <div className="text-white text-[50px] text-center w-[500px] font-bold">YOU HAVE RECEIVED</div>
+                        <div
+                          style={{
+                            textShadow:
+                              "-3px -3px 0 #ffc629, -3px 0 0 #ffc629, -3px 3px 0 #ffc629, 0 -3px 0 #ffc629, 0 3px 0 #ffc629, 3px -3px 0 #ffc629, 3px 0 0 #ffc629, 3px 3px 0 #ffc629, -2px -2px 0 #ffc629, -2px 0 0 #ffc629, -2px 2px 0 #ffc629, 0 -2px 0 #ffc629, 0 2px 0 #ffc629, 2px -2px 0 #ffc629, 2px 0 0 #ffc629, 2px 2px 0 #ffc629, -1px -1px 0 #ffc629, -1px 0 0 #ffc629, -1px 1px 0 #ffc629, 0 -1px 0 #ffc629, 0 1px 0 #ffc629, 1px -1px 0 #ffc629, 1px 0 0 #ffc629, 1px 1px 0 #ffc629",
+                          }}
+                          className="gift-text font-complain text-center mb-5 w-[700px] font-bold"
+                        >
+                          {formatNumberWithCommas(giftDetail?.assets[0].amount)} {giftDetail?.assets[0].metadata.symbol}
+                        </div>
+                        <ActionButton
+                          text="Go Back"
+                          type="neutral"
+                          className="w-[100px] h-[40px] text-xl"
+                          onClick={() => {
+                            router.push("/");
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div
+              className={`w-[20%] mt-[25%] h-full flex items-center justify-center ${isDropping ? "animate-drop-right" : ""}`}
+            >
+              <img
+                src="/gift/open-gift/gift-3.svg"
+                alt=""
+                draggable="false"
+                style={{
+                  animation: isDropping ? "none" : isLoaded ? "bounce4 1.4s ease-in-out infinite" : "none",
+                }}
+                className="scale-[125%]"
+              />
+            </div>
+            <div
+              className={`w-[20%] mt-[30%] h-full flex items-center justify-center ${isDropping ? "animate-drop-bottom" : ""}`}
+            >
+              <img
+                src="/gift/open-gift/gift-4.svg"
+                alt=""
+                draggable="false"
+                style={{
+                  animation: isDropping ? "none" : isLoaded ? "bounce5 1.6s ease-in-out infinite" : "none",
+                }}
+                className="scale-[125%]"
+              />
+            </div>
+          </div>
+        </div>
+      ) : giftDetail?.status === "consumed" ? (
+        <div className="flex flex-col items-center justify-center gap-8">
+          <img src="/gift/open-gift/consumed-gift-text.svg" alt="" className="scale-110" aria-hidden="true" />
+          <ActionButton
+            text="Go Back"
+            type="neutral"
+            className="text-xl font-bold"
+            onClick={() => {
+              router.push("/");
+            }}
+          />
+          <div className="relative top-[10%]">
+            <img
+              src="/gift/open-gift/consumed-gift.svg"
+              alt=""
+              className="scale-125"
+              aria-hidden="true"
+              draggable="false"
+            />
+
+            <img
+              src="/gift/open-gift/gift-box-lit.svg"
+              alt=""
+              className="scale-125 absolute top-0 left-12 pointer-events-none"
+              aria-hidden="true"
+              draggable="false"
+            />
+            <img
+              src="/gift/open-gift/consumed-gift-light-cone.svg"
+              alt=""
+              className="scale-125 absolute top-[-40%] blur-xl pointer-events-none"
+              aria-hidden="true"
+              draggable="false"
+            />
+            <img
+              src="/gift/open-gift/light-particle.gif"
+              alt=""
+              draggable="false"
+              className="scale-125 absolute top-[-30%]  pointer-events-none mix-blend-color-dodge"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center gap-8">
+          <img
+            src="/gift/open-gift/gift-cancelled-text.svg"
+            alt=""
+            className="scale-110"
+            aria-hidden="true"
+            draggable="false"
+          />
+          <ActionButton
+            text="Go Back"
+            type="neutral"
+            className="text-xl font-bold"
+            onClick={() => {
+              router.push("/");
+            }}
+          />
+          <div className="relative top-[10%]">
+            <img
+              src="/gift/open-gift/consumed-gift.svg"
+              alt=""
+              className="scale-125"
+              aria-hidden="true"
+              draggable="false"
+            />
+
+            <img
+              src="/gift/open-gift/gift-box-lit.svg"
+              alt=""
+              className="scale-125 absolute top-0 left-12 pointer-events-none"
+              aria-hidden="true"
+              draggable="false"
+            />
+            <img
+              src="/gift/open-gift/consumed-gift-light-cone.svg"
+              alt=""
+              draggable="false"
+              className="scale-125 absolute top-[-40%] blur-xl pointer-events-none"
+              aria-hidden="true"
+            />
+            <img
+              src="/gift/open-gift/light-particle.gif"
+              alt=""
+              draggable="false"
+              className="scale-125 absolute top-[-30%]  pointer-events-none mix-blend-color-dodge"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="absolute bottom-15 right-15 pointer-events-auto">
         <div
