@@ -6,6 +6,8 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { getQRsFromLocalStorage, generateQRCode } from "@/services/utils/qrCode";
 import { CustomQRData } from "@/services/utils/qrCode";
 import toast from "react-hot-toast";
+import { MODAL_IDS } from "@/types/modal";
+import { useModal } from "@/contexts/ModalManagerProvider";
 
 interface ReceiveAddressProps {
   address?: string;
@@ -19,7 +21,8 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
   address = "0x137f06b5b832592900253730d5a5ad01c456...",
   onEnterAmount,
 }) => {
-  const { handleConnect, walletAddress, isConnected } = useWalletConnect();
+  const { openModal } = useModal();
+  const { walletAddress, isConnected } = useWalletConnect();
 
   const [qrCode, setQrCode] = useState<QRCodeStyling>();
   const [showQR, setShowQR] = useState(true);
@@ -321,7 +324,12 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
             </span>
           </div>
 
-          <ActionButton text="Connect Wallet" onClick={() => handleConnect()} />
+          <ActionButton
+            text="Connect Wallet"
+            onClick={() => {
+              openModal(MODAL_IDS.CONNECT_WALLET);
+            }}
+          />
         </>
       )}
     </main>

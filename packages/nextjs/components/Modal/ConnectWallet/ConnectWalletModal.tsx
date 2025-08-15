@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { MODAL_IDS, SelectTokenModalProps } from "@/types/modal";
+import { MODAL_IDS, ConnectWalletModalProps } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { ActionButton } from "../../Common/ActionButton";
@@ -10,47 +10,21 @@ import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTour } from "@reactour/tour";
 import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
+import { usePathname, useRouter } from "next/navigation";
+import { useCreateDefaultGroup } from "@/services/api/group-payment";
+import { CreateGroupDto } from "@/types/group-payment";
+import { LoadingBar } from "../../Common/LoadingBar";
 
 type Step = "init" | "creating" | "final";
 
-interface LoadingBarProps {
-  progress: number; // 0-100
-  className?: string;
-}
-
-const LoadingBar: React.FC<LoadingBarProps> = ({ progress, className = "" }) => {
-  const clampedProgress = Math.min(Math.max(progress, 0), 100);
-  const width = `${clampedProgress}%`;
-
-  return (
-    <div className={`flex flex-row gap-2 items-center justify-start p-0 relative w-full ${className}`}>
-      <div className="basis-0 bg-[#292929] flex flex-row grow h-10 items-center justify-start min-h-px min-w-px overflow-clip p-[6px] relative rounded shrink-0">
-        <div
-          className="bg-gradient-to-l from-[#caffef] h-full relative rounded shrink-0 to-[#416af9] via-[#6fb2f1]"
-          style={{ width }}
-        >
-          <div
-            className="absolute bg-[#b5e0ff] blur-[6px] filter h-10 rounded-[32px] top-[-4px] w-[7.373px]"
-            style={{ right: "-3.686px" }}
-          />
-          <div
-            className="absolute bg-[#cefffb] h-10 rounded-[32px] top-1/2 translate-y-[-50%] w-[3px]"
-            style={{ right: "-1.5px" }}
-          />
-        </div>
-      </div>
-      <div className="font-['Barlow:Medium',_sans-serif] leading-[0] not-italic relative shrink-0 text-[#fbfeff] text-[24px] text-right w-14">
-        <p className="block leading-[normal]">{Math.round(clampedProgress)}%</p>
-      </div>
-    </div>
-  );
-};
-
-export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenModalProps>) {
+export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<ConnectWalletModalProps>) {
   // **************** Custom Hooks *******************
   const { openModal } = useModal();
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
   const { connectWallet: authenticateWallet } = useWalletAuth();
+  const { mutate: createGroup } = useCreateDefaultGroup();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // **************** Local State *******************
   const [currentStep, setCurrentStep] = useState<Step>("init");
@@ -101,6 +75,28 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
     }
   }, [isOpen]);
 
+  // Function to create default "Quick Share" group
+  const createQuickShareGroup = async () => {
+    try {
+      const quickShareGroup: CreateGroupDto = {
+        name: "Quick Share",
+        members: [], // Add the new account as a member
+      };
+
+      createGroup(quickShareGroup, {
+        onSuccess: () => {
+          console.log("Default Quick Share group created successfully");
+        },
+        onError: error => {
+          console.error("Failed to create default Quick Share group:", error);
+          // Don't show error toast to user as this is a background operation
+        },
+      });
+    } catch (error) {
+      console.error("Error creating default Quick Share group:", error);
+    }
+  };
+
   const handleCreateClick = async () => {
     setCurrentStep("creating");
     setIsImporting(false);
@@ -123,6 +119,8 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       // Authenticate the newly created wallet
       try {
         await authenticateWallet(accountId);
+        // Create default "Quick Share" group after successful authentication
+        await createQuickShareGroup();
       } catch (error) {
         console.error("Failed to authenticate new wallet:", error);
         // Continue anyway since wallet was created successfully
@@ -259,7 +257,15 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                 }}
                 className="flex flex-col gap-4 h-[300px] p-4 rounded-xl"
               >
-                <h2 className="text-neutral-400 text-sm font-medium">Recently Connected Wallets</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-neutral-400 text-sm font-medium">Recently Connected Wallets</h2>
+                  <img
+                    src="/modal/reset-icon.svg"
+                    alt=""
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => openModal(MODAL_IDS.RESET_ACCOUNT)}
+                  />
+                </div>
                 <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
                   {accounts.map((account, index) => (
                     <div
@@ -472,6 +478,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
                   // if first time, then open this
                   const isTourSkipped = localStorage.getItem(TOUR_SKIPPED_KEY);
                   if (!isTourSkipped) {
+                    pathname !== "/" && router.push("/");
                     setIsOpen(true);
                   }
                 }}
@@ -495,6 +502,8 @@ export function ConnectWalletModal({ isOpen, onClose }: ModalProp<SelectTokenMod
       actionButtonIcon="/plus.png"
       currentStep={currentStep}
       handleCreateClick={handleCreateClick}
+      showCreateButton={accounts.length > 0 && currentStep === "init"}
+      zIndex={zIndex}
     >
       {renderStepContent()}
     </BaseModal>

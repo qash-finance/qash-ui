@@ -3,7 +3,7 @@ import React, { useState, useCallback } from "react";
 import { AmountInput } from "./AmountInput";
 import { TransactionOptions } from "./TransactionOptions";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS } from "@/types/modal";
+import { MODAL_IDS, SendModalProps } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
@@ -30,6 +30,7 @@ import { CustomNoteType, WrappedNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
+import { useAcceptRequest } from "@/services/api/request-payment";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -49,13 +50,36 @@ interface SendTransactionFormValues {
   message?: string;
 }
 
-export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
+export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalProps> = ({
+  activeTab,
+  onTabChange,
+  onClose,
+  ...props
+}) => {
+  // **************** Custom Hooks *******************
   const searchParams = useSearchParams();
-  const recipientParam = searchParams?.get("recipient") || "";
-  const recipientNameParam = searchParams?.get("name") || "";
-  const tokenAddressParam = searchParams?.get("tokenAddress") || "";
-  const amountParam = searchParams?.get("amount") || "";
-  const messageParam = searchParams?.get("message") || "";
+  const { openModal, isModalOpen } = useModal();
+  const { isConnected } = useWalletConnect();
+  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
+  const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
+  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
+  const { mutateAsync: acceptRequest } = useAcceptRequest();
+
+  // Check if component is being used as a modal
+  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
+
+  // Get initial data based on usage mode
+  // If modal: use props data, else: use URL search params
+  const recipientParam = isSendModalOpen ? props.recipient || "" : searchParams?.get("recipient") || "";
+  const recipientNameParam = isSendModalOpen ? props.recipientName || "" : searchParams?.get("name") || ""; // Modal doesn't have name param
+  const tokenAddressParam = isSendModalOpen ? props.tokenAddress || "" : searchParams?.get("tokenAddress") || "";
+  const amountParam = isSendModalOpen ? props.amount || "" : searchParams?.get("amount") || "";
+  const messageParam = isSendModalOpen ? props.message || "" : searchParams?.get("message") || "";
+  const isGroupPaymentParam = isSendModalOpen ? props.isGroupPayment : false;
+  const isRequestPaymentParam = isSendModalOpen ? props.isRequestPayment : false;
+
+  // **************** Form Hooks *******************
   const {
     register,
     handleSubmit,
@@ -73,16 +97,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       message: messageParam || "",
     },
   });
-
-  // **************** Custom Hooks *******************
-  const { openModal, isModalOpen } = useModal();
-  const { isConnected } = useWalletConnect();
-  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
-  const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
-  const { addTransaction } = useBatchTransactions(state => state);
-  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
-
-  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
@@ -221,6 +235,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         tokenAddress: selectedToken.faucetId,
         tokenSymbol: selectedToken.metadata.symbol,
         onConfirm: async () => {
+          if (onClose && props.onTransactionConfirmed) {
+            await props.onTransactionConfirmed();
+            onClose();
+          }
+
           try {
             setIsSending(true);
             toast.loading("Sending transaction...");
@@ -262,6 +281,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               noteType: CustomNoteType.P2IDR,
               noteId: noteId,
               transactionId: txId,
+              requestPaymentId: props.pendingRequestId,
             });
 
             // refetch assets
@@ -288,6 +308,28 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
               );
               reset();
               setRecipientName("");
+
+              // If this transaction exists in batch, remove it
+              try {
+                if (walletAddress) {
+                  const batchTransactions = getBatchTransactions(walletAddress);
+                  const matchedTransactions = batchTransactions.filter(tx => {
+                    if (props.pendingRequestId != null) return tx.pendingRequestId === props.pendingRequestId;
+                    return (
+                      tx.tokenAddress === selectedToken.faucetId &&
+                      tx.amount === amount.toString() &&
+                      tx.recipient === recipientAddress &&
+                      tx.isPrivate === isPrivateTransaction &&
+                      tx.recallableTime === recallableTime
+                    );
+                  });
+                  matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
+                }
+              } catch (_) {}
+
+              if (props.pendingRequestId) {
+                await acceptRequest({ id: props.pendingRequestId, txid: txId });
+              }
             }
           } catch (error) {
             toast.dismiss();
@@ -350,11 +392,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         recallableHeight: Math.floor(recallableTime / BLOCK_TIME),
         recallableTime: recallableTime,
         noteType: CustomNoteType.P2IDR,
+        pendingRequestId: props.pendingRequestId,
       });
 
       toast.success("Transaction added to batch successfully");
       reset();
       setRecipientName("");
+
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to add transaction to batch");
@@ -364,10 +411,36 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
   const handleFormSubmit = async (data: SendTransactionFormValues) => {
     if (isSubmittingAsBatch) {
-      handleAddToBatch(data);
+      await handleAddToBatch(data);
     } else {
       await handleSendTransaction(data);
     }
+  };
+
+  // ********************************************
+  // **************** Render *******************
+  // ********************************************
+  const renderRecipientInputButton = () => {
+    if (isGroupPaymentParam || isRequestPaymentParam) {
+      return null;
+    }
+
+    return (
+      <>
+        {watch("recipientAddress") && validateAddress(watch("recipientAddress")) ? (
+          <ActionButton
+            text="Remove"
+            type="deny"
+            onClick={() => {
+              setRecipientName("");
+              setValue("recipientAddress", "");
+            }}
+          />
+        ) : (
+          <ActionButton text="Choose" onClick={handleChooseRecipient} />
+        )}
+      </>
+    );
   };
 
   return (
@@ -429,10 +502,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             selectedToken={selectedToken}
             onTokenSelect={handleTokenSelect}
             tokenAddress={selectedTokenAddress}
+            disabled={isGroupPaymentParam || isRequestPaymentParam}
           />
         </header>
 
         <AmountInput
+          disabled={isGroupPaymentParam || isRequestPaymentParam}
           selectedToken={selectedToken}
           availableBalance={Number(
             formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
@@ -472,18 +547,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                 />
               </div>
             </div>
-            {watch("recipientAddress") && validateAddress(watch("recipientAddress")) ? (
-              <ActionButton
-                text="Remove"
-                type="deny"
-                onClick={() => {
-                  setRecipientName("");
-                  setValue("recipientAddress", "");
-                }}
-              />
-            ) : (
-              <ActionButton text="Choose" onClick={handleChooseRecipient} />
-            )}
+            {renderRecipientInputButton()}
           </div>
 
           {watch("recipientAddress") && !validateAddress(watch("recipientAddress")) && (
@@ -507,14 +571,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
                 {getValues("recipientAddress")}
               </span>
             </div>
-            <ActionButton
-              text="Remove"
-              type="deny"
-              onClick={() => {
-                setRecipientName("");
-                setValue("recipientAddress", "");
-              }}
-            />
+            {isRequestPaymentParam || isGroupPaymentParam ? null : (
+              <ActionButton
+                text="Remove"
+                type="deny"
+                onClick={() => {
+                  setRecipientName("");
+                  setValue("recipientAddress", "");
+                }}
+              />
+            )}
           </div>
         </section>
       )}

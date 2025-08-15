@@ -13,6 +13,7 @@ export interface BatchTransaction {
   recallableHeight: number;
   recallableTime: number;
   noteType: CustomNoteType;
+  pendingRequestId?: number;
   createdAt: string; // Store as ISO string
 }
 

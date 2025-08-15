@@ -41,7 +41,7 @@ export function useConsumableNotes() {
         id: note.noteId,
         sender: note.sender,
         recipient: note.recipient,
-        private: true,
+        private: note.private,
         recallableHeight: note.recallableHeight,
         recallableTime: note.recallableTime,
         serialNumber: note.serialNumber,
@@ -92,7 +92,8 @@ export function useConsumableNotes() {
       // filterout the sender and recipient are the same
       const filteredConsumableNotes = consumableNotes.filter(note => note.sender !== note.recipient);
 
-      const returnNotes = [...filteredConsumableNotes, ...consumablePrivateNotes];
+      // Prefer server-enriched notes (which include recallable metadata) when IDs collide
+      const returnNotes = [...consumablePrivateNotes, ...filteredConsumableNotes];
 
       // remove the same note.id
       const filteredNotes = returnNotes.filter(
@@ -103,15 +104,19 @@ export function useConsumableNotes() {
     enabled: !!walletAddress,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
-    refetchInterval: 60000, // Refetch every 60 second
+    refetchInterval: 25000, // Refetch every 25 seconds
     refetchOnWindowFocus: true, // Refetch when window gains focus
     refetchOnMount: true, // Always refetch on mount
   });
 
   // Force fresh fetch by invalidating cache
   const forceFetch = async () => {
-    queryClient.invalidateQueries({ queryKey: ["consumable-notes", walletAddress] });
-    await refetch();
+    // repeat 3 times, each with 3 seconds delay
+    for (let i = 0; i < 5; i++) {
+      queryClient.invalidateQueries({ queryKey: ["consumable-notes", walletAddress] });
+      await refetch();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   };
 
   return {

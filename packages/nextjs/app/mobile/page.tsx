@@ -81,7 +81,7 @@ export default function MobilePage() {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-center pb-[34px]">
+      <div className="mt-5 flex justify-center pb-[34px]">
         <div className="flex w-[329px] flex-row items-center justify-center text-center">
           {socialLinks.map((social, index) => (
             <div key={social.link} className="flex items-center gap-2">

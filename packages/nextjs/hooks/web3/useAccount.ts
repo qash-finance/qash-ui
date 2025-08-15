@@ -97,10 +97,12 @@ export function useAccount() {
   });
 
   const forceFetch = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ["account-data", walletAddress],
-    });
-    await refetchAssets();
+    // repeat 3 times, each with 3 seconds delay
+    for (let i = 0; i < 5; i++) {
+      queryClient.invalidateQueries({ queryKey: ["account-data", walletAddress] });
+      await refetchAssets();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   };
 
   const defaultData: AccountData = {

@@ -1,5 +1,5 @@
 import React from "react";
-import { ModalHeader } from "../../ConnectWallet/ModalHeader";
+import { ModalHeader } from "./ModalHeader";
 
 type BaseModalProps = {
   isOpen: boolean;
@@ -11,6 +11,7 @@ type BaseModalProps = {
   children: React.ReactNode;
   handleCreateClick?: () => void;
   currentStep?: string;
+  showCreateButton?: boolean;
 };
 
 const BaseModal: React.FC<BaseModalProps> = ({
@@ -23,6 +24,7 @@ const BaseModal: React.FC<BaseModalProps> = ({
   children,
   handleCreateClick,
   currentStep,
+  showCreateButton = false,
 }) => {
   return (
     <div style={{ zIndex }} className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -34,6 +36,7 @@ const BaseModal: React.FC<BaseModalProps> = ({
           actionButtonIcon={actionButtonIcon}
           handleCreateClick={handleCreateClick}
           currentStep={currentStep}
+          showCreateButton={showCreateButton}
         />
         {children}
       </div>

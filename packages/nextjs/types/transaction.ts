@@ -29,6 +29,7 @@ export interface SendTransactionDto {
   noteType: CustomNoteType;
   noteId: string;
   transactionId: string;
+  requestPaymentId?: number;
 }
 
 export interface ConsumableNote {
@@ -81,6 +82,7 @@ export interface RecallableNote {
   sender: string;
   serialNumber: string[];
   status: NoteStatus;
+  secretNumber?: string;
 }
 
 export interface ConsumePublicTransactionDto {
@@ -90,4 +92,6 @@ export interface ConsumePublicTransactionDto {
   tokenId: string;
   tokenName: string;
   txId: string;
+  requestPaymentId?: number;
+  noteId: string;
 }

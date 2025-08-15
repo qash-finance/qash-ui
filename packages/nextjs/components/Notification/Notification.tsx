@@ -10,6 +10,7 @@ import { useGetNotificationsInfinite, useMarkNotificationAsRead } from "@/servic
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { NotificationCardType, NotificationResponseDto } from "@/types/notification";
+import { formatRelativeTime } from "@/services/utils/formatDate";
 
 const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) => {
   const { walletAddress, isConnected } = useWalletConnect();
@@ -159,39 +160,23 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     }
   };
 
-  // Convert server notification type to client type
-  const convertNotificationType = (serverType: string): NotificationType => {
-    switch (serverType) {
-      case "SEND":
-        return NotificationType.SEND;
-      case "CLAIM":
-        return NotificationType.CLAIM;
-      case "REFUND":
-        return NotificationType.REFUND;
-      case "BATCH_SEND":
-        return NotificationType.BATCH_SEND;
-      case "WALLET_CREATE":
-        return NotificationType.WALLET_CREATE;
-      default:
-        return NotificationType.SEND;
-    }
-  };
-
   // Convert server notification to client format
   const convertNotification = (notification: NotificationResponseDto): NotificationCardType => {
     return {
       id: notification.id,
-      type: convertNotificationType(notification.type) as NotificationType,
+      type: notification.type as NotificationType,
       title: notification.title,
       subtitle: notification.message,
-      time: new Date(notification.createdAt).toLocaleString(),
+      time: formatRelativeTime(new Date(notification.createdAt)),
       amount: notification.metadata?.amount,
       tokenAddress: notification.metadata?.tokenId,
       tokenName: notification.metadata?.tokenName,
       address: notification.metadata?.recipient,
+      payee: notification.metadata?.payee,
       recipientCount: notification.metadata?.recipientCount,
       isRead: notification.status === "READ",
       transactionId: notification.metadata?.transactionId,
+      giftOpener: notification.metadata?.caller,
     };
   };
 
@@ -211,7 +196,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
   return (
     <div
       data-tour="portfolio-section"
-      className="portfolio fixed inset-0 flex items-center justify-end z-[100] pointer-events-auto"
+      className="relativportfolio fixed inset-0 flex items-center justify-end z-[150] pointer-events-auto"
     >
       {/* Overlay */}
       <div
@@ -232,10 +217,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
           className="flex flex-col shrink-0 justify-center items-center self-stretch px-2 py-0 rounded-2xl bg-[#292929] w-[42px] cursor-pointer relative"
           onClick={handleClose}
         >
-          <button
-            className="flex absolute justify-center items-center w-7 h-7 left-[7px] top-[398px]"
-            aria-label="Close"
-          >
+          <button className="flex absolute justify-center items-center w-7 h-7 top-1/2" aria-label="Close">
             <img src="/close-icon.svg" alt="close-icon" className="w-7 h-7" />
           </button>
         </nav>
@@ -318,9 +300,11 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                     tokenAddress={notification.tokenAddress}
                     tokenName={notification.tokenName}
                     address={notification.address}
+                    payee={notification.payee}
                     recipientCount={notification.recipientCount}
                     isRead={notification.isRead}
                     txId={notification.transactionId}
+                    giftOpener={notification.giftOpener}
                     onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
                   />
                 ))

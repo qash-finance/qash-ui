@@ -9,6 +9,7 @@ interface AmountInputProps {
   register: UseFormRegister<any>;
   errors: FieldErrors<any>;
   setValue: UseFormSetValue<any>;
+  disabled?: boolean;
 }
 
 const percentages = [25, 50, 75] as const;
@@ -19,6 +20,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
   register,
   errors,
   setValue,
+  disabled = false,
 }) => {
   const handlePercentageSelect = (percentage: number | "MAX") => {
     let newAmount: number;
@@ -44,7 +46,8 @@ export const AmountInput: React.FC<AmountInputProps> = ({
             min: { value: 0, message: "Amount must be greater than 0" },
           })}
           autoComplete="off"
-          className="text-white text-center outline-none"
+          disabled={disabled}
+          className={`text-white text-center outline-none ${disabled ? "opacity-50" : ""}`}
           placeholder="0.00"
           type="number"
           inputMode="decimal"
@@ -65,6 +68,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
             onClick={() => handlePercentageSelect(percentage)}
             className="cursor-pointer flex flex-1 shrink gap-1 justify-center items-center px-6 py-2 rounded-md bg-[#3D3D3D] hover:bg-neutral-600 transition-colors max-md:px-5"
             type="button"
+            disabled={disabled}
           >
             <span className="text-white">{percentage}</span>
             <span className="text-white">%</span>
@@ -74,6 +78,7 @@ export const AmountInput: React.FC<AmountInputProps> = ({
           onClick={() => handlePercentageSelect("MAX")}
           className="flex flex-1 shrink gap-2 justify-center items-center px-6 py-2 rounded-md bg-[#3D3D3D] hover:bg-neutral-600 transition-colors max-md:px-5"
           type="button"
+          disabled={disabled}
         >
           <span className="text-white">MAX</span>
         </button>

@@ -125,7 +125,6 @@ export function AuthProvider({
 
       const existingKey = AuthStorage.getKey(walletAddress);
       if (existingKey && !AuthStorage.isSessionExpired(existingKey.expiresAt)) {
-        console.log("DID I EXPIRED?");
         keyPair = existingKey.keyPair;
         publicKey = existingKey.publicKey;
       } else {
@@ -167,7 +166,7 @@ export function AuthProvider({
           walletAddress,
           keyPair,
           publicKey,
-          expiresAt: new Date(Date.now() + AUTH_EXPIRATION_HOURS * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(Date.now() + (AUTH_EXPIRATION_HOURS - 24) * 60 * 60 * 1000).toISOString(),
           deviceFingerprint,
           createdAt: new Date().toISOString(),
         };

@@ -56,13 +56,13 @@ export const actionItems = [
     items: [
       { icon: "/sidebar/send.gif", label: "Send", isActive: false, link: SidebarLink.Send, disabled: false },
       { icon: "/sidebar/batch.gif", label: "Batch", isActive: false, link: SidebarLink.Batch, disabled: false },
-      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: true },
+      { icon: "/sidebar/gift.gif", label: "Gift", isActive: false, link: SidebarLink.Gift, disabled: false },
       {
         icon: "/sidebar/group-payment.gif",
         label: "Group Payment",
         isActive: false,
         link: SidebarLink.GroupPayment,
-        disabled: true,
+        disabled: false,
       },
     ],
   },
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   };
 
   return (
-    <nav className="sidebar overflow-hidden pt-3.5 rounded-lg bg-neutral-900 max-w-[400px] h-screen">
+    <nav className="sidebar overflow-hidden pt-3.5 rounded-lg bg-neutral-900 h-screen w-full">
       <div className="flex flex-col justify-between h-full">
         <div className="px-3.5 w-full">
           {/* Logo */}

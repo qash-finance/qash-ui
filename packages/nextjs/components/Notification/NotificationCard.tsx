@@ -12,9 +12,11 @@ export interface NotificationCardProps {
   tokenAddress?: string;
   tokenName?: string;
   address?: string;
+  payee?: string;
   recipientCount?: number;
   isRead?: boolean;
   txId?: string;
+  giftOpener?: string;
   onClick?: () => void;
 }
 
@@ -27,9 +29,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   tokenAddress,
   tokenName,
   address,
+  payee,
   recipientCount,
   isRead = false,
   txId,
+  giftOpener,
   onClick,
 }) => {
   // Common styles
@@ -37,8 +41,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   const iconContainerStyles = "bg-[#066eff] rounded-lg size-10 relative shrink-0";
   const iconWrapperStyles = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-6 overflow-hidden";
   const contentStyles = "flex flex-col gap-1 grow text-left leading-none min-w-0";
-  const titleStyles = "font-['Barlow:Medium',_sans-serif] text-white text-sm tracking-[-0.16px] leading-[20px]";
-  const subtitleStyles = "font-['Barlow:Regular',_sans-serif] text-[#dcdcdc] leading-[20px]";
+  const titleStyles = "font-['Barlow:Medium',_sans-serif] text-white tracking-[-0.16px] leading-[20px]";
+  const subtitleStyles = "font-['Barlow:Regular',_sans-serif] text-sm text-[#DCDCDC] leading-[20px]";
   const timeStyles = "font-['Barlow:Regular',_sans-serif] text-[#989898] text-[13px] tracking-[-0.13px] leading-[1.1]";
   const dotStyles = "size-2.5 shrink-0";
 
@@ -46,6 +50,10 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   const getIcon = () => {
     switch (type) {
       case NotificationType.SEND:
+        return <img src="/arrow/thin-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.GIFT_SEND:
+        return <img src="/arrow/thin-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.GIFT_OPEN:
         return <img src="/arrow/thin-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
       case NotificationType.CLAIM:
         return <img src="/arrow/thin-arrow-down-short.svg" alt="send" className="w-6 h-6" />;
@@ -55,6 +63,10 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return <img src="/arrow/thin-double-arrow-up-right.svg" alt="send" className="w-6 h-6" />;
       case NotificationType.WALLET_CREATE:
         return <img src="/notification/wallet.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.REQUEST_PAYMENT:
+        return <img src="/notification/request-payment.svg" alt="send" className="w-6 h-6" />;
+      case NotificationType.GIFT_CLAIM:
+        return <img src="/notification/gift-claim.svg" alt="send" className="w-5 h-5" />;
       default:
         return null;
     }
@@ -67,11 +79,80 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return (
           <div>
             <span className={titleStyles}>
-              {title}{" "}
+              {title} for{" "}
               <span className="text-[#1e8fff]">
                 {amount} {tokenName} ({formatAddress(tokenAddress || "")})
               </span>{" "}
               to {formatAddress(address || "")}
+            </span>
+            <div className="my-1.5">
+              <a
+                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white text-sm w-fit"
+              >
+                <span>View on explorer</span>
+                <svg
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        );
+      case NotificationType.GIFT_SEND:
+        return (
+          <div>
+            <span className={titleStyles}>
+              {title} for{" "}
+              <span className="text-[#1e8fff]">
+                {amount} {tokenName}
+              </span>{" "}
+            </span>
+            <div className="my-1.5">
+              <a
+                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white text-sm w-fit"
+              >
+                <span>View on explorer</span>
+                <svg
+                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        );
+      case NotificationType.GIFT_OPEN:
+        return (
+          <div>
+            <span className={titleStyles}>
+              Gift worth{" "}
+              <span className="text-[#1e8fff]">
+                {amount} {tokenName}
+              </span>{" "}
+              opened by {formatAddress(giftOpener || "")}
             </span>
             <div className="my-1.5">
               <a
@@ -177,12 +258,38 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
             in total to <span className="text-white">{recipientCount} accounts</span>
           </span>
         );
+      case NotificationType.REQUEST_PAYMENT:
+        // Use the address prop which contains the payee from metadata
+        const payeeAddress = payee || "";
+        const isPayeeAddress = payeeAddress.length > 20; // Assume addresses are longer than names
+        const formattedPayee = isPayeeAddress ? formatAddress(payeeAddress) : payeeAddress;
+
+        return (
+          <span className={titleStyles}>
+            <span className="text-white">{formattedPayee}</span> has requested you to transfer{" "}
+            <span className="text-[#1e8fff]">
+              {amount} {tokenName}
+            </span>
+          </span>
+        );
       case NotificationType.WALLET_CREATE:
         return (
           <div className="flex flex-col gap-1 w-full text-sm tracking-[-0.16px]">
             <span className="font-['Barlow:Medium',_sans-serif] text-white leading-[20px]">{title}</span>
-            {subtitle && <span className={subtitleStyles}>{subtitle}</span>}
+            {subtitle && <span className={subtitleStyles}>{subtitle}.</span>}
           </div>
+        );
+      case NotificationType.GIFT_CLAIM:
+        return (
+          <>
+            <span className={titleStyles}>{title}</span>
+            <span className={subtitleStyles}>
+              You’ve successfully claimed{" "}
+              <span className="text-[#1e8fff]">
+                {amount} {tokenName}.
+              </span>
+            </span>
+          </>
         );
       default:
         return <span className={titleStyles}>{title}</span>;

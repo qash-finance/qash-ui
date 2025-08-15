@@ -12,9 +12,15 @@ interface SelectTokenInputProps {
   selectedToken: AssetWithMetadata | null;
   onTokenSelect: (token: AssetWithMetadata) => void;
   tokenAddress?: string; // Add token address to generate correct avatar
+  disabled?: boolean;
 }
 
-export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToken, onTokenSelect, tokenAddress }) => {
+export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({
+  selectedToken,
+  onTokenSelect,
+  tokenAddress,
+  disabled = false,
+}) => {
   const { openModal } = useModal();
   const token = selectedToken || AnyToken;
 
@@ -30,6 +36,7 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({ selectedToke
       <button
         type="button"
         className="flex flex-col justify-center py-1 px-2 rounded-[10px] bg-zinc-800 hover:bg-zinc-700 transition-colors outline-none"
+        disabled={disabled}
       >
         <div
           className="flex gap-1 items-center cursor-pointer"
