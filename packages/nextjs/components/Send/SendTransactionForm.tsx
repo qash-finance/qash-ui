@@ -479,7 +479,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                 Send
               </span>
             </button>
-            {!isSendModalOpen && (
+            {/* {!isSendModalOpen && (
               <button
                 type="button"
                 className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
@@ -496,7 +496,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                   Stream Send
                 </span>
               </button>
-            )}
+            )} */}
           </nav>
           <SelectTokenInput
             selectedToken={selectedToken}

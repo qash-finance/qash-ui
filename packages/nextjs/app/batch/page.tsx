@@ -74,9 +74,15 @@ export default function BatchPage() {
             })),
           );
 
+          // we can add multiple request payments to the batch
+          // we need to avoid accepting the same request payment multiple times
+          const acceptedRequestPayments = new Set<number>();
           for (const transaction of transactions) {
             if (transaction.pendingRequestId) {
-              await acceptRequest({ id: transaction.pendingRequestId, txid: txId });
+              if (!acceptedRequestPayments.has(transaction.pendingRequestId)) {
+                await acceptRequest({ id: transaction.pendingRequestId, txid: txId });
+                acceptedRequestPayments.add(transaction.pendingRequestId);
+              }
             }
           }
 
