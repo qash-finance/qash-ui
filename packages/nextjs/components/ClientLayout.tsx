@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
@@ -47,6 +47,7 @@ const queryClient = new QueryClient({
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
   const wallets = useMemo(
     () => [
@@ -133,10 +134,23 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         {/* <ConnectWalletButton /> */}
                         <ModalManager />
                         <div className="flex flex-row">
-                          <div className="fixed w-1/6">
-                            <Sidebar />
+                          <div
+                            className={`fixed ${isSidebarMinimized ? "w-[54px]" : "w-[272px]"}`}
+                            style={{
+                              transition: "width 250ms ease",
+                              willChange: "width",
+                            }}
+                          >
+                            <Sidebar minimized={isSidebarMinimized} onToggleMinimize={setIsSidebarMinimized} />
                           </div>
-                          <div className="ml-[16.6%] w-5/6 h-screen max-h-[1980px]">
+                          <div
+                            className={`${isSidebarMinimized ? "ml-[54px]" : "ml-[272px]"} h-screen max-h-[1980px]`}
+                            style={{
+                              width: `calc(100% - ${isSidebarMinimized ? 54 : 272}px)`,
+                              transition: "margin-left 250ms ease, width 250ms ease",
+                              willChange: "margin-left, width",
+                            }}
+                          >
                             <div className="p-[24px]">
                               <Title />
                             </div>

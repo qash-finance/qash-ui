@@ -1758,6 +1758,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@date-fns/tz@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@date-fns/tz@npm:1.2.0"
+  checksum: 2eb37e63fdbd5d72458c528ded6c2f7bdb76bae9c6875d3b827e33600b807cfbd72ab05c9291f258a6e6b7b360ec03e57f7e7d85fe6e0d5e989476dec908910e
+  languageName: node
+  linkType: hard
+
 "@demox-labs/miden-sdk@npm:0.10.1":
   version: 0.10.1
   resolution: "@demox-labs/miden-sdk@npm:0.10.1"
@@ -3331,6 +3338,7 @@ __metadata:
     prettier: ^3.5.3
     qr-code-styling: ^1.9.2
     react: ^19.0.0
+    react-day-picker: ^9.8.1
     react-dom: ^19.0.0
     react-hook-form: ^7.60.0
     react-hot-toast: ^2.5.2
@@ -7009,12 +7017,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"date-fns-jalali@npm:^4.1.0-0":
+  version: 4.1.0-0
+  resolution: "date-fns-jalali@npm:4.1.0-0"
+  checksum: cde80e4a87bfd96458ff1edfd5af5fed7ed6e04dd48574ed64d376e37e7689ddee1a7c5a6685f4b93cf3432eac73c51acd786504070a6973a140c5f15163ca39
+  languageName: node
+  linkType: hard
+
 "date-fns@npm:^2.29.3":
   version: 2.30.0
   resolution: "date-fns@npm:2.30.0"
   dependencies:
     "@babel/runtime": ^7.21.0
   checksum: f7be01523282e9bb06c0cd2693d34f245247a29098527d4420628966a2d9aad154bd0e90a6b1cf66d37adcb769cd108cf8a7bd49d76db0fb119af5cdd13644f4
+  languageName: node
+  linkType: hard
+
+"date-fns@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "date-fns@npm:4.1.0"
+  checksum: fb681b242cccabed45494468f64282a7d375ea970e0adbcc5dcc92dcb7aba49b2081c2c9739d41bf71ce89ed68dd73bebfe06ca35129490704775d091895710b
   languageName: node
   linkType: hard
 
@@ -12780,6 +12802,19 @@ __metadata:
     lodash.flow: ^3.3.0
     pure-color: ^1.2.0
   checksum: 00a12dddafc8a9025cca933b0dcb65fca41c81fa176d1fc3a6a9d0242127042e2c0a604f4c724a3254dd2c6aeb5ef55095522ff22f5462e419641c1341a658e4
+  languageName: node
+  linkType: hard
+
+"react-day-picker@npm:^9.8.1":
+  version: 9.8.1
+  resolution: "react-day-picker@npm:9.8.1"
+  dependencies:
+    "@date-fns/tz": ^1.2.0
+    date-fns: ^4.1.0
+    date-fns-jalali: ^4.1.0-0
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 87cb9ad1a566a40fc97dc740333dfe6f36b55e7f2e27f585b6bde5bdfcd577778961394c202e15ac919729079c381a611af78d08d0f2e48290b12e3412967537
   languageName: node
   linkType: hard
 

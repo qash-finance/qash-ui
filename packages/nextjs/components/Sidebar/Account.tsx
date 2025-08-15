@@ -86,11 +86,11 @@ export const Account: React.FC<AccountProps> = () => {
   };
 
   return (
-    <article className="flex flex-col w-full font-medium bg-white rounded-xl flex-1 max-h-[140px]">
+    <article className="flex flex-col w-full font-medium bg-white rounded-xl flex-1">
       {/* Account Info */}
       <div
         id="account-info"
-        className="flex-4/6 flex flex-col px-3 w-full text-blue-600 whitespace-nowrap justify-center align-middle"
+        className="flex-4/6 flex flex-col px-3 w-full text-blue-600 whitespace-nowrap justify-center align-middle py-3"
       >
         <header className="flex items-center w-full text-sm font-medium tracking-tight">
           <div className="flex flex-1 gap-1 items-center">
@@ -232,7 +232,7 @@ export const Account: React.FC<AccountProps> = () => {
       )}
 
       {/* Current Plan */}
-      <div className="flex-2/6 flex gap-1.5 px-3  w-full bg-blue-700 justify-center items-center">
+      <div className="flex-2/6 flex gap-1.5 px-3  w-full bg-blue-700 justify-center items-center py-2 rounded-b-xl">
         <img src="/current-plan-icon.svg" className="w-6 aspect-square" alt="Plan icon" />
         <h2 className="flex-1 text-base font-medium text-white">Current Plan</h2>
         <div className="flex gap-2.5 items-center px-2 py-1 text-xs font-semibold tracking-tight leading-tight whitespace-nowrap bg-white rounded-lg text-neutral-950">

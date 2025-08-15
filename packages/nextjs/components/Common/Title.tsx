@@ -52,6 +52,9 @@ export const Title = () => {
     case "/address-book":
       title = "Address Book";
       break;
+    case "/dashboard/schedule-payment":
+      title = "Schedule Payment";
+      break;
     default:
       title = "Qash";
   }

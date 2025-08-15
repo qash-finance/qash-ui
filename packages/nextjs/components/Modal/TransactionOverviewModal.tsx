@@ -8,6 +8,7 @@ import { formatAddress } from "@/services/utils/miden/address";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { ScheduleTransactionDropdown } from "../SchedulePayment/ScheduleTransactionDropdown";
 
 export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalProp<TransactionOverviewModalProps>) {
   const {
@@ -31,7 +32,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
       <div className="flex flex-col gap-1 p-2 bg-[#1E1E1E] rounded-b-2xl w-[520px]">
         {/* Amount Section */}
         <div className="bg-[#292929] flex flex-col h-[180px] items-center justify-center py-3 rounded-lg w-full">
-          <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Amount</div>
+          <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Total Amount</div>
           <div className="flex items-center gap-2">
             <div className="text-white text-[40px] font-medium tracking-[0.2px] leading-[normal]">{amount}</div>
             <img
@@ -60,16 +61,30 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
             </div>
           </div>
 
+          {/* Schedule Payment Row */}
+          <ScheduleTransactionDropdown
+            title="Schedule Payment"
+            transactions={[{ amountLabel: "1000 BTC", claimableAfterLabel: "Claimable after 01/08/2025" }]}
+          />
+
           {/* Transaction Type Row */}
           <div className="bg-[#292929] flex items-center justify-between px-3 py-2.5 rounded-lg w-full">
             <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Transaction Type</div>
-            <div className="text-white text-[14px] font-medium tracking-[0.07px] leading-[20px]">{transactionType}</div>
+            <div className="bg-[#3d3d3d] rounded-md px-3 py-1.5 w-fit">
+              <span className="text-white text-[14px] leading-3 tracking-[0.07px] truncate block text-center">
+                {transactionType}
+              </span>
+            </div>
           </div>
 
           {/* Cancellable in Row */}
           <div className="bg-[#292929] flex items-center justify-between px-3 py-2.5 rounded-lg w-full">
             <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Cancellable in</div>
-            <div className="text-white text-[14px] font-medium tracking-[0.07px] leading-[20px]">{cancellableTime}</div>
+            <div className="bg-[#3d3d3d] rounded-md px-3 py-1.5 w-fit">
+              <span className="text-white text-[14px] leading-3 tracking-[0.07px] truncate block text-center">
+                {cancellableTime}
+              </span>
+            </div>
           </div>
 
           <div className="mt-3 flex gap-2 w-full">

@@ -49,7 +49,7 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
       {/* Recipient Input */}
       {/* If recipient name is not set, show the input */}
       {!recipientName ? (
-        <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-zinc-800">
+        <section className="flex flex-col flex-wrap py-2.5 pr-4 pl-3 mt-1 mb-1 w-full rounded-lg bg-[#292929]">
           <div className="flex flex-wrap gap-2.5 items-center">
             <img
               src="/default-avatar-icon.png"
