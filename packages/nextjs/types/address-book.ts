@@ -10,6 +10,9 @@ export interface Category {
 }
 
 export interface AddressBook {
+  id?: number;
+  createdAt?: string;
+  updatedAt?: string;
   userAddress: string;
   name: string;
   address: string;

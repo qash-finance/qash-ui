@@ -419,6 +419,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
                             memberStatus={memberStatus}
                             amount={payment.perMember}
                             tokenSymbol={payment.tokens[0]?.metadata?.symbol || "QASH"}
+                            isQuickShare={isQuickShare}
                           />
                         ))}
                       </div>

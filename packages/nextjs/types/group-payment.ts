@@ -38,6 +38,7 @@ export interface Group {
 export interface MemberStatus {
   id: number;
   memberAddress: string;
+  memberName: string;
   status: "pending" | "paid" | "denied";
   paidAt: string | null;
   createdAt: string;
