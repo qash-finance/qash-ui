@@ -37,7 +37,7 @@ export function SignersTable({ signers }: { signers: Signer[] }) {
                 </td>
 
                 <td className={`${cellClasses} text-center`}>
-                  <StatusBadge status={signer.status} text={signer.status} />
+                  {/* <StatusBadge status={signer.status as RequestPaymentStatus} text={signer.status} /> */}
                 </td>
               </tr>
             ))}

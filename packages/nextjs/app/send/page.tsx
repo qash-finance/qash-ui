@@ -28,6 +28,14 @@ export default function SendPage() {
     //     <StreamingTransactionDashboard />
     //   </div>
     // </div>
-    <SendTransactionForm activeTab={activeTab} onTabChange={handleTabChange} />
+    <Suspense fallback={<div>Loading...</div>}>
+      {/* @ts-ignore */}
+      <SendTransactionForm
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        // onClose={() => {}}
+        // pendingRequestId={0}
+      />
+    </Suspense>
   );
 }
