@@ -145,8 +145,7 @@ export const PendingRecieveContainer: React.FC = () => {
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
-  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
+
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {

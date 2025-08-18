@@ -1,15 +1,13 @@
-# Q3x
+# Qash
 
-## Quick Start
+**Qash** is a privacy‑first, programmable payment platform built on Miden, a blockchain that supports privacy by default by executing transactions locally and storing account data locally.
 
-1. Git clone `https://github.com/q3x-finance/miden-q3x-ui.git`
-2. **Install dependencies:**
+It enables custom payment logic (like cancellable, time‑lock, recurring, streaming and more) and private multisig management designed for teams, with AI integration for usability and personalization.
 
-   ```bash
-   yarn install
-   ```
+Qash is currently live on the Miden testnet. Try it here: [qash.finance](https://qash.finance)
 
-3. **Run the dev server:**
-   ```bash
-   yarn start
-   ```
+## Have an idea to improve this?
+
+We’d love to hear from you! Share your `feedback/feature request/talk with the team` via this form:
+
+[Submit Feedback](https://forms.gle/tchasFauLyCpTiAz9)

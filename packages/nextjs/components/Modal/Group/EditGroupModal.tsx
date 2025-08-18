@@ -49,6 +49,7 @@ export function EditGroupModal({ isOpen, onClose, zIndex, group }: ModalProp<Edi
       <input
         type="text"
         className="text-white text-[16px] tracking-[-0.32px] leading-none w-full outline-none text-center"
+        placeholder="Enter address"
         value={member.address}
         onChange={e =>
           setMembers(prev => prev.map((m, i) => (i === index ? { ...m, address: e.target.value.trim() } : m)))
@@ -62,20 +63,60 @@ export function EditGroupModal({ isOpen, onClose, zIndex, group }: ModalProp<Edi
   );
 
   const handleSave = async () => {
-    if (!group) return;
+    try {
+      const { AccountId } = await import("@demox-labs/miden-sdk");
 
-    if (members.length === 0) {
-      toast.error("Please add at least one member");
-      return;
+      if (!group) return;
+
+      if (members.length === 0) {
+        toast.error("Please add at least one member");
+        return;
+      }
+
+      // Check for empty names or addresses
+      const emptyMembers = members.filter(m => !m.name.trim() || !m.address.trim());
+      if (emptyMembers.length > 0) {
+        toast.error("Please fill in both name and address for all members");
+        return;
+      }
+
+      // Check for duplicate names
+      const trimmedNames = members.map(m => m.name.trim().toLowerCase());
+      const duplicateNames = trimmedNames.filter((name, index) => trimmedNames.indexOf(name) !== index);
+      if (duplicateNames.length > 0) {
+        toast.error("Duplicate names are not allowed");
+        return;
+      }
+
+      // Check for duplicate addresses
+      const trimmedAddresses = members.map(m => m.address.trim());
+      const duplicateAddresses = trimmedAddresses.filter(
+        (address, index) => trimmedAddresses.indexOf(address) !== index,
+      );
+      if (duplicateAddresses.length > 0) {
+        toast.error("Duplicate addresses are not allowed");
+        return;
+      }
+
+      members.forEach((member, index) => {
+        try {
+          AccountId.fromBech32(member.address);
+        } catch (error) {
+          toast.error(`Invalid address for member ${index + 1}`);
+          return;
+        }
+      });
+
+      const name = getValues("name") ?? group.name;
+      // Persist addresses only for the group update
+      const updatedMembers = members.map(m => ({ address: m.address.trim(), name: m.name.trim() }));
+
+      await updateGroup.mutateAsync({ groupId: group.id, data: { name, members: updatedMembers } });
+      onClose?.();
+      toast.success("Group updated successfully");
+    } catch (error) {
+      toast.error("Failed to update group");
     }
-
-    const name = getValues("name") ?? group.name;
-    // Persist addresses only for the group update
-    const updatedMembers = members.map(m => ({ address: m.address, name: m.name }));
-
-    await updateGroup.mutateAsync({ groupId: group.id, data: { name, members: updatedMembers } });
-    onClose?.();
-    toast.success("Group updated successfully");
   };
 
   if (!isOpen) return null;
@@ -92,7 +133,14 @@ export function EditGroupModal({ isOpen, onClose, zIndex, group }: ModalProp<Edi
             defaultValue={group.name}
           />
         </div>
-        <div className="text-[15px] tracking-[-0.45px] text-neutral-600 ">{members.length} member(s)</div>
+        <div className="flex flex-row justify-between items-center">
+          <div className="text-[15px] tracking-[-0.45px] text-neutral-600 ">{members.length} member(s)</div>
+          <ActionButton
+            text="Add new"
+            onClick={() => setMembers(prev => [...prev, { address: "", name: "" }])}
+            className="rounded-full"
+          />
+        </div>
 
         {/* Table */}
         <Table headers={headers} data={tableData} actionColumn={true} actionRenderer={actionRenderer} />

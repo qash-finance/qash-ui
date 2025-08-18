@@ -18,6 +18,8 @@ import { CreateRequestPaymentDto } from "@/types/request-payment";
 import { useCreatePendingRequest } from "@/services/api/request-payment";
 import { toast } from "react-hot-toast";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
+import { useAccountContext } from "@/contexts/AccountProvider";
 
 interface RequestFormData {
   amount: string;
@@ -38,11 +40,13 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
       maxSupply: QASH_TOKEN_MAX_SUPPLY,
     },
   });
+  const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
 
   // **************** Hooks *******************
   const { walletAddress } = useWalletAuth();
   const { isConnected } = useWalletConnect();
   const { openModal } = useModal();
+  const { assets } = useAccountContext();
   const { mutate: createRequestPayment } = useCreatePendingRequest();
   const {
     register,
@@ -70,6 +74,25 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
   }, [recipient]);
 
   // **************** Handlers *******************
+  useEffect(() => {
+    const defaultToken = getDefaultSelectedToken(assets);
+    setSelectedToken(defaultToken);
+  }, [assets]);
+
+  const handleTokenSelect = (token: AssetWithMetadata) => {
+    setSelectedToken(token);
+
+    if (token.metadata.symbol === QASH_TOKEN_SYMBOL) {
+      const qashTokenAddress = require("@/services/utils/constant").QASH_TOKEN_ADDRESS;
+      setSelectedTokenAddress(qashTokenAddress);
+    } else {
+      const selectedAsset = assets.find(asset => asset.metadata.symbol === token.metadata.symbol);
+      if (selectedAsset) {
+        setSelectedTokenAddress(selectedAsset.faucetId);
+      }
+    }
+  };
+
   const handleChooseRecipient = () => {
     openModal(MODAL_IDS.SELECT_RECIPIENT, {
       onSave: (address: string, name: string) => {
@@ -153,7 +176,11 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
           >
             <header className="flex flex-wrap  justify-between self-stretch px-3 py-2 w-full bg-[#2D2D2D] flex-1 rounded-t-xl">
               <h2 className="text-white mt-0.5">Requesting</h2>
-              <SelectTokenInput selectedToken={selectedToken} onTokenSelect={setSelectedToken} />
+              <SelectTokenInput
+                selectedToken={selectedToken}
+                onTokenSelect={handleTokenSelect}
+                tokenAddress={selectedTokenAddress}
+              />
             </header>
 
             <div className="flex flex-col text-5xl font-medium leading-none text-center align-middle flex-3/4 justify-center">
@@ -285,7 +312,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
                 style={{
                   resize: "none",
                 }}
-                className="text-white opacity-20 outline-none text-base"
+                className="text-white outline-none text-base"
                 placeholder="Your message"
                 rows={5}
               />

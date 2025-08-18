@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import { BatchTransactionsModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import { TransactionItem } from "../../Batch/TransactionItem";
@@ -16,7 +16,7 @@ export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTrans
 
   // Subscribe directly to the store state for automatic reactivity
   const allTransactions = useBatchTransactions(state => state.transactions);
-  const transactions = React.useMemo(() => {
+  const transactions = useMemo(() => {
     if (walletAddress && allTransactions[walletAddress]) {
       return allTransactions[walletAddress].map(tx => ({
         ...tx,
@@ -50,15 +50,14 @@ export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTrans
       icon="/arrow/chevron-left.svg"
       onClickIcon={onClose}
     >
-      <div className="bg-[#292929] pt-2 flex flex-col gap-1 items-center self-stretch rounded-2xl h-full w-[600px]">
-        {transactions.length == 0 ? (
-          <div className="h-[400px]">
-            {" "}
-            <EmptyBatch />
-          </div>
-        ) : (
-          <div className="flex-1 w-full overflow-hidden">
-            <section className="h-[400px] flex flex-col gap-1.5 items-start self-stretch px-1.5 py-0 max-sm:px-1 max-sm:py-0 overflow-y-auto">
+      <div className="bg-[#1E1E1E] py-2 flex flex-col gap-1 items-center self-stretch h-full w-[600px]">
+        <div className="flex-1 w-full overflow-hidden rounded-xl">
+          {transactions.length === 0 ? (
+            <div className="h-[400px]">
+              <EmptyBatch />
+            </div>
+          ) : (
+            <section className="h-[400px] flex flex-col gap-1.5 items-start self-stretch px-1.5 overflow-y-auto bg-[#292929] pt-2">
               {transactions.map(transaction => (
                 <TransactionItem
                   key={transaction.id}
@@ -70,11 +69,11 @@ export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTrans
                 />
               ))}
             </section>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="mt-1 box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#292929] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-b-2xl">
+      <div className="box-border flex relative justify-between items-center py-2.5 pr-4 pl-4 w-full bg-[#292929] max-md:flex-col max-md:gap-2.5 max-md:p-4 max-sm:p-3 rounded-b-2xl">
         <h1 className="leading-4 text-white capitalize max-md:text-center text-xl">Total Batch</h1>
         <div
           className={`flex gap-1 justify-center items-center py-1.5 pr-3 pl-1.5 rounded-xl max-md:self-center`}

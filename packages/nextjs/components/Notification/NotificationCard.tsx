@@ -148,7 +148,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         return (
           <div>
             <span className={titleStyles}>
-              Gift worth{""}
+              Gift worth{" "}
               <span className="text-[#1e8fff]">
                 {amount} {tokenName}
               </span>{" "}

@@ -283,7 +283,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
               noteType: CustomNoteType.P2IDR,
               noteId: noteId,
               transactionId: txId,
-              requestPaymentId: props.pendingRequestId,
+              requestPaymentId: props.pendingRequestId ?? null,
             });
 
             // refetch assets
@@ -394,13 +394,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         recallableHeight: Math.floor(recallableTime / BLOCK_TIME),
         recallableTime: recallableTime,
         noteType: CustomNoteType.P2IDR,
-        pendingRequestId: props.pendingRequestId,
+        pendingRequestId: props.pendingRequestId ?? null,
       });
 
       toast.success("Transaction added to batch successfully");
       reset();
       setRecipientName("");
-      onClose();
+
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to add transaction to batch");
@@ -457,14 +460,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         <header className="flex flex-wrap gap-5 justify-between self-stretch px-3 py-2 w-full bg-[#2D2D2D] row-span-1">
           {/* Tab Navigation */}
           <nav
-            className={`flex gap-1.5 justify-center items-center self-stretch p-1 rounded-xl bg-neutral-950 h-[34px] row-span-1 ${
-              !isSendModalOpen ? "w-[280px]" : "w-[150px]"
+            className={`flex gap-1.5 justify-center items-center self-stretch p-1 rounded-xl h-[34px] row-span-1 ${
+              !isSendModalOpen ? "" : "w-[150px]"
             }`}
           >
             <button
               type="button"
               className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
-                activeTab === "send" ? "bg-zinc-800" : ""
+                activeTab === "send" ? "" : ""
               } cursor-pointer`}
               onClick={() => {
                 onTabChange?.(AmountInputTab.SEND);
@@ -478,7 +481,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                 Send
               </span>
             </button>
-            {!isSendModalOpen && (
+            {/* {!isSendModalOpen && (
               <button
                 type="button"
                 className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
@@ -495,7 +498,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                   Stream Send
                 </span>
               </button>
-            )}
+            )} */}
           </nav>
           <SelectTokenInput
             selectedToken={selectedToken}
