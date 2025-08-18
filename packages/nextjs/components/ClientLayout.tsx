@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useMemo, useState, useEffect } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
@@ -22,6 +22,8 @@ import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
+import DashboardMenu from "./Dashboard/DashboardMenu";
+import { usePathname } from "next/navigation";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -48,6 +50,21 @@ const queryClient = new QueryClient({
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const pathname = usePathname();
+
+  // Load sidebar state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebarMinimized");
+    if (savedState !== null) {
+      setIsSidebarMinimized(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save sidebar state to localStorage when it changes
+  const handleSidebarToggle = (minimized: boolean) => {
+    setIsSidebarMinimized(minimized);
+    localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
+  };
 
   const wallets = useMemo(
     () => [
@@ -135,25 +152,17 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         <ModalManager />
                         <div className="flex flex-row">
                           <div
-                            className={`fixed ${isSidebarMinimized ? "w-[54px]" : "w-[272px]"}`}
+                            className={`top-0 ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
                             style={{
                               transition: "width 250ms ease",
                               willChange: "width",
                             }}
                           >
-                            <Sidebar minimized={isSidebarMinimized} onToggleMinimize={setIsSidebarMinimized} />
+                            <Sidebar minimized={isSidebarMinimized} onToggleMinimize={handleSidebarToggle} />
                           </div>
-                          <div
-                            className={`${isSidebarMinimized ? "ml-[54px]" : "ml-[272px]"} h-screen max-h-[1980px]`}
-                            style={{
-                              width: `calc(100% - ${isSidebarMinimized ? 54 : 272}px)`,
-                              transition: "margin-left 250ms ease, width 250ms ease",
-                              willChange: "margin-left, width",
-                            }}
-                          >
-                            <div className="p-[24px]">
-                              <Title />
-                            </div>
+                          {pathname.includes("dashboard") && <DashboardMenu />}
+                          <div className="flex-1 h-screen flex flex-col overflow-hidden">
+                            <Title />
                             <div
                               style={{
                                 backgroundImage: 'url("/background.svg")',

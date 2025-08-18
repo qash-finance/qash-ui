@@ -171,7 +171,10 @@ export function SetupSchedulePaymentModal({
                 <span className="text-[16px] tracking-[-0.32px] text-white/80 transition-colors duration-300 ease-in-out">
                   {formatDateDDMMYYYY(startDate)}
                 </span>
-                <button type="button" className="bg-[#3d3d3d] rounded-md p-[6px] flex items-center justify-center">
+                <button
+                  type="button"
+                  className="bg-[#3d3d3d] rounded-md p-[6px] flex items-center justify-center cursor-pointer"
+                >
                   <img src="/modal/calendar-icon.svg" alt="calendar" className="w-4 h-4" />
                 </button>
               </div>

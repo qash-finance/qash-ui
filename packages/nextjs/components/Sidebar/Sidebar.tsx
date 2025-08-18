@@ -90,11 +90,8 @@ export const actionItems = [
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: minimizedProp, onToggleMinimize }) => {
-  const [renderFab, setRenderFab] = useState(false);
-
   const [action, setActions] = useState(actionItems);
-  const [minimizedLocal, setMinimizedLocal] = useState(false);
-  const minimized = minimizedProp ?? minimizedLocal;
+  const minimized = minimizedProp ?? false;
   const router = useRouter();
   const pathname = usePathname();
 
@@ -236,7 +233,6 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: mini
         aria-label={minimized ? "Expand sidebar" : "Minimize sidebar"}
         onClick={() => {
           const next = !minimized;
-          setMinimizedLocal(next);
           onToggleMinimize?.(next);
         }}
         className="absolute top-[13px] py-1.5 z-20 cursor-pointer hover:bg-white bg-[#111212]"
@@ -251,8 +247,6 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: mini
       >
         <img src="/sidebar/minimize-icon.svg" alt="" className="w-5 h-5" />
       </button>
-
-      {renderFab && <FloatingActionButton imgSrc="/qash-icon.svg" />}
     </nav>
   );
 };

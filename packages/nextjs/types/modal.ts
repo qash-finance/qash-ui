@@ -24,12 +24,14 @@ import FailModal from "@/components/Modal/Status/FailModal";
 import DeleteGroupModal from "@/components/Modal/Group/DeleteGroupModal";
 import EditGroupModal from "@/components/Modal/Group/EditGroupModal";
 import ResetAccountModal from "@/components/Modal/ResetAccountModal";
-import DatePickerModal from "@/components/Modal/DatePickerModal";
+import DatePickerModal from "@/components/Modal/Date/DatePickerModal";
 import SetupSchedulePaymentModal from "@/components/Modal/SchedulePayment/SetupSchedulePaymentModal";
 import RecurringTransferModal from "@/components/Modal/SchedulePayment/RecurringTransferModal";
 import RecurringTransferDetail from "@/components/Modal/SchedulePayment/RecurringTransferDetail";
 import CancelPayment from "@/components/Modal/SchedulePayment/CancelPayment";
 import CancelSchedule from "@/components/Modal/SchedulePayment/CancelSchedule";
+import SchedulePaymentSidebar from "@/components/SchedulePayment/SchedulePaymentSidebar";
+import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -67,6 +69,8 @@ export const MODAL_IDS = {
   RECURRING_TRANSFER_DETAIL: "RECURRING_TRANSFER_DETAIL",
   CANCEL_PAYMENT: "CANCEL_PAYMENT",
   CANCEL_SCHEDULE: "CANCEL_SCHEDULE",
+  SCHEDULE_PAYMENT_SIDEBAR: "SCHEDULE_PAYMENT_SIDEBAR",
+  DATE_FILTER: "DATE_FILTER",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -161,6 +165,11 @@ export interface DatePickerModalProps extends BaseModalProps {
   onSelect?: (date: Date | undefined) => void;
 }
 
+export interface DateFilterModalProps extends BaseModalProps {
+  defaultSelected?: Date;
+  onSelect?: (date: Date | undefined) => void;
+}
+
 export type ScheduleFrequency = "daily" | "weekly" | "monthly";
 
 export interface SetupSchedulePaymentModalProps extends BaseModalProps {
@@ -237,6 +246,8 @@ export interface CancelScheduleProps extends BaseModalProps {
   onCancel?: () => Promise<void>;
 }
 
+export interface SchedulePaymentSidebarProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -270,6 +281,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.RECURRING_TRANSFER_DETAIL]: RecurringTransferDetailProps;
   [MODAL_IDS.CANCEL_PAYMENT]: CancelPaymentProps;
   [MODAL_IDS.CANCEL_SCHEDULE]: CancelScheduleProps;
+  [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebarProps;
+  [MODAL_IDS.DATE_FILTER]: DateFilterModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -307,4 +320,6 @@ export const modalRegistry = {
   [MODAL_IDS.RECURRING_TRANSFER_DETAIL]: RecurringTransferDetail,
   [MODAL_IDS.CANCEL_PAYMENT]: CancelPayment,
   [MODAL_IDS.CANCEL_SCHEDULE]: CancelSchedule,
+  [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebar,
+  [MODAL_IDS.DATE_FILTER]: DateFilterModal,
 } as const;

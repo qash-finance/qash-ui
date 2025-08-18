@@ -1,5 +1,5 @@
 import CancelDashboardContainer from "@/components/Dashboard/CancelTransaction/CancelDashboardContainer";
 
-export default function CancelTransactionPage() {
+export default function CancelPaymentPage() {
   return <CancelDashboardContainer />;
 }

@@ -55,6 +55,16 @@ export const Title = () => {
     case "/dashboard/schedule-payment":
       title = "Schedule Payment";
       break;
+    case "/dashboard/wallet-analytics":
+      title = "Wallet Analytics";
+      break;
+    case "/dashboard/wallet-analytics/transaction-history":
+      title = "Transaction History";
+      break;
+    case "/dashboard/stream-receive":
+      title = "Stream Receive";
+      break;
+
     default:
       title = "Qash";
   }
@@ -76,7 +86,7 @@ export const Title = () => {
         <div className="font-medium font-['Barlow'] uppercase leading-none text-white text-xl font-bolds flex-1">
           <span className="text-left">{title}</span>
         </div>
-        {pathname.startsWith("/dashboard") && <TabContainer tabs={dashboardTabs} className="w-[600px]" />}
+        {/* {pathname.startsWith("/dashboard") && <TabContainer tabs={dashboardTabs} className="w-[600px]" />} */}
       </div>
 
       <button

@@ -68,21 +68,6 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
     return latestModalId;
   }, [modalStates]);
 
-  // Handle ESC key to close only the latest modal
-  const handleEscape = useCallback(() => {
-    const latestModalId = getLatestOpenModal();
-    if (latestModalId) {
-      closeModal(latestModalId);
-    }
-  }, [getLatestOpenModal]);
-
-  // Use the escape key handler only if any modal is open
-  const anyModalOpen = useMemo(() => {
-    return Object.values(modalStates).some(state => state.isOpen);
-  }, [modalStates]);
-
-  useEscapeKey(handleEscape, anyModalOpen);
-
   const closeModal = useCallback((modalId: ModalId) => {
     setModalStates(prev => {
       const newState = {
@@ -92,6 +77,21 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
       return newState;
     });
   }, []);
+
+  // Handle ESC key to close only the latest modal
+  const handleEscape = useCallback(() => {
+    const latestModalId = getLatestOpenModal();
+    if (latestModalId) {
+      closeModal(latestModalId);
+    }
+  }, [getLatestOpenModal, closeModal]);
+
+  // Use the escape key handler only if any modal is open
+  const anyModalOpen = useMemo(() => {
+    return Object.values(modalStates).some(state => state.isOpen);
+  }, [modalStates]);
+
+  useEscapeKey(handleEscape, anyModalOpen);
 
   const openModal = useCallback(
     <T extends ModalProps>(modalId: ModalId, props: Omit<T, keyof BaseModalProps> = {} as any, closeAll?: boolean) => {

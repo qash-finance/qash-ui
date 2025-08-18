@@ -98,9 +98,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         <img src="/loading-square.gif" alt="loading" className="w-6 h-6" />
       ) : (
         <div className="flex items-center gap-1">
-          {icon && iconPosition === "left" && (
-            <img src={icon} alt="icon" className="w-4 h-4" style={{ filter: "invert(1) brightness(1000%)" }} />
-          )}
+          {icon && iconPosition === "left" && <img src={icon} alt="icon" className="w-4 h-4" />}
           <span>{text}</span>
           {icon && iconPosition === "right" && (
             <img src={icon} alt="icon" className="w-4 h-4" style={{ filter: "invert(1) brightness(1000%)" }} />

@@ -2,8 +2,8 @@
 import React from "react";
 import { DatePickerModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
-import DatePicker from "../Common/DatePicker";
+import BaseModal from "../BaseModal";
+import DatePicker from "../../Date/DatePicker";
 
 export function DatePickerModal({ isOpen, onClose, defaultSelected, onSelect }: ModalProp<DatePickerModalProps>) {
   if (!isOpen) return null;
