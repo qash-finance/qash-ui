@@ -224,7 +224,12 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
               </div>
 
               {/* Arrow Icon */}
-              <img src="/schedule-payment/gear.svg" alt="gear" className="w-full h-full cursor-pointer  " />
+              <img
+                src="/schedule-payment/gear.svg"
+                alt="gear"
+                className="w-full h-full cursor-pointer"
+                onClick={() => openModal(MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR)}
+              />
             </div>
           </div>
 

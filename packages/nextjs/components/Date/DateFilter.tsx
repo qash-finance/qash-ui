@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DayButton, DayPicker, DateRange } from "react-day-picker";
+import { DayButton, DayPicker, DateRange, Chevron, MonthCaption, MonthGrid } from "react-day-picker";
 import "react-day-picker/style.css";
 
 interface DateFilterProps {
@@ -15,12 +15,11 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
       classNames={{
         month: "text-white",
         today: `text-[#1E8FFF]`,
-        chevron: `fill-[#1E8FFF]`,
-        caption_label: `text-white flex items-center justify-center`,
-        // range_start: `text-[#1E8FFF]`,
+        chevron: `fill-white`,
+        caption_label: `text-[#DCDCDC] flex items-center justify-center`,
         range_middle: `bg-[#113355]`,
-        range_end: `bg-[#113355] rounded-tr-full rounded-br-full !w-0 !h-0`,
-        range_start: `bg-[#113355] rounded-tl-full rounded-bl-full !w-0 !h-0`,
+        range_end: `bg-[#113355] rounded-tr-full rounded-br-full`,
+        range_start: `bg-[#113355] rounded-tl-full rounded-bl-full`,
       }}
       disabled={{ before: new Date(new Date().setDate(new Date().getDate() + 1)) }}
       animate
@@ -32,16 +31,13 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
           backgroundColor: "#0C0C0C",
           borderRadius: "10px",
           fontSize: "18px",
+          padding: "10px",
         },
         day: {
           justifyItems: "center",
-          // backgroundColor: "none",
         },
-        weekday: {
-          width: "55px",
-        },
-        month_caption: {
-          marginLeft: "20px",
+        month_grid: {
+          width: "350px",
         },
       }}
       navLayout="around"
@@ -81,6 +77,22 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
                 }
               : {};
           return <DayButton {...buttonProps} day={day} modifiers={modifiers} style={selectedStyle} />;
+        },
+        Chevron: props => {
+          const { className, ...buttonProps } = props;
+          return (
+            <div className="flex items-center justify-center p-1 rounded-lg bg-[#3D3D3D]">
+              <Chevron className={className} {...buttonProps} size={20} />
+            </div>
+          );
+        },
+        MonthCaption: props => {
+          const { className, ...buttonProps } = props;
+          return (
+            <div className="flex items-center justify-center w-full bg-[#292929] rounded-lg">
+              <MonthCaption className={className} {...buttonProps} />
+            </div>
+          );
         },
       }}
     />

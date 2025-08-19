@@ -32,9 +32,11 @@ import CancelPayment from "@/components/Modal/SchedulePayment/CancelPayment";
 import CancelSchedule from "@/components/Modal/SchedulePayment/CancelSchedule";
 import SchedulePaymentSidebar from "@/components/SchedulePayment/SchedulePaymentSidebar";
 import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
+import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
+import { DateRange } from "react-day-picker";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -71,6 +73,7 @@ export const MODAL_IDS = {
   CANCEL_SCHEDULE: "CANCEL_SCHEDULE",
   SCHEDULE_PAYMENT_SIDEBAR: "SCHEDULE_PAYMENT_SIDEBAR",
   DATE_FILTER: "DATE_FILTER",
+  TRANSACTION_FILTER: "TRANSACTION_FILTER",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -166,8 +169,8 @@ export interface DatePickerModalProps extends BaseModalProps {
 }
 
 export interface DateFilterModalProps extends BaseModalProps {
-  defaultSelected?: Date;
-  onSelect?: (date: Date | undefined) => void;
+  defaultSelected?: DateRange;
+  onSelect?: (date: DateRange | undefined) => void;
 }
 
 export type ScheduleFrequency = "daily" | "weekly" | "monthly";
@@ -248,6 +251,10 @@ export interface CancelScheduleProps extends BaseModalProps {
 
 export interface SchedulePaymentSidebarProps extends BaseModalProps {}
 
+export interface TransactionFilterModalProps extends BaseModalProps {
+  hash: string;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -283,6 +290,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.CANCEL_SCHEDULE]: CancelScheduleProps;
   [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebarProps;
   [MODAL_IDS.DATE_FILTER]: DateFilterModalProps;
+  [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -322,4 +330,5 @@ export const modalRegistry = {
   [MODAL_IDS.CANCEL_SCHEDULE]: CancelSchedule,
   [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebar,
   [MODAL_IDS.DATE_FILTER]: DateFilterModal,
+  [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModal,
 } as const;

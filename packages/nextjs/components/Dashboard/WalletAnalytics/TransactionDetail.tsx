@@ -1,19 +1,10 @@
 import React from "react";
 import { toast } from "react-hot-toast";
-
-// Image assets from Figma
-const imgAva2 = "http://localhost:3845/assets/2ce9dc06a4fdb8370204f7c443de9e96e17260ab.png";
-const imgAva3 = "http://localhost:3845/assets/0c3873c33a3c94742d63313eac12593e98cb30aa.png";
-const imgAva4 = "http://localhost:3845/assets/3120fc7b000d3423675d1f6a143be1245f6b09c0.png";
-const imgAva5 = "http://localhost:3845/assets/3788e20a7bf3f24f397aa80a726685c93c9bfed5.png";
-const imgChevronLeft = "http://localhost:3845/assets/b81832500b47150f227f17c946aa03caf87ad63f.svg";
-const imgDownload = "http://localhost:3845/assets/990cfda3f7702bab0e08d915e97057c7ae9a9264.svg";
-const imgExternalLink = "http://localhost:3845/assets/2217b92c72ef3367832acdb1e4570a9559f1878f.svg";
-const imgGroup = "http://localhost:3845/assets/0cc0bba741720c32450856b5f32f6e22aa49fa0f.svg";
-const imgGroup1 = "http://localhost:3845/assets/9df676ecfc356998af982b44c2dfb5ae99921393.svg";
-const imgGroup2 = "http://localhost:3845/assets/8cb245b7cb085f384482d0988b965054e8fd1f12.svg";
-const imgGroup3 = "http://localhost:3845/assets/bd49f5a7084998b9d6b6891b128fdb9f484a87f5.svg";
-const imgBtc = "http://localhost:3845/assets/566f6787aa3b84cff5d7d5a65df8c95976813b16.svg";
+import { UITransaction } from "@/services/store/transaction";
+import { formatAddress } from "@/services/utils/miden/address";
+import { MIDEN_EXPLORER_URL, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
+import { blo } from "blo";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
 
 interface StatusProps {
   status?: "confirmed" | "pending" | "failed";
@@ -108,7 +99,7 @@ interface Transaction {
 }
 
 interface TransactionDetailProps {
-  transaction: Transaction;
+  transaction: UITransaction;
   onBack: () => void;
 }
 
@@ -133,13 +124,13 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ transaction, onBa
         {/* Transaction Hash */}
         <TransactionRow label="Transaction Hash">
           <div className="flex items-center gap-2">
-            <span className=" font-medium text-[#48b3ff] text-[14px] underline">{transaction.hash}</span>
+            <span className=" font-medium text-[#48b3ff] text-[14px] underline">{formatAddress(transaction.id)}</span>
             <img
               alt=""
               className="w-4 h-4 cursor-pointer"
               src="/external-link-icon.svg"
               onClick={() => {
-                window.open(`https://etherscan.io/tx/${transaction.hash}`, "_blank");
+                window.open(`${MIDEN_EXPLORER_URL}/tx/${transaction.id}`, "_blank");
               }}
             />
             <img
@@ -150,7 +141,7 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ transaction, onBa
                 filter: "invert(1)",
               }}
               onClick={() => {
-                navigator.clipboard.writeText(transaction.hash);
+                navigator.clipboard.writeText(transaction.id);
                 toast.success("Copied to clipboard");
               }}
             />
@@ -169,43 +160,43 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ transaction, onBa
 
         {/* Timestamp */}
         <TransactionRow label="Timestamp">
-          <span className=" font-medium text-white text-[14px]">{transaction.timestamp}</span>
+          <span className=" font-medium text-white text-[14px]">{transaction.blockNumber}</span>
         </TransactionRow>
 
         {/* From */}
         <TransactionRow label="From">
-          <AddressDisplay address={transaction.from} avatar={imgAva2} />
+          <AddressDisplay address={transaction.sender} avatar={blo(turnBechToHex(transaction.sender))} />
         </TransactionRow>
 
         {/* To */}
         <TransactionRow label="To">
-          <AddressDisplay address={transaction.to} avatar={imgAva4} />
+          <AddressDisplay address={transaction.recipient} avatar={blo(turnBechToHex(transaction.recipient))} />
         </TransactionRow>
 
         {/* Value */}
         <TransactionRow label="Value">
           <div className="flex items-center gap-1">
             <img alt="" className="w-5 h-5" src="/token/qash.svg" />
-            <span className=" text-white text-[14px]">{transaction.value}</span>
-            <span className=" text-[#989898] text-[14px]">($50)</span>
+            <span className=" text-white text-[14px]">{Number(transaction.amount) / 10 ** QASH_TOKEN_DECIMALS}</span>
+            {/* <span className=" text-[#989898] text-[14px]">($50)</span> */}
           </div>
         </TransactionRow>
 
         {/* Transaction Fee */}
-        <TransactionRow label="Transaction Fee">
+        {/* <TransactionRow label="Transaction Fee">
           <div className="flex items-center gap-1">
             <span className=" text-white text-[14px]">0.000003288450648 BTC</span>
             <span className=" text-[#989898] text-[14px]">($0.01)</span>
           </div>
-        </TransactionRow>
+        </TransactionRow> */}
 
         {/* Gas Price */}
-        <TransactionRow label="Gas Price">
+        {/* <TransactionRow label="Gas Price">
           <div className="flex items-center gap-1">
             <span className=" text-white text-[14px]">0.156592888</span>
             <span className=" text-[#989898] text-[14px]">($0.01)</span>
           </div>
-        </TransactionRow>
+        </TransactionRow> */}
       </div>
     </div>
   );

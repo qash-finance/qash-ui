@@ -1776,7 +1776,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-base@npm:^0.1.0, @demox-labs/miden-wallet-adapter-base@npm:^0.1.4, @demox-labs/miden-wallet-adapter-base@npm:^0.1.5":
+"@demox-labs/miden-wallet-adapter-base@npm:^0.1.0":
   version: 0.1.5
   resolution: "@demox-labs/miden-wallet-adapter-base@npm:0.1.5"
   dependencies:
@@ -1785,32 +1785,40 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-react@npm:^0.1.0, @demox-labs/miden-wallet-adapter-react@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "@demox-labs/miden-wallet-adapter-react@npm:0.1.1"
+"@demox-labs/miden-wallet-adapter-base@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@demox-labs/miden-wallet-adapter-base@npm:0.2.0"
   dependencies:
-    "@demox-labs/miden-wallet-adapter-base": ^0.1.5
-    react: ^18.2.0
-  peerDependencies:
-    react: ^18.2.0
-  checksum: cf8b8fffdf05bc9211131a9e423fbae0fc3f5318945186df92df82632549d576fe761e2e07c013269f42d16d95d7707b5434cd8a8b55fc3407059f571075653f
+    eventemitter3: ^5.0.1
+  checksum: 15cafa02078cd19d1e7a24e9925378a10b88650dec0a546d1373d5401a98a7a06c183a52574c7f785a7e80dcb20ea1c9498512c946634c80db61d7db9b4067db
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-reactui@npm:^0.1.3":
-  version: 0.1.4
-  resolution: "@demox-labs/miden-wallet-adapter-reactui@npm:0.1.4"
+"@demox-labs/miden-wallet-adapter-react@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@demox-labs/miden-wallet-adapter-react@npm:0.2.0"
   dependencies:
-    "@demox-labs/miden-wallet-adapter-base": ^0.1.5
-    "@demox-labs/miden-wallet-adapter-react": ^0.1.1
+    "@demox-labs/miden-wallet-adapter-base": ^0.2.0
   peerDependencies:
-    react: ^18.2.0
-    react-dom: ^18.2.0
-  checksum: 2ac22f1754689f2b10c67de86a8a673b515b103caa3bbf33bf23cf3d568dd36bf067d9ddf1646686b20cae004a89e866d7df9d8bf080ef039d953d8a3ee6bf07
+    react: ^19.1.1
+  checksum: 7c4d3e9bd1cf3ca963bf26d56cf15166a8f14b5e622c4428c9a71998dac087a30b771f7b38234525740367cf110ba0fefd5beb45c7fb347c6843cdd92585dca2
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-trident@npm:^0.1.2":
+"@demox-labs/miden-wallet-adapter-reactui@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@demox-labs/miden-wallet-adapter-reactui@npm:0.2.0"
+  dependencies:
+    "@demox-labs/miden-wallet-adapter-base": ^0.2.0
+    "@demox-labs/miden-wallet-adapter-react": ^0.2.0
+  peerDependencies:
+    react: ^19.1.1
+    react-dom: ^19.1.1
+  checksum: 9b3e3ed168f89560c62254f51d379aca440b92c6dba1d0be454107c75f39e68ca5bff3be36e6fefafdfd6cc28cdbdd158c7d9fb1e0ea859bd89724adb9bde1eb
+  languageName: node
+  linkType: hard
+
+"@demox-labs/miden-wallet-adapter-trident@npm:^0.1.5":
   version: 0.1.5
   resolution: "@demox-labs/miden-wallet-adapter-trident@npm:0.1.5"
   dependencies:
@@ -3316,10 +3324,10 @@ __metadata:
   resolution: "@q3x/nextjs@workspace:packages/nextjs"
   dependencies:
     "@demox-labs/miden-sdk": 0.10.1
-    "@demox-labs/miden-wallet-adapter-base": ^0.1.4
-    "@demox-labs/miden-wallet-adapter-react": ^0.1.0
-    "@demox-labs/miden-wallet-adapter-reactui": ^0.1.3
-    "@demox-labs/miden-wallet-adapter-trident": ^0.1.2
+    "@demox-labs/miden-wallet-adapter-base": ^0.2.0
+    "@demox-labs/miden-wallet-adapter-react": ^0.2.0
+    "@demox-labs/miden-wallet-adapter-reactui": ^0.2.0
+    "@demox-labs/miden-wallet-adapter-trident": ^0.1.5
     "@reactour/tour": ^3.8.0
     "@tailwindcss/postcss": ^4
     "@tanstack/react-query": ^5.81.5
@@ -13057,15 +13065,6 @@ __metadata:
     loose-envify: ^1.1.0
     object-assign: ^4.1.1
   checksum: b254cc17ce3011788330f7bbf383ab653c6848902d7936a87b09d835d091e3f295f7e9dd1597c6daac5dc80f90e778c8230218ba8ad599f74adcc11e33b9d61b
-  languageName: node
-  linkType: hard
-
-"react@npm:^18.2.0":
-  version: 18.3.1
-  resolution: "react@npm:18.3.1"
-  dependencies:
-    loose-envify: ^1.1.0
-  checksum: a27bcfa8ff7c15a1e50244ad0d0c1cb2ad4375eeffefd266a64889beea6f6b64c4966c9b37d14ee32d6c9fcd5aa6ba183b6988167ab4d127d13e7cb5b386a376
   languageName: node
   linkType: hard
 
