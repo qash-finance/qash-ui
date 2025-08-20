@@ -43,8 +43,16 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
       mode="single"
       selected={selected}
       onSelect={date => {
-        setSelected(date);
-        onSelect?.(date);
+        if (date) {
+          // Set time to start of day (00:00:00.000)
+          const startOfDay = new Date(date);
+          startOfDay.setHours(0, 0, 0, 0);
+          setSelected(startOfDay);
+          onSelect?.(startOfDay);
+        } else {
+          setSelected(undefined);
+          onSelect?.(undefined);
+        }
       }}
       captionLayout="dropdown-years"
       components={{

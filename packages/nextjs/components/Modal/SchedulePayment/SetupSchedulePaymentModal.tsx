@@ -1,14 +1,13 @@
 "use client";
 import React from "react";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS, SetupSchedulePaymentModalProps, ScheduleFrequency } from "@/types/modal";
-import BaseModal from "../BaseModal";
+import { MODAL_IDS, SetupSchedulePaymentModalProps } from "@/types/modal";
 import { useForm } from "react-hook-form";
-import { ModalHeader } from "../../Common/ModalHeader";
-import { useAccountContext } from "@/contexts/AccountProvider";
+import { ActionButton } from "@/components/Common/ActionButton";
+import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 
 type FormValues = {
-  frequency: ScheduleFrequency;
+  frequency: SchedulePaymentFrequency;
   times: number;
   startDate?: Date;
 };
@@ -22,14 +21,14 @@ function formatDateDDMMYYYY(date?: Date) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-const getUnitLabel = (frequency: ScheduleFrequency) => {
+const getUnitLabel = (frequency: SchedulePaymentFrequency) => {
   switch (frequency) {
-    case "monthly":
-      return "months";
-    case "weekly":
-      return "weeks";
-    case "daily":
-      return "days";
+    case SchedulePaymentFrequency.MONTHLY:
+      return "month(s)";
+    case SchedulePaymentFrequency.WEEKLY:
+      return "week(s)";
+    case SchedulePaymentFrequency.DAILY:
+      return "day(s)";
   }
 };
 
@@ -37,13 +36,9 @@ export function SetupSchedulePaymentModal({
   isOpen,
   onClose,
   zIndex,
-  initialFrequency = "monthly",
-  initialTimes = 1,
-  initialStartDate,
   onSave,
 }: ModalProp<SetupSchedulePaymentModalProps>) {
   // **************** Custom Hooks *******************
-  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { openModal } = useModal();
 
   /****** REACT HOOK FORM ******/
@@ -55,9 +50,9 @@ export function SetupSchedulePaymentModal({
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
-      frequency: initialFrequency,
-      times: initialTimes,
-      startDate: initialStartDate,
+      frequency: SchedulePaymentFrequency.MONTHLY,
+      times: 1,
+      startDate: undefined,
     },
   });
   const frequency = watch("frequency");
@@ -98,28 +93,22 @@ export function SetupSchedulePaymentModal({
         </header>
 
         {/* Form */}
-        <form
-          className="flex flex-col gap-3 p-1.5 bg-[#1E1E1E] rounded-b-2xl w-[550px] max-md:w-[90%]"
-          onSubmit={handleSubmit(values => {
-            onSave?.(values);
-            onClose();
-          })}
-        >
+        <form className="flex flex-col gap-3 p-1.5 bg-[#1E1E1E] rounded-b-2xl w-[550px] max-md:w-[90%]">
           {/* Frequency chips */}
           <div className="flex flex-row gap-1.5 overflow-x-auto">
             {[
-              { id: "daily", label: "Daily Execution" },
-              { id: "weekly", label: "Weekly Execution" },
-              { id: "monthly", label: "Monthly Execution" },
+              { id: SchedulePaymentFrequency.DAILY, label: "Daily Execution" },
+              { id: SchedulePaymentFrequency.WEEKLY, label: "Weekly Execution" },
+              { id: SchedulePaymentFrequency.MONTHLY, label: "Monthly Execution" },
             ].map(opt => {
-              const isActive = frequency === (opt.id as ScheduleFrequency);
+              const isActive = frequency === (opt.id as SchedulePaymentFrequency);
               return (
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setValue("frequency", opt.id as ScheduleFrequency, { shouldValidate: true })}
-                  className={`px-4 py-[9px] rounded-[20px] whitespace-nowrap transition-colors duration-300 ease-in-out ${
-                    isActive ? "bg-[#066eff] text-white" : "bg-[#313131] text-white"
+                  onClick={() => setValue("frequency", opt.id as SchedulePaymentFrequency, { shouldValidate: true })}
+                  className={`px-4 py-[9px] rounded-[20px] whitespace-nowrap transition-colors duration-300 ease-in-out cursor-pointer ${
+                    isActive ? "bg-[#066eff] text-white" : "bg-[#313131] text-white "
                   }`}
                   aria-pressed={isActive}
                 >
@@ -182,16 +171,16 @@ export function SetupSchedulePaymentModal({
           </div>
 
           {/* Actions */}
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center rounded-xl text-white text-[16px] tracking-[-0.084px] bg-[#7c7c7c] p-3 cursor-pointer "
-            style={{
-              boxShadow:
-                "0px 0px 0px 1px #525252, 0px 1px 3px 0px rgba(78,78,78,0.2), 0px -2.4px 0px 0px #525252 inset",
-            }}
-          >
-            Save changes
-          </button>
+          <ActionButton
+            onClick={handleSubmit(values => {
+              onSave?.(values);
+              onClose();
+            })}
+            type="accept"
+            text="Save Changes"
+            className="h-9"
+            disabled={!times || !startDate}
+          />
         </form>
       </div>
     </div>

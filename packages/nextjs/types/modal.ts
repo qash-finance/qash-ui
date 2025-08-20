@@ -37,6 +37,7 @@ import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
 import { DateRange } from "react-day-picker";
+import { SchedulePaymentFrequency } from "./schedule-payment";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -146,6 +147,10 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
   onConfirm?: () => void;
   tokenAddress?: string;
   tokenSymbol?: string;
+  schedulePayment?: {
+    frequency: SchedulePaymentFrequency;
+    times: number;
+  } | null;
 }
 
 export interface BatchTransactionOverviewModalProps extends BaseModalProps {
@@ -173,13 +178,8 @@ export interface DateFilterModalProps extends BaseModalProps {
   onSelect?: (date: DateRange | undefined) => void;
 }
 
-export type ScheduleFrequency = "daily" | "weekly" | "monthly";
-
 export interface SetupSchedulePaymentModalProps extends BaseModalProps {
-  initialFrequency?: ScheduleFrequency;
-  initialTimes?: number;
-  initialStartDate?: Date;
-  onSave?: (data: { frequency: ScheduleFrequency; times: number; startDate?: Date }) => void;
+  onSave: (data: { frequency: SchedulePaymentFrequency; times: number }) => void;
 }
 
 export interface GiftTransactionOverviewModalProps extends BaseModalProps {

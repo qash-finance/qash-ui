@@ -23,18 +23,21 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
     onConfirm,
     tokenAddress,
     tokenSymbol,
+    schedulePayment,
   } = props;
 
   if (!isOpen) return null;
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Transaction Overview" icon="/modal/coin-icon.gif">
-      <div className="flex flex-col gap-1 p-2 bg-[#1E1E1E] rounded-b-2xl w-[520px]">
+      <div className="flex flex-col gap-1 p-2 bg-[#1E1E1E] rounded-b-2xl w-[550px]">
         {/* Amount Section */}
         <div className="bg-[#292929] flex flex-col h-[180px] items-center justify-center py-3 rounded-lg w-full">
           <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Total Amount</div>
           <div className="flex items-center gap-2">
-            <div className="text-white text-[40px] font-medium tracking-[0.2px] leading-[normal]">{amount}</div>
+            <div className="text-white text-[40px] font-medium tracking-[0.2px] leading-[normal]">
+              {schedulePayment ? (parseFloat(amount || "0") * schedulePayment.times).toString() : amount}
+            </div>
             <img
               alt={tokenSymbol || "Token"}
               className="w-8 h-8"
@@ -62,10 +65,9 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           </div>
 
           {/* Schedule Payment Row */}
-          <ScheduleTransactionDropdown
-            title="Schedule Payment"
-            transactions={[{ amountLabel: "1000 BTC", claimableAfterLabel: "Claimable after 01/08/2025" }]}
-          />
+          {schedulePayment && (
+            <ScheduleTransactionDropdown schedulePayment={schedulePayment} amount={amount} tokenSymbol={tokenSymbol} />
+          )}
 
           {/* Transaction Type Row */}
           <div className="bg-[#292929] flex items-center justify-between px-3 py-2.5 rounded-lg w-full">

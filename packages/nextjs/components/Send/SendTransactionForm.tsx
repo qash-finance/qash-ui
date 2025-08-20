@@ -3,12 +3,12 @@ import React, { useState, useCallback } from "react";
 import { AmountInput } from "./AmountInput";
 import { TransactionOptions } from "./TransactionOptions";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS, SendModalProps } from "@/types/modal";
+import { MODAL_IDS, SendModalProps, SetupSchedulePaymentModalProps } from "@/types/modal";
 import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { createP2IDENote } from "@/services/utils/miden/note";
+import { createP2IDENote, createBatchNote } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
@@ -25,7 +25,7 @@ import {
 } from "@/services/utils/constant";
 import { useSearchParams } from "next/navigation";
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
-import { useSendSingleTransaction } from "@/hooks/server/useSendTransaction";
+import { useSendSingleTransaction, useSendBatchTransaction } from "@/hooks/server/useSendTransaction";
 import { CustomNoteType, WrappedNoteType } from "@/types/note";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
@@ -33,6 +33,8 @@ import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useAcceptRequest } from "@/services/api/request-payment";
 import SchedulePaymentOption from "../SchedulePayment/SchedulePaymentOption";
 import { RecipientInput } from "./RecipientInput";
+import { SchedulePaymentFrequency } from "@/types/schedule-payment";
+import { useCreateSchedulePayment, useGetSchedulePayments } from "@/services/api/schedule-payment";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -64,9 +66,179 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const { isConnected } = useWalletConnect();
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
+  const { mutateAsync: sendBatchTransaction } = useSendBatchTransaction();
   const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const { mutateAsync: acceptRequest } = useAcceptRequest();
+  const { mutateAsync: createSchedulePayment } = useCreateSchedulePayment();
+  const { refetch: refetchSchedulePayments } = useGetSchedulePayments();
+
+  // ********************************************
+  // **************** Helper Functions **********
+  // ********************************************
+
+  /**
+   * Creates notes for a transaction based on whether it's a schedule payment or not
+   * @param senderAccountId - The sender's account ID
+   * @param recipientAccountId - The recipient's account ID
+   * @param faucetAccountId - The token faucet ID
+   * @param amount - The transaction amount
+   * @param isPrivateTransaction - Whether the transaction is private
+   * @param recallHeight - The recall height for the notes
+   * @param schedulePayment - Schedule payment configuration (null for regular transactions)
+   * @returns Object containing notes array, serial numbers, and calculated recall height
+   */
+  const createNotesForTransaction = async (
+    senderAccountId: string,
+    recipientAccountId: string,
+    faucetAccountId: string,
+    amount: number,
+    isPrivateTransaction: boolean,
+    recallHeight: number,
+    schedulePayment: { frequency: SchedulePaymentFrequency; times: number } | null,
+  ) => {
+    let notes: any[] = [];
+    let allSerialNumbers: string[] | string[][] = [];
+    let calculatedRecallHeight = recallHeight;
+    let noteIds: string[] = [];
+
+    if (schedulePayment) {
+      // Create multiple notes for schedule payments using createBatchNote
+      const batchTransactions = Array.from({ length: schedulePayment.times }, (_, index) => ({
+        id: `schedule-${Date.now()}-${index}`, // Generate unique ID for each transaction
+        tokenMetadata: selectedToken.metadata,
+        tokenAddress: selectedToken.faucetId,
+        amount: amount.toString(),
+        recipient: recipientAccountId,
+        isPrivate: isPrivateTransaction,
+        recallableHeight: recallHeight,
+        recallableTime: recallHeight * BLOCK_TIME, // Convert height to seconds
+        noteType: CustomNoteType.P2IDR,
+        createdAt: new Date(),
+      }));
+
+      const {
+        batch,
+        noteIds: batchNoteIds,
+        serialNumbers,
+        recallableHeights,
+      } = await createBatchNote(senderAccountId, batchTransactions);
+      notes = batch;
+      allSerialNumbers = serialNumbers; // Keep as array of arrays, each index corresponds to a transaction
+      noteIds = batchNoteIds;
+      calculatedRecallHeight = Math.max(...recallableHeights);
+    } else {
+      // Create single note for regular transactions
+      const [note, serialNumbers, noteRecallHeight] = await createP2IDENote(
+        senderAccountId,
+        recipientAccountId,
+        faucetAccountId,
+        Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)),
+        isPrivateTransaction ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
+        recallHeight,
+      );
+      notes.push(note);
+      allSerialNumbers = serialNumbers;
+      noteIds = [note.id().toString()];
+      calculatedRecallHeight = noteRecallHeight;
+    }
+
+    return { notes, allSerialNumbers, noteIds, calculatedRecallHeight };
+  };
+
+  /**
+   * Creates a schedule payment record in the database
+   * @param walletAddress - The sender's wallet address
+   * @param recipientAddress - The recipient's address
+   * @param amount - The transaction amount
+   * @param selectedToken - The selected token metadata
+   * @param schedulePayment - Schedule payment configuration
+   * @param message - Optional message for the payment
+   * @param transactionIds - Array of transaction IDs from the batch transaction
+   */
+  const createSchedulePaymentRecord = async (
+    walletAddress: string,
+    recipientAddress: string,
+    amount: number,
+    selectedToken: AssetWithMetadata,
+    schedulePayment: { frequency: SchedulePaymentFrequency; times: number },
+    message: string,
+    transactionIds: string[],
+  ) => {
+    const nextExecutionDate = new Date();
+    const endDate = new Date();
+
+    // Calculate next execution date and end date based on frequency
+    switch (schedulePayment.frequency) {
+      case SchedulePaymentFrequency.DAILY:
+        nextExecutionDate.setDate(nextExecutionDate.getDate() + 1);
+        endDate.setDate(endDate.getDate() + schedulePayment.times);
+        break;
+      case SchedulePaymentFrequency.WEEKLY:
+        nextExecutionDate.setDate(nextExecutionDate.getDate() + 7);
+        endDate.setDate(endDate.getDate() + schedulePayment.times * 7);
+        break;
+      case SchedulePaymentFrequency.MONTHLY:
+        nextExecutionDate.setMonth(nextExecutionDate.getMonth() + 1);
+        endDate.setMonth(endDate.getMonth() + schedulePayment.times);
+        break;
+      case SchedulePaymentFrequency.YEARLY:
+        nextExecutionDate.setFullYear(nextExecutionDate.getFullYear() + 1);
+        endDate.setFullYear(endDate.getFullYear() + schedulePayment.times);
+        break;
+    }
+
+    console.log("Creating schedule payment with:", {
+      frequency: schedulePayment.frequency,
+      times: schedulePayment.times,
+      maxExecutions: schedulePayment.times,
+      endDate: endDate.toISOString(),
+      nextExecutionDate: nextExecutionDate.toISOString(),
+    });
+
+    await createSchedulePayment({
+      payer: walletAddress,
+      payee: recipientAddress,
+      amount: amount.toString(),
+      tokens: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
+      message: message,
+      frequency: schedulePayment.frequency,
+      endDate: endDate.toISOString(),
+      nextExecutionDate: nextExecutionDate.toISOString(),
+      maxExecutions: schedulePayment.times,
+      transactionIds: transactionIds,
+    });
+
+    // Refetch schedule payments to update the UI
+    refetchSchedulePayments();
+
+    toast.success(`Schedule payment created successfully with ${schedulePayment.times} transactions`);
+  };
+
+  /**
+   * Validates schedule payment configuration
+   * @param amount - The transaction amount
+   * @param schedulePayment - Schedule payment configuration
+   * @param selectedToken - The selected token metadata
+   * @returns Error message string if validation fails, null if validation passes
+   */
+  const validateSchedulePayment = (
+    amount: number,
+    schedulePayment: { frequency: SchedulePaymentFrequency; times: number },
+    selectedToken: AssetWithMetadata,
+  ): string | null => {
+    if (schedulePayment.times <= 0 || schedulePayment.times > 100) {
+      return "Schedule payment times must be between 1 and 100";
+    }
+
+    // Check if user has sufficient balance for all scheduled payments
+    const totalAmount = amount * schedulePayment.times;
+    if (totalAmount > parseFloat(selectedToken.amount)) {
+      return `Insufficient balance for ${schedulePayment.times} scheduled payments. Required: ${totalAmount.toFixed(2)} ${selectedToken.metadata.symbol}`;
+    }
+
+    return null; // No validation errors
+  };
 
   // Check if component is being used as a modal
   const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
@@ -114,6 +286,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const [isSending, setIsSending] = useState(false);
   const [recipientName, setRecipientName] = useState(recipientNameParam);
   const [isSubmittingAsBatch, setIsSubmittingAsBatch] = useState(false);
+  const [schedulePayment, setSchedulePayment] = useState<{
+    frequency: SchedulePaymentFrequency;
+    times: number;
+  } | null>(null);
 
   // Debounced address validation
   const validateAddress = useCallback((address: string) => {
@@ -224,6 +400,15 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         return;
       }
 
+      // Validate schedule payment configuration
+      if (schedulePayment) {
+        const validationError = validateSchedulePayment(amount, schedulePayment, selectedToken);
+        if (validationError) {
+          toast.error(validationError);
+          return;
+        }
+      }
+
       // Show transaction overview modal first
       openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
         amount: `${amount}`,
@@ -236,6 +421,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         message: data.message || "Transaction details",
         tokenAddress: selectedToken.faucetId,
         tokenSymbol: selectedToken.metadata.symbol,
+        schedulePayment: schedulePayment,
         onConfirm: async () => {
           if (onClose && props.onTransactionConfirmed) {
             await props.onTransactionConfirmed();
@@ -254,50 +440,103 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             const recipientAccountId = recipientAddress;
             const faucetAccountId = selectedToken.faucetId;
 
-            // create note
-            const [note, serialNumbers, calculatedRecallHeight] = await createP2IDENote(
+            // Create notes using the helper function
+            const { notes, allSerialNumbers, noteIds, calculatedRecallHeight } = await createNotesForTransaction(
               senderAccountId,
               recipientAccountId,
               faucetAccountId,
-              Math.round(amount * Math.pow(10, selectedToken.metadata.decimals)), // ensure we have an integer
-              isPrivateTransaction ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
+              amount,
+              isPrivateTransaction,
               recallHeight,
+              schedulePayment,
             );
 
-            const noteId = note.id().toString();
-
             // submit transaction to miden
-            const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
+            const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, notes);
 
-            // submit transaction to server
-            const response = await sendSingleTransaction({
-              assets: [
-                { faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata },
-              ],
-              private: isPrivateTransaction,
-              recipient: recipientAddress,
-              recallable: true,
-              recallableTime: new Date(Date.now() + recallableTime * 1000),
-              recallableHeight: calculatedRecallHeight,
-              serialNumber: serialNumbers,
-              noteType: CustomNoteType.P2IDR,
-              noteId: noteId,
-              transactionId: txId,
-              requestPaymentId: props.pendingRequestId ?? null,
-            });
+            // submit transaction to server - use batch transaction for schedule payments
+            let response;
+            let transactionIds: string[] = [];
+
+            if (schedulePayment) {
+              // For schedule payments, create batch transaction with all notes
+              const batchTransactions = notes.map((_, index) => ({
+                assets: [
+                  { faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata },
+                ],
+                private: isPrivateTransaction,
+                recipient: recipientAddress,
+                recallable: true,
+                recallableTime: new Date(Date.now() + recallableTime * 1000),
+                recallableHeight: calculatedRecallHeight,
+                serialNumber: Array.isArray(allSerialNumbers[index])
+                  ? allSerialNumbers[index]
+                  : [allSerialNumbers[index] || ""],
+                noteType: CustomNoteType.P2IDR,
+                noteId: noteIds[index] || notes[index].id().toString(),
+                transactionId: txId, // All notes use the same transaction ID from Miden
+                requestPaymentId: props.pendingRequestId ?? null,
+              }));
+
+              response = await sendBatchTransaction(batchTransactions);
+              // Extract transaction IDs from batch response
+              transactionIds = response?.map((tx: any) => tx.id || tx.transactionId) || [];
+
+              // Create schedule payment if schedulePayment is configured
+              if (schedulePayment && response) {
+                try {
+                  await createSchedulePaymentRecord(
+                    walletAddress,
+                    recipientAddress,
+                    amount,
+                    selectedToken,
+                    schedulePayment,
+                    getValues("message") || "",
+                    transactionIds,
+                  );
+                } catch (scheduleError) {
+                  console.error("Failed to create schedule payment:", scheduleError);
+                  toast.error("Transaction sent but failed to create schedule payment");
+                }
+              }
+            } else {
+              const noteId = notes[0].id().toString();
+
+              // For regular transactions, use single transaction
+              response = await sendSingleTransaction({
+                assets: [
+                  { faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata },
+                ],
+                private: isPrivateTransaction,
+                recipient: recipientAddress,
+                recallable: true,
+                recallableTime: new Date(Date.now() + recallableTime * 1000),
+                recallableHeight: calculatedRecallHeight,
+                serialNumber: Array.isArray(allSerialNumbers[0]) ? allSerialNumbers[0] : (allSerialNumbers as string[]),
+                noteType: CustomNoteType.P2IDR,
+                noteId: noteId,
+                transactionId: txId,
+                requestPaymentId: props.pendingRequestId ?? null,
+              });
+            }
 
             // refetch assets
             // call refetch assets 5 seconds later
             setTimeout(() => {
               forceRefetchAssets();
               forceRefetchRecallablePayment();
+              if (schedulePayment) {
+                refetchSchedulePayments();
+              }
             }, REFETCH_DELAY);
 
             if (response) {
               toast.dismiss();
               toast.success(
                 <div>
-                  Transaction sent successfully, view transaction on{" "}
+                  {schedulePayment
+                    ? `Transaction sent successfully with ${schedulePayment.times} transactions, view transaction on `
+                    : "Transaction sent successfully, view transaction on "}
                   <a
                     href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
                     target="_blank"
@@ -310,6 +549,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
               );
               reset();
               setRecipientName("");
+              setSchedulePayment(null);
 
               // If this transaction exists in batch, remove it
               try {
@@ -533,7 +773,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         onChooseRecipient={handleChooseRecipient}
       />
 
-      <SchedulePaymentOption handleView={() => openModal(MODAL_IDS.SETUP_SCHEDULE_PAYMENT)} />
+      <SchedulePaymentOption
+        schedulePayment={schedulePayment}
+        handleView={() =>
+          openModal<SetupSchedulePaymentModalProps>(MODAL_IDS.SETUP_SCHEDULE_PAYMENT, {
+            onSave: (values: { frequency: SchedulePaymentFrequency; times: number }) => {
+              setSchedulePayment(values);
+            },
+          })
+        }
+      />
 
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
 
@@ -548,7 +797,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             onClick={() => setIsSubmittingAsBatch(true)}
           />
           <ActionButton
-            text="Send Transaction"
+            text={`${schedulePayment ? "Schedule now" : "Send Transaction"} `}
             buttonType="submit"
             className="w-[70%] h-10 mt-2"
             loading={isSending}

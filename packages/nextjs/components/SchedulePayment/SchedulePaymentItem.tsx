@@ -19,12 +19,14 @@ export interface SchedulePaymentItemProps {
   claimedAmount: string;
   currency: string;
   progress: number; // 0-100
+  claimProgress: number; // 0-100, calculated from claimedAmount/totalAmount
   transactions: Array<{
     id: string;
     date: string;
     status: "completed" | "current" | "pending";
     label: string;
     progress?: number; // 0-100, for current status circle
+    amount?: string;
   }>;
   onClick?: () => void;
   onHover?: () => void;
@@ -41,6 +43,80 @@ const CLASSES = {
   statusIconBase: "rounded-full w-10 h-10 flex items-center justify-center",
   blurBg: "backdrop-blur-[30px] bg-[rgba(83,83,83,0.45)]",
 } as const;
+
+// Function to calculate remaining time until 12:00 AM of the next day
+const calculateRemainingTime = (scheduledDate: string): string => {
+  try {
+    // Parse the scheduled date (format: DD/MM/YYYY)
+    const [day, month, year] = scheduledDate.split("/").map(Number);
+    if (!day || !month || !year) return "00:00:00";
+
+    // Create date object for the scheduled date at 12:00 AM
+    const scheduledDateTime = new Date(year, month - 1, day, 0, 0, 0, 0);
+
+    // Get current date/time
+    const now = new Date();
+
+    // Calculate time difference
+    const timeDiff = scheduledDateTime.getTime() - now.getTime();
+
+    if (timeDiff <= 0) {
+      return "00:00:00"; // Already past the scheduled time
+    }
+
+    // Convert to hours, minutes, seconds
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+    // Format as HH:MM:SS
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  } catch (error) {
+    console.error("Error calculating remaining time:", error);
+    return "00:00:00";
+  }
+};
+
+// Function to format remaining time in a user-friendly way
+const formatRemainingTime = (scheduledDate: string): string => {
+  try {
+    const [day, month, year] = scheduledDate.split("/").map(Number);
+    if (!day || !month || !year) return "00:00:00";
+
+    const scheduledDateTime = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const now = new Date();
+    const timeDiff = scheduledDateTime.getTime() - now.getTime();
+
+    if (timeDiff <= 0) return "00:00:00";
+
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
+  } catch (error) {
+    return "00:00:00";
+  }
+};
+
+// Function to get the next claimable date for pending transactions
+const getNextClaimableDate = (
+  transactions: Array<{ id: string; date: string; status: string }>,
+  activeId: string | null,
+): string => {
+  if (!activeId) return "";
+
+  const activeTransaction = transactions.find(t => t.id === activeId);
+  if (!activeTransaction || activeTransaction.status !== "pending") return "";
+
+  return activeTransaction.date;
+};
 
 const StatusIcon: React.FC<{
   status: "completed" | "current" | "pending";
@@ -77,8 +153,13 @@ const StatusIcon: React.FC<{
     return `${remaining} ${currency}`;
   };
 
+  const isClickable = !transaction.id.startsWith("create-"); // Create transactions are not clickable
+
   return (
-    <div className="relative z-0 cursor-pointer" onClick={e => onClick(transaction.id, e)}>
+    <div
+      className={`relative z-0 ${isClickable ? "cursor-pointer" : "cursor-default"}`}
+      onClick={isClickable ? e => onClick(transaction.id, e) : undefined}
+    >
       {/* Status Circle */}
       <div className="relative z-0">
         {status === "completed" && <StatusCircle progress={100} />}
@@ -120,13 +201,45 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
   claimedAmount,
   currency,
   progress,
+  claimProgress,
   transactions,
   onClick,
   onHover,
 }) => {
   const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [remainingTime, setRemainingTime] = useState<string>("00:00:00");
   const { openModal } = useModal();
+
+  // Calculate claim progress if not provided
+  const calculatedClaimProgress =
+    claimProgress ??
+    (() => {
+      const claimed = parseFloat(claimedAmount);
+      const total = parseFloat(totalAmount);
+      return total > 0 ? Math.min(100, (claimed / total) * 100) : 0;
+    })();
+
+  // Update remaining time every second
+  useEffect(() => {
+    const updateRemainingTime = () => {
+      // Find the first pending transaction to show remaining time
+      const pendingTransaction = transactions.find(t => t.status === "pending");
+      if (pendingTransaction?.date) {
+        setRemainingTime(formatRemainingTime(pendingTransaction.date));
+      } else {
+        setRemainingTime("00:00:00");
+      }
+    };
+
+    // Initial update
+    updateRemainingTime();
+
+    // Update every second
+    const intervalId = setInterval(updateRemainingTime, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [transactions]);
 
   // Close tooltip when clicking outside
   useEffect(() => {
@@ -256,7 +369,7 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
             <div className="bg-[#0c0c0c] h-6 rounded p-[6px] flex items-center overflow-hidden">
               <div
                 className="bg-gradient-to-l from-[#caffef] to-[#416af9] via-[#6fb2f1] h-full rounded relative transition-all duration-300 ease-out"
-                style={{ width: `${Math.max(1, progress)}%` }}
+                style={{ width: `${Math.max(1, calculatedClaimProgress)}%` }}
               >
                 <div
                   className="absolute bg-[#b5e0ff] blur-[6px] h-10 w-[7.373px] rounded-[32px] -top-1"
@@ -372,8 +485,12 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
               statusText={activeTransactionId ? "In Progress" : "Pending"}
               sentText={`${progress} ${currency}`}
               dateTimeText={transactions.find(t => t.id === activeTransactionId)?.date || ""}
-              balanceText={`${100 - progress} ${currency}`}
-              remainingTimeText="00:00:00"
+              balanceText={(activeTransactionId && transactions.find(t => t.id === activeTransactionId)?.amount) || "0"}
+              remainingTimeText={
+                activeTransactionId
+                  ? formatRemainingTime(transactions.find(t => t.id === activeTransactionId)?.date || "")
+                  : remainingTime
+              }
               onCancel={() => {
                 openModal(MODAL_IDS.CANCEL_PAYMENT);
               }}

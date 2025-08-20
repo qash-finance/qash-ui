@@ -2,17 +2,21 @@
 
 import React from "react";
 import { ActionButton } from "../Common/ActionButton";
+import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 
 type SchedulePaymentProps = {
-  handleView?: () => void;
-  disabled?: boolean; // view button only appears when user filled schedule settings
+  handleView: () => void;
   className?: string;
+  schedulePayment: {
+    frequency: SchedulePaymentFrequency;
+    times: number;
+  } | null;
 };
 
 export const SchedulePaymentOption: React.FC<SchedulePaymentProps> = ({
   handleView,
-  disabled = true,
   className = "",
+  schedulePayment,
 }) => {
   return (
     <div
@@ -25,7 +29,7 @@ export const SchedulePaymentOption: React.FC<SchedulePaymentProps> = ({
         </span>
       </div>
 
-      {!disabled ? (
+      {schedulePayment ? (
         <ActionButton text="View" onClick={handleView} className="rounded-[10px]" />
       ) : (
         <img
