@@ -9,7 +9,7 @@ import { useAccountContext } from "@/contexts/AccountProvider";
 import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
-import { NODE_ENDPOINT } from "@/services/utils/constant";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 
 const UpcomingPaymentHeader = () => {
   return (
@@ -90,12 +90,16 @@ const LockedAmountHeader = ({ schedulePayments }: { schedulePayments: any[] | un
     if (!schedulePayments || schedulePayments.length === 0) return 0;
 
     return schedulePayments.reduce((total, payment) => {
-      const amount = parseFloat(payment.amount) || 0;
-      const maxExecutions = payment.maxExecutions || 0;
-      const executionCount = payment.executionCount || 0;
-      const remainingExecutions = Math.max(0, maxExecutions - executionCount);
+      if (!payment.transactions || payment.transactions.length === 0) return total;
 
-      return total + amount * remainingExecutions;
+      const transactionTotal = payment.transactions
+        .filter((transaction: any) => transaction.status !== "recalled")
+        .reduce((sum: number, transaction: any) => {
+          const amount = parseFloat(transaction.assets?.[0]?.amount) || 0;
+          return sum + amount;
+        }, 0);
+
+      return total + transactionTotal;
     }, 0);
   };
 
@@ -147,81 +151,73 @@ export const SchedulePaymentContainer = () => {
     payer: accountId,
     status: SchedulePaymentStatus.ACTIVE,
   }) as { data: any[] | undefined };
+  console.log("🚀 ~ SchedulePaymentContainer ~ schedulePayments:", schedulePayments);
+
+  const blockNum = useMidenSdkStore(state => state.blockNum);
+
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [claimableDates, setClaimableDates] = useState<{ [key: string]: string }>({});
 
-  // Calculate time-based progress relative to createdAt
-  const calculateTimeBasedProgress = (createdAt: string | number, frequency: string): number => {
+  // Calculate progress based on schedule payment creation and frequency
+  const calculateTransactionBasedProgress = (
+    executionCount: number,
+    maxExecutions: number,
+    createdAt: string | number,
+    frequency: string,
+  ): number => {
     try {
+      if (maxExecutions === 0) return 0;
+
+      // Calculate how many intervals have passed since creation
       const startDate = new Date(createdAt);
       const now = new Date();
+
+      // Set start date to 12:00 AM of the creation day
+      startDate.setHours(0, 0, 0, 0);
+
       const elapsed = now.getTime() - startDate.getTime();
 
-      // Calculate total duration based on frequency
-      let totalDuration: number;
+      // Calculate interval duration based on frequency
+      let intervalDuration: number;
       switch (frequency) {
         case "DAILY":
-          totalDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+          intervalDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
           break;
         case "WEEKLY":
-          totalDuration = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+          intervalDuration = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
           break;
         case "MONTHLY":
-          totalDuration = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+          intervalDuration = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
           break;
         case "YEARLY":
-          totalDuration = 365 * 24 * 60 * 60 * 1000; // 365 days in milliseconds
+          intervalDuration = 365 * 24 * 60 * 60 * 1000; // 365 days in milliseconds
           break;
         default:
-          totalDuration = 30 * 24 * 60 * 60 * 1000; // Default to monthly
+          intervalDuration = 30 * 24 * 60 * 60 * 1000; // Default to monthly
       }
 
-      // Calculate progress percentage
-      const progressPercent = Math.min((elapsed / totalDuration) * 100, 100);
-      return Math.max(0, progressPercent);
+      // How many full intervals have passed since creation
+      const intervalsElapsed = Math.floor(elapsed / intervalDuration);
+
+      // Progress within the current interval (0-100%)
+      const progressWithinInterval = ((elapsed % intervalDuration) / intervalDuration) * 100;
+
+      // Total progress calculation:
+      // - Each interval represents (100 / maxExecutions)% of total progress
+      // - The creation is at 0%, first transaction at 100/maxExecutions%, etc.
+      const progressPerInterval = 100 / maxExecutions;
+      const completedIntervalsProgress = intervalsElapsed * progressPerInterval;
+      const currentIntervalProgress = (progressWithinInterval / 100) * progressPerInterval;
+
+      const totalProgress = completedIntervalsProgress + currentIntervalProgress;
+
+      return Math.min(Math.max(0, totalProgress), 100);
     } catch (error) {
-      console.error("Error calculating time-based progress:", error);
+      console.error("Error calculating transaction-based progress:", error);
       return 0;
     }
   };
-
-  // Calculate claimable dates for all pending transactions
-  useEffect(() => {
-    if (!schedulePayments?.length) return;
-
-    const calculateDates = async () => {
-      const { WebClient } = await import("@demox-labs/miden-sdk");
-
-      const client = await WebClient.createClient(NODE_ENDPOINT);
-      const currentHeight = await client.getSyncHeight();
-      const dateMap: { [key: string]: string } = {};
-
-      for (const payment of schedulePayments) {
-        for (let i = 0; i < payment.transactions.length; i++) {
-          if (i >= payment.executionCount) {
-            const result = await calculateClaimableTime(i, payment.frequency, currentHeight);
-            dateMap[`${payment.id}-${i}`] = result.formattedDate;
-          }
-        }
-      }
-
-      setClaimableDates(dateMap);
-    };
-
-    calculateDates();
-  }, [schedulePayments]);
-
-  // Real-time progress updates
-  useEffect(() => {
-    if (!schedulePayments?.length) return;
-
-    const interval = setInterval(() => {
-      setProgress(prev => prev + 0.1);
-    }, 60 * 1000); // update every minute
-
-    return () => clearInterval(interval);
-  }, [schedulePayments]);
 
   // Demo: Simulate loading progress
   const startDemo = () => {
@@ -256,16 +252,43 @@ export const SchedulePaymentContainer = () => {
           // Transform transactions to match SchedulePaymentItem props
           const transformedTransactions =
             payment.transactions?.map((tx: any, index: number) => {
-              // For pending transactions, use pre-calculated claimable date or fallback
-              const claimableKey = `${payment.id}-${index}`;
-              const transactionDate = claimableDates[claimableKey];
+              // Calculate the scheduled date for each transaction based on frequency and creation date
+              const creationDate = new Date(payment.createdAt);
+              creationDate.setHours(0, 0, 0, 0); // Set to 12:00 AM
+
+              let scheduledDate = new Date(creationDate);
+
+              // Add intervals based on frequency and transaction index
+              switch (payment.frequency) {
+                case "DAILY":
+                  scheduledDate.setDate(creationDate.getDate() + index + 1);
+                  break;
+                case "WEEKLY":
+                  scheduledDate.setDate(creationDate.getDate() + (index + 1) * 7);
+                  break;
+                case "MONTHLY":
+                  scheduledDate.setMonth(creationDate.getMonth() + index + 1);
+                  break;
+                case "YEARLY":
+                  scheduledDate.setFullYear(creationDate.getFullYear() + index + 1);
+                  break;
+                default:
+                  scheduledDate.setDate(creationDate.getDate() + index + 1);
+              }
+
+              const transactionDate = scheduledDate.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              });
 
               return {
                 id: tx.id.toString(),
+                noteId: tx.noteId,
                 date: transactionDate,
                 status: tx.status,
                 label: `Txn ${index + 1}`,
-                progress: 0, // Ignoring progress for now as requested
+                progress: 0, // Progress will be calculated by the main progress bar
                 amount: tx.assets[0].amount,
               };
             }) || [];
@@ -281,7 +304,12 @@ export const SchedulePaymentContainer = () => {
               totalAmount={totalAmount.toString()}
               claimedAmount={claimedAmount.toString()}
               currency={payment.tokens[0]?.metadata?.symbol || "QASH"}
-              progress={calculateTimeBasedProgress(payment.createdAt || Date.now(), payment.frequency)}
+              progress={calculateTransactionBasedProgress(
+                payment.executionCount || 0,
+                payment.maxExecutions || 0,
+                payment.createdAt || Date.now(),
+                payment.frequency,
+              )}
               claimProgress={(claimedAmount / totalAmount) * 100}
               transactions={[
                 {

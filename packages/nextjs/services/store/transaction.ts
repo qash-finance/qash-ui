@@ -6,7 +6,10 @@ import { immer } from "zustand/middleware/immer";
 export interface UITransaction {
   id: string;
   type: "Incoming" | "Outgoing" | "Faucet";
-  amount: bigint;
+  assets: {
+    assetId: string;
+    amount: bigint;
+  }[];
   blockNumber: string;
   sender: string;
   recipient: string;
@@ -28,19 +31,22 @@ async function transactionRecordToUITransaction({
 }): Promise<UITransaction> {
   const { AccountId } = await import("@demox-labs/miden-sdk");
 
+  const assets: {
+    assetId: string;
+    amount: bigint;
+  }[] = [];
+
   if (inputNote === undefined || inputNote.length === 0) {
     const outputNotes = tr
       .outputNotes()
       .notes()
       .map((note: any) => note.intoFull());
-    const amount = outputNotes.reduce((acc: bigint, note: any) => {
-      const fungibleAssets = note
-        ?.assets()
-        .fungibleAssets()
-        .filter((asset: any) => asset.faucetId().toBech32() === FAUCET_ID);
-      return acc + (fungibleAssets?.reduce((sum: bigint, asset: any) => sum + asset.amount(), BigInt(0)) || BigInt(0));
-    }, BigInt(0));
-    console.log("🚀 ~ transactionRecordToUITransaction ~ outputNotes:", outputNotes);
+    outputNotes.forEach((note: any) => {
+      const fungibleAssets = note.assets().fungibleAssets();
+      fungibleAssets.forEach((asset: any) => {
+        assets.push({ assetId: asset.faucetId().toBech32(), amount: asset.amount() });
+      });
+    });
 
     const recipientNote: string[] = outputNotes.map((note: any) => {
       return note.id().toString();
@@ -52,7 +58,7 @@ async function transactionRecordToUITransaction({
     const result: UITransaction = {
       id: tr.id().toHex(),
       type: "Outgoing",
-      amount,
+      assets,
       sender,
       recipient: recipientNote[0],
       blockNumber: tr.blockNum().toString(),
@@ -65,14 +71,12 @@ async function transactionRecordToUITransaction({
       throw new Error("Input notes do not match transaction input note nullifiers");
     }
 
-    const amount = inputNote.reduce((acc: bigint, note: any) => {
-      const fungibleAssets = note
-        .details()
-        .assets()
-        .fungibleAssets()
-        .filter((asset: any) => asset.faucetId().toBech32() === FAUCET_ID);
-      return acc + fungibleAssets.reduce((sum: bigint, asset: any) => sum + asset.amount(), BigInt(0));
-    }, BigInt(0));
+    inputNote.forEach((note: any) => {
+      const fungibleAssets = note.details().assets().fungibleAssets();
+      fungibleAssets.forEach((asset: any) => {
+        assets.push({ assetId: asset.faucetId().toBech32(), amount: asset.amount() });
+      });
+    });
 
     const statusObject = tr.transactionStatus();
     const consumer = tr.accountId().toBech32();
@@ -91,7 +95,7 @@ async function transactionRecordToUITransaction({
     const result: UITransaction = {
       id: tr.id().toHex(),
       type: transactionType,
-      amount: amount,
+      assets,
       sender: sender,
       recipient: consumer,
       blockNumber: tr.blockNum().toString(),

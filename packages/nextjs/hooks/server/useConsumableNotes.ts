@@ -6,10 +6,12 @@ import { getConsumableNotes } from "@/services/utils/miden/note";
 import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { ConsumableNote } from "@/types/transaction";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 
 export function useConsumableNotes() {
   const { walletAddress } = useWalletAuth();
   const queryClient = useQueryClient();
+  const blockNum = useMidenSdkStore(state => state.blockNum);
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["consumable-notes", walletAddress],
@@ -27,12 +29,15 @@ export function useConsumableNotes() {
 
       // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
 
+      const latestBlockHeight = blockNum || 0;
+
       let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
         consumableTxs: [],
         recallableTxs: [],
       };
+
       try {
-        consumableNotesFromServer = await getConsumableNotesFromServer();
+        consumableNotesFromServer = await getConsumableNotesFromServer(latestBlockHeight);
       } catch (error) {
         console.log("ERROR GETTING PRIVATE NOTES", error);
       }
@@ -103,7 +108,7 @@ export function useConsumableNotes() {
       );
       return filteredNotes;
     },
-    enabled: !!walletAddress,
+    enabled: !!walletAddress && !!blockNum,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
     refetchInterval: 25000, // Refetch every 25 seconds

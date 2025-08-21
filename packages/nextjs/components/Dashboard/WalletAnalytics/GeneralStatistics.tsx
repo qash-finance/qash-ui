@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
-import { QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 
 interface GeneralStatisticsProps {
   timePeriod: "month" | "year";
@@ -74,15 +74,17 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
     // In a real implementation, you'd need to get actual timestamps from the blockchain
     // We dont have timestamp in the transaction for now
     // https://github.com/0xnullifier/miden-browser-wallet/issues/3
-    const filteredTransactions = transactions;
+    const filteredTransactions = transactions.filter(tx =>
+      tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS),
+    );
 
     const moneyIn = filteredTransactions
       .filter(tx => tx.type === "Incoming" || tx.type === "Faucet")
-      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+      .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0);
 
     const moneyOut = filteredTransactions
       .filter(tx => tx.type === "Outgoing")
-      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+      .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0);
 
     return {
       moneyIn: moneyIn / 10 ** QASH_TOKEN_DECIMALS,

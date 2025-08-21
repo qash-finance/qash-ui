@@ -9,7 +9,7 @@ export interface MidenSdkConfig {
 export interface MidenSdkState {
   isLoading: boolean;
   error: string | null;
-  blockNum: number;
+  blockNum: number | null;
   config: MidenSdkConfig;
   account: string;
 }
@@ -27,7 +27,7 @@ export const createMidenSdkStore = () =>
       isLoading: false,
       error: null,
       config: { endpoint: NODE_ENDPOINT },
-      blockNum: 0,
+      blockNum: null,
       account: "",
       setAccount: (account: string) => {
         set(state => {

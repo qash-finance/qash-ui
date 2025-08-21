@@ -3,7 +3,7 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 import { getClaimableTimeLabel } from "@/services/utils/claimableTime";
-import { NODE_ENDPOINT } from "@/services/utils/constant";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 
 const labelClass = "text-[#989898] text-[14px] leading-5 tracking-[0.07px]";
 
@@ -62,6 +62,7 @@ export const ScheduleTransactionDropdown: React.FC<{
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
   const [displayTransactions, setDisplayTransactions] = useState<ScheduleTransaction[]>([]);
+  const blockNum = useMidenSdkStore(state => state.blockNum);
 
   // Generate transactions from schedulePayment if not provided
   useEffect(() => {
@@ -71,17 +72,12 @@ export const ScheduleTransactionDropdown: React.FC<{
         return;
       }
 
-      if (schedulePayment && amount && tokenSymbol) {
-        const { WebClient } = await import("@demox-labs/miden-sdk");
-
-        const client = await WebClient.createClient(NODE_ENDPOINT);
-        const currentHeight = await client.getSyncHeight();
+      if (schedulePayment && amount && tokenSymbol && blockNum) {
         const { frequency, times } = schedulePayment;
-        const frequencyLabel = getFrequencyLabel(frequency);
 
         const txns = await Promise.all(
           Array.from({ length: times }, async (_, index) => {
-            const claimableTimeLabel = await getClaimableTimeLabel(index, frequency, currentHeight);
+            const claimableTimeLabel = await getClaimableTimeLabel(index, frequency, blockNum, new Date());
 
             return {
               amountLabel: `${amount} ${tokenSymbol}`,
@@ -95,7 +91,7 @@ export const ScheduleTransactionDropdown: React.FC<{
     };
 
     fetchTransactions();
-  }, [transactions, schedulePayment, amount, tokenSymbol]);
+  }, [transactions, schedulePayment, amount, tokenSymbol, blockNum]);
 
   // Measure content height when transactions change
   useEffect(() => {

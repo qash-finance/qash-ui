@@ -79,7 +79,7 @@ const NewFolder = ({
       </div>
 
       <img
-        src="/plus-icon.svg"
+        src="/address-book/plus-icon.svg"
         alt="plus"
         className="absolute z-20 left-45 bottom-17 translate-x-[-50%] cursor-pointer w-8 h-8"
         onClick={toggleNewFolder}

@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { type ReactNode, createContext, useRef, useContext } from "react";
 import { useStore } from "zustand";
 import { type TransactionStore, createTransactionStore } from "@/services/store/transaction";
-import { NODE_ENDPOINT } from "@/services/utils/constant";
-import { useMidenSdkStore } from "./MidenSdkProvider";
 
 export type TransactionStoreV = ReturnType<typeof createTransactionStore>;
 

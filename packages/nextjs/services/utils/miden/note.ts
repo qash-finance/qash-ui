@@ -397,6 +397,88 @@ export async function createBatchNote(
   }
 }
 
+export async function createSchedulePaymentNote(
+  sender: string,
+  receiver: string,
+  faucet: string,
+  amount: number,
+  noteType: WrappedNoteType,
+  recallHeight: number,
+  timelockHeight: number,
+) {
+  try {
+    const { OutputNote, WebClient } = await import("@demox-labs/miden-sdk");
+
+    const client = await WebClient.createClient(NODE_ENDPOINT);
+    const serialNumbers = await randomSerialNumbers();
+    const serialNumbersCopy = serialNumbers.map(felt => felt.toString());
+
+    // get current height
+    const currentHeight = await client.getSyncHeight();
+    recallHeight = currentHeight + recallHeight;
+
+    const note = await customCreateP2IDENote(
+      sender,
+      receiver,
+      amount,
+      faucet,
+      recallHeight,
+      timelockHeight,
+      noteType,
+      0,
+      serialNumbers,
+    );
+
+    return [OutputNote.full(note), serialNumbersCopy, recallHeight];
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to create schedule payment note");
+  }
+}
+
+export async function createBatchSchedulePaymentNote(
+  caller: string,
+  transactions: (Omit<BatchTransaction, "createdAt"> & { createdAt: Date })[],
+) {
+  try {
+    const notes = [];
+    const noteIds: string[] = [];
+    const serialNumbers: string[][] = [];
+    const recallableHeights: number[] = [];
+    const timelockHeights: number[] = [];
+
+    // Process each transaction
+    for (const transaction of transactions) {
+      console.log(transaction);
+      const amount = parseFloat(transaction.amount);
+      const recallHeight = transaction.recallableHeight;
+      const timelockHeight = transaction.timelockHeight || 0;
+
+      // Create schedule payment note for transaction
+      const [note, noteSerialNumbers, calculatedRecallHeight] = await createSchedulePaymentNote(
+        caller,
+        transaction.recipient,
+        transaction.tokenAddress,
+        Math.round(amount * Math.pow(10, transaction.tokenMetadata.decimals)),
+        transaction.isPrivate ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
+        recallHeight,
+        timelockHeight,
+      );
+
+      notes.push(note);
+      noteIds.push((note as any).id().toString());
+      serialNumbers.push(noteSerialNumbers as string[]);
+      recallableHeights.push(calculatedRecallHeight as number);
+      timelockHeights.push(timelockHeight);
+    }
+
+    return { notes, noteIds, serialNumbers, recallableHeights, timelockHeights };
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to create batch schedule payment note");
+  }
+}
+
 // **************** HELPER METHODS ********************
 
 async function randomSerialNumbers(): Promise<any[]> {

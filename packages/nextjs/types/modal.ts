@@ -33,6 +33,7 @@ import CancelSchedule from "@/components/Modal/SchedulePayment/CancelSchedule";
 import SchedulePaymentSidebar from "@/components/SchedulePayment/SchedulePaymentSidebar";
 import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
 import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
+import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -72,6 +73,7 @@ export const MODAL_IDS = {
   RECURRING_TRANSFER_DETAIL: "RECURRING_TRANSFER_DETAIL",
   CANCEL_PAYMENT: "CANCEL_PAYMENT",
   CANCEL_SCHEDULE: "CANCEL_SCHEDULE",
+  REMOVE_SCHEDULE_PAYMENT: "REMOVE_SCHEDULE_PAYMENT",
   SCHEDULE_PAYMENT_SIDEBAR: "SCHEDULE_PAYMENT_SIDEBAR",
   DATE_FILTER: "DATE_FILTER",
   TRANSACTION_FILTER: "TRANSACTION_FILTER",
@@ -179,6 +181,11 @@ export interface DateFilterModalProps extends BaseModalProps {
 }
 
 export interface SetupSchedulePaymentModalProps extends BaseModalProps {
+  schedulePayment: {
+    frequency: SchedulePaymentFrequency;
+    times: number;
+    startDate?: Date;
+  } | null;
   onSave: (data: { frequency: SchedulePaymentFrequency; times: number }) => void;
 }
 
@@ -249,7 +256,33 @@ export interface CancelScheduleProps extends BaseModalProps {
   onCancel?: () => Promise<void>;
 }
 
-export interface SchedulePaymentSidebarProps extends BaseModalProps {}
+export interface RemoveSchedulePaymentProps extends BaseModalProps {
+  onConfirm?: () => Promise<void>;
+}
+
+export interface SchedulePaymentSidebarProps extends BaseModalProps {
+  schedulePaymentData: {
+    recipient: {
+      address: string;
+      avatar?: string;
+      name?: string;
+    };
+    totalAmount: string;
+    claimedAmount: string;
+    currency: string;
+    progress: number;
+    claimProgress: number;
+    transactions: Array<{
+      id: string;
+      noteId: string;
+      date: string;
+      status: "completed" | "current" | "pending" | "recalled";
+      label: string;
+      progress?: number;
+      amount?: string;
+    }>;
+  };
+}
 
 export interface TransactionFilterModalProps extends BaseModalProps {
   hash: string;
@@ -291,6 +324,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebarProps;
   [MODAL_IDS.DATE_FILTER]: DateFilterModalProps;
   [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModalProps;
+  [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePaymentProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -331,4 +365,5 @@ export const modalRegistry = {
   [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebar,
   [MODAL_IDS.DATE_FILTER]: DateFilterModal,
   [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModal,
+  [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePayment,
 } as const;

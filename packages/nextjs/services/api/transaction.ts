@@ -1,8 +1,8 @@
 import { ConsumableNote, ConsumePublicTransactionDto, RecallRequestDto, SendTransactionDto } from "@/types/transaction";
 import { apiServerWithAuth } from "./index";
 
-const getConsumable = async () => {
-  const response = await apiServerWithAuth.getData(`/transactions/consumable`);
+const getConsumable = async (latestBlockHeight: number) => {
+  const response = await apiServerWithAuth.getData(`/transactions/consumable?latestBlockHeight=${latestBlockHeight}`);
   return response as {
     consumableTxs: ConsumableNote[];
     recallableTxs: ConsumableNote[];

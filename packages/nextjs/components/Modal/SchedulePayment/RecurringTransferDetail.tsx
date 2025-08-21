@@ -4,6 +4,7 @@ import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { RecurringTransferDetailProps } from "@/types/modal";
 import { ScheduleTransactionRow } from "@/components/SchedulePayment/ScheduleTransactionDropdown";
+import { ScheduleTransactionDropdown } from "@/components/SchedulePayment/ScheduleTransactionDropdown";
 
 const rowContainerClass = "flex items-center justify-between bg-[#292929] rounded-lg py-2.5 pl-3 pr-[15px]";
 
@@ -86,20 +87,15 @@ export function RecurringTransferDetail({
               </InfoRow>
 
               {/* Schedule payment section */}
-              <div className="flex flex-col gap-1 bg-[#292929] rounded-lg pb-2">
-                <div className="flex items-center py-2.5 px-3">
-                  <span className="text-[#989898] text-[14px] leading-5 tracking-[0.07px]">Schedule payment</span>
-                </div>
-
-                {transactions.map((tx, idx) => (
-                  <ScheduleTransactionRow
-                    key={idx}
-                    index={idx + 1}
-                    amountLabel={tx.amountLabel}
-                    claimableAfterLabel={tx.claimableAfterLabel}
-                  />
-                ))}
-              </div>
+              <ScheduleTransactionDropdown
+                schedulePayment={{
+                  frequency: item.frequencyLabel.toUpperCase() as any,
+                  times: parseInt(item.timesLabel.split("/")[1]),
+                }}
+                amount={item.amount}
+                tokenSymbol={item.token.metadata.symbol}
+                defaultOpen={true}
+              />
             </div>
           </div>
         </div>

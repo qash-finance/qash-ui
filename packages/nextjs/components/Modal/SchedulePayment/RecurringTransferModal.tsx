@@ -16,6 +16,12 @@ import {
   RecurringTransferModalProps,
   RecurringTransferTransaction,
 } from "@/types/modal";
+import { useRouter } from "next/navigation";
+import { useGetSchedulePayments } from "@/services/api/schedule-payment";
+import { useAccountContext } from "@/contexts/AccountProvider";
+import { SchedulePaymentStatus } from "@/types/schedule-payment";
+import { formatAddress } from "@/services/utils/miden/address";
+import { useGetAddressBooks } from "@/services/api/address-book";
 
 const qashToken: AssetWithMetadata = {
   amount: "0",
@@ -33,52 +39,64 @@ const EmptySchedulePayments = () => {
 };
 
 export function RecurringTransferModal({ isOpen, onClose, zIndex }: ModalProp<RecurringTransferModalProps>) {
-  if (!isOpen) return null;
+  const { data: addressBook } = useGetAddressBooks();
+  const { accountId } = useAccountContext();
+  const { data: schedulePayments } = useGetSchedulePayments({
+    payer: accountId,
+    status: SchedulePaymentStatus.ACTIVE,
+  }) as { data: any[] | undefined };
 
   const { openModal } = useModal();
+  const router = useRouter();
 
-  const items: RecurringTransferItem[] = [
-    {
-      recipientName: "(Nam) 0x23C...15g63",
-      amount: "3000",
-      token: qashToken,
-      frequencyLabel: "Monthly",
-      startDateLabel: "From 01/08/2025",
-      timesLabel: "3 times",
-    },
-    {
-      recipientName: "(Nam) 0x23C...15g63",
-      amount: "0.001",
-      token: qashToken,
-      frequencyLabel: "Monthly",
-      startDateLabel: "From 01/09/2025",
-      timesLabel: "2 times",
-    },
-    {
-      recipientName: "(Nam) 0x23C...15g63",
-      amount: "0.001",
-      token: qashToken,
-      frequencyLabel: "Monthly",
-      startDateLabel: "From 02/10/2025",
-      timesLabel: "2 times",
-    },
-  ];
+  const items: RecurringTransferItem[] = (schedulePayments || []).slice(-3).map(payment => {
+    const payeeName = addressBook
+      ?.flatMap(category => category.addressBooks || [])
+      .find(item => item?.address === payment.payee)?.name;
+    let frequencyLabel = "";
+    switch (payment.frequency) {
+      case "DAILY":
+        frequencyLabel = "Daily";
+        break;
+      case "WEEKLY":
+        frequencyLabel = "Weekly";
+        break;
+      case "MONTHLY":
+        frequencyLabel = "Monthly";
+        break;
+      default:
+        frequencyLabel = "Custom";
+        break;
+    }
+    return {
+      recipientName: payeeName ? `(${payeeName}) ${formatAddress(payment.payee)}` : formatAddress(payment.payee),
+      amount: payment.amount,
+      token: {
+        faucetId: payment.tokens[0]?.faucetId || "",
+        amount: payment.amount,
+        metadata: {
+          symbol: payment.tokens[0]?.metadata?.symbol || "QASH",
+          decimals: payment.tokens[0]?.metadata?.decimals || 8,
+          maxSupply: payment.tokens[0]?.metadata?.maxSupply || 0,
+        },
+      },
+      frequencyLabel,
+      startDateLabel: `From ${new Date(payment.createdAt).toLocaleDateString("en-GB")}`,
+      timesLabel: `${payment.executionCount}/${payment.maxExecutions} times`,
+    };
+  });
 
-  const transactionsMap: Record<number, RecurringTransferTransaction[]> = {
-    0: [
-      { amountLabel: "1000 BTC", claimableAfterLabel: "Claimable after 01/08/2025" },
-      { amountLabel: "1000 BTC", claimableAfterLabel: "Claimable after 01/09/2025" },
-      { amountLabel: "1000 BTC", claimableAfterLabel: "Claimable after 01/10/2025" },
-    ],
-    1: [
-      { amountLabel: "0.0005 BTC", claimableAfterLabel: "Claimable after 01/09/2025" },
-      { amountLabel: "0.0005 BTC", claimableAfterLabel: "Claimable after 01/10/2025" },
-    ],
-    2: [
-      { amountLabel: "0.0005 BTC", claimableAfterLabel: "Claimable after 02/10/2025" },
-      { amountLabel: "0.0005 BTC", claimableAfterLabel: "Claimable after 02/11/2025" },
-    ],
-  };
+  const transactionsMap: Record<number, RecurringTransferTransaction[]> = {};
+
+  (schedulePayments || []).forEach((payment, index) => {
+    transactionsMap[index] =
+      payment.transactions?.map((tx: any) => ({
+        amountLabel: `${tx.assets[0]?.amount} ${tx.assets[0]?.metadata?.symbol || "QASH"}`,
+        claimableAfterLabel: `Claimable after ${new Date(tx.createdAt).toLocaleDateString("en-GB")}`,
+      })) || [];
+  });
+
+  if (!isOpen) return null;
 
   return (
     <BaseModal
@@ -99,7 +117,11 @@ export function RecurringTransferModal({ isOpen, onClose, zIndex }: ModalProp<Re
               </span>
             </div>
             {items.length > 0 && (
-              <button type="button" className="flex items-center gap-0.5 px-4 justify-center">
+              <button
+                type="button"
+                className="flex items-center gap-0.5 px-4 justify-center cursor-pointer"
+                onClick={() => router.push("/dashboard/schedule-payment")}
+              >
                 <span className="text-[16px] text-[#1e8fff]">See all</span>
                 <img src={`/arrow/chevron-right.svg`} alt="chevron-right" className="w-6 h-6" />
               </button>

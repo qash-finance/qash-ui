@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { UITransaction } from "@/services/store/transaction";
-import { QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
+import { QASH_TOKEN_DECIMALS, QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
 const COLUMN_GAP = 18; // Gap between chart columns in pixels
 
@@ -103,25 +103,25 @@ const SpendingAverageChart = () => {
     let expenseCount = 0;
 
     filteredTransactions.forEach(transaction => {
-      const amount = transaction.amount;
+      const assets = transaction.assets.filter(asset => asset.assetId === QASH_TOKEN_ADDRESS);
 
       if (transaction.type === "Incoming" || transaction.type === "Faucet") {
-        totalIncoming += amount;
+        totalIncoming += assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
         incomingCount++;
       } else if (transaction.type === "Outgoing") {
-        totalExpense += amount;
+        totalExpense += assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
         expenseCount++;
       }
     });
 
-    const avgIncoming = incomingCount > 0 ? Number(totalIncoming) / incomingCount : 0;
-    const avgExpense = expenseCount > 0 ? Number(totalExpense) / expenseCount : 0;
+    const avgIncoming = incomingCount > 0 ? Number(totalIncoming) / 10 ** QASH_TOKEN_DECIMALS / incomingCount : 0;
+    const avgExpense = expenseCount > 0 ? Number(totalExpense) / 10 ** QASH_TOKEN_DECIMALS / expenseCount : 0;
 
     return {
       totalIncoming: Number(totalIncoming) / 10 ** QASH_TOKEN_DECIMALS,
-      totalExpense: Number(totalExpense) / 10 ** QASH_TOKEN_DECIMALS,
-      avgIncoming: avgIncoming / 10 ** QASH_TOKEN_DECIMALS,
-      avgExpense: avgExpense / 10 ** QASH_TOKEN_DECIMALS,
+      totalExpense: Number(totalExpense),
+      avgIncoming: avgIncoming,
+      avgExpense: avgExpense,
       incomingCount,
       expenseCount,
       totalTransactions: filteredTransactions.length,

@@ -2,18 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { PortfolioModalProps } from "@/types/modal";
+import { SchedulePaymentSidebarProps } from "@/types/modal";
 import { ActionButton } from "../Common/ActionButton";
+import { blo } from "blo";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { useAccountContext } from "@/contexts/AccountProvider";
+import useRecall from "@/hooks/server/useRecall";
+import { consumeNoteByID, consumeNoteByIDs } from "@/services/utils/miden/note";
+import { RecallableNoteType } from "@/types/transaction";
+import toast from "react-hot-toast";
 
 interface ScheduledTransactionItemProps {
   transactionNumber: number;
-  status: "Claimed" | "Pending claim" | "Pending Send";
+  status: "Claimed" | "Pending claim" | "Pending Send" | "recalled";
   amount: string;
   claimableDate: string;
   onCancel: () => void;
 }
 
-const ScheduledTransactionItem: React.FC<ScheduledTransactionItemProps> = ({
+const Item: React.FC<ScheduledTransactionItemProps> = ({
   transactionNumber,
   status,
   amount,
@@ -28,10 +35,14 @@ const ScheduledTransactionItem: React.FC<ScheduledTransactionItemProps> = ({
         return "text-[#1e8fff]";
       case "Pending Send":
         return "text-[#ffb700]";
+      case "recalled":
+        return "text-[#7c7c7c]";
       default:
         return "text-white";
     }
   };
+
+  const isDisabled = status === "recalled";
 
   return (
     <div className="bg-[#1e1e1e] flex flex-col gap-1 items-start justify-center px-3 py-5 rounded-lg w-full relative">
@@ -49,10 +60,12 @@ const ScheduledTransactionItem: React.FC<ScheduledTransactionItemProps> = ({
             </div>
             <div className="flex flex-col text-sm font-medium">
               <div className="text-white leading-5 tracking-[0.07px]">Transaction #{transactionNumber}</div>
-              <div className={`leading-5 ${getStatusColor(status)}`}>{status}</div>
+              <div className={`leading-5 ${getStatusColor(status)}`}>
+                {status === "recalled" ? "Cancelled" : status}
+              </div>
             </div>
           </div>
-          <ActionButton text="Cancel" onClick={onCancel} type="neutral" />
+          <ActionButton text="Cancel" onClick={onCancel} type="neutral" disabled={isDisabled} />
         </div>
         <div className="flex gap-2 items-center justify-end">
           <div className="bg-[#3d3d3d] flex gap-2.5 items-center justify-center px-4 py-1.5 rounded-md">
@@ -69,8 +82,10 @@ const ScheduledTransactionItem: React.FC<ScheduledTransactionItemProps> = ({
   );
 };
 
-const SchedulePaymentSidebar = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
+const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalProp<SchedulePaymentSidebarProps>) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const { accountId } = useAccountContext();
+  const { mutateAsync: recallBatch } = useRecall();
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +101,125 @@ const SchedulePaymentSidebar = ({ isOpen, onClose }: ModalProp<PortfolioModalPro
   };
 
   if (!isOpen) return null;
+
+  const handleCancelSchedule = async () => {
+    if (!accountId) {
+      toast.error("Account not connected.");
+      return;
+    }
+
+    toast.loading("Cancelling schedule...");
+    try {
+      // Get all recallable transactions (filter out create transactions)
+      const recallableTransactions = schedulePaymentData.transactions.filter(
+        tx => !tx.id.startsWith("create-") && tx.status !== "recalled",
+      );
+
+      if (recallableTransactions.length === 0) {
+        toast.dismiss();
+        toast.error("No transactions to cancel.");
+        return;
+      }
+
+      // Process each transaction sequentially
+      const txIds = await consumeNoteByIDs(
+        accountId,
+        recallableTransactions.map(tx => tx.noteId),
+      );
+
+      await recallBatch({
+        items: recallableTransactions.map(tx => ({
+          type: RecallableNoteType.SCHEDULE_PAYMENT,
+          id: Number(tx.id),
+        })),
+        txId: txIds,
+      });
+
+      toast.dismiss();
+      toast.success("Schedule cancelled successfully!");
+      onClose();
+    } catch (error) {
+      console.error("Error cancelling schedule:", error);
+      toast.dismiss();
+      toast.error("Failed to cancel schedule.");
+    } finally {
+      toast.dismiss();
+    }
+  };
+
+  // Transform transactions data for display
+  const transformedTransactions = schedulePaymentData.transactions
+    .filter(tx => !tx.id.startsWith("create-")) // Filter out create transactions
+    .map((tx, index) => {
+      let status: "Claimed" | "Pending claim" | "Pending Send" | "recalled";
+      let claimableDate = tx.date;
+
+      switch (tx.status) {
+        case "completed":
+          status = "Claimed";
+          break;
+        case "current":
+          status = "Pending claim";
+          break;
+        case "pending":
+          status = "Pending Send";
+          break;
+        case "recalled":
+          status = "recalled";
+          break;
+        default:
+          status = "Pending Send";
+      }
+
+      const handleCancelTransaction = async () => {
+        if (!accountId) {
+          toast.error("Account not connected.");
+          return;
+        }
+
+        if (status === "recalled") {
+          toast.error("Transaction already cancelled.");
+          return;
+        }
+
+        toast.loading("Cancelling transaction...");
+        try {
+          // Consume the note to get transaction ID
+          const txId = await consumeNoteByID(accountId, tx.id);
+
+          // Recall the transaction on server
+          await recallBatch({
+            items: [
+              {
+                type: RecallableNoteType.SCHEDULE_PAYMENT,
+                id: Number(tx.id),
+              },
+            ],
+            txId: txId,
+          });
+
+          toast.dismiss();
+          toast.success("Transaction cancelled successfully!");
+
+          // Refresh the modal data or close it
+          onClose();
+        } catch (error) {
+          console.error("Error cancelling transaction:", error);
+          toast.dismiss();
+          toast.error("Failed to cancel transaction.");
+        } finally {
+          toast.dismiss();
+        }
+      };
+
+      return {
+        transactionNumber: index + 1,
+        status,
+        amount: `${tx.amount || schedulePaymentData.totalAmount} ${schedulePaymentData.currency}`,
+        claimableDate,
+        onCancel: handleCancelTransaction,
+      };
+    });
 
   return (
     <div
@@ -125,17 +259,19 @@ const SchedulePaymentSidebar = ({ isOpen, onClose }: ModalProp<PortfolioModalPro
             <div
               className="w-20 h-20 rounded-[100px] bg-no-repeat bg-center bg-cover"
               style={{
-                backgroundImage: `url('http://localhost:3845/assets/3120fc7b000d3423675d1f6a143be1245f6b09c0.png'), url('http://localhost:3845/assets/63fb8a94c931017c97173106ac42b6801edd5d1c.png')`,
+                backgroundImage: `url(${blo(turnBechToHex(schedulePaymentData.recipient.address))})`,
               }}
             />
             <div className="flex flex-col gap-1.5 items-center text-center">
-              <div className="text-[#989898] text-sm tracking-[0.07px] leading-5">Recipent</div>
-              <div className="text-white text-xl tracking-[0.1px] leading-5 font-medium">0x23C...11g63</div>
+              <div className="text-[#989898] text-sm tracking-[0.07px] leading-5">Recipient</div>
+              <div className="text-white text-xl tracking-[0.1px] leading-5 font-medium">
+                {schedulePaymentData.recipient.address}
+              </div>
             </div>
           </div>
 
           {/* Cancel Schedule Button */}
-          <ActionButton text="Cancel Schedule" onClick={() => {}} type="neutral" className="h-9" />
+          <ActionButton text="Cancel Schedule" onClick={handleCancelSchedule} type="deny" className="h-9" />
 
           {/* Transactions Container */}
           <div className="bg-[#0c0c0c] flex flex-col gap-5 grow w-full rounded-2xl p-3">
@@ -147,36 +283,23 @@ const SchedulePaymentSidebar = ({ isOpen, onClose }: ModalProp<PortfolioModalPro
               <div className="flex gap-2 items-center">
                 <img src="/token/qash.svg" alt="qash" className="w-5 h-5" />
                 <div className="flex flex-col justify-center text-white text-xl font-medium tracking-[-0.6px] uppercase leading-none">
-                  3 000
+                  {schedulePaymentData.totalAmount} {schedulePaymentData.currency}
                 </div>
               </div>
             </div>
 
             {/* Transaction List */}
             <div className="flex flex-col gap-1 w-full">
-              <ScheduledTransactionItem
-                transactionNumber={1}
-                status="Claimed"
-                amount="1000 BTC"
-                claimableDate="01/08/2025"
-                onCancel={() => {}}
-              />
-
-              <ScheduledTransactionItem
-                transactionNumber={2}
-                status="Pending claim"
-                amount="1000 BTC"
-                claimableDate="01/09/2025"
-                onCancel={() => {}}
-              />
-
-              <ScheduledTransactionItem
-                transactionNumber={3}
-                status="Pending Send"
-                amount="1000 BTC"
-                claimableDate="01/10/2025"
-                onCancel={() => {}}
-              />
+              {transformedTransactions.map(transaction => (
+                <Item
+                  key={transaction.transactionNumber}
+                  transactionNumber={transaction.transactionNumber}
+                  status={transaction.status}
+                  amount={transaction.amount}
+                  claimableDate={transaction.claimableDate}
+                  onCancel={transaction.onCancel}
+                />
+              ))}
             </div>
           </div>
         </div>

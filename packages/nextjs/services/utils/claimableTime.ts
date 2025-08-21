@@ -1,4 +1,4 @@
-import { BLOCK_TIME, NODE_ENDPOINT } from "./constant";
+import { BLOCK_TIME } from "./constant";
 
 /**
  * Calculate claimable time based on block height and frequency
@@ -21,6 +21,7 @@ export interface ClaimableTimeResult {
   claimableDate: Date;
   formattedDate: string;
   blocksToWait: number;
+  timelockHeight: number;
 }
 
 /**
@@ -35,12 +36,14 @@ function getDaysInMonth(year: number, month: number): number {
  * @param transactionIndex - 0-based index of the transaction
  * @param frequency - Frequency of payments (daily, weekly, monthly, yearly)
  * @param currentHeight - Current block height
+ * @param createdAt - When the scheduled payment was created (Date or timestamp)
  * @returns ClaimableTimeResult with date and formatted string
  */
 export async function calculateClaimableTime(
   transactionIndex: number,
   frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
   currentHeight: number,
+  createdAt: Date | string | number,
 ): Promise<ClaimableTimeResult> {
   let blocksPerPeriod: number;
 
@@ -53,9 +56,9 @@ export async function calculateClaimableTime(
       break;
     case "MONTHLY":
       // Calculate based on actual month length
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth();
+      const createdAtDate = new Date(createdAt);
+      const currentYear = createdAtDate.getFullYear();
+      const currentMonth = createdAtDate.getMonth();
 
       // Get the actual number of days in the current month
       const daysInCurrentMonth = getDaysInMonth(currentYear, currentMonth);
@@ -63,7 +66,7 @@ export async function calculateClaimableTime(
       break;
     case "YEARLY":
       // Check if it's a leap year
-      const year = new Date().getFullYear();
+      const year = new Date(createdAt).getFullYear();
       const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
       const daysInYear = isLeapYear ? 366 : 365;
       blocksPerPeriod = Math.floor((daysInYear * SECONDS_PER_DAY) / BLOCK_TIME);
@@ -82,8 +85,12 @@ export async function calculateClaimableTime(
   const secondsToWait = blocksToWait * BLOCK_TIME;
   const millisecondsToWait = secondsToWait * 1000;
 
-  // Calculate the claimable date
-  const claimableDate = new Date(Date.now() + millisecondsToWait);
+  // Calculate the claimable date from the creation date, not current time
+  const createdAtDate = new Date(createdAt);
+  const claimableDate = new Date(createdAtDate.getTime() + millisecondsToWait);
+
+  // Set time to start of day (12:00 AM UTC)
+  claimableDate.setUTCHours(0, 0, 0, 0);
 
   // Format the date as DD/MM/YYYY
   const day = claimableDate.getDate().toString().padStart(2, "0");
@@ -95,6 +102,7 @@ export async function calculateClaimableTime(
     claimableDate,
     formattedDate,
     blocksToWait,
+    timelockHeight: targetHeight,
   };
 }
 
@@ -105,7 +113,8 @@ export async function getClaimableTimeLabel(
   transactionIndex: number,
   frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
   currentHeight: number,
+  createdAt: Date | string | number,
 ): Promise<string> {
-  const result = await calculateClaimableTime(transactionIndex, frequency, currentHeight);
+  const result = await calculateClaimableTime(transactionIndex, frequency, currentHeight, createdAt);
   return `Claimable after ${result.formattedDate}`;
 }

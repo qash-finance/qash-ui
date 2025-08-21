@@ -41,7 +41,7 @@ export const CreateAddressCard = ({
   return (
     <form className="flex flex-col gap-2 w-[250px] bg-[#292929] rounded-2xl p-2" id="create-address-card">
       <div className="flex flex-row gap-2 items-center">
-        <img src="/plus-icon.svg" alt="folder" className="w-12 h-12 rounded-xl" />
+        <img src="/address-book/plus-icon.svg" alt="folder" className="w-12 h-12 rounded-xl" />
         <div className="flex flex-col gap-1">
           <input
             type="text"

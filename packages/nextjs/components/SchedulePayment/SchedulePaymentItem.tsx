@@ -4,10 +4,151 @@ import React, { useState, useEffect } from "react";
 import { LoadingBar } from "../Common/LoadingBar";
 import StatusCircle from "./StatusCircle";
 import SchedulePaymentTooltip from "./SchedulePaymentTooltip";
-import { MODAL_IDS } from "@/types/modal";
+import { CancelPaymentProps, MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
+import { RecallableNoteType } from "@/types/transaction";
+import { consumeNoteByID } from "@/services/utils/miden/note";
+import useRecall from "@/hooks/server/useRecall";
+import { useAccountContext } from "@/contexts/AccountProvider";
+import toast from "react-hot-toast";
 
 const PADDING = "40px";
+
+/***
+ * {
+    "id": 3,
+    "createdAt": "2025-08-21T04:33:50.896Z",
+    "updatedAt": "2025-08-21T04:33:50.896Z",
+    "amount": "2",
+    "tokens": [
+        {
+            "amount": "2",
+            "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
+            "metadata": {
+                "symbol": "QASH",
+                "decimals": 8,
+                "maxSupply": 1000000000000000000
+            }
+        }
+    ],
+    "message": null,
+    "frequency": "DAILY",
+    "endDate": "2025-08-24T04:33:50.879Z",
+    "nextExecutionDate": "2025-08-22T04:33:50.879Z",
+    "payer": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
+    "payee": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
+    "status": "ACTIVE",
+    "executionCount": 0,
+    "maxExecutions": 3,
+    "transactions": [
+        {
+            "id": 38,
+            "createdAt": "2025-08-21T04:33:50.849Z",
+            "updatedAt": "2025-08-21T04:33:50.849Z",
+            "sender": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
+            "recipient": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
+            "assets": [
+                {
+                    "amount": "2",
+                    "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
+                    "metadata": {
+                        "symbol": "QASH",
+                        "decimals": 8,
+                        "maxSupply": 1000000000000000000
+                    }
+                }
+            ],
+            "private": false,
+            "recallable": true,
+            "recallableTime": "2025-08-21T05:33:50.819Z",
+            "serialNumber": [
+                "3094235627",
+                "3939414064",
+                "1389988599",
+                "521228688"
+            ],
+            "noteType": "p2idr",
+            "status": "pending",
+            "recallableHeight": 626240,
+            "timelockHeight": null,
+            "noteId": "0xfa076c3eee3b1f6c78cd97bf7ab44b388b59dc811cc26275b172f63f1ba3f5ad",
+            "requestPaymentId": null,
+            "schedulePaymentId": 3
+        },
+        {
+            "id": 36,
+            "createdAt": "2025-08-21T04:33:50.849Z",
+            "updatedAt": "2025-08-21T04:33:50.849Z",
+            "sender": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
+            "recipient": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
+            "assets": [
+                {
+                    "amount": "2",
+                    "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
+                    "metadata": {
+                        "symbol": "QASH",
+                        "decimals": 8,
+                        "maxSupply": 1000000000000000000
+                    }
+                }
+            ],
+            "private": false,
+            "recallable": true,
+            "recallableTime": "2025-08-21T05:33:50.819Z",
+            "serialNumber": [
+                "1136242132",
+                "2869576027",
+                "2325209527",
+                "2912979683"
+            ],
+            "noteType": "p2idr",
+            "status": "pending",
+            "recallableHeight": 626240,
+            "timelockHeight": null,
+            "noteId": "0x7fdb3d7da36f2eb6f36550b3130b9a7993ec6dcfe582cdc92c8561c0e76d9235",
+            "requestPaymentId": null,
+            "schedulePaymentId": 3
+        },
+        {
+            "id": 37,
+            "createdAt": "2025-08-21T04:33:50.849Z",
+            "updatedAt": "2025-08-21T04:33:50.849Z",
+            "sender": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
+            "recipient": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
+            "assets": [
+                {
+                    "amount": "2",
+                    "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
+                    "metadata": {
+                        "symbol": "QASH",
+                        "decimals": 8,
+                        "maxSupply": 1000000000000000000
+                    }
+                }
+            ],
+            "private": false,
+            "recallable": true,
+            "recallableTime": "2025-08-21T05:33:50.819Z",
+            "serialNumber": [
+                "2093019654",
+                "2962670959",
+                "4046810668",
+                "490298968"
+            ],
+            "noteType": "p2idr",
+            "status": "pending",
+            "recallableHeight": 626240,
+            "timelockHeight": null,
+            "noteId": "0xbf2b3fd455e5ed380995f0ac96610713114bd7dbe5d1025b8b625a0e6de3e178",
+            "requestPaymentId": null,
+            "schedulePaymentId": 3
+        }
+    ]
+}
+ * 
+ * 
+ * 
+ */
 
 export interface SchedulePaymentItemProps {
   recipient: {
@@ -23,7 +164,8 @@ export interface SchedulePaymentItemProps {
   transactions: Array<{
     id: string;
     date: string;
-    status: "completed" | "current" | "pending";
+    noteId: string;
+    status: "completed" | "current" | "pending" | "recalled";
     label: string;
     progress?: number; // 0-100, for current status circle
     amount?: string;
@@ -119,7 +261,7 @@ const getNextClaimableDate = (
 };
 
 const StatusIcon: React.FC<{
-  status: "completed" | "current" | "pending";
+  status: "completed" | "current" | "pending" | "recalled";
   progress?: number;
   transaction: any;
   onClick: (id: string | null, e?: React.MouseEvent) => void;
@@ -134,6 +276,8 @@ const StatusIcon: React.FC<{
         return "In Progress";
       case "pending":
         return "Pending";
+      case "recalled":
+        return "Cancelled";
       default:
         return "Unknown";
     }
@@ -165,6 +309,9 @@ const StatusIcon: React.FC<{
         {status === "completed" && <StatusCircle progress={100} />}
         {status === "current" && <StatusCircle progress={progress || 60} />}
         {status === "pending" && <StatusCircle progress={0} />}
+        {status === "recalled" && (
+          <img src="/schedule-payment/recalled-status-icon.svg" alt="recalled" className="scale-120" />
+        )}
       </div>
     </div>
   );
@@ -172,21 +319,34 @@ const StatusIcon: React.FC<{
 
 const TransactionInfo: React.FC<{
   date: string;
-  status: "completed" | "current" | "pending";
+  status: "completed" | "current" | "pending" | "recalled";
   label: string;
 }> = ({ date, status, label }) => {
   const statusColors = {
     completed: "text-[#1e8fff]",
     current: "text-[#ffd71b]",
     pending: "text-[#7c7c7c]",
+    recalled: "text-white",
   } as const;
 
+  const badge = () => {
+    if (status === "recalled") {
+      return (
+        <div className="bg-[#192E4B] rounded-full px-2 py-1 leading-[15px] flex items-center justify-center">
+          <span className="text-[#48B3FF]">Cancelled</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="flex flex-col items-center gap-0.5 w-[122px]">
-      <div className={CLASSES.flexCenter}>
-        <div className={`${CLASSES.barlowMedium} ${CLASSES.text14} leading-[17px] ${statusColors[status]}`}>
+    <div className="flex flex-col items-center gap-0.5 w-[125px]">
+      <div className={`${CLASSES.flexCenter} w-full gap-1`}>
+        <div className={`${CLASSES.barlowMedium} ${CLASSES.text14} leading-[15px] ${statusColors[status]}`}>
           {label}
         </div>
+        {badge()}
       </div>
       <div className={`${CLASSES.barlowMedium} ${CLASSES.text14} ${CLASSES.textGray} text-center leading-[normal]`}>
         {date}
@@ -206,9 +366,11 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
   onClick,
   onHover,
 }) => {
+  const { mutateAsync: recallBatch } = useRecall();
   const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [remainingTime, setRemainingTime] = useState<string>("00:00:00");
+  const { accountId } = useAccountContext();
   const { openModal } = useModal();
 
   // Calculate claim progress if not provided
@@ -341,7 +503,19 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
                 src="/schedule-payment/gear.svg"
                 alt="gear"
                 className="w-full h-full cursor-pointer"
-                onClick={() => openModal(MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR)}
+                onClick={() =>
+                  openModal(MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR, {
+                    schedulePaymentData: {
+                      recipient,
+                      totalAmount,
+                      claimedAmount,
+                      currency,
+                      progress,
+                      claimProgress: calculatedClaimProgress,
+                      transactions,
+                    },
+                  })
+                }
               />
             </div>
           </div>
@@ -401,9 +575,7 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
               }}
             >
               {transactions.map((transaction, index) => (
-                <div key={`info-${transaction.id}`} className="flex-shrink-0 w-[122px] flex justify-center">
-                  <TransactionInfo date={transaction.date} status={transaction.status} label={transaction.label} />
-                </div>
+                <TransactionInfo date={transaction.date} status={transaction.status} label={transaction.label} />
               ))}
             </div>
 
@@ -483,7 +655,7 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
           <div className="pointer-events-auto" onMouseDown={e => e.stopPropagation()} data-tooltip="true">
             <SchedulePaymentTooltip
               statusText={activeTransactionId ? "In Progress" : "Pending"}
-              sentText={`${progress} ${currency}`}
+              sentText={`${transactions.find(t => t.id === activeTransactionId)?.amount} ${currency}`}
               dateTimeText={transactions.find(t => t.id === activeTransactionId)?.date || ""}
               balanceText={(activeTransactionId && transactions.find(t => t.id === activeTransactionId)?.amount) || "0"}
               remainingTimeText={
@@ -492,7 +664,36 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
                   : remainingTime
               }
               onCancel={() => {
-                openModal(MODAL_IDS.CANCEL_PAYMENT);
+                openModal<CancelPaymentProps>(MODAL_IDS.CANCEL_PAYMENT, {
+                  onCancel: async () => {
+                    toast.loading("Cancelling payment...");
+                    try {
+                      const recallingNote = transactions.find(t => t.id === activeTransactionId);
+
+                      if (!recallingNote) throw new Error("Recalling note not found");
+
+                      const txId = await consumeNoteByID(accountId, recallingNote.noteId);
+                      // recall on server
+                      await recallBatch({
+                        items: [
+                          {
+                            type: RecallableNoteType.SCHEDULE_PAYMENT,
+                            id: Number(recallingNote?.id),
+                          },
+                        ],
+                        txId: txId,
+                      });
+                      toast.dismiss();
+                      toast.success("Payment cancelled successfully");
+                    } catch (error) {
+                      console.error("Error cancelling payment:", error);
+                      toast.dismiss();
+                      toast.error("Failed to cancel payment");
+                    } finally {
+                      toast.dismiss();
+                    }
+                  },
+                });
               }}
             />
           </div>

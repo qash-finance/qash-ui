@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS, SetupSchedulePaymentModalProps } from "@/types/modal";
 import { useForm } from "react-hook-form";
@@ -37,6 +37,7 @@ export function SetupSchedulePaymentModal({
   onClose,
   zIndex,
   onSave,
+  schedulePayment,
 }: ModalProp<SetupSchedulePaymentModalProps>) {
   // **************** Custom Hooks *******************
   const { openModal } = useModal();
@@ -47,17 +48,22 @@ export function SetupSchedulePaymentModal({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
-  } = useForm<FormValues>({
-    defaultValues: {
-      frequency: SchedulePaymentFrequency.MONTHLY,
-      times: 1,
-      startDate: undefined,
-    },
-  });
+  } = useForm<FormValues>();
   const frequency = watch("frequency");
   const startDate = watch("startDate");
   const times = watch("times");
+
+  useEffect(() => {
+    if (schedulePayment?.times === undefined) {
+      reset();
+    } else {
+      setValue("frequency", schedulePayment?.frequency);
+      setValue("times", schedulePayment?.times);
+      setValue("startDate", schedulePayment?.startDate);
+    }
+  }, [schedulePayment]);
 
   if (!isOpen) return null;
 

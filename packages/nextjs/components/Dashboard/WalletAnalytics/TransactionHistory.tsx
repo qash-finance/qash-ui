@@ -15,7 +15,7 @@ import { useAccount } from "@/hooks/web3/useAccount";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
 const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (transaction: UITransaction) => void }) => {
-  const { accountId } = useAccount();
+  const { accountId, assets } = useAccount();
   const transactions = useTransactionStore(state => state.transactions);
   const [searchQuery, setSearchQuery] = useState("");
   const { openModal } = useModal();
@@ -33,8 +33,46 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
     }
   };
 
+  const renderValue = (transaction: UITransaction) => {
+    // Get unique asset IDs from the transaction
+    const uniqueAssetIds = [...new Set(transaction.assets.map(asset => asset.assetId))];
+    const firstAssetId = uniqueAssetIds[0];
+
+    // Find all matching assets and calculate total values
+    const assetValues = uniqueAssetIds
+      .map(assetId => {
+        const asset = assets.find(asset => asset.faucetId === assetId);
+        if (asset) {
+          // Calculate the total amount for this asset type in the transaction
+          const assetTransactions = transaction.assets.filter(txAsset => txAsset.assetId === assetId);
+          const totalAmount = assetTransactions.reduce((sum, txAsset) => sum + txAsset.amount, BigInt(0));
+          const formattedAmount = Number(totalAmount) / Math.pow(10, asset.metadata.decimals);
+          // Remove trailing zeros for cleaner display
+          const cleanAmount = parseFloat(formattedAmount.toFixed(asset.metadata.decimals));
+          return `${cleanAmount}`;
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    const displayValue =
+      assetValues.length > 0 ? assetValues.join(", ") : `${Number(transaction.assets[0]?.amount || BigInt(0))} (raw)`;
+
+    // Return JSX with icon and value
+    return (
+      <>
+        {firstAssetId === QASH_TOKEN_ADDRESS ? (
+          <img src="/token/qash.svg" alt="qash" className="w-5 h-5" />
+        ) : (
+          <img src={blo(turnBechToHex(firstAssetId))} alt="asset" className="w-5 h-5 rounded-full" />
+        )}
+        <span className="font-medium text-white text-sm">{displayValue}</span>
+      </>
+    );
+  };
+
   return (
-    <div className="bg-[#1e1e1e] flex flex-col gap-1 flex-1 items-start min-h-px min-w-px overflow-hidden rounded-lg w-full">
+    <div className="bg-[#1e1e1e] flex flex-col gap-1 flex-1 items-start min-h-px min-w-px overflow-hidden rounded-lg w-full pb-2">
       {/* Header */}
       <div className="bg-[#292929] flex flex-row items-center justify-between pl-3 pr-2 py-2 w-full">
         <div aria-hidden="true" className="absolute border-[#131313] border-b inset-0 pointer-events-none" />
@@ -214,12 +252,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
             </div>
 
             {/* Value */}
-            <div className="col-span-1 flex items-center justify-center h-full gap-2">
-              <img src="/token/qash.svg" alt="btc" className="w-5 h-5" />
-              <span className="font-medium text-white text-sm">
-                {Number(transaction.amount) / 10 ** QASH_TOKEN_DECIMALS}
-              </span>
-            </div>
+            <div className="col-span-1 flex items-center justify-center h-full gap-2">{renderValue(transaction)}</div>
           </div>
         ))}
       </div>

@@ -10,6 +10,7 @@ export enum NoteType {
 export enum RecallableNoteType {
   TRANSACTION = "transaction",
   GIFT = "gift",
+  SCHEDULE_PAYMENT = "schedule_payment",
 }
 
 export interface AssetDto {

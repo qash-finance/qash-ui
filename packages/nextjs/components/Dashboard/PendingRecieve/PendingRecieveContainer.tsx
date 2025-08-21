@@ -135,7 +135,6 @@ export const PendingRecieveContainer: React.FC = () => {
     error: errorConsumableNotesFromServer,
     isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
-  console.log("🚀 ~ PendingRecieveContainer ~ consumableNotesFromServer:", consumableNotesFromServer);
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();

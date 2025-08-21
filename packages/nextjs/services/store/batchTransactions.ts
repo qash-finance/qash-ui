@@ -15,6 +15,7 @@ export interface BatchTransaction {
   noteType: CustomNoteType;
   pendingRequestId?: number;
   createdAt: string; // Store as ISO string
+  timelockHeight?: number;
 }
 
 interface BatchTransactionStorage {
