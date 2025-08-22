@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { SchedulePaymentItem } from "./SchedulePaymentItem";
+import React, { useState } from "react";
+import { SchedulePaymentItem, SchedulePaymentItemProps } from "./SchedulePaymentItem";
 import StatusCircle from "./StatusCircle";
 import { useGetSchedulePayments } from "@/services/api/schedule-payment";
 import { SchedulePaymentStatus, SchedulePayment } from "@/types/schedule-payment";
@@ -10,6 +10,7 @@ import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { ConsumableNote, TransactionStatus } from "@/types/transaction";
 
 const UpcomingPaymentHeader = () => {
   return (
@@ -151,8 +152,6 @@ export const SchedulePaymentContainer = () => {
     payer: accountId,
     status: SchedulePaymentStatus.ACTIVE,
   }) as { data: any[] | undefined };
-  console.log("🚀 ~ SchedulePaymentContainer ~ schedulePayments:", schedulePayments);
-
   const blockNum = useMidenSdkStore(state => state.blockNum);
 
   const [progress, setProgress] = useState(0);
@@ -236,6 +235,118 @@ export const SchedulePaymentContainer = () => {
     }, 100);
   };
 
+  const renderSchedulePaymentItem = () => {
+    return schedulePayments?.map(payment => {
+      // Calculate total amount for this payment
+      const totalAmount = parseFloat(payment.amount) * (payment.maxExecutions || 0);
+      const claimedAmount = parseFloat(payment.amount) * (payment.executionCount || 0);
+
+      // Transform transactions to match SchedulePaymentItem props
+      const transformedTransactions: SchedulePaymentItemProps["transactions"] = payment.transactions?.map(
+        (tx: ConsumableNote, index: number) => {
+          // Calculate the scheduled date for each transaction based on frequency and creation date
+          const creationDate = new Date(payment.createdAt);
+          creationDate.setHours(0, 0, 0, 0); // Set to 12:00 AM
+
+          let scheduledDate = new Date(creationDate);
+
+          // Add intervals based on frequency and transaction index
+          switch (payment.frequency) {
+            case "DAILY":
+              scheduledDate.setDate(creationDate.getDate() + index + 1);
+              break;
+            case "WEEKLY":
+              scheduledDate.setDate(creationDate.getDate() + (index + 1) * 7);
+              break;
+            case "MONTHLY":
+              scheduledDate.setMonth(creationDate.getMonth() + index + 1);
+              break;
+            case "YEARLY":
+              scheduledDate.setFullYear(creationDate.getFullYear() + index + 1);
+              break;
+            default:
+              scheduledDate.setDate(creationDate.getDate() + index + 1);
+          }
+
+          const transactionDate = scheduledDate.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+
+          if (
+            tx.timelockHeight &&
+            blockNum &&
+            tx.timelockHeight <= blockNum &&
+            tx.status !== TransactionStatus.RECALLED &&
+            tx.status !== TransactionStatus.CONSUMED
+          ) {
+            return {
+              id: tx.id.toString(),
+              noteId: tx.noteId,
+              date: transactionDate,
+              status: "ready_to_claim",
+              label: `Txn ${index + 1}`,
+              progress: 0, // Progress will be calculated by the main progress bar
+              amount: tx.assets[0].amount,
+            };
+          }
+
+          const result = {
+            id: tx.id.toString(),
+            noteId: tx.noteId,
+            date: transactionDate,
+            status: tx.status as TransactionStatus,
+            label: `Txn ${index + 1}`,
+            progress: 0, // Progress will be calculated by the main progress bar
+            amount: tx.assets[0].amount,
+          };
+
+          return result;
+        },
+      );
+
+      return (
+        <SchedulePaymentItem
+          key={payment.id}
+          recipient={{
+            address: `${payment.payee.slice(0, 8)}...${payment.payee.slice(-6)}`,
+            avatar: blo(turnBechToHex(payment.payee)), // Default avatar
+            name: `Recipient ${payment.id}`,
+          }}
+          totalAmount={totalAmount.toString()}
+          claimedAmount={claimedAmount.toString()}
+          currency={payment.tokens[0]?.metadata?.symbol || "QASH"}
+          progress={calculateTransactionBasedProgress(
+            payment.executionCount || 0,
+            payment.maxExecutions || 0,
+            payment.createdAt || Date.now(),
+            payment.frequency,
+          )}
+          claimProgress={(claimedAmount / totalAmount) * 100}
+          transactions={[
+            {
+              id: `creation`,
+              date: new Date(payment.createdAt || Date.now())
+                .toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+                .replace(",", ""),
+              status: TransactionStatus.CONSUMED,
+              label: "Create",
+              progress: 100,
+            },
+            ...(transformedTransactions || []), // Add null check here
+          ]}
+        />
+      );
+    });
+  };
+
   return (
     <div className="flex flex-col justify-start gap-2 p-2 w-full h-full overflow-hidden overflow-y-auto">
       <div className="flex flex-row gap-2">
@@ -244,94 +355,7 @@ export const SchedulePaymentContainer = () => {
       </div>
 
       {schedulePayments && schedulePayments.length > 0 ? (
-        schedulePayments.map(payment => {
-          // Calculate total amount for this payment
-          const totalAmount = parseFloat(payment.amount) * (payment.maxExecutions || 0);
-          const claimedAmount = parseFloat(payment.amount) * (payment.executionCount || 0);
-
-          // Transform transactions to match SchedulePaymentItem props
-          const transformedTransactions =
-            payment.transactions?.map((tx: any, index: number) => {
-              // Calculate the scheduled date for each transaction based on frequency and creation date
-              const creationDate = new Date(payment.createdAt);
-              creationDate.setHours(0, 0, 0, 0); // Set to 12:00 AM
-
-              let scheduledDate = new Date(creationDate);
-
-              // Add intervals based on frequency and transaction index
-              switch (payment.frequency) {
-                case "DAILY":
-                  scheduledDate.setDate(creationDate.getDate() + index + 1);
-                  break;
-                case "WEEKLY":
-                  scheduledDate.setDate(creationDate.getDate() + (index + 1) * 7);
-                  break;
-                case "MONTHLY":
-                  scheduledDate.setMonth(creationDate.getMonth() + index + 1);
-                  break;
-                case "YEARLY":
-                  scheduledDate.setFullYear(creationDate.getFullYear() + index + 1);
-                  break;
-                default:
-                  scheduledDate.setDate(creationDate.getDate() + index + 1);
-              }
-
-              const transactionDate = scheduledDate.toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              });
-
-              return {
-                id: tx.id.toString(),
-                noteId: tx.noteId,
-                date: transactionDate,
-                status: tx.status,
-                label: `Txn ${index + 1}`,
-                progress: 0, // Progress will be calculated by the main progress bar
-                amount: tx.assets[0].amount,
-              };
-            }) || [];
-
-          return (
-            <SchedulePaymentItem
-              key={payment.id}
-              recipient={{
-                address: `${payment.payee.slice(0, 8)}...${payment.payee.slice(-6)}`,
-                avatar: blo(turnBechToHex(payment.payee)), // Default avatar
-                name: `Recipient ${payment.id}`,
-              }}
-              totalAmount={totalAmount.toString()}
-              claimedAmount={claimedAmount.toString()}
-              currency={payment.tokens[0]?.metadata?.symbol || "QASH"}
-              progress={calculateTransactionBasedProgress(
-                payment.executionCount || 0,
-                payment.maxExecutions || 0,
-                payment.createdAt || Date.now(),
-                payment.frequency,
-              )}
-              claimProgress={(claimedAmount / totalAmount) * 100}
-              transactions={[
-                {
-                  id: `create-${payment.id}`,
-                  date: new Date(payment.createdAt || Date.now())
-                    .toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                    .replace(",", ""),
-                  status: "completed" as const,
-                  label: "Create",
-                  progress: 100,
-                },
-                ...transformedTransactions,
-              ]}
-            />
-          );
-        })
+        <>{renderSchedulePaymentItem()}</>
       ) : (
         <div className="flex items-center justify-center h-32 text-gray-400">No schedule payments found</div>
       )}

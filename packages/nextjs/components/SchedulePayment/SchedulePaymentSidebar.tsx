@@ -7,14 +7,14 @@ import { ActionButton } from "../Common/ActionButton";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { useAccountContext } from "@/contexts/AccountProvider";
-import useRecall from "@/hooks/server/useRecall";
 import { consumeNoteByID, consumeNoteByIDs } from "@/services/utils/miden/note";
-import { RecallableNoteType } from "@/types/transaction";
+import { RecallableNoteType, TransactionStatus } from "@/types/transaction";
 import toast from "react-hot-toast";
+import { useRecallBatch } from "@/services/api/transaction";
 
 interface ScheduledTransactionItemProps {
   transactionNumber: number;
-  status: "Claimed" | "Pending claim" | "Pending Send" | "recalled";
+  status: TransactionStatus | "ready_to_claim";
   amount: string;
   claimableDate: string;
   onCancel: () => void;
@@ -27,22 +27,27 @@ const Item: React.FC<ScheduledTransactionItemProps> = ({
   claimableDate,
   onCancel,
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Claimed":
-        return "text-[#09de34]";
-      case "Pending claim":
-        return "text-[#1e8fff]";
-      case "Pending Send":
-        return "text-[#ffb700]";
-      case "recalled":
-        return "text-[#7c7c7c]";
-      default:
-        return "text-white";
-    }
+  const getStatusColor = (status: TransactionStatus | "ready_to_claim") => {
+    const colorMap = {
+      [TransactionStatus.CONSUMED]: "text-[#09DE34]",
+      [TransactionStatus.PENDING]: "text-[#FFB700]",
+      [TransactionStatus.RECALLED]: "text-[#FF0000]",
+      ready_to_claim: "text-[#1E8FFF]",
+    };
+    return colorMap[status] || "text-[#FFB700]";
   };
 
-  const isDisabled = status === "recalled";
+  const getStatusDisplay = (status: TransactionStatus | "ready_to_claim") => {
+    const statusMap = {
+      [TransactionStatus.CONSUMED]: "Claimed",
+      [TransactionStatus.PENDING]: "Pending Send",
+      [TransactionStatus.RECALLED]: "Cancelled",
+      ready_to_claim: "Pending Claim",
+    };
+    return statusMap[status] || status;
+  };
+
+  const isDisabled = status === TransactionStatus.RECALLED || status === TransactionStatus.CONSUMED;
 
   return (
     <div className="bg-[#1e1e1e] flex flex-col gap-1 items-start justify-center px-3 py-5 rounded-lg w-full relative">
@@ -60,9 +65,7 @@ const Item: React.FC<ScheduledTransactionItemProps> = ({
             </div>
             <div className="flex flex-col text-sm font-medium">
               <div className="text-white leading-5 tracking-[0.07px]">Transaction #{transactionNumber}</div>
-              <div className={`leading-5 ${getStatusColor(status)}`}>
-                {status === "recalled" ? "Cancelled" : status}
-              </div>
+              <div className={`leading-5 ${getStatusColor(status)}`}>{getStatusDisplay(status)}</div>
             </div>
           </div>
           <ActionButton text="Cancel" onClick={onCancel} type="neutral" disabled={isDisabled} />
@@ -85,7 +88,7 @@ const Item: React.FC<ScheduledTransactionItemProps> = ({
 const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalProp<SchedulePaymentSidebarProps>) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { accountId } = useAccountContext();
-  const { mutateAsync: recallBatch } = useRecall();
+  const { mutateAsync: recallBatch } = useRecallBatch();
 
   useEffect(() => {
     if (isOpen) {
@@ -112,7 +115,7 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
     try {
       // Get all recallable transactions (filter out create transactions)
       const recallableTransactions = schedulePaymentData.transactions.filter(
-        tx => !tx.id.startsWith("create-") && tx.status !== "recalled",
+        tx => !tx.id.includes("creation") && tx.status !== "recalled",
       );
 
       if (recallableTransactions.length === 0) {
@@ -149,27 +152,10 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
 
   // Transform transactions data for display
   const transformedTransactions = schedulePaymentData.transactions
-    .filter(tx => !tx.id.startsWith("create-")) // Filter out create transactions
+    .filter(tx => !tx.id.includes("creation")) // Filter out create transactions
     .map((tx, index) => {
-      let status: "Claimed" | "Pending claim" | "Pending Send" | "recalled";
       let claimableDate = tx.date;
-
-      switch (tx.status) {
-        case "completed":
-          status = "Claimed";
-          break;
-        case "current":
-          status = "Pending claim";
-          break;
-        case "pending":
-          status = "Pending Send";
-          break;
-        case "recalled":
-          status = "recalled";
-          break;
-        default:
-          status = "Pending Send";
-      }
+      const status = tx.status;
 
       const handleCancelTransaction = async () => {
         if (!accountId) {
@@ -177,7 +163,7 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
           return;
         }
 
-        if (status === "recalled") {
+        if (status === TransactionStatus.RECALLED) {
           toast.error("Transaction already cancelled.");
           return;
         }
@@ -207,8 +193,6 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
           console.error("Error cancelling transaction:", error);
           toast.dismiss();
           toast.error("Failed to cancel transaction.");
-        } finally {
-          toast.dismiss();
         }
       };
 

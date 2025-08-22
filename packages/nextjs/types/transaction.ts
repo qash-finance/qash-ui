@@ -13,6 +13,12 @@ export enum RecallableNoteType {
   SCHEDULE_PAYMENT = "schedule_payment",
 }
 
+export enum TransactionStatus {
+  PENDING = "pending",
+  RECALLED = "recalled",
+  CONSUMED = "consumed",
+}
+
 export interface AssetDto {
   faucetId: string;
   amount: string;
@@ -49,6 +55,7 @@ export interface ConsumableNote {
   updatedAt: string;
   assets: AssetWithMetadata[];
   requestPaymentId?: number;
+  timelockHeight?: number;
 }
 
 export interface RecallRequestDto {

@@ -407,15 +407,10 @@ export async function createSchedulePaymentNote(
   timelockHeight: number,
 ) {
   try {
-    const { OutputNote, WebClient } = await import("@demox-labs/miden-sdk");
+    const { OutputNote } = await import("@demox-labs/miden-sdk");
 
-    const client = await WebClient.createClient(NODE_ENDPOINT);
     const serialNumbers = await randomSerialNumbers();
     const serialNumbersCopy = serialNumbers.map(felt => felt.toString());
-
-    // get current height
-    const currentHeight = await client.getSyncHeight();
-    recallHeight = currentHeight + recallHeight;
 
     const note = await customCreateP2IDENote(
       sender,

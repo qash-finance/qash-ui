@@ -39,6 +39,7 @@ import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
 import { DateRange } from "react-day-picker";
 import { SchedulePaymentFrequency } from "./schedule-payment";
+import { TransactionStatus } from "./transaction";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -276,7 +277,7 @@ export interface SchedulePaymentSidebarProps extends BaseModalProps {
       id: string;
       noteId: string;
       date: string;
-      status: "completed" | "current" | "pending" | "recalled";
+      status: TransactionStatus | "ready_to_claim";
       label: string;
       progress?: number;
       amount?: string;

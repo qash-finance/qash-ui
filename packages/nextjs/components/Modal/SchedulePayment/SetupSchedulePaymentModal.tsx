@@ -58,6 +58,7 @@ export function SetupSchedulePaymentModal({
   useEffect(() => {
     if (schedulePayment?.times === undefined) {
       reset();
+      setValue("frequency", SchedulePaymentFrequency.DAILY);
     } else {
       setValue("frequency", schedulePayment?.frequency);
       setValue("times", schedulePayment?.times);

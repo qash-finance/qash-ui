@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ConsumableNote, ConsumePublicTransactionDto, RecallRequestDto, SendTransactionDto } from "@/types/transaction";
 import { apiServerWithAuth } from "./index";
 
@@ -34,9 +35,45 @@ const consumePublicTransactions = async (noteIds: ConsumePublicTransactionDto[])
   return response;
 };
 
-const recallBatch = async (recallRequest: RecallRequestDto) => {
-  const response = await apiServerWithAuth.putData("/transactions/recall", recallRequest);
-  return response;
+const useConsumePublicNotes = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (noteIds: ConsumePublicTransactionDto[]) => {
+      const response = await apiServerWithAuth.putData("/transactions/consume-public", noteIds);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["consumable"] });
+      queryClient.invalidateQueries({ queryKey: ["recallable"] });
+
+      // Invalidate schedule payments cache since consume public affects them
+      queryClient.invalidateQueries({ queryKey: ["schedule-payments"] });
+    },
+    onError: error => {
+      console.error("Error consuming public transactions:", error);
+    },
+  });
+};
+
+const useRecallBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recallRequest: RecallRequestDto) => {
+      const response = await apiServerWithAuth.putData("/transactions/recall", recallRequest);
+      return response;
+    },
+    onSuccess: () => {
+      // Invalidate transactions cache
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["consumable"] });
+      queryClient.invalidateQueries({ queryKey: ["recallable"] });
+
+      // Invalidate schedule payments cache since recall affects them
+      queryClient.invalidateQueries({ queryKey: ["schedule-payments"] });
+    },
+  });
 };
 
 export {
@@ -46,5 +83,6 @@ export {
   sendBatchTransaction,
   consumeTransactions,
   consumePublicTransactions,
-  recallBatch,
+  useRecallBatch,
+  useConsumePublicNotes,
 };

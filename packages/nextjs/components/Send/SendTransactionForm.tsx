@@ -58,6 +58,7 @@ interface SendTransactionFormValues {
 const DEFAULT_SCHEDULE_PAYMENT = {
   frequency: SchedulePaymentFrequency.DAILY,
   times: undefined,
+  startDate: new Date(),
 };
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalProps> = ({
@@ -129,6 +130,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const [schedulePayment, setSchedulePayment] = useState<{
     frequency: SchedulePaymentFrequency;
     times: number | undefined;
+    startDate: Date | undefined;
   }>(DEFAULT_SCHEDULE_PAYMENT);
 
   // Debounced address validation
@@ -220,6 +222,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         return `Insufficient balance for ${schedulePayment.times} scheduled payments. Required: ${totalAmount.toFixed(2)} ${selectedToken.metadata.symbol}`;
       }
 
+      if (!schedulePayment.startDate) {
+        return;
+      }
+
+      const startDate = schedulePayment.startDate;
+
       // prepare transactions based on schedule payment times
       const transactions = await Promise.all(
         Array.from({ length: schedulePayment.times }, async (_, index) => {
@@ -227,7 +235,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             index,
             schedulePayment.frequency,
             blockNum,
-            new Date(),
+            startDate,
           );
 
           return {
@@ -237,7 +245,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             amount: amount.toString(),
             recipient: recipientAccountId,
             isPrivate: isPrivateTransaction,
-            recallableHeight: recallHeight,
+            recallableHeight: timelockHeight + recallHeight,
             recallableTime: recallHeight * BLOCK_TIME,
             noteType: CustomNoteType.P2IDR,
             timelockHeight: timelockHeight,
@@ -604,7 +612,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
   const handleSetupSchedulePayment = () => {
     openModal(MODAL_IDS.SETUP_SCHEDULE_PAYMENT, {
       schedulePayment,
-      onSave: (values: { frequency: SchedulePaymentFrequency; times: number }) => {
+      onSave: (values: { frequency: SchedulePaymentFrequency; times: number; startDate: Date }) => {
         setSchedulePayment(values);
       },
     });

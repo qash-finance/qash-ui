@@ -81,7 +81,6 @@ export const CreateAddressCard = ({
           onClick={() =>
             openModal(MODAL_IDS.SELECT_TOKEN, {
               onTokenSelect: (token: AssetWithMetadata) => {
-                console.log("🚀 ~ token:", token);
                 setSelectedToken(token);
               },
             })

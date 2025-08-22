@@ -51,6 +51,7 @@ export const ScheduleTransactionDropdown: React.FC<{
   schedulePayment?: {
     frequency: SchedulePaymentFrequency;
     times: number;
+    startDate: Date;
   } | null;
   amount?: string;
   tokenSymbol?: string;
@@ -73,11 +74,11 @@ export const ScheduleTransactionDropdown: React.FC<{
       }
 
       if (schedulePayment && amount && tokenSymbol && blockNum) {
-        const { frequency, times } = schedulePayment;
+        const { frequency, times, startDate } = schedulePayment;
 
         const txns = await Promise.all(
           Array.from({ length: times }, async (_, index) => {
-            const claimableTimeLabel = await getClaimableTimeLabel(index, frequency, blockNum, new Date());
+            const claimableTimeLabel = await getClaimableTimeLabel(index, frequency, blockNum, startDate);
 
             return {
               amountLabel: `${amount} ${tokenSymbol}`,

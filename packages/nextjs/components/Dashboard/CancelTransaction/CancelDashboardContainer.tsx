@@ -24,6 +24,7 @@ import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
+import { useRecallBatch } from "@/services/api/transaction";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -167,7 +168,7 @@ export const CancelDashboardContainer: React.FC = () => {
 
   console.log("recallableNotes", recallableNotes);
 
-  const { mutateAsync: recallBatch } = useRecall();
+  const { mutateAsync: recallBatch } = useRecallBatch();
   const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { isConnected } = useWalletConnect();
 

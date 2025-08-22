@@ -1,154 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LoadingBar } from "../Common/LoadingBar";
 import StatusCircle from "./StatusCircle";
 import SchedulePaymentTooltip from "./SchedulePaymentTooltip";
 import { CancelPaymentProps, MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { RecallableNoteType } from "@/types/transaction";
+import { RecallableNoteType, TransactionStatus } from "@/types/transaction";
 import { consumeNoteByID } from "@/services/utils/miden/note";
-import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
+import { Tooltip } from "react-tooltip";
+import { useRecallBatch } from "@/services/api/transaction";
 
 const PADDING = "40px";
-
-/***
- * {
-    "id": 3,
-    "createdAt": "2025-08-21T04:33:50.896Z",
-    "updatedAt": "2025-08-21T04:33:50.896Z",
-    "amount": "2",
-    "tokens": [
-        {
-            "amount": "2",
-            "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
-            "metadata": {
-                "symbol": "QASH",
-                "decimals": 8,
-                "maxSupply": 1000000000000000000
-            }
-        }
-    ],
-    "message": null,
-    "frequency": "DAILY",
-    "endDate": "2025-08-24T04:33:50.879Z",
-    "nextExecutionDate": "2025-08-22T04:33:50.879Z",
-    "payer": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
-    "payee": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
-    "status": "ACTIVE",
-    "executionCount": 0,
-    "maxExecutions": 3,
-    "transactions": [
-        {
-            "id": 38,
-            "createdAt": "2025-08-21T04:33:50.849Z",
-            "updatedAt": "2025-08-21T04:33:50.849Z",
-            "sender": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
-            "recipient": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
-            "assets": [
-                {
-                    "amount": "2",
-                    "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
-                    "metadata": {
-                        "symbol": "QASH",
-                        "decimals": 8,
-                        "maxSupply": 1000000000000000000
-                    }
-                }
-            ],
-            "private": false,
-            "recallable": true,
-            "recallableTime": "2025-08-21T05:33:50.819Z",
-            "serialNumber": [
-                "3094235627",
-                "3939414064",
-                "1389988599",
-                "521228688"
-            ],
-            "noteType": "p2idr",
-            "status": "pending",
-            "recallableHeight": 626240,
-            "timelockHeight": null,
-            "noteId": "0xfa076c3eee3b1f6c78cd97bf7ab44b388b59dc811cc26275b172f63f1ba3f5ad",
-            "requestPaymentId": null,
-            "schedulePaymentId": 3
-        },
-        {
-            "id": 36,
-            "createdAt": "2025-08-21T04:33:50.849Z",
-            "updatedAt": "2025-08-21T04:33:50.849Z",
-            "sender": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
-            "recipient": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
-            "assets": [
-                {
-                    "amount": "2",
-                    "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
-                    "metadata": {
-                        "symbol": "QASH",
-                        "decimals": 8,
-                        "maxSupply": 1000000000000000000
-                    }
-                }
-            ],
-            "private": false,
-            "recallable": true,
-            "recallableTime": "2025-08-21T05:33:50.819Z",
-            "serialNumber": [
-                "1136242132",
-                "2869576027",
-                "2325209527",
-                "2912979683"
-            ],
-            "noteType": "p2idr",
-            "status": "pending",
-            "recallableHeight": 626240,
-            "timelockHeight": null,
-            "noteId": "0x7fdb3d7da36f2eb6f36550b3130b9a7993ec6dcfe582cdc92c8561c0e76d9235",
-            "requestPaymentId": null,
-            "schedulePaymentId": 3
-        },
-        {
-            "id": 37,
-            "createdAt": "2025-08-21T04:33:50.849Z",
-            "updatedAt": "2025-08-21T04:33:50.849Z",
-            "sender": "mtst1qzuq5dluy74lgyrmy88q6ndc75fyvqnx",
-            "recipient": "mtst1qpacy8vd0wk0zypzcqctk0jy6sg6yzuv",
-            "assets": [
-                {
-                    "amount": "2",
-                    "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
-                    "metadata": {
-                        "symbol": "QASH",
-                        "decimals": 8,
-                        "maxSupply": 1000000000000000000
-                    }
-                }
-            ],
-            "private": false,
-            "recallable": true,
-            "recallableTime": "2025-08-21T05:33:50.819Z",
-            "serialNumber": [
-                "2093019654",
-                "2962670959",
-                "4046810668",
-                "490298968"
-            ],
-            "noteType": "p2idr",
-            "status": "pending",
-            "recallableHeight": 626240,
-            "timelockHeight": null,
-            "noteId": "0xbf2b3fd455e5ed380995f0ac96610713114bd7dbe5d1025b8b625a0e6de3e178",
-            "requestPaymentId": null,
-            "schedulePaymentId": 3
-        }
-    ]
-}
- * 
- * 
- * 
- */
 
 export interface SchedulePaymentItemProps {
   recipient: {
@@ -164,8 +29,8 @@ export interface SchedulePaymentItemProps {
   transactions: Array<{
     id: string;
     date: string;
-    noteId: string;
-    status: "completed" | "current" | "pending" | "recalled";
+    noteId?: string;
+    status: TransactionStatus | "ready_to_claim";
     label: string;
     progress?: number; // 0-100, for current status circle
     amount?: string;
@@ -261,55 +126,27 @@ const getNextClaimableDate = (
 };
 
 const StatusIcon: React.FC<{
-  status: "completed" | "current" | "pending" | "recalled";
+  status: TransactionStatus | "ready_to_claim";
   progress?: number;
   transaction: any;
-  onClick: (id: string | null, e?: React.MouseEvent) => void;
   isActive: boolean;
   currency: string;
-}> = ({ status, progress, transaction, onClick, isActive, currency }) => {
-  const getStatusText = () => {
-    switch (status) {
-      case "completed":
-        return "Completed";
-      case "current":
-        return "In Progress";
-      case "pending":
-        return "Pending";
-      case "recalled":
-        return "Cancelled";
-      default:
-        return "Unknown";
-    }
-  };
-
-  const getSentText = () => {
-    // Calculate based on progress and total amount
-    const totalAmount = 100; // This should come from props
-    const sentAmount = Math.round(((progress || 0) / 100) * totalAmount);
-    return `${sentAmount} ${currency}`;
-  };
-
-  const getBalanceText = () => {
-    const totalAmount = 100; // This should come from props
-    const sentAmount = progress || 0;
-    const remaining = totalAmount - sentAmount;
-    return `${remaining} ${currency}`;
-  };
-
-  const isClickable = !transaction.id.startsWith("create-"); // Create transactions are not clickable
+  id: string;
+}> = ({ status, progress, transaction, isActive, currency, id }) => {
+  const isClickable = transaction.id !== "creation"; // Create transactions are not clickable
 
   return (
     <div
       className={`relative z-0 ${isClickable ? "cursor-pointer" : "cursor-default"}`}
-      onClick={isClickable ? e => onClick(transaction.id, e) : undefined}
+      id={id}
+      data-tooltip-id="schedule-payment-tooltip"
+      data-tooltip-content={transaction.id}
     >
       {/* Status Circle */}
       <div className="relative z-0">
-        {status === "completed" && <StatusCircle progress={100} />}
-        {status === "current" && <StatusCircle progress={progress || 60} />}
-        {status === "pending" && <StatusCircle progress={0} />}
-        {status === "recalled" && (
+        {status === TransactionStatus.CONSUMED && <StatusCircle progress={100} />}
+        {(status === TransactionStatus.PENDING || status === "ready_to_claim") && <StatusCircle progress={0} />}
+        {status === TransactionStatus.RECALLED && (
           <img src="/schedule-payment/recalled-status-icon.svg" alt="recalled" className="scale-120" />
         )}
       </div>
@@ -319,21 +156,28 @@ const StatusIcon: React.FC<{
 
 const TransactionInfo: React.FC<{
   date: string;
-  status: "completed" | "current" | "pending" | "recalled";
+  status: TransactionStatus | "ready_to_claim";
   label: string;
 }> = ({ date, status, label }) => {
   const statusColors = {
-    completed: "text-[#1e8fff]",
-    current: "text-[#ffd71b]",
-    pending: "text-[#7c7c7c]",
-    recalled: "text-white",
-  } as const;
+    [TransactionStatus.CONSUMED]: "text-[#1e8fff]",
+    [TransactionStatus.PENDING]: "text-[#ffd71b]",
+    [TransactionStatus.RECALLED]: "text-white",
+    ready_to_claim: "text-white",
+  };
 
   const badge = () => {
-    if (status === "recalled") {
+    if (status === TransactionStatus.RECALLED) {
       return (
         <div className="bg-[#192E4B] rounded-full px-2 py-1 leading-[15px] flex items-center justify-center">
           <span className="text-[#48B3FF]">Cancelled</span>
+        </div>
+      );
+    }
+    if (status === TransactionStatus.CONSUMED && label !== "Create") {
+      return (
+        <div className="bg-[#213E27] rounded-full px-2 py-1 leading-[15px] flex items-center justify-center">
+          <span className="text-[#33F55A]">Claimed</span>
         </div>
       );
     }
@@ -343,9 +187,7 @@ const TransactionInfo: React.FC<{
   return (
     <div className="flex flex-col items-center gap-0.5 w-[125px]">
       <div className={`${CLASSES.flexCenter} w-full gap-1`}>
-        <div className={`${CLASSES.barlowMedium} ${CLASSES.text14} leading-[15px] ${statusColors[status]}`}>
-          {label}
-        </div>
+        <div className={`${CLASSES.barlowMedium} ${CLASSES.text14} leading-[15px] text-white`}>{label}</div>
         {badge()}
       </div>
       <div className={`${CLASSES.barlowMedium} ${CLASSES.text14} ${CLASSES.textGray} text-center leading-[normal]`}>
@@ -366,12 +208,11 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
   onClick,
   onHover,
 }) => {
-  const { mutateAsync: recallBatch } = useRecall();
-  const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const { mutateAsync: recallBatch } = useRecallBatch();
   const [remainingTime, setRemainingTime] = useState<string>("00:00:00");
   const { accountId } = useAccountContext();
   const { openModal } = useModal();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate claim progress if not provided
   const calculatedClaimProgress =
@@ -383,48 +224,25 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
     })();
 
   // Update remaining time every second
-  useEffect(() => {
-    const updateRemainingTime = () => {
-      // Find the first pending transaction to show remaining time
-      const pendingTransaction = transactions.find(t => t.status === "pending");
-      if (pendingTransaction?.date) {
-        setRemainingTime(formatRemainingTime(pendingTransaction.date));
-      } else {
-        setRemainingTime("00:00:00");
-      }
-    };
+  // useEffect(() => {
+  //   const updateRemainingTime = () => {
+  //     // Find the first pending transaction to show remaining time
+  //     const pendingTransaction = transactions.find(t => t.status === "pending");
+  //     if (pendingTransaction?.date) {
+  //       setRemainingTime(formatRemainingTime(pendingTransaction.date));
+  //     } else {
+  //       setRemainingTime("00:00:00");
+  //     }
+  //   };
 
-    // Initial update
-    updateRemainingTime();
+  //   // Initial update
+  //   updateRemainingTime();
 
-    // Update every second
-    const intervalId = setInterval(updateRemainingTime, 1000);
+  //   // Update every second
+  //   const intervalId = setInterval(updateRemainingTime, 1000);
 
-    return () => clearInterval(intervalId);
-  }, [transactions]);
-
-  // Close tooltip when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Check if the click target is inside the tooltip
-      const tooltipElement = document.querySelector('[data-tooltip="true"]');
-      if (tooltipElement && tooltipElement.contains(event.target as Node)) {
-        return; // Don't close if clicking inside tooltip
-      }
-
-      if (activeTransactionId) {
-        setActiveTransactionId(null);
-      }
-    };
-
-    if (activeTransactionId) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [activeTransactionId]);
+  //   return () => clearInterval(intervalId);
+  // }, [transactions]);
 
   const formatAddress = (address: string) => {
     if (address.length <= 10) return address;
@@ -447,20 +265,9 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
 
   const { gap: transactionGap, containerWidth } = calculateTransactionSpacing();
 
-  const handleStatusIconClick = (transactionId: string | null, e?: React.MouseEvent) => {
-    if (transactionId && e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setTooltipPosition({
-        top: rect.bottom + 8,
-        left: rect.left + rect.width / 2,
-      });
-    }
-    // Toggle tooltip - if same transaction is clicked again, hide it
-    setActiveTransactionId(activeTransactionId === transactionId ? null : transactionId);
-  };
-
   return (
     <div
+      ref={containerRef}
       className="bg-[#1e1e1e] rounded-2xl transition-colors duration-200 flex flex-col gap-3 rounded-t-2xl"
       onClick={onClick}
       onMouseEnter={onHover}
@@ -617,11 +424,11 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
                   className="flex-shrink-0 relative z-10 w-[122px] flex justify-center"
                 >
                   <StatusIcon
+                    id={`status-${transaction.id}`}
                     status={transaction.status}
                     progress={transaction.progress}
                     transaction={transaction}
-                    onClick={handleStatusIconClick}
-                    isActive={activeTransactionId === transaction.id}
+                    isActive={false}
                     currency={currency}
                   />
                 </div>
@@ -631,46 +438,56 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
         </div>
       </div>
 
-      {/* Global Tooltip Overlay - Rendered outside scrollable area */}
-      {activeTransactionId && (
-        <div
-          className="fixed pointer-events-none"
-          style={{
-            top: tooltipPosition.top,
-            left: tooltipPosition.left,
-            transform: "translateX(-50%)",
-            zIndex: 20,
-          }}
-        >
-          {/* Upward Arrow pointing to StatusIcon */}
-          <div
-            className="absolute w-0 h-0 border-l-[6px] border-r-[6px] border-b-[8px] border-l-transparent border-r-transparent border-b-[#292929]"
-            style={{
-              top: "-8px",
-              left: "50%",
-              transform: "translateX(-50%)",
-            }}
-          />
+      <Tooltip
+        id="schedule-payment-tooltip"
+        clickable
+        style={{
+          zIndex: 20,
+          borderRadius: "12px",
+          padding: "0",
+        }}
+        border="none"
+        opacity={1}
+        render={({ content }) => {
+          if (!content) return null;
+          const transactionId = content;
+          const transaction = transactions.find(t => t.id === transactionId);
+          if (!transaction) return null;
 
-          <div className="pointer-events-auto" onMouseDown={e => e.stopPropagation()} data-tooltip="true">
+          const getStatusText = () => {
+            switch (transaction.status) {
+              case TransactionStatus.CONSUMED:
+                return "Completed";
+              case TransactionStatus.PENDING:
+                return "In Progress";
+              case TransactionStatus.RECALLED:
+                return "Cancelled";
+              case "ready_to_claim":
+                return "Pending Claim";
+              default:
+                return "Unknown";
+            }
+          };
+
+          return (
             <SchedulePaymentTooltip
-              statusText={activeTransactionId ? "In Progress" : "Pending"}
-              sentText={`${transactions.find(t => t.id === activeTransactionId)?.amount} ${currency}`}
-              dateTimeText={transactions.find(t => t.id === activeTransactionId)?.date || ""}
-              balanceText={(activeTransactionId && transactions.find(t => t.id === activeTransactionId)?.amount) || "0"}
-              remainingTimeText={
-                activeTransactionId
-                  ? formatRemainingTime(transactions.find(t => t.id === activeTransactionId)?.date || "")
-                  : remainingTime
+              statusText={getStatusText()}
+              sentText={`${transaction.amount} ${currency}`}
+              dateTimeText={transaction.date || ""}
+              balanceText={transaction.amount || "0"}
+              remainingTimeText={formatRemainingTime(transaction.date || "")}
+              disabledCancel={
+                transaction.status === TransactionStatus.CONSUMED || transaction.status === TransactionStatus.RECALLED
               }
               onCancel={() => {
                 openModal<CancelPaymentProps>(MODAL_IDS.CANCEL_PAYMENT, {
                   onCancel: async () => {
                     toast.loading("Cancelling payment...");
                     try {
-                      const recallingNote = transactions.find(t => t.id === activeTransactionId);
+                      const recallingNote = transaction;
+                      console.log("🚀 ~ recallingNote:", recallingNote);
 
-                      if (!recallingNote) throw new Error("Recalling note not found");
+                      if (!recallingNote || !recallingNote.noteId) throw new Error("Recalling note not found");
 
                       const txId = await consumeNoteByID(accountId, recallingNote.noteId);
                       // recall on server
@@ -683,22 +500,21 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
                         ],
                         txId: txId,
                       });
+
                       toast.dismiss();
                       toast.success("Payment cancelled successfully");
                     } catch (error) {
                       console.error("Error cancelling payment:", error);
                       toast.dismiss();
                       toast.error("Failed to cancel payment");
-                    } finally {
-                      toast.dismiss();
                     }
                   },
                 });
               }}
             />
-          </div>
-        </div>
-      )}
+          );
+        }}
+      />
     </div>
   );
 };

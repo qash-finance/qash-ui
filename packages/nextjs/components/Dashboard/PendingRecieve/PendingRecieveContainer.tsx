@@ -19,13 +19,13 @@ import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
-import useConsumePublicNotes from "@/hooks/server/useConsumePublicNotes";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
+import { useConsumePublicNotes } from "@/services/api/transaction";
 
 const HeaderColumns = ["Amount", "From", "Action"];
 

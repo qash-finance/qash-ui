@@ -9,8 +9,7 @@ export type SchedulePaymentTooltipProps = {
   balanceText: string; // e.g. "2 000 BTC"
   remainingTimeText: string; // e.g. "00:30:25"
   onCancel?: () => void;
-  showCancel?: boolean;
-  className?: string;
+  disabledCancel?: boolean;
 };
 
 const SchedulePaymentTooltip: React.FC<SchedulePaymentTooltipProps> = ({
@@ -19,11 +18,11 @@ const SchedulePaymentTooltip: React.FC<SchedulePaymentTooltipProps> = ({
   dateTimeText,
   balanceText,
   remainingTimeText,
+  disabledCancel,
   onCancel,
-  className = "",
 }) => {
   return (
-    <div className={`bg-[#292929] relative rounded-xl ${className} w-[390px]`}>
+    <div className={`bg-[#292929] relative rounded-xl w-[390px]`}>
       <div className="flex flex-col gap-2.5 p-3">
         {/* Row: Status + Cancel */}
         <div className="flex items-center justify-between w-full">
@@ -37,6 +36,7 @@ const SchedulePaymentTooltip: React.FC<SchedulePaymentTooltipProps> = ({
             type="accept"
             onClick={onCancel}
             className="bg-[#1E8FFF] hover:bg-[#1E8FFF]/80 rounded-full h-[25px]"
+            disabled={disabledCancel}
           />
         </div>
 
