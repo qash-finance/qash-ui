@@ -753,7 +753,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
             buttonType="submit"
             type="neutral"
             className="w-[30%] h-10 mt-2"
-            disabled={isSending}
+            disabled={isSending || schedulePayment.times !== undefined}
             onClick={() => setIsSubmittingAsBatch(true)}
           />
           <ActionButton

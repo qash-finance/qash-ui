@@ -4,8 +4,9 @@ import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { UITransaction } from "@/services/store/transaction";
 import { QASH_TOKEN_DECIMALS, QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 
-const COLUMN_GAP = 18; // Gap between chart columns in pixels
+const COLUMN_GAP = 10; // Gap between chart columns in pixels
 
 const TimeRangeDropdown: React.FC<{ timeRange: string; onTimeRangeChange: (range: string) => void }> = ({
   timeRange,
@@ -69,9 +70,23 @@ const SpendingAverageChart = () => {
   const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const transactions = useTransactionStore(state => state.transactions);
+  const blockNumber = useMidenSdkStore(state => state.blockNum);
 
-  // Calculate transaction statistics based on time range
+  // Calculate transaction statistics based on time range and block numbers
   const transactionStats = useMemo(() => {
+    if (!blockNumber) {
+      return {
+        totalIncoming: 0,
+        totalExpense: 0,
+        avgIncoming: 0,
+        avgExpense: 0,
+        incomingCount: 0,
+        expenseCount: 0,
+        totalTransactions: 0,
+        dailyData: [],
+      };
+    }
+
     const now = new Date();
     let daysAgo: number;
 
@@ -86,74 +101,115 @@ const SpendingAverageChart = () => {
         daysAgo = 5;
     }
 
-    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    // Calculate block range based on 5-second average block time
+    const secondsPerDay = 24 * 60 * 60; // 86400 seconds per day
+    const blocksPerDay = secondsPerDay / 5; // 17280 blocks per day (assuming 5 second block time)
+    const blocksInTimeRange = Math.floor(blocksPerDay * daysAgo);
+    const cutoffBlockNumber = blockNumber - blocksInTimeRange;
 
-    // Filter transactions by date (using block number as proxy for time)
+    // Filter transactions by block number range
     const filteredTransactions = transactions.filter(transaction => {
-      const blockNumber = parseInt(transaction.blockNumber);
-      // Assuming block numbers are recent and represent recent transactions
-      // In a real implementation, you'd want to map block numbers to actual timestamps
-      return blockNumber > 0; // For now, include all transactions
+      const txBlockNumber = parseInt(transaction.blockNumber);
+      return txBlockNumber >= cutoffBlockNumber && txBlockNumber <= blockNumber;
     });
 
-    // Calculate totals and averages
-    let totalIncoming = BigInt(0);
-    let totalExpense = BigInt(0);
-    let incomingCount = 0;
-    let expenseCount = 0;
+    // Calculate daily breakdown
+    const dailyData: Array<{
+      date: Date;
+      day: string;
+      income: number;
+      expense: number;
+      incomingCount: number;
+      expenseCount: number;
+    }> = [];
 
-    filteredTransactions.forEach(transaction => {
-      const assets = transaction.assets.filter(asset => asset.assetId === QASH_TOKEN_ADDRESS);
-
-      if (transaction.type === "Incoming" || transaction.type === "Faucet") {
-        totalIncoming += assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
-        incomingCount++;
-      } else if (transaction.type === "Outgoing") {
-        totalExpense += assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
-        expenseCount++;
-      }
-    });
-
-    const avgIncoming = incomingCount > 0 ? Number(totalIncoming) / 10 ** QASH_TOKEN_DECIMALS / incomingCount : 0;
-    const avgExpense = expenseCount > 0 ? Number(totalExpense) / 10 ** QASH_TOKEN_DECIMALS / expenseCount : 0;
-
-    return {
-      totalIncoming: Number(totalIncoming) / 10 ** QASH_TOKEN_DECIMALS,
-      totalExpense: Number(totalExpense),
-      avgIncoming: avgIncoming,
-      avgExpense: avgExpense,
-      incomingCount,
-      expenseCount,
-      totalTransactions: filteredTransactions.length,
-    };
-  }, [transactions, timeRange]);
-
-  // Generate chart data based on real transaction data
-  const chartData = useMemo(() => {
-    // Calculate the actual last 5 or 7 days from current date
-    const today = new Date();
-    const days = [];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    for (let i = timeRange === "Last 5 days" ? 4 : 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      days.push({
-        date: date,
+    for (let i = daysAgo - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+
+      // Calculate block range for this specific day
+      const dayStartBlock = blockNumber - Math.floor(blocksPerDay * (i + 1));
+      const dayEndBlock = blockNumber - Math.floor(blocksPerDay * i);
+
+      // Filter transactions for this day
+      const dayTransactions = filteredTransactions.filter(transaction => {
+        const txBlockNumber = parseInt(transaction.blockNumber);
+        return txBlockNumber >= dayStartBlock && txBlockNumber < dayEndBlock;
+      });
+
+      let dayIncoming = BigInt(0);
+      let dayExpense = BigInt(0);
+      let dayIncomingCount = 0;
+      let dayExpenseCount = 0;
+
+      dayTransactions.forEach(transaction => {
+        const assets = transaction.assets.filter(asset => asset.assetId === QASH_TOKEN_ADDRESS);
+        const assetAmount = assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
+
+        if (transaction.type === "Incoming" || transaction.type === "Faucet") {
+          dayIncoming += assetAmount;
+          dayIncomingCount++;
+        } else if (transaction.type === "Outgoing") {
+          dayExpense += assetAmount;
+          dayExpenseCount++;
+        }
+      });
+
+      dailyData.push({
+        date,
         day: dayNames[date.getDay()],
+        income: Number(dayIncoming) / 10 ** QASH_TOKEN_DECIMALS,
+        expense: Number(dayExpense) / 10 ** QASH_TOKEN_DECIMALS,
+        incomingCount: dayIncomingCount,
+        expenseCount: dayExpenseCount,
       });
     }
 
-    const maxValue = Math.max(transactionStats.avgIncoming, transactionStats.avgExpense);
+    // Calculate totals and averages
+    const totalIncoming = dailyData.reduce((sum, day) => sum + day.income, 0);
+    const totalExpense = dailyData.reduce((sum, day) => sum + day.expense, 0);
+    const totalIncomingCount = dailyData.reduce((sum, day) => sum + day.incomingCount, 0);
+    const totalExpenseCount = dailyData.reduce((sum, day) => sum + day.expenseCount, 0);
+
+    const avgIncoming = totalIncomingCount > 0 ? totalIncoming / totalIncomingCount : 0;
+    const avgExpense = totalExpenseCount > 0 ? totalExpense / totalExpenseCount : 0;
+
+    return {
+      totalIncoming,
+      totalExpense,
+      avgIncoming,
+      avgExpense,
+      incomingCount: totalIncomingCount,
+      expenseCount: totalExpenseCount,
+      totalTransactions: filteredTransactions.length,
+      dailyData,
+    };
+  }, [transactions, timeRange, blockNumber]);
+
+  // Generate chart data based on daily transaction data
+  const chartData = useMemo(() => {
+    if (!transactionStats.dailyData.length) {
+      return [];
+    }
+
+    // Find the maximum value across all days for proper scaling
+    const maxIncome = Math.max(...transactionStats.dailyData.map(day => day.income));
+    const maxExpense = Math.max(...transactionStats.dailyData.map(day => day.expense));
+    const maxValue = Math.max(maxIncome, maxExpense);
     const scaleFactor = maxValue > 0 ? 100 / maxValue : 1; // Scale to max 100px height
 
-    return days.map((dayInfo, index) => ({
-      ...dayInfo,
-      income: Math.min(100, transactionStats.avgIncoming * scaleFactor),
-      expense: Math.min(100, transactionStats.avgExpense * scaleFactor),
+    return transactionStats.dailyData.map((dayData, index) => ({
+      date: dayData.date,
+      day: dayData.day,
+      income: Math.min(100, dayData.income * scaleFactor),
+      expense: Math.min(100, dayData.expense * scaleFactor),
+      rawIncome: dayData.income, // Keep raw values for tooltip
+      rawExpense: dayData.expense,
       opacity: hoveredColumn === index ? 1 : 0.3, // Highlight hovered column
     }));
-  }, [transactionStats, hoveredColumn, timeRange]);
+  }, [transactionStats, hoveredColumn]);
 
   const handleColumnHover = (index: number, event: React.MouseEvent) => {
     setHoveredColumn(index);
@@ -173,7 +229,7 @@ const SpendingAverageChart = () => {
       <div className="flex items-start justify-between p-4 w-full">
         <div className="flex flex-col gap-1 items-start w-[177px]">
           <div className="flex items-center gap-1 w-full">
-            <img src="/wallet-analytics/bar-chart-icon.gif" alt="chart" className="w-8 h-8" />
+            <img src="/wallet-analytics/bar-chart-icon.gif" alt="chart" className="w-5 h-5" />
             <span className="font-normal text-white text-sm">Spending Average</span>
           </div>
           <div className="flex gap-3 ml-2">
@@ -252,28 +308,28 @@ const SpendingAverageChart = () => {
       </div>
 
       {/* Chart Legend - Follows mouse position */}
-      {hoveredColumn !== null && (
+      {hoveredColumn !== null && chartData[hoveredColumn] && (
         <div
-          className="fixed bg-[#0c0c0c] flex flex-col gap-4 items-start justify-center p-3 rounded-md w-28 z-50 pointer-events-none"
+          className="fixed bg-[#0c0c0c] flex flex-col gap-4 items-start justify-center p-3 rounded-md w-30 z-50 pointer-events-none"
           style={{
             left: mousePosition.x + 15,
             top: mousePosition.y - 80,
           }}
         >
           <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">
-            {chartData[hoveredColumn]?.day}
+            {chartData[hoveredColumn]?.day}, {chartData[hoveredColumn]?.date?.toLocaleDateString("en-GB")}
           </span>
           <div className="flex flex-col gap-2 items-start">
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-4 bg-[#00e595] rounded-full" />
               <span className="font-normal text-white text-sm tracking-[0.5px]">
-                ${transactionStats.avgIncoming.toFixed(2)}
+                ${(chartData[hoveredColumn]?.rawIncome || 0).toFixed(2)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="bg-[#fc2bad] h-1.5 rounded-full w-4" />
               <span className="font-normal text-white text-sm tracking-[0.5px]">
-                ${transactionStats.avgExpense.toFixed(2)}
+                ${(chartData[hoveredColumn]?.rawExpense || 0).toFixed(2)}
               </span>
             </div>
           </div>

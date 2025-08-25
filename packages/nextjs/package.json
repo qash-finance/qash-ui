@@ -31,8 +31,10 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.60.0",
     "react-hot-toast": "^2.5.2",
+    "react-is": "^19.1.1",
     "react-loading-skeleton": "^3.5.0",
     "react-tooltip": "^5.29.1",
+    "recharts": "^3.1.0",
     "viem": "2.x",
     "wagmi": "^2.16.0",
     "zustand": "^5.0.6"
@@ -43,6 +45,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-is": "^19",
     "@typescript-eslint/parser": "^8.31.0",
     "prettier": "^3.5.3",
     "tailwindcss": "^4",

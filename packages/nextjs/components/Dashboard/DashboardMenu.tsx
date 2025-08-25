@@ -80,19 +80,19 @@ const DashboardMenu: React.FC<DashboardMenuProps> = () => {
     () => [
       {
         icon: "/sidebar/dashboard/wallet-analytics.gif",
-        label: "Wallet Analytics",
+        label: "Overview",
         href: "/dashboard/wallet-analytics",
         isActive: activeSection === "wallet-analytics",
       },
       {
         icon: "/sidebar/dashboard/pending-request.gif",
-        label: "Pending Request",
+        label: "Payment Request",
         href: "/dashboard/pending-request",
         isActive: activeSection === "pending-request",
       },
       {
         icon: "/sidebar/dashboard/pending-receive.gif",
-        label: "Pending Receive",
+        label: "Receive",
         href: "/dashboard/pending-receive",
         isActive: activeSection === "pending-receive",
       },
@@ -108,12 +108,12 @@ const DashboardMenu: React.FC<DashboardMenuProps> = () => {
         href: "/dashboard/schedule-payment",
         isActive: activeSection === "schedule-payment",
       },
-      {
-        icon: "/sidebar/dashboard/stream-receive.gif",
-        label: "Stream Receive",
-        href: "/dashboard/stream-receive",
-        isActive: activeSection === "stream-receive",
-      },
+      // {
+      //   icon: "/sidebar/dashboard/stream-receive.gif",
+      //   label: "Stream Receive",
+      //   href: "/dashboard/stream-receive",
+      //   isActive: activeSection === "stream-receive",
+      // },
     ],
     [activeSection],
   );

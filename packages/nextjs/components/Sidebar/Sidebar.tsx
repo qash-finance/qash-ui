@@ -141,7 +141,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: mini
           {/* Logo */}
           <header
             className={`flex max-w-full leading-6 justify-items-start gap-2 cursor-pointer items-center`}
-            onClick={() => router.push("/dashboard/pending-receive")}
+            onClick={() => router.push("/dashboard/wallet-analytics")}
           >
             <div
               className="flex items-center justify-center"

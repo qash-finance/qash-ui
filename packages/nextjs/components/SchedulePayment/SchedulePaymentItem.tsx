@@ -12,6 +12,8 @@ import { useAccountContext } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
 import { useRecallBatch } from "@/services/api/transaction";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import _ from "lodash";
 
 const PADDING = "40px";
 
@@ -34,6 +36,7 @@ export interface SchedulePaymentItemProps {
     label: string;
     progress?: number; // 0-100, for current status circle
     amount?: string;
+    timelockHeight?: number; // Block height when transaction becomes claimable
   }>;
   onClick?: () => void;
   onHover?: () => void;
@@ -125,6 +128,42 @@ const getNextClaimableDate = (
   return activeTransaction.date;
 };
 
+// Function to calculate balance: total of all transaction amounts minus consumed ones
+const calculateRemainingBalance = (transactions: Array<any>): string => {
+  if (!transactions || transactions.length === 0) return "0";
+
+  const totalAmount = transactions.reduce((sum, tx) => {
+    const amount = tx.assets?.[0]?.amount || tx.amount || "0";
+    return sum + parseFloat(amount);
+  }, 0);
+
+  const consumedAmount = transactions.reduce((sum, tx) => {
+    if (tx.status === TransactionStatus.CONSUMED) {
+      const amount = tx.assets?.[0]?.amount || tx.amount || "0";
+      return sum + parseFloat(amount);
+    }
+    return sum;
+  }, 0);
+
+  const balance = totalAmount - consumedAmount;
+  return balance.toString();
+};
+
+const getStatusText = (status: TransactionStatus | "ready_to_claim") => {
+  switch (status) {
+    case TransactionStatus.CONSUMED:
+      return "Completed";
+    case TransactionStatus.PENDING:
+      return "In Progress";
+    case TransactionStatus.RECALLED:
+      return "Cancelled";
+    case "ready_to_claim":
+      return "Pending Claim";
+    default:
+      return "Unknown";
+  }
+};
+
 const StatusIcon: React.FC<{
   status: TransactionStatus | "ready_to_claim";
   progress?: number;
@@ -208,10 +247,11 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
   onClick,
   onHover,
 }) => {
-  const { mutateAsync: recallBatch } = useRecallBatch();
-  const [remainingTime, setRemainingTime] = useState<string>("00:00:00");
   const { accountId } = useAccountContext();
   const { openModal } = useModal();
+  const { mutateAsync: recallBatch } = useRecallBatch();
+  const blockNum = useMidenSdkStore(state => state.blockNum);
+  const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate claim progress if not provided
@@ -454,38 +494,29 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
           const transaction = transactions.find(t => t.id === transactionId);
           if (!transaction) return null;
 
-          const getStatusText = () => {
-            switch (transaction.status) {
-              case TransactionStatus.CONSUMED:
-                return "Completed";
-              case TransactionStatus.PENDING:
-                return "In Progress";
-              case TransactionStatus.RECALLED:
-                return "Cancelled";
-              case "ready_to_claim":
-                return "Pending Claim";
-              default:
-                return "Unknown";
-            }
-          };
+          // Check if cancel should be disabled due to timelock
+          const isTimelocked =
+            !_.isNil(transaction.timelockHeight) && !_.isNil(blockNum) && blockNum < transaction.timelockHeight;
+
+          const disabledCancel =
+            transaction.status === TransactionStatus.CONSUMED ||
+            transaction.status === TransactionStatus.RECALLED ||
+            isTimelocked;
 
           return (
             <SchedulePaymentTooltip
-              statusText={getStatusText()}
+              statusText={getStatusText(transaction.status)}
               sentText={`${transaction.amount} ${currency}`}
               dateTimeText={transaction.date || ""}
-              balanceText={transaction.amount || "0"}
+              balanceText={`${calculateRemainingBalance(transactions)} ${currency}`}
               remainingTimeText={formatRemainingTime(transaction.date || "")}
-              disabledCancel={
-                transaction.status === TransactionStatus.CONSUMED || transaction.status === TransactionStatus.RECALLED
-              }
+              disabledCancel={disabledCancel}
               onCancel={() => {
                 openModal<CancelPaymentProps>(MODAL_IDS.CANCEL_PAYMENT, {
                   onCancel: async () => {
                     toast.loading("Cancelling payment...");
                     try {
                       const recallingNote = transaction;
-                      console.log("🚀 ~ recallingNote:", recallingNote);
 
                       if (!recallingNote || !recallingNote.noteId) throw new Error("Recalling note not found");
 

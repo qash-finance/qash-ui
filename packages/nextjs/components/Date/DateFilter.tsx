@@ -9,7 +9,6 @@ interface DateFilterProps {
 }
 
 const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRangeChange }) => {
-  const [selected, setSelected] = useState<DateRange | undefined>(defaultSelected);
   return (
     <DayPicker
       classNames={{
@@ -21,7 +20,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
         range_end: `bg-[#113355] rounded-tr-full rounded-br-full`,
         range_start: `bg-[#113355] rounded-tl-full rounded-bl-full`,
       }}
-      disabled={{ before: new Date(new Date().setDate(new Date().getDate() + 1)) }}
+      disabled={{ after: new Date() }}
       animate
       styles={{
         root: {
@@ -42,9 +41,8 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
       }}
       navLayout="around"
       mode="range"
-      selected={selected}
+      selected={defaultSelected}
       onSelect={date => {
-        setSelected(date);
         onSelect?.(date?.from);
         onRangeChange?.(date);
       }}
@@ -53,13 +51,17 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
           const { day, modifiers, ...buttonProps } = props;
           const dayDate = new Date(day.date);
           const isSelected =
-            !!selected &&
-            (selected.from?.toDateString() === dayDate.toDateString() ||
-              selected.to?.toDateString() === dayDate.toDateString());
+            !!defaultSelected &&
+            (defaultSelected.from?.toDateString() === dayDate.toDateString() ||
+              defaultSelected.to?.toDateString() === dayDate.toDateString());
 
           // Check if day is in the middle of the range
           const isInRange =
-            !!selected && selected.from && selected.to && dayDate > selected.from && dayDate < selected.to;
+            !!defaultSelected &&
+            defaultSelected.from &&
+            defaultSelected.to &&
+            dayDate > defaultSelected.from &&
+            dayDate < defaultSelected.to;
 
           const selectedStyle = isSelected
             ? {

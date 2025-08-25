@@ -11,8 +11,178 @@ import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { ConsumableNote, TransactionStatus } from "@/types/transaction";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
-const UpcomingPaymentHeader = () => {
+const UpcomingPaymentHeader = ({ schedulePayments }: { schedulePayments: any[] | undefined }) => {
+  // Find the next upcoming payment
+  const getNextUpcomingPayment = () => {
+    if (!schedulePayments || schedulePayments.length === 0) return null;
+
+    const now = new Date();
+    const upcomingPayments: Array<{
+      payment: any;
+      nextDate: Date;
+      amount: number;
+    }> = [];
+
+    schedulePayments.forEach(payment => {
+      if (!payment.transactions || payment.transactions.length === 0) return;
+
+      // Find the next unclaimed transaction for this payment
+      const nextTransaction = payment.transactions.find((tx: any) => {
+        if (tx.status === "recalled" || tx.status === "consumed") return false;
+
+        // Calculate the scheduled date for this transaction
+        const creationDate = new Date(payment.createdAt);
+        creationDate.setHours(0, 0, 0, 0);
+
+        let scheduledDate = new Date(creationDate);
+        const txIndex = payment.transactions.indexOf(tx);
+
+        switch (payment.frequency) {
+          case "DAILY":
+            scheduledDate.setDate(creationDate.getDate() + txIndex + 1);
+            break;
+          case "WEEKLY":
+            scheduledDate.setDate(creationDate.getDate() + (txIndex + 1) * 7);
+            break;
+          case "MONTHLY":
+            scheduledDate.setMonth(creationDate.getMonth() + txIndex + 1);
+            break;
+          case "YEARLY":
+            scheduledDate.setFullYear(creationDate.getFullYear() + txIndex + 1);
+            break;
+          default:
+            scheduledDate.setDate(creationDate.getDate() + txIndex + 1);
+        }
+
+        return scheduledDate > now;
+      });
+
+      if (nextTransaction) {
+        const creationDate = new Date(payment.createdAt);
+        creationDate.setHours(0, 0, 0, 0);
+
+        let scheduledDate = new Date(creationDate);
+        const txIndex = payment.transactions.indexOf(nextTransaction);
+
+        switch (payment.frequency) {
+          case "DAILY":
+            scheduledDate.setDate(creationDate.getDate() + txIndex + 1);
+            break;
+          case "WEEKLY":
+            scheduledDate.setDate(creationDate.getDate() + (txIndex + 1) * 7);
+            break;
+          case "MONTHLY":
+            scheduledDate.setMonth(creationDate.getMonth() + txIndex + 1);
+            break;
+          case "YEARLY":
+            scheduledDate.setFullYear(creationDate.getFullYear() + txIndex + 1);
+            break;
+          default:
+            scheduledDate.setDate(creationDate.getDate() + txIndex + 1);
+        }
+
+        upcomingPayments.push({
+          payment,
+          nextDate: scheduledDate,
+          amount: parseFloat(nextTransaction.assets?.[0]?.amount) || 0,
+        });
+      }
+    });
+
+    if (upcomingPayments.length === 0) return null;
+
+    // Group payments by date and find the one with largest amount for each date
+    const paymentsByDate = upcomingPayments.reduce(
+      (acc, item) => {
+        const dateKey = item.nextDate.toDateString();
+        if (!acc[dateKey] || acc[dateKey].amount < item.amount) {
+          acc[dateKey] = item;
+        }
+        return acc;
+      },
+      {} as Record<string, (typeof upcomingPayments)[0]>,
+    );
+
+    // Find the earliest date
+    const earliestDate = Object.keys(paymentsByDate).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
+
+    const result = earliestDate ? paymentsByDate[earliestDate] : null;
+
+    return result;
+  };
+
+  const nextPayment = getNextUpcomingPayment();
+
+  if (!nextPayment) {
+    return (
+      <div className="flex flex-col justify-center items-center flex-1 h-fit">
+        <article
+          className="relative flex-1 text-white rounded-xl bg-[#1E1E1E] min-w-60 w-full"
+          style={{
+            backgroundImage: "url('/schedule-payment/upcoming-payment-background.svg')",
+            backgroundSize: "cover",
+            backgroundPosition: "0px -10px",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div
+            className="flex text-lg font-normal font-['Barlow'] rounded-tl-xl w-[45%] justify-center items-center"
+            style={{
+              backgroundImage: "url('/schedule-payment/header-container.svg')",
+              backgroundSize: "100%",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <span className="text-black font-normal">Next upcoming payment</span>
+          </div>
+          <div
+            className="rounded-[10px] flex justify-center items-center h-[90px] m-2 bg-black"
+            style={{
+              backgroundImage: "url('/schedule-payment/header-inner-background.svg')",
+              backgroundSize: "contain",
+              backgroundPosition: "left",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <div className="text-center text-gray-400">
+              <span className="font-['Barlow'] text-sm">No upcoming payments</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    );
+  }
+
+  const { payment, nextDate, amount } = nextPayment;
+
+  // Safely extract recipient address with fallback
+  const recipientAddress =
+    payment.payee && payment.payee.length > 14
+      ? `${payment.payee.slice(0, 8)}...${payment.payee.slice(-6)}`
+      : payment.payee || "Unknown";
+
+  const tokenSymbol = payment.tokens?.[0]?.metadata?.symbol || "QASH";
+
+  // Safely format date with fallback
+  let formattedDate = "Unknown";
+  let formattedTime = "Unknown";
+
+  try {
+    formattedDate = nextDate.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    formattedTime = nextDate.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+  }
+
   return (
     <div className="flex flex-col justify-center items-center flex-1 h-fit">
       <article
@@ -48,18 +218,20 @@ const UpcomingPaymentHeader = () => {
             {/* Recipient Section */}
             <div className="flex items-center gap-3 z-10">
               {/* Avatar */}
-              <div
-                className="w-10 h-10 rounded-full bg-center bg-cover"
-                style={{
-                  backgroundImage: `url('/gift/flower.png')`,
-                  backgroundColor: "#06ffb4",
+              <img
+                src={payment.payee ? blo(turnBechToHex(payment.payee)) : "/gift/flower.png"}
+                alt="Recipient"
+                className="w-10 h-10 rounded-full bg-cover"
+                onError={e => {
+                  // Fallback to default avatar if blo fails
+                  (e.target as HTMLImageElement).src = "/gift/flower.png";
                 }}
               />
 
               {/* Recipient Info */}
               <div className="flex flex-col gap-1 text-sm">
                 <span className="font-['Barlow'] text-[#989898] leading-5">Recipient</span>
-                <span className="font-['Barlow'] font-medium text-white leading-5">0x23C...11g63</span>
+                <span className="font-['Barlow'] font-medium text-white leading-5">{recipientAddress}</span>
               </div>
             </div>
 
@@ -67,14 +239,30 @@ const UpcomingPaymentHeader = () => {
             <div className="flex flex-col gap-2 items-end z-10">
               {/* Amount */}
               <div className="flex items-center gap-2">
-                <img alt="QASH" className="w-5 h-5" src="/token/qash.svg" />
-                <span className="font-repetition-scrolling text-white text-2xl tracking-[2.16px]">5,045.09</span>
+                <img
+                  alt={tokenSymbol}
+                  className="w-5 h-5"
+                  src={
+                    payment.tokens?.[0]?.faucetId === QASH_TOKEN_ADDRESS
+                      ? "/token/qash.svg"
+                      : `/token/${tokenSymbol.toLowerCase()}.svg`
+                  }
+                  onError={e => {
+                    // Fallback to any-token.svg if the specific token icon doesn't exist
+                    (e.target as HTMLImageElement).src = "/token/any-token.svg";
+                  }}
+                />
+                <span className="font-repetition-scrolling text-white text-2xl tracking-[2.16px]">
+                  {isNaN(amount)
+                    ? "0.00"
+                    : amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
               {/* Date Badge */}
               <div className="bg-[#06ffb4] flex items-center px-3 py-0.5 rounded shadow-[1px_1px_0px_0px_#ffffff]">
                 <span className="font-['Barlow'] font-medium text-[#292929] text-xs leading-[18px]">
-                  01/08/2025, 09:41
+                  {formattedDate}, {formattedTime}
                 </span>
               </div>
             </div>
@@ -289,6 +477,7 @@ export const SchedulePaymentContainer = () => {
               label: `Txn ${index + 1}`,
               progress: 0, // Progress will be calculated by the main progress bar
               amount: tx.assets[0].amount,
+              timelockHeight: tx.timelockHeight,
             };
           }
 
@@ -300,6 +489,7 @@ export const SchedulePaymentContainer = () => {
             label: `Txn ${index + 1}`,
             progress: 0, // Progress will be calculated by the main progress bar
             amount: tx.assets[0].amount,
+            timelockHeight: tx.timelockHeight,
           };
 
           return result;
@@ -350,14 +540,21 @@ export const SchedulePaymentContainer = () => {
   return (
     <div className="flex flex-col justify-start gap-2 p-2 w-full h-full overflow-hidden overflow-y-auto">
       <div className="flex flex-row gap-2">
-        <UpcomingPaymentHeader />
+        <UpcomingPaymentHeader schedulePayments={schedulePayments} />
         <LockedAmountHeader schedulePayments={schedulePayments} />
+      </div>
+
+      <div className="flex w-full">
+        <span className="text-white">All Recurring Transfers ({schedulePayments?.length})</span>
       </div>
 
       {schedulePayments && schedulePayments.length > 0 ? (
         <>{renderSchedulePaymentItem()}</>
       ) : (
-        <div className="flex items-center justify-center h-32 text-gray-400">No schedule payments found</div>
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <img src="/schedule-payment/empty-schedule-payment-icon.svg" alt="Empty State" className="scale-100" />
+          <span className="text-white">You haven’t created any transactions yet.</span>
+        </div>
       )}
     </div>
   );

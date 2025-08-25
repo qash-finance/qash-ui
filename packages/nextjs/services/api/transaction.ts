@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConsumableNote, ConsumePublicTransactionDto, RecallRequestDto, SendTransactionDto } from "@/types/transaction";
 import { apiServerWithAuth } from "./index";
 
@@ -76,6 +76,22 @@ const useRecallBatch = () => {
   });
 };
 
+const useTopInteractedWallets = () => {
+  return useQuery<
+    {
+      walletAddress: string;
+      accumulatedAmount: number;
+      transactionCount: number;
+      rank: number;
+    }[]
+  >({
+    queryKey: ["top-interacted-wallets"],
+    queryFn: async () => {
+      return apiServerWithAuth.getData("/transactions/top-interacted-wallets");
+    },
+  });
+};
+
 export {
   getConsumable,
   getRecallable,
@@ -83,6 +99,7 @@ export {
   sendBatchTransaction,
   consumeTransactions,
   consumePublicTransactions,
+  useTopInteractedWallets,
   useRecallBatch,
   useConsumePublicNotes,
 };

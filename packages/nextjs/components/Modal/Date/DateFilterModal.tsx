@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import DateFilter from "../../Date/DateFilter";
 import BaseModal from "../BaseModal";
@@ -7,6 +7,7 @@ import { ActionButton } from "@/components/Common/ActionButton";
 import toast from "react-hot-toast";
 import { DateFilterModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
+import _ from "lodash";
 
 const formatDate = (date: Date | undefined) => {
   if (!date) return "";
@@ -31,11 +32,16 @@ export function DateFilterModal({
         from: selected.from,
         to: selected.to,
       });
+      onClose();
     } else {
       toast.error("Start date must be before end date");
       return;
     }
   };
+
+  useEffect(() => {
+    setSelected(defaultSelected);
+  }, [defaultSelected]);
 
   if (!isOpen) return null;
 
@@ -43,7 +49,7 @@ export function DateFilterModal({
     <BaseModal isOpen={isOpen} onClose={onClose} title="Choose date" icon="/modal/coin-icon.gif" zIndex={zIndex}>
       <div className="flex flex-col gap-1 p-1.5 bg-[#1E1E1E] rounded-b-2xl ">
         <DateFilter
-          defaultSelected={defaultSelected}
+          defaultSelected={selected}
           onRangeChange={range => {
             setSelected(range);
           }}

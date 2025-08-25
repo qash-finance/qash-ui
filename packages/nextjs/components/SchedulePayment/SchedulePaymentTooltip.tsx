@@ -67,7 +67,7 @@ const SchedulePaymentTooltip: React.FC<SchedulePaymentTooltipProps> = ({
         </div>
 
         {/* Row: Next Schedule Date */}
-        <div className="flex items-center justify-between w-full">
+        {/* <div className="flex items-center justify-between w-full">
           <div className="flex flex-row gap-2 items-center text-[14px] tracking-[0.07px]">
             <span className="text-[#989898] leading-5">Next Schedule Date:</span>
           </div>
@@ -77,7 +77,7 @@ const SchedulePaymentTooltip: React.FC<SchedulePaymentTooltipProps> = ({
               2025-08-15 <span className="text-[#48B3FF]">(10 days left)</span>
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* bottom border accent to match Figma */}

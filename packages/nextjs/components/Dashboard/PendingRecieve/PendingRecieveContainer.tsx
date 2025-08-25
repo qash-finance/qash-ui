@@ -352,7 +352,7 @@ export const PendingRecieveContainer: React.FC = () => {
                   {consumableNotes?.length === 0 || !consumableNotes ? (
                     <Empty title="No pending receive" />
                   ) : (
-                    <table className="w-full min-w-[800px]">
+                    <table className="w-full">
                       <TableHeader
                         columns={HeaderColumns}
                         allChecked={isAllChecked || false}

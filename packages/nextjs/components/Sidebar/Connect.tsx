@@ -97,23 +97,23 @@ export const Connect = () => {
   }, [isConnected, walletAddress]);
 
   // Auto-deploy local authentication account and authenticate when wallet connects
-  useEffect(() => {
-    if (isConnected && walletAddress) {
-      const deployAndAuthenticate = async () => {
-        try {
-          // server side authentication
-          // generate local keypair for signing message
+  // useEffect(() => {
+  //   if (isConnected && walletAddress && !isAuthenticated) {
+  //     const deployAndAuthenticate = async () => {
+  //       try {
+  //         // server side authentication
+  //         // generate local keypair for signing message
 
-          // Then authenticate
-          if (!isAuthenticated) {
-            await connectWallet(walletAddress);
-          }
-        } catch (error) {}
-      };
+  //         // Then authenticate
+  //         if (!isAuthenticated) {
+  //           await connectWallet(walletAddress);
+  //         }
+  //       } catch (error) {}
+  //     };
 
-      deployAndAuthenticate();
-    }
-  }, [isConnected, walletAddress]);
+  //     deployAndAuthenticate();
+  //   }
+  // }, [isConnected, walletAddress, isAuthenticated]);
 
   // If connected and authenticated, render Account component
   if (isConnected && isAuthenticated) {

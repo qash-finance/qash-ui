@@ -21,7 +21,7 @@ export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<Connec
   // **************** Custom Hooks *******************
   const { openModal } = useModal();
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
-  const { connectWallet: authenticateWallet } = useWalletAuth();
+  const { connectWallet } = useWalletAuth();
   const { mutate: createGroup } = useCreateDefaultGroup();
   const router = useRouter();
   const pathname = usePathname();
@@ -118,7 +118,7 @@ export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<Connec
       setAccountId(accountId);
       // Authenticate the newly created wallet
       try {
-        await authenticateWallet(accountId);
+        await connectWallet(accountId);
         // Create default "Quick Share" group after successful authentication
         await createQuickShareGroup();
       } catch (error) {
@@ -277,7 +277,7 @@ export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<Connec
                           const connectedAddress = await handleConnectExisting(account);
                           if (connectedAddress) {
                             // Then authenticate with the selected account
-                            await authenticateWallet(connectedAddress);
+                            await connectWallet(connectedAddress);
                             onClose();
                           }
                         } catch (error) {

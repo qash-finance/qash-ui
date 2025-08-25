@@ -1,7 +1,8 @@
 "use client";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import React, { useState } from "react";
-import { DateFilterModalProps, MODAL_IDS, TransactionFilterModalProps } from "@/types/modal";
+import React, { useState, useMemo, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { DateFilterModalProps, MODAL_IDS } from "@/types/modal";
 import { DateRange } from "react-day-picker";
 import { ActionButton } from "@/components/Common/ActionButton";
 import toast from "react-hot-toast";
@@ -9,16 +10,82 @@ import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { UITransaction } from "@/services/store/transaction";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { formatAddress } from "@/services/utils/miden/address";
 import { QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 
+type SearchFormData = {
+  searchQuery: string;
+};
+
 const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (transaction: UITransaction) => void }) => {
   const { accountId, assets } = useAccount();
   const transactions = useTransactionStore(state => state.transactions);
+  const blockNumber = useMidenSdkStore(state => state.blockNum);
+  const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const { openModal } = useModal();
+
+  const { register, handleSubmit, setValue } = useForm<SearchFormData>({
+    defaultValues: {
+      searchQuery: "",
+    },
+  });
+
+  // Filter transactions by date range and search query
+  const processedTransactions = useMemo(() => {
+    let filtered = transactions;
+
+    // Apply date filter if date range is selected and blockNumber is available
+    if (selectedDateRange?.from && selectedDateRange?.to && blockNumber) {
+      const secondsPerDay = 24 * 60 * 60;
+      const blocksPerDay = secondsPerDay / 5; // 5-second block time
+      const currentDate = new Date();
+
+      // Use the same date calculation logic as the chart
+      // Convert selected dates to "days ago" from current date
+      const startDate = selectedDateRange.from;
+      const endDate = selectedDateRange.to;
+
+      // Calculate how many days ago each date is from current date
+      const daysAgoStartDate = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysAgoEndDate = Math.floor((currentDate.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Calculate block numbers using the same logic as the chart
+      // For each day, calculate the block range
+      const startBlockNumber = blockNumber - Math.floor(blocksPerDay * (daysAgoStartDate + 1));
+      const endBlockNumber = blockNumber - Math.floor(blocksPerDay * daysAgoEndDate);
+
+      filtered = filtered.filter(transaction => {
+        const txBlockNumber = parseInt(transaction.blockNumber);
+        const isInRange = txBlockNumber >= startBlockNumber && txBlockNumber <= endBlockNumber;
+
+        return isInRange;
+      });
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const queryLower = searchQuery.toLowerCase();
+      filtered = filtered.filter(transaction => {
+        if (transaction.id.toLowerCase().includes(queryLower)) return true;
+        if (transaction.sender.toLowerCase().includes(queryLower)) return true;
+        if (transaction.recipient.toLowerCase().includes(queryLower)) return true;
+        return false;
+      });
+    }
+
+    return filtered;
+  }, [transactions, selectedDateRange, searchQuery, blockNumber]);
+
+  // Update filteredTransactions when processedTransactions changes
+  useEffect(() => {
+    setFilteredTransactions(processedTransactions);
+  }, [processedTransactions]);
+
   const getTypeColor = (type: string) => {
     return "text-[#48b3ff]";
   };
@@ -71,6 +138,24 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
     );
   };
 
+  const onSubmit = (data: SearchFormData) => {
+    setSearchQuery(data.searchQuery);
+  };
+
+  const handleDateRangeSelect = (dateRange: DateRange | undefined) => {
+    setSelectedDateRange(dateRange);
+    if (dateRange?.from && dateRange?.to) {
+      toast.success(
+        `Filter applied: ${dateRange.from.toLocaleDateString("en-GB")} - ${dateRange.to.toLocaleDateString("en-GB")}`,
+      );
+    }
+  };
+
+  const clearDateFilter = () => {
+    setSelectedDateRange({ from: undefined, to: undefined });
+    toast.success("Date filter cleared");
+  };
+
   return (
     <div className="bg-[#1e1e1e] flex flex-col gap-1 flex-1 items-start min-h-px min-w-px overflow-hidden rounded-lg w-full pb-2">
       {/* Header */}
@@ -86,49 +171,56 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
         <div className="flex flex-row gap-6 items-center">
           {/* Search Bar */}
           <div className="flex flex-row gap-2 items-center">
-            <div className="bg-[#3d3d3d] flex flex-row gap-2 items-center pr-1 pl-3 py-1 rounded-lg w-[300px]">
-              <div className="flex flex-row gap-2 flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by hash or address"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="font-medium text-sm text-[rgba(255,255,255,0.4)] bg-transparent border-none outline-none w-full"
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      openModal<TransactionFilterModalProps>(MODAL_IDS.TRANSACTION_FILTER, {
-                        hash: searchQuery,
-                      });
-                      setSearchQuery("");
-                    }
-                  }}
-                />
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-row gap-2 items-center">
+              <div className="bg-[#3d3d3d] flex flex-row gap-2 items-center pr-1 pl-3 py-1 rounded-lg w-[300px]">
+                <div className="flex flex-row gap-2 flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search by hash or address"
+                    {...register("searchQuery", {
+                      onChange: e => {
+                        const value = e.target.value;
+                        // Auto-clear filter when input is empty
+                        if (!value.trim()) {
+                          setSearchQuery("");
+                        }
+                      },
+                    })}
+                    className="font-medium text-sm text-[rgba(255,255,255,0.4)] bg-transparent border-none outline-none w-full"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="bg-white flex flex-row gap-1.5 items-center rounded-lg w-6 h-6 justify-center cursor-pointer"
+                >
+                  <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
+                </button>
               </div>
-              <div
-                className="bg-white flex flex-row gap-1.5 items-center rounded-lg w-6 h-6 justify-center cursor-pointer"
-                onClick={() => {
-                  openModal<TransactionFilterModalProps>(MODAL_IDS.TRANSACTION_FILTER, {
-                    hash: searchQuery,
-                  });
-                  setSearchQuery("");
-                }}
-              >
-                <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
-              </div>
-            </div>
+            </form>
 
             {/* Filter Button */}
-            <div
-              className="bg-[#3d3d3d] overflow-hidden rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer"
-              onClick={() =>
-                openModal<DateFilterModalProps>(MODAL_IDS.DATE_FILTER, {
-                  onSelect: (date: DateRange | undefined) => {
-                    console.log(date);
-                  },
-                })
-              }
-            >
-              <img src="/wallet-analytics/setting-icon.gif" alt="filter" className="w-5 h-5" />
+            <div className="flex items-center gap-2">
+              <div
+                className={`overflow-hidden rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer bg-[#3d3d3d]`}
+                onClick={() =>
+                  openModal<DateFilterModalProps>(MODAL_IDS.DATE_FILTER, {
+                    defaultSelected: selectedDateRange,
+                    onSelect: handleDateRangeSelect,
+                  })
+                }
+              >
+                <img src="/wallet-analytics/setting-icon.gif" alt="filter" className="w-5 h-5" />
+              </div>
+
+              {/* Clear Filter Button - only show when date filter is active */}
+              {selectedDateRange?.from && selectedDateRange?.to && (
+                <button
+                  onClick={clearDateFilter}
+                  className=" text-[#ff6b6b] hover:text-white transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </div>
 
@@ -138,7 +230,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
             icon="/wallet-analytics/download-icon.svg"
             onClick={() => {}}
             type="neutral"
-            className="h-9"
+            className="h-9 !cursor-not-allowed"
           />
         </div>
       </div>
@@ -169,7 +261,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
 
       <div className="px-2 w-full cursor-pointer overflow-y-auto">
         {/* Transaction Rows */}
-        {transactions.map((transaction, index) => (
+        {filteredTransactions.map((transaction, index) => (
           <div
             key={index}
             className="grid grid-cols-12 gap-2.5 items-center px-2 py-0 rounded-lg w-full h-15 hover:bg-[#292929]"

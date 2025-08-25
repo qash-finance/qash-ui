@@ -3,6 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface GeneralStatisticsProps {
   timePeriod: "month" | "year";
@@ -68,15 +70,127 @@ const TimePeriodDropdown: React.FC<{
 const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatisticsProps) => {
   const transactions = useTransactionStore(state => state.transactions);
   const loading = useTransactionStore(state => state.loading);
+  const blockNumber = useMidenSdkStore(state => state.blockNum);
+
+  // Generate monthly data for the chart based on block numbers
+  const chartData = useMemo(() => {
+    if (!blockNumber) {
+      return [];
+    }
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth(); // 0-based
+
+    // Calculate block time constants
+    const secondsPerDay = 24 * 60 * 60; // 86400 seconds per day
+    const blocksPerDay = secondsPerDay / 5; // 17280 blocks per day (assuming 5 second block time)
+
+    return months.map((month, monthIndex) => {
+      // Skip future months
+      if (monthIndex > currentMonth) {
+        return {
+          month,
+          moneyIn: 0,
+          moneyOut: 0,
+        };
+      }
+
+      // Calculate days from start of year to end of this month
+      const monthDate = new Date(currentYear, monthIndex + 1, 0); // Last day of the month
+      const startOfYear = new Date(currentYear, 0, 1);
+      const daysFromStartOfYear = Math.floor((monthDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Calculate days from start of year to start of this month
+      const startOfMonth = new Date(currentYear, monthIndex, 1);
+      const daysToStartOfMonth = Math.floor((startOfMonth.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Calculate block ranges for this month
+      const blocksFromStartOfYear = Math.floor(blocksPerDay * daysFromStartOfYear);
+      const blocksToStartOfMonth = Math.floor(blocksPerDay * daysToStartOfMonth);
+
+      const monthEndBlock =
+        blockNumber - Math.floor((currentDate.getTime() - monthDate.getTime()) / (1000 * 60 * 60 * 24)) * blocksPerDay;
+      const monthStartBlock =
+        blockNumber -
+        Math.floor((currentDate.getTime() - startOfMonth.getTime()) / (1000 * 60 * 60 * 24)) * blocksPerDay;
+
+      // Filter transactions for this month
+      const monthTransactions = transactions.filter(transaction => {
+        const txBlockNumber = parseInt(transaction.blockNumber);
+        return (
+          txBlockNumber >= monthStartBlock &&
+          txBlockNumber <= monthEndBlock &&
+          transaction.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
+        );
+      });
+
+      // Calculate totals for this month
+      let monthIncoming = BigInt(0);
+      let monthExpense = BigInt(0);
+
+      monthTransactions.forEach(transaction => {
+        const assets = transaction.assets.filter(asset => asset.assetId === QASH_TOKEN_ADDRESS);
+        const assetAmount = assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
+
+        if (transaction.type === "Incoming" || transaction.type === "Faucet") {
+          monthIncoming += assetAmount;
+        } else if (transaction.type === "Outgoing") {
+          monthExpense += assetAmount;
+        }
+      });
+
+      return {
+        month,
+        moneyIn: Number(monthIncoming) / 10 ** QASH_TOKEN_DECIMALS,
+        moneyOut: Number(monthExpense) / 10 ** QASH_TOKEN_DECIMALS,
+      };
+    });
+  }, [transactions, timePeriod, blockNumber]);
 
   const { moneyIn, moneyOut } = useMemo(() => {
-    // For now, we'll show all transactions since blockNumber is not a timestamp
-    // In a real implementation, you'd need to get actual timestamps from the blockchain
-    // We dont have timestamp in the transaction for now
-    // https://github.com/0xnullifier/miden-browser-wallet/issues/3
-    const filteredTransactions = transactions.filter(tx =>
-      tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS),
-    );
+    if (!blockNumber) {
+      return { moneyIn: 0, moneyOut: 0 };
+    }
+
+    const currentDate = new Date();
+    const secondsPerDay = 24 * 60 * 60;
+    const blocksPerDay = secondsPerDay / 5;
+
+    let filteredTransactions = [];
+
+    if (timePeriod === "month") {
+      // Calculate current month's block range
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const daysFromStartOfMonth = Math.floor((currentDate.getTime() - startOfMonth.getTime()) / (1000 * 60 * 60 * 24));
+      const blocksFromStartOfMonth = Math.floor(blocksPerDay * daysFromStartOfMonth);
+      const monthStartBlock = blockNumber - blocksFromStartOfMonth;
+
+      filteredTransactions = transactions.filter(tx => {
+        const txBlockNumber = parseInt(tx.blockNumber);
+        return (
+          txBlockNumber >= monthStartBlock &&
+          txBlockNumber <= blockNumber &&
+          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
+        );
+      });
+    } else {
+      // Calculate current year's block range
+      const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+      const daysFromStartOfYear = Math.floor((currentDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+      const blocksFromStartOfYear = Math.floor(blocksPerDay * daysFromStartOfYear);
+      const yearStartBlock = blockNumber - blocksFromStartOfYear;
+
+      filteredTransactions = transactions.filter(tx => {
+        const txBlockNumber = parseInt(tx.blockNumber);
+        return (
+          txBlockNumber >= yearStartBlock &&
+          txBlockNumber <= blockNumber &&
+          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
+        );
+      });
+    }
 
     const moneyIn = filteredTransactions
       .filter(tx => tx.type === "Incoming" || tx.type === "Faucet")
@@ -90,20 +204,117 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       moneyIn: moneyIn / 10 ** QASH_TOKEN_DECIMALS,
       moneyOut: moneyOut / 10 ** QASH_TOKEN_DECIMALS,
     };
-  }, [transactions, timePeriod]);
+  }, [transactions, timePeriod, blockNumber]);
 
-  // Calculate percentage changes (placeholder - you might want to compare with previous period)
-  const moneyInChange = 1.25; // Placeholder
-  const moneyOutChange = -4.58; // Placeholder
+  // Calculate percentage changes compared to previous period
+  const { moneyInChange, moneyOutChange } = useMemo(() => {
+    if (!blockNumber) {
+      return { moneyInChange: 0, moneyOutChange: 0 };
+    }
+
+    const currentDate = new Date();
+    const secondsPerDay = 24 * 60 * 60;
+    const blocksPerDay = secondsPerDay / 5;
+
+    let previousPeriodTransactions = [];
+
+    if (timePeriod === "month") {
+      // Calculate previous month's block range
+      const startOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const startOfPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const endOfPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+
+      const daysFromStartOfCurrentMonth = Math.floor(
+        (currentDate.getTime() - startOfCurrentMonth.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const daysFromStartOfPreviousMonth = Math.floor(
+        (startOfCurrentMonth.getTime() - startOfPreviousMonth.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const previousMonthEndBlock = blockNumber - Math.floor(blocksPerDay * daysFromStartOfCurrentMonth);
+      const previousMonthStartBlock =
+        blockNumber - Math.floor(blocksPerDay * (daysFromStartOfCurrentMonth + daysFromStartOfPreviousMonth));
+
+      previousPeriodTransactions = transactions.filter(tx => {
+        const txBlockNumber = parseInt(tx.blockNumber);
+        return (
+          txBlockNumber >= previousMonthStartBlock &&
+          txBlockNumber <= previousMonthEndBlock &&
+          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
+        );
+      });
+    } else {
+      // Calculate previous year's block range
+      const startOfCurrentYear = new Date(currentDate.getFullYear(), 0, 1);
+      const startOfPreviousYear = new Date(currentDate.getFullYear() - 1, 0, 1);
+
+      const daysFromStartOfCurrentYear = Math.floor(
+        (currentDate.getTime() - startOfCurrentYear.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const daysInPreviousYear = Math.floor(
+        (startOfCurrentYear.getTime() - startOfPreviousYear.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const previousYearEndBlock = blockNumber - Math.floor(blocksPerDay * daysFromStartOfCurrentYear);
+      const previousYearStartBlock =
+        blockNumber - Math.floor(blocksPerDay * (daysFromStartOfCurrentYear + daysInPreviousYear));
+
+      previousPeriodTransactions = transactions.filter(tx => {
+        const txBlockNumber = parseInt(tx.blockNumber);
+        return (
+          txBlockNumber >= previousYearStartBlock &&
+          txBlockNumber <= previousYearEndBlock &&
+          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
+        );
+      });
+    }
+
+    const previousMoneyIn =
+      previousPeriodTransactions
+        .filter(tx => tx.type === "Incoming" || tx.type === "Faucet")
+        .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0) /
+      10 ** QASH_TOKEN_DECIMALS;
+
+    const previousMoneyOut =
+      previousPeriodTransactions
+        .filter(tx => tx.type === "Outgoing")
+        .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0) /
+      10 ** QASH_TOKEN_DECIMALS;
+
+    const moneyInChange = previousMoneyIn > 0 ? ((moneyIn - previousMoneyIn) / previousMoneyIn) * 100 : 0;
+    const moneyOutChange = previousMoneyOut > 0 ? ((moneyOut - previousMoneyOut) / previousMoneyOut) * 100 : 0;
+
+    return { moneyInChange, moneyOutChange };
+  }, [transactions, timePeriod, blockNumber, moneyIn, moneyOut]);
+
+  // Custom tooltip component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#0c0c0c] rounded-md p-3 border border-[#000000]">
+          <div className="text-white text-xs opacity-50 mb-2">{label}</div>
+          <div className="flex flex-col gap-2">
+            {payload.map((entry: any, index: number) => (
+              <div key={index} className="flex gap-1.5 items-center">
+                <div className={`h-1.5 w-4 rounded`} style={{ backgroundColor: entry.color }}></div>
+                <div className="text-white text-sm">${entry.value?.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div
-      className="h-full overflow-hidden relative rounded-xl flex-1"
+      className="h-full overflow-hidden relative rounded-xl flex-1 transition-all duration-300"
       style={{
-        background: "linear-gradient(90deg, #0059FF 0%, #003699 100%)",
+        background: timePeriod === "month" ? "linear-gradient(90deg, #0059FF 0%, #003699 100%)" : "#1E1E1E",
       }}
     >
-      <div className="absolute inset-0 p-4 flex flex-col justify-between">
+      <div className="absolute inset-0 p-3 flex flex-col justify-between gap-2">
         {/* Header */}
         <div className="flex flex-row gap-1 items-center">
           <img src="/wallet-analytics/money-icon.gif" alt="money-icon" className="w-8 h-4" />
@@ -113,45 +324,105 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
         </div>
 
         {/* Money In Section */}
-        <div className="flex flex-col">
-          <span className="font-medium text-[#B2C6EB] text-sm">Money in</span>
-          <div className="flex flex-col">
-            <div className="flex flex-row gap-1.5 items-center text-white text-2xl uppercase">
-              <span className="font-normal">$</span>
-              <span className="font-medium tracking-[-0.72px]">{loading ? "..." : moneyIn.toLocaleString()}</span>
-            </div>
-            <div className="flex flex-row gap-2 items-center">
-              <span className="font-medium text-[#7cff96] text-base">+${moneyInChange.toFixed(2)}</span>
-              <div className="bg-white flex items-center px-[7px] py-[5px] rounded-full">
-                <span className="font-semibold text-[#059022] text-sm leading-[12px]">{moneyInChange}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Money Out Section */}
-        <div className="flex flex-row gap-5 items-end justify-end">
-          <div className="flex-1">
-            <span className="font-medium text-[#B2C6EB] text-sm">Money Out</span>
+        {timePeriod === "month" ? (
+          <>
             <div className="flex flex-col">
-              <div className="flex flex-row items-center text-white text-2xl uppercase">
-                <span className="font-normal">$</span>
-                <span className="font-medium">{loading ? "..." : moneyOut.toLocaleString()}</span>
-              </div>
-              <div className="flex flex-row gap-2 items-center">
-                <span className="font-medium text-[#fc2bad] text-base">${moneyOutChange.toFixed(2)}</span>
-                <div className="bg-white flex items-center px-[7px] py-[5px] rounded-full">
-                  <span className="font-semibold text-[#ff2323] text-sm leading-[12px]">
-                    {Math.abs(moneyOutChange)}%
-                  </span>
+              <span className="font-medium text-[#B2C6EB] text-sm">Income</span>
+              <div className="flex flex-col">
+                <div className="flex flex-row gap-1.5 items-center text-white text-2xl uppercase">
+                  <span className="font-normal">$</span>
+                  <span className="font-medium tracking-[-0.72px]">{loading ? "..." : moneyIn.toLocaleString()}</span>
+                </div>
+                <div className="flex flex-row gap-2 items-center">
+                  <span className="font-medium text-[#7cff96] text-base">+${moneyInChange.toFixed(2)}</span>
+                  <div className="bg-white flex items-center px-[7px] py-[5px] rounded-full">
+                    <span className="font-semibold text-[#059022] text-sm leading-[12px]">{moneyInChange}%</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Time Period Dropdown */}
-          <TimePeriodDropdown timePeriod={timePeriod} onTimePeriodChange={onTimePeriodChange} />
-        </div>
+            {/* Money Out Section */}
+            <div className="flex flex-row gap-5 items-end justify-end">
+              <div className="flex-1">
+                <span className="font-medium text-[#B2C6EB] text-sm">Expense</span>
+                <div className="flex flex-col">
+                  <div className="flex flex-row items-center text-white text-2xl uppercase">
+                    <span className="font-normal">$</span>
+                    <span className="font-medium">{loading ? "..." : moneyOut.toLocaleString()}</span>
+                  </div>
+                  <div className="flex flex-row gap-2 items-center">
+                    <span className="font-medium text-[#fc2bad] text-base">${moneyOutChange.toFixed(2)}</span>
+                    <div className="bg-white flex items-center px-[7px] py-[5px] rounded-full">
+                      <span className="font-semibold text-[#ff2323] text-sm leading-[12px]">
+                        {Math.abs(moneyOutChange)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Time Period Dropdown */}
+              <TimePeriodDropdown timePeriod={timePeriod} onTimePeriodChange={onTimePeriodChange} />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Chart Legend */}
+            <div className="flex gap-3 items-center">
+              <div className="flex gap-1.5 items-center">
+                <div className="h-2 w-4 bg-[#00E595] rounded"></div>
+                <span className="text-white text-xs opacity-50 tracking-[0.5px]">Income</span>
+              </div>
+              <div className="flex gap-1.5 items-center">
+                <div className="h-2 w-4 bg-[#fc2bad] rounded"></div>
+                <span className="text-white text-xs opacity-50 tracking-[0.5px]">Expense</span>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <div className="flex-1 relative outline-none">
+              <ResponsiveContainer width="100%" height="80%" className="">
+                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                  {/*
+                    // Dotted grid 
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" /> 
+                  */}
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    tickMargin={8}
+                    interval={0}
+                    minTickGap={0}
+                  />
+
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="moneyIn"
+                    stroke="#00E595"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 7, fill: "#00E595", stroke: "#ffffff", strokeWidth: 2 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="moneyOut"
+                    stroke="#fc2bad"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 7, fill: "#fc2bad", stroke: "#ffffff", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="flex items-end justify-end">
+                <TimePeriodDropdown timePeriod={timePeriod} onTimePeriodChange={onTimePeriodChange} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
