@@ -12,6 +12,7 @@ export interface MidenSdkState {
   blockNum: number | null;
   config: MidenSdkConfig;
   account: string;
+  client: unknown;
 }
 
 export interface MidenSdkActions {
@@ -29,6 +30,7 @@ export const createMidenSdkStore = () =>
       config: { endpoint: NODE_ENDPOINT },
       blockNum: null,
       account: "",
+      client: null,
       setAccount: (account: string) => {
         set(state => {
           state.account = account;
@@ -56,6 +58,7 @@ export const createMidenSdkStore = () =>
 
           set(state => {
             state.error = null;
+            state.client = client;
           });
 
           await get().syncState(client);

@@ -18,51 +18,28 @@ const ANIMATION_DURATION = 300;
 export const WalletAnalyticsContainer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { accountId } = useAccount();
-  const clientRef = useRef<any | null>(null);
   const loadTransactions = useTransactionStore(state => state.loadTransactions);
+  const client = useMidenSdkStore(state => state.client);
   const [selectedTransaction, setSelectedTransaction] = useState<UITransaction | null>(null);
-  const [clientInitialized, setClientInitialized] = useState(false);
   const [timePeriod, setTimePeriod] = useState<"month" | "year">("month");
   const [showTransactionDetail, setShowTransactionDetail] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
   /************** Effects **************/
-  useEffect(() => {
-    const initClient = async () => {
-      const { WebClient } = await import("@demox-labs/miden-sdk");
-      const clientInstance = await WebClient.createClient(NODE_ENDPOINT);
-      clientInstance.terminate();
-      clientRef.current = clientInstance;
-      setClientInitialized(true);
-      console.log("Miden SDK client initialized:", clientInstance);
-    };
-    initClient();
-
-    return () => {
-      if (clientRef.current) {
-        clientRef.current.terminate();
-        clientRef.current = null;
-      }
-    };
-  }, []);
 
   useEffect(() => {
-    if (!accountId) return;
-    if (!clientRef.current) {
-      console.warn("Client not initialized yet, waiting for initialization...");
-      return;
-    }
+    if (!accountId || !client) return;
 
     (async () => {
       console.log("Fetching transactions for account:", accountId);
       setLoading(true);
       try {
         const { TransactionFilter, NoteFilter, NoteFilterTypes, WebClient } = await import("@demox-labs/miden-sdk");
-        if (clientRef.current instanceof WebClient) {
-          const transactionRecords = (await clientRef.current.getTransactions(TransactionFilter.all())).filter(
+        if (client instanceof WebClient) {
+          const transactionRecords = (await client.getTransactions(TransactionFilter.all())).filter(
             tx => tx.accountId().toBech32() === accountId,
           );
-          const inputNotes = await clientRef.current.getInputNotes(new NoteFilter(NoteFilterTypes.All));
+          const inputNotes = await client.getInputNotes(new NoteFilter(NoteFilterTypes.All));
           const zippedInputeNotesAndTr = transactionRecords.map(tr => {
             if (tr.outputNotes().notes().length > 0) {
               return { tr, inputNote: undefined };
@@ -79,7 +56,7 @@ export const WalletAnalyticsContainer: React.FC = () => {
         setLoading(false);
       }
     })();
-  }, [clientInitialized, accountId]);
+  }, [client, accountId]);
 
   /************** Handlers **************/
 

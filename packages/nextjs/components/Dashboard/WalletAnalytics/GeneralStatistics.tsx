@@ -297,7 +297,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex gap-1.5 items-center">
                 <div className={`h-1.5 w-4 rounded`} style={{ backgroundColor: entry.color }}></div>
-                <div className="text-white text-sm">${entry.value?.toLocaleString()}</div>
+                <div className="text-white text-sm">{entry.value?.toLocaleString()} QASH</div>
               </div>
             ))}
           </div>
