@@ -462,6 +462,17 @@ export const SchedulePaymentContainer = () => {
             year: "numeric",
           });
 
+          // Calculate time until recallable and progress
+          const now = Date.now();
+          const recallableTime = new Date(tx.recallableTime!).getTime();
+          const createdAt = new Date(tx.createdAt!).getTime();
+          const totalTimeToRecall = recallableTime - createdAt;
+          const timeToRecall = Math.max(0, recallableTime - now);
+
+          // Calculate progress: 0% when created, 100% when recallable
+          const elapsedTime = now - createdAt;
+          const progress = Math.min(100, Math.max(0, (elapsedTime / totalTimeToRecall) * 100));
+
           if (
             tx.timelockHeight &&
             blockNum &&
@@ -475,9 +486,11 @@ export const SchedulePaymentContainer = () => {
               date: transactionDate,
               status: "ready_to_claim",
               label: `Txn ${index + 1}`,
-              progress: 0, // Progress will be calculated by the main progress bar
+              progress: progress,
               amount: tx.assets[0].amount,
               timelockHeight: tx.timelockHeight,
+              recallableTime: tx.recallableTime,
+              createdAt: tx.createdAt,
             };
           }
 
@@ -487,9 +500,11 @@ export const SchedulePaymentContainer = () => {
             date: transactionDate,
             status: tx.status as TransactionStatus,
             label: `Txn ${index + 1}`,
-            progress: 0, // Progress will be calculated by the main progress bar
+            progress: progress,
             amount: tx.assets[0].amount,
             timelockHeight: tx.timelockHeight,
+            recallableTime: tx.recallableTime,
+            createdAt: tx.createdAt,
           };
 
           return result;

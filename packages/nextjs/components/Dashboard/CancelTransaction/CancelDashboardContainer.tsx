@@ -20,7 +20,6 @@ import {
 } from "@/services/utils/miden/note";
 import toast from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";

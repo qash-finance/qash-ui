@@ -67,7 +67,7 @@ export interface GroupPaymentsResponse {
 export interface PaymentByLinkResponse {
   id: number;
   groupId: number;
-  group: Group;
+  groupPaymentGroup: Group;
   tokens: AssetWithMetadata[];
   amount: string;
   perMember: number;

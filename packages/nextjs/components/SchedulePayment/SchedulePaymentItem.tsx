@@ -37,6 +37,8 @@ export interface SchedulePaymentItemProps {
     progress?: number; // 0-100, for current status circle
     amount?: string;
     timelockHeight?: number; // Block height when transaction becomes claimable
+    recallableTime?: string;
+    createdAt?: string;
   }>;
   onClick?: () => void;
   onHover?: () => void;
@@ -184,7 +186,9 @@ const StatusIcon: React.FC<{
       {/* Status Circle */}
       <div className="relative z-0">
         {status === TransactionStatus.CONSUMED && <StatusCircle progress={100} />}
-        {(status === TransactionStatus.PENDING || status === "ready_to_claim") && <StatusCircle progress={0} />}
+        {(status === TransactionStatus.PENDING || status === "ready_to_claim") && (
+          <StatusCircle progress={progress || 0} />
+        )}
         {status === TransactionStatus.RECALLED && (
           <img src="/schedule-payment/recalled-status-icon.svg" alt="recalled" className="scale-120" />
         )}
@@ -495,8 +499,7 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
           if (!transaction) return null;
 
           // Check if cancel should be disabled due to timelock
-          const isTimelocked =
-            !_.isNil(transaction.timelockHeight) && !_.isNil(blockNum) && blockNum < transaction.timelockHeight;
+          const isTimelocked: boolean = new Date(transaction.recallableTime!) > new Date(transaction.createdAt!);
 
           const disabledCancel =
             transaction.status === TransactionStatus.CONSUMED ||

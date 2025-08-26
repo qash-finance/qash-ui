@@ -45,6 +45,7 @@ export enum AmountInputTab {
 interface SendTransactionFormProps {
   activeTab?: AmountInputTab;
   onTabChange?: (tab: AmountInputTab) => void;
+  onTransactionConfirmed?: () => void;
 }
 
 interface SendTransactionFormValues {
@@ -61,38 +62,32 @@ const DEFAULT_SCHEDULE_PAYMENT = {
   startDate: new Date(),
 };
 
-export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalProps> = ({
+export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
   activeTab,
   onTabChange,
-  onClose,
+  onTransactionConfirmed,
   ...props
 }) => {
   // **************** Custom Hooks *******************
   const searchParams = useSearchParams();
-  const { openModal, isModalOpen } = useModal();
+  const { openModal } = useModal();
   const { isConnected } = useWalletConnect();
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
   const { mutateAsync: sendBatchTransaction } = useSendBatchTransaction();
   const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
-  const { mutateAsync: acceptRequest } = useAcceptRequest();
   const { mutateAsync: createSchedulePayment } = useCreateSchedulePayment();
   const { refetch: refetchSchedulePayments } = useGetSchedulePayments();
   const blockNum = useMidenSdkStore(state => state.blockNum);
 
-  // Check if component is being used as a modal
-  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
-
   // Get initial data based on usage mode
-  // If modal: use props data, else: use URL search params
-  const recipientParam = isSendModalOpen ? props.recipient || "" : searchParams?.get("recipient") || "";
-  const recipientNameParam = isSendModalOpen ? props.recipientName || "" : searchParams?.get("name") || ""; // Modal doesn't have name param
-  const tokenAddressParam = isSendModalOpen ? props.tokenAddress || "" : searchParams?.get("tokenAddress") || "";
-  const amountParam = isSendModalOpen ? props.amount || "" : searchParams?.get("amount") || "";
-  const messageParam = isSendModalOpen ? props.message || "" : searchParams?.get("message") || "";
-  const isGroupPaymentParam = isSendModalOpen ? props.isGroupPayment : false;
-  const isRequestPaymentParam = isSendModalOpen ? props.isRequestPayment : false;
+  // Use URL search params for standalone form
+  const recipientParam = searchParams?.get("recipient") || "";
+  const recipientNameParam = searchParams?.get("name") || "";
+  const tokenAddressParam = searchParams?.get("tokenAddress") || "";
+  const amountParam = searchParams?.get("amount") || "";
+  const messageParam = searchParams?.get("message") || "";
 
   // **************** Form Hooks *******************
   const {
@@ -332,7 +327,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         toast.success(
           <div>
             {schedulePayment
-              ? `Transaction sent successfully with ${schedulePayment.times} transactions, view transaction on `
+              ? `Created schedule payment successfully with ${schedulePayment.times} transactions, view transaction on `
               : "Transaction sent successfully, view transaction on "}
             <a
               href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
@@ -392,7 +387,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         noteType: CustomNoteType.P2IDR,
         noteId: note.id().toString(),
         transactionId: txId,
-        requestPaymentId: props.pendingRequestId ?? null,
       });
 
       setTimeout(() => {
@@ -426,7 +420,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
 
         const batchTransactions = getBatchTransactions(walletAddress);
         const matchedTransactions = batchTransactions.filter(tx => {
-          if (props.pendingRequestId != null) return tx.pendingRequestId === props.pendingRequestId;
           return (
             tx.tokenAddress === selectedToken.faucetId &&
             tx.amount === amount.toString() &&
@@ -436,10 +429,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
           );
         });
         matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
-
-        if (props.pendingRequestId) {
-          await acceptRequest({ id: props.pendingRequestId, txid: txId });
-        }
       }
     } catch (error) {
       console.error("Failed to send schedule payment transaction:", error);
@@ -503,9 +492,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         tokenSymbol: selectedToken.metadata.symbol,
         schedulePayment: schedulePayment,
         onConfirm: async () => {
-          if (onClose && props.onTransactionConfirmed) {
-            await props.onTransactionConfirmed();
-            onClose();
+          if (onTransactionConfirmed) {
+            await onTransactionConfirmed();
           }
 
           setIsSending(true);
@@ -584,16 +572,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         recallableHeight: Math.floor(recallableTime / BLOCK_TIME),
         recallableTime: recallableTime,
         noteType: CustomNoteType.P2IDR,
-        pendingRequestId: props.pendingRequestId ?? null,
       });
 
       toast.success("Transaction added to batch successfully");
       reset();
       setRecipientName("");
-
-      if (onClose) {
-        onClose();
-      }
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to add transaction to batch");
@@ -632,11 +615,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         {/* Title */}
         <header className="flex flex-wrap gap-5 justify-between self-stretch px-3 py-2 w-full bg-[#2D2D2D] row-span-1">
           {/* Tab Navigation */}
-          <nav
-            className={`flex gap-1.5 justify-center items-center self-stretch p-1 rounded-xl h-[34px] row-span-1 ${
-              !isSendModalOpen ? "" : "w-[150px]"
-            }`}
-          >
+          <nav className={`flex gap-1.5 justify-center items-center self-stretch p-1 rounded-xl h-[34px] row-span-1`}>
             <button
               type="button"
               className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
@@ -654,35 +633,15 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
                 Send
               </span>
             </button>
-            {/* {!isSendModalOpen && (
-              <button
-                type="button"
-                className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
-                  activeTab === AmountInputTab.STREAM ? "bg-zinc-800" : ""
-                } cursor-pointer`}
-                onClick={() => {
-                  // TODO: Uncomment this when stream is implemented
-                  // onTabChange?.(AmountInputTab.STREAM);
-                }}
-              >
-                <span
-                  className={`cursor-not-allowed text-base tracking-tight leading-5 text-white ${activeTab === "stream" ? "" : "opacity-50"}`}
-                >
-                  Stream Send
-                </span>
-              </button>
-            )} */}
           </nav>
           <SelectTokenInput
             selectedToken={selectedToken}
             onTokenSelect={handleTokenSelect}
             tokenAddress={selectedTokenAddress}
-            disabled={isGroupPaymentParam || isRequestPaymentParam}
           />
         </header>
 
         <AmountInput
-          disabled={isGroupPaymentParam || isRequestPaymentParam}
           selectedToken={selectedToken}
           availableBalance={Number(
             formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
@@ -766,17 +725,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps & SendModalP
         </div>
       ) : (
         <div className="relative">
-          {/* <WalletMultiButton
-            className="wallet-button-custom cursor-pointer w-full h-10 mt-2"
-            style={{
-              color: "transparent",
-              fontSize: "0",
-              backgroundColor: "transparent",
-              border: "none",
-              outline: "none",
-            }}
-          /> */}
-
           <ActionButton
             text="Connect Wallet"
             buttonType="submit"
