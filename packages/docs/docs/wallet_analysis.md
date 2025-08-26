@@ -2,51 +2,69 @@
 sidebar_position: 4.5
 ---
 
-# Analytic Dashboard
+# Wallet Analytics Dashboard
 
-Q3x's analytics dashboard provides users with a clear and comprehensive overview of their financial activities on Starknet through an intuitive financial tracking interface. This streamlined dashboard focuses on essential metrics that help users understand their token flows and balance changes over time.
+Q3x's wallet analytics dashboard gives you a comprehensive view of your financial activities on Starknet. This intuitive
+dashboard helps you track your spending patterns, understand your transaction history, and gain insights into your
+financial behavior over time.
 
-## Key Features
+## What You'll See
 
-### Financial Metrics Overview
+The dashboard is organized into two main sections:
 
-The dashboard provides comprehensive financial insights:
+### Top Row - Key Metrics Cards
 
-1. **Daily Spending Analysis**
+1. **General Statistics**
 
-   - Last 5 days spending average
-   - Daily spending trends
+   - View your monthly or yearly financial overview
+   - Toggle between monthly and yearly views using the time period selector
+   - See your income, expenses, and net flow for the selected period
 
-2. **Monthly Financial Overview**
+2. **Top Interacted Addresses**
 
-   - Current month's income
-   - Current month's expenses
+   - Discover your most frequent transaction partners
+   - See transaction volumes with each address
+   - Identify your regular payment recipients
 
-3. **Counterparty Analysis**
+3. **Spending Average Chart**
+   - Visual representation of your spending patterns
+   - Track daily spending trends
+   - Understand your spending habits over time
 
-   - Top 5 most frequent counterparties
-   - Transaction volume with each counterparty
+### Bottom Row - Transaction Details
 
-4. **Annual Financial Trends**
-   - Monthly income and expenses for the entire year
+**Transaction History View**
 
-![Wallet Analysis](/img/analysis/dashboard.png)
+- Scroll through all your recent transactions
+- Each transaction shows key details like amount, date, and counterparty
+- Click on any transaction to see full details
 
-### Export Functionality
+**Transaction Detail View**
 
-:::note Premium Feature
-Analytics export functionality is available as part of our [Premium](/premium) subscription.
-:::
+- Get comprehensive information about a specific transaction
+- View input/output notes, transaction ID, and status
+- Use the back button or press ESC to return to the transaction list
 
-Generate detailed analytics reports for your records:
+## How to Use
 
-1. **Export as PDF**
-   - Select date range
-   - Click the "Export" button
-   - Download PDF report
+### Navigating the Dashboard
 
-## Important Notes
+1. **Switch Time Periods**: Use the time period selector in the General Statistics card to view monthly or yearly data
+2. **Explore Transactions**: Scroll through your transaction history to see all your recent activity
+3. **Get Transaction Details**: Click on any transaction to see complete information
+4. **Return to Overview**: Use the back button or press ESC to return to the transaction list
 
-- Analytics are powered by Q3x indexer for real-time updates
-- All values are calculated based on the time where indexing happened
-- Export functionality helps with financial record-keeping and analysis
+### Understanding Your Data
+
+- **Real-time Updates**: All data is powered by Q3x's indexer for current information
+- **Time-based Calculations**: Values are calculated based on when the indexing occurred
+- **Comprehensive Tracking**: Every transaction, note, and balance change is recorded
+
+## Key Benefits
+
+- **Financial Awareness**: Understand your spending patterns and habits
+- **Transaction Tracking**: Keep detailed records of all your Starknet activity
+- **Address Insights**: Identify your most frequent transaction partners
+- **Historical Analysis**: Track your financial progress over time
+
+![Wallet Analytics Dashboard](/img/analysis/dashboard.png)
