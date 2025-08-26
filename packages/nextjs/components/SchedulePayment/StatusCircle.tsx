@@ -5,6 +5,7 @@ import React, { useMemo } from "react";
 interface StatusCircleProps {
   progress?: number; // 0-100
   className?: string;
+  showCheckIcon?: boolean; // Whether to show check icon (for consumed transactions)
 }
 
 // Constants for better performance and maintainability
@@ -24,7 +25,7 @@ const ICON_CLASSES = "bg-center bg-cover bg-no-repeat shrink-0 w-5 h-5";
 const SVG_CONTAINER_CLASSES = "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
 const SVG_CLASSES = "absolute inset-0 transform -rotate-90";
 
-export default function StatusCircle({ progress = 0, className = "" }: StatusCircleProps) {
+export default function StatusCircle({ progress = 0, className = "", showCheckIcon = false }: StatusCircleProps) {
   // Memoize expensive calculations to prevent recalculation on every render
   const progressCalculations = useMemo(() => {
     const clampedProgress = Math.min(Math.max(progress, 0), 100);
@@ -41,9 +42,9 @@ export default function StatusCircle({ progress = 0, className = "" }: StatusCir
     () => ({
       width: COMPONENT_SIZE,
       height: COMPONENT_SIZE,
-      backgroundColor: progress >= 100 ? "#1E8FFF" : "#3E4655",
+      backgroundColor: showCheckIcon ? "#1E8FFF" : "#3E4655",
     }),
-    [progress],
+    [showCheckIcon],
   );
 
   const svgContainerStyle = useMemo(
@@ -56,10 +57,10 @@ export default function StatusCircle({ progress = 0, className = "" }: StatusCir
 
   const iconStyle = useMemo(
     () => ({
-      backgroundImage: progress >= 100 ? "url('/schedule-payment/check.svg')" : "url('/modal/coin-icon.gif')",
+      backgroundImage: showCheckIcon ? "url('/schedule-payment/check.svg')" : "url('/modal/coin-icon.gif')",
       transition: "opacity 0.3s ease-in-out",
     }),
-    [progress],
+    [showCheckIcon],
   );
 
   const progressCircleStyle = useMemo(
@@ -97,7 +98,7 @@ export default function StatusCircle({ progress = 0, className = "" }: StatusCir
             cy={SVG_CENTER}
             r={CIRCLE_RADIUS}
             fill="none"
-            stroke={progress >= 100 ? "#ffffff" : "#066eff"}
+            stroke={showCheckIcon ? "#ffffff" : "#066eff"}
             strokeWidth={STROKE_WIDTH}
             strokeLinecap="round"
             strokeDasharray={progressCalculations.strokeDasharray}

@@ -467,7 +467,6 @@ export const SchedulePaymentContainer = () => {
           const recallableTime = new Date(tx.recallableTime!).getTime();
           const createdAt = new Date(tx.createdAt!).getTime();
           const totalTimeToRecall = recallableTime - createdAt;
-          const timeToRecall = Math.max(0, recallableTime - now);
 
           // Calculate progress: 0% when created, 100% when recallable
           const elapsedTime = now - createdAt;

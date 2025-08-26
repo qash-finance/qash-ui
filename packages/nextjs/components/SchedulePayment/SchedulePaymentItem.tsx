@@ -185,9 +185,9 @@ const StatusIcon: React.FC<{
     >
       {/* Status Circle */}
       <div className="relative z-0">
-        {status === TransactionStatus.CONSUMED && <StatusCircle progress={100} />}
+        {status === TransactionStatus.CONSUMED && <StatusCircle progress={100} showCheckIcon={true} />}
         {(status === TransactionStatus.PENDING || status === "ready_to_claim") && (
-          <StatusCircle progress={progress || 0} />
+          <StatusCircle progress={progress || 0} showCheckIcon={false} />
         )}
         {status === TransactionStatus.RECALLED && (
           <img src="/schedule-payment/recalled-status-icon.svg" alt="recalled" className="scale-120" />
@@ -499,7 +499,8 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
           if (!transaction) return null;
 
           // Check if cancel should be disabled due to timelock
-          const isTimelocked: boolean = new Date(transaction.recallableTime!) > new Date(transaction.createdAt!);
+          // Transaction is timelocked if current time is before recallableTime
+          const isTimelocked: boolean = Date.now() < new Date(transaction.recallableTime!).getTime();
 
           const disabledCancel =
             transaction.status === TransactionStatus.CONSUMED ||
