@@ -559,7 +559,7 @@ export const SchedulePaymentContainer = () => {
       </div>
 
       <div className="flex w-full">
-        <span className="text-white">All Recurring Transfers ({schedulePayments?.length})</span>
+        <span className="text-white">All Recurring Transfers ({schedulePayments?.length || 0})</span>
       </div>
 
       {schedulePayments && schedulePayments.length > 0 ? (

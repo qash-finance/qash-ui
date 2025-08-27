@@ -4,7 +4,6 @@ import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { formatAddress } from "@/services/utils/miden/address";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { InteractAccountTransactionModalProps, MODAL_IDS } from "@/types/modal";
-import { QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { blo } from "blo";
 import React, { useMemo } from "react";
 
@@ -16,7 +15,7 @@ interface TopInteractedAddressesProps {
 }
 
 const TopInteractedAddresses = () => {
-  const { accountId } = useAccountContext();
+  const { accountId, assets } = useAccountContext();
   const transactions = useTransactionStore(state => state.transactions);
   const { openModal } = useModal();
 
@@ -31,14 +30,21 @@ const TopInteractedAddresses = () => {
     );
 
     // Group by sender and accumulate amounts
-    const senderMap = new Map<string, { amount: bigint; count: number }>();
+    const senderMap = new Map<string, { amount: number; count: number }>();
 
     incomingTransactions.forEach(transaction => {
       const sender = transaction.sender;
-      const current = senderMap.get(sender) || { amount: BigInt(0), count: 0 };
+      const current = senderMap.get(sender) || { amount: 0, count: 0 };
 
-      // Sum up all asset amounts for this sender
-      const totalAmount = transaction.assets.reduce((sum, asset) => sum + asset.amount, BigInt(0));
+      // Sum up all asset amounts for this sender with proper decimal conversion
+      let totalAmount = 0;
+      transaction.assets.forEach(asset => {
+        // Find the asset metadata to get the correct decimals
+        const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
+        if (assetMetadata) {
+          totalAmount += Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
+        }
+      });
 
       senderMap.set(sender, {
         amount: current.amount + totalAmount,
@@ -50,7 +56,7 @@ const TopInteractedAddresses = () => {
     const sortedSenders = Array.from(senderMap.entries())
       .map(([walletAddress, { amount, count }]) => ({
         walletAddress,
-        accumulatedAmount: Number(amount) / 10 ** QASH_TOKEN_DECIMALS,
+        accumulatedAmount: amount,
         rank: 0, // Will be set below
         transactionCount: count,
       }))
@@ -63,7 +69,7 @@ const TopInteractedAddresses = () => {
     });
 
     return sortedSenders;
-  }, [transactions, accountId]);
+  }, [transactions, accountId, assets]);
 
   return (
     <div

@@ -58,7 +58,7 @@ export const Title = () => {
       title = "Schedule Payment";
       break;
     case "/dashboard/wallet-analytics":
-      title = "Wallet Analytics";
+      title = "Overview";
       break;
     case "/dashboard/wallet-analytics/transaction-history":
       title = "Transaction History";

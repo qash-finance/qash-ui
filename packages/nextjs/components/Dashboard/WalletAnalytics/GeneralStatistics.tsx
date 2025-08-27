@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
-import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { useAccountContext } from "@/contexts/AccountProvider";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface GeneralStatisticsProps {
@@ -68,6 +68,7 @@ const TimePeriodDropdown: React.FC<{
 };
 
 const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatisticsProps) => {
+  const { assets } = useAccountContext();
   const transactions = useTransactionStore(state => state.transactions);
   const loading = useTransactionStore(state => state.loading);
   const blockNumber = useMidenSdkStore(state => state.blockNum);
@@ -119,35 +120,37 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       // Filter transactions for this month
       const monthTransactions = transactions.filter(transaction => {
         const txBlockNumber = parseInt(transaction.blockNumber);
-        return (
-          txBlockNumber >= monthStartBlock &&
-          txBlockNumber <= monthEndBlock &&
-          transaction.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
-        );
+        return txBlockNumber >= monthStartBlock && txBlockNumber <= monthEndBlock;
       });
 
       // Calculate totals for this month
-      let monthIncoming = BigInt(0);
-      let monthExpense = BigInt(0);
+      let monthIncoming = 0;
+      let monthExpense = 0;
 
       monthTransactions.forEach(transaction => {
-        const assets = transaction.assets.filter(asset => asset.assetId === QASH_TOKEN_ADDRESS);
-        const assetAmount = assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
-
-        if (transaction.type === "Incoming" || transaction.type === "Faucet") {
-          monthIncoming += assetAmount;
-        } else if (transaction.type === "Outgoing") {
-          monthExpense += assetAmount;
-        }
+        // Process all assets in the transaction, not just QASH
+        transaction.assets.forEach(asset => {
+          // Find the asset metadata to get the correct decimals
+          const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
+          if (assetMetadata) {
+            const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
+            
+            if (transaction.type === "Incoming" || transaction.type === "Faucet") {
+              monthIncoming += assetAmount;
+            } else if (transaction.type === "Outgoing") {
+              monthExpense += assetAmount;
+            }
+          }
+        });
       });
 
       return {
         month,
-        moneyIn: Number(monthIncoming) / 10 ** QASH_TOKEN_DECIMALS,
-        moneyOut: Number(monthExpense) / 10 ** QASH_TOKEN_DECIMALS,
+        moneyIn: monthIncoming,
+        moneyOut: monthExpense,
       };
     });
-  }, [transactions, timePeriod, blockNumber]);
+  }, [transactions, timePeriod, blockNumber, assets]);
 
   const { moneyIn, moneyOut } = useMemo(() => {
     if (!blockNumber) {
@@ -169,11 +172,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
 
       filteredTransactions = transactions.filter(tx => {
         const txBlockNumber = parseInt(tx.blockNumber);
-        return (
-          txBlockNumber >= monthStartBlock &&
-          txBlockNumber <= blockNumber &&
-          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
-        );
+        return txBlockNumber >= monthStartBlock && txBlockNumber <= blockNumber;
       });
     } else {
       // Calculate current year's block range
@@ -184,27 +183,35 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
 
       filteredTransactions = transactions.filter(tx => {
         const txBlockNumber = parseInt(tx.blockNumber);
-        return (
-          txBlockNumber >= yearStartBlock &&
-          txBlockNumber <= blockNumber &&
-          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
-        );
+        return txBlockNumber >= yearStartBlock && txBlockNumber <= blockNumber;
       });
     }
 
-    const moneyIn = filteredTransactions
-      .filter(tx => tx.type === "Incoming" || tx.type === "Faucet")
-      .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0);
+    let moneyIn = 0;
+    let moneyOut = 0;
 
-    const moneyOut = filteredTransactions
-      .filter(tx => tx.type === "Outgoing")
-      .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0);
+    filteredTransactions.forEach(tx => {
+      // Process all assets in the transaction, not just QASH
+      tx.assets.forEach(asset => {
+        // Find the asset metadata to get the correct decimals
+        const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
+        if (assetMetadata) {
+          const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
+          
+          if (tx.type === "Incoming" || tx.type === "Faucet") {
+            moneyIn += assetAmount;
+          } else if (tx.type === "Outgoing") {
+            moneyOut += assetAmount;
+          }
+        }
+      });
+    });
 
     return {
-      moneyIn: moneyIn / 10 ** QASH_TOKEN_DECIMALS,
-      moneyOut: moneyOut / 10 ** QASH_TOKEN_DECIMALS,
+      moneyIn,
+      moneyOut,
     };
-  }, [transactions, timePeriod, blockNumber]);
+  }, [transactions, timePeriod, blockNumber, assets]);
 
   // Calculate percentage changes compared to previous period
   const { moneyInChange, moneyOutChange } = useMemo(() => {
@@ -237,11 +244,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
 
       previousPeriodTransactions = transactions.filter(tx => {
         const txBlockNumber = parseInt(tx.blockNumber);
-        return (
-          txBlockNumber >= previousMonthStartBlock &&
-          txBlockNumber <= previousMonthEndBlock &&
-          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
-        );
+        return txBlockNumber >= previousMonthStartBlock && txBlockNumber <= previousMonthEndBlock;
       });
     } else {
       // Calculate previous year's block range
@@ -261,25 +264,29 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
 
       previousPeriodTransactions = transactions.filter(tx => {
         const txBlockNumber = parseInt(tx.blockNumber);
-        return (
-          txBlockNumber >= previousYearStartBlock &&
-          txBlockNumber <= previousYearEndBlock &&
-          tx.assets.some(asset => asset.assetId === QASH_TOKEN_ADDRESS)
-        );
+        return txBlockNumber >= previousYearStartBlock && txBlockNumber <= previousYearEndBlock;
       });
     }
 
-    const previousMoneyIn =
-      previousPeriodTransactions
-        .filter(tx => tx.type === "Incoming" || tx.type === "Faucet")
-        .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0) /
-      10 ** QASH_TOKEN_DECIMALS;
+    let previousMoneyIn = 0;
+    let previousMoneyOut = 0;
 
-    const previousMoneyOut =
-      previousPeriodTransactions
-        .filter(tx => tx.type === "Outgoing")
-        .reduce((sum, tx) => sum + Number(tx.assets.reduce((acc, asset) => acc + asset.amount, BigInt(0))), 0) /
-      10 ** QASH_TOKEN_DECIMALS;
+    previousPeriodTransactions.forEach(tx => {
+      // Process all assets in the transaction, not just QASH
+      tx.assets.forEach(asset => {
+        // Find the asset metadata to get the correct decimals
+        const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
+        if (assetMetadata) {
+          const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
+          
+          if (tx.type === "Incoming" || tx.type === "Faucet") {
+            previousMoneyIn += assetAmount;
+          } else if (tx.type === "Outgoing") {
+            previousMoneyOut += assetAmount;
+          }
+        }
+      });
+    });
 
     const moneyInChange = previousMoneyIn > 0 ? ((moneyIn - previousMoneyIn) / previousMoneyIn) * 100 : 0;
     const moneyOutChange = previousMoneyOut > 0 ? ((moneyOut - previousMoneyOut) / previousMoneyOut) * 100 : 0;
@@ -297,7 +304,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex gap-1.5 items-center">
                 <div className={`h-1.5 w-4 rounded`} style={{ backgroundColor: entry.color }}></div>
-                <div className="text-white text-sm">{entry.value?.toLocaleString()} QASH</div>
+                <div className="text-white text-sm">${entry.value?.toLocaleString()}</div>
               </div>
             ))}
           </div>
@@ -330,8 +337,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
               <span className="font-medium text-[#B2C6EB] text-sm">Income</span>
               <div className="flex flex-col">
                 <div className="flex flex-row gap-1.5 items-center text-white text-2xl uppercase">
-                  <span className="font-normal">$</span>
-                  <span className="font-medium tracking-[-0.72px]">{loading ? "..." : moneyIn.toLocaleString()}</span>
+                  <span className="font-normal">${loading ? "..." : moneyIn.toLocaleString()}</span>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
                   <span className="font-medium text-[#7cff96] text-base">+${moneyInChange.toFixed(2)}</span>
@@ -348,8 +354,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
                 <span className="font-medium text-[#B2C6EB] text-sm">Expense</span>
                 <div className="flex flex-col">
                   <div className="flex flex-row items-center text-white text-2xl uppercase">
-                    <span className="font-normal">$</span>
-                    <span className="font-medium">{loading ? "..." : moneyOut.toLocaleString()}</span>
+                    <span className="font-normal">${loading ? "..." : moneyOut.toLocaleString()}</span>
                   </div>
                   <div className="flex flex-row gap-2 items-center">
                     <span className="font-medium text-[#fc2bad] text-base">${moneyOutChange.toFixed(2)}</span>

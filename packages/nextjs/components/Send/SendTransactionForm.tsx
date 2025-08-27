@@ -716,7 +716,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
             onClick={() => setIsSubmittingAsBatch(true)}
           />
           <ActionButton
-            text={`${schedulePayment ? "Schedule now" : "Send Transaction"} `}
+            text={`${schedulePayment.times !== undefined ? "Schedule now" : "Send Transaction"} `}
             buttonType="submit"
             className="w-[70%] h-10 mt-2"
             loading={isSending}

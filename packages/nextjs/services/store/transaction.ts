@@ -20,6 +20,7 @@ export interface TransactionStore {
   loading: boolean;
   transactions: UITransaction[];
   loadTransactions: (record: { tr: any; inputNote: any | undefined }[]) => Promise<void>;
+  clearTransactions: () => void;
 }
 
 async function transactionRecordToUITransaction({
@@ -124,6 +125,9 @@ export const createTransactionStore = () =>
         } finally {
           set({ loading: false });
         }
+      },
+      clearTransactions: () => {
+        set({ transactions: [], loading: false });
       },
     })),
   );

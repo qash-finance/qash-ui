@@ -4,6 +4,7 @@ import { formatAddress } from "@/services/utils/miden/address";
 import toast from "react-hot-toast";
 import { useWalletState } from "@/services/store";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
+import { useTransactionStore } from "@/contexts/TransactionProvider";
 
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
@@ -16,6 +17,7 @@ interface AccountProps {}
 export const Account: React.FC<AccountProps> = () => {
   const { walletAddress, setIsConnected } = useWalletState(state => state);
   const { disconnectWallet } = useWalletAuth();
+  const clearTransactions = useTransactionStore(state => state.clearTransactions);
 
   const [isBlurred, setIsBlurred] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
@@ -23,6 +25,7 @@ export const Account: React.FC<AccountProps> = () => {
   const handleDisconnect = async () => {
     try {
       setIsConnected(false);
+      clearTransactions();
       await disconnectWallet();
       toast.success("Wallet disconnected");
     } catch (error) {

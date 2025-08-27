@@ -3,8 +3,9 @@
 import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { UITransaction } from "@/services/store/transaction";
-import { QASH_TOKEN_DECIMALS, QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { Tooltip } from "react-tooltip";
+import { useAccountContext } from "@/contexts/AccountProvider";
 
 const COLUMN_GAP = 10; // Gap between chart columns in pixels
 
@@ -66,9 +67,8 @@ const TimeRangeDropdown: React.FC<{ timeRange: string; onTimeRangeChange: (range
 };
 
 const SpendingAverageChart = () => {
+  const { assets } = useAccountContext();
   const [timeRange, setTimeRange] = useState("Last 5 days");
-  const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const transactions = useTransactionStore(state => state.transactions);
   const blockNumber = useMidenSdkStore(state => state.blockNum);
 
@@ -139,29 +139,35 @@ const SpendingAverageChart = () => {
         return txBlockNumber >= dayStartBlock && txBlockNumber < dayEndBlock;
       });
 
-      let dayIncoming = BigInt(0);
-      let dayExpense = BigInt(0);
+      let dayIncoming = 0;
+      let dayExpense = 0;
       let dayIncomingCount = 0;
       let dayExpenseCount = 0;
 
       dayTransactions.forEach(transaction => {
-        const assets = transaction.assets.filter(asset => asset.assetId === QASH_TOKEN_ADDRESS);
-        const assetAmount = assets.reduce((acc, asset) => acc + asset.amount, BigInt(0));
-
-        if (transaction.type === "Incoming" || transaction.type === "Faucet") {
-          dayIncoming += assetAmount;
-          dayIncomingCount++;
-        } else if (transaction.type === "Outgoing") {
-          dayExpense += assetAmount;
-          dayExpenseCount++;
-        }
+        // Process all assets in the transaction, not just QASH
+        transaction.assets.forEach(asset => {
+          // Find the asset metadata to get the correct decimals
+          const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
+          if (assetMetadata) {
+            const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
+            
+            if (transaction.type === "Incoming" || transaction.type === "Faucet") {
+              dayIncoming += assetAmount;
+              dayIncomingCount++;
+            } else if (transaction.type === "Outgoing") {
+              dayExpense += assetAmount;
+              dayExpenseCount++;
+            }
+          }
+        });
       });
 
       dailyData.push({
         date,
         day: dayNames[date.getDay()],
-        income: Number(dayIncoming) / 10 ** QASH_TOKEN_DECIMALS,
-        expense: Number(dayExpense) / 10 ** QASH_TOKEN_DECIMALS,
+        income: dayIncoming,
+        expense: dayExpense,
         incomingCount: dayIncomingCount,
         expenseCount: dayExpenseCount,
       });
@@ -186,7 +192,7 @@ const SpendingAverageChart = () => {
       totalTransactions: filteredTransactions.length,
       dailyData,
     };
-  }, [transactions, timeRange, blockNumber]);
+  }, [transactions, timeRange, blockNumber, assets]);
 
   // Generate chart data based on daily transaction data
   const chartData = useMemo(() => {
@@ -207,18 +213,8 @@ const SpendingAverageChart = () => {
       expense: Math.min(100, dayData.expense * scaleFactor),
       rawIncome: dayData.income, // Keep raw values for tooltip
       rawExpense: dayData.expense,
-      opacity: hoveredColumn === index ? 1 : 0.3, // Highlight hovered column
     }));
-  }, [transactionStats, hoveredColumn]);
-
-  const handleColumnHover = (index: number, event: React.MouseEvent) => {
-    setHoveredColumn(index);
-    setMousePosition({ x: event.clientX, y: event.clientY });
-  };
-
-  const handleColumnLeave = () => {
-    setHoveredColumn(null);
-  };
+  }, [transactionStats]);
 
   const columnWidth = timeRange === "Last 5 days" ? "60px" : "42px";
   const chartContainerStyle = { gap: `${COLUMN_GAP}px` };
@@ -254,30 +250,25 @@ const SpendingAverageChart = () => {
             {chartData.map((data, index) => (
               <div
                 key={index}
-                className="flex gap-1 items-end relative cursor-pointer"
+                className="flex gap-1 items-end relative cursor-pointer group"
                 style={{
                   width: columnWidth,
-                  opacity: data.opacity,
                 }}
-                onMouseEnter={e => handleColumnHover(index, e)}
-                onMouseLeave={handleColumnLeave}
+                data-tooltip-id={`chart-tooltip-${index}`}
+                data-tooltip-content={`${data.day}, ${data.date?.toLocaleDateString("en-GB")}`}
               >
                 <div
-                  className="flex-1 bg-[#00e595] min-h-px min-w-px relative rounded-[3px] transition-all duration-200"
+                  className="flex-1 bg-[#00e595] min-h-px min-w-px relative rounded-[3px] transition-all duration-200 opacity-30 group-hover:opacity-100 group-hover:scale-105 group-hover:shadow-[0_0_10px_rgba(0,229,149,0.5)]"
                   style={{
                     height: `${data.income}px`,
-                    transform: hoveredColumn === index ? "scale(1.05)" : "scale(1)",
-                    boxShadow: hoveredColumn === index ? "0 0 10px rgba(0, 229, 149, 0.5)" : "none",
                   }}
                 >
                   <div className="absolute inset-0 pointer-events-none shadow-[0px_-6px_7.8px_0px_inset_#78ff91,0px_4px_15px_0px_inset_#bbf7c6]" />
                 </div>
                 <div
-                  className="flex-1 bg-[#ff009f] min-h-px min-w-px relative rounded-[3px] transition-all duration-200"
+                  className="flex-1 bg-[#ff009f] min-h-px min-w-px relative rounded-[3px] transition-all duration-200 opacity-30 group-hover:opacity-100 group-hover:scale-105 group-hover:shadow-[0_0_10px_rgba(255,0,159,0.5)]"
                   style={{
                     height: `${data.expense}px`,
-                    transform: hoveredColumn === index ? "scale(1.05)" : "scale(1)",
-                    boxShadow: hoveredColumn === index ? "0 0 10px rgba(255, 0, 159, 0.5)" : "none",
                   }}
                 >
                   <div className="absolute inset-0 pointer-events-none shadow-[0px_4px_15px_0px_inset_#fec6e9,0px_-17px_13px_0px_inset_#ff009f]" />
@@ -294,10 +285,9 @@ const SpendingAverageChart = () => {
             {chartData.map((data, index) => (
               <div
                 key={index}
-                className="h-[22px] flex items-center justify-center"
+                className="h-[22px] flex items-center justify-center opacity-30 group-hover:opacity-100 transition-opacity duration-200"
                 style={{
                   width: columnWidth,
-                  opacity: data.opacity === 1 ? 1 : 0.3,
                 }}
               >
                 <span className="block leading-[20px]">{data.day}</span>
@@ -307,34 +297,44 @@ const SpendingAverageChart = () => {
         </div>
       </div>
 
-      {/* Chart Legend - Follows mouse position */}
-      {hoveredColumn !== null && chartData[hoveredColumn] && (
-        <div
-          className="fixed bg-[#0c0c0c] flex flex-col gap-4 items-start justify-center p-3 rounded-md w-35 z-50 pointer-events-none"
+      {/* Tooltips for each chart column */}
+      {chartData.map((data, index) => (
+        <Tooltip
+          key={index}
+          id={`chart-tooltip-${index}`}
+          className="bg-[#0c0c0c] text-white p-3 rounded-md border border-[#000000] max-w-[200px] z-50"
           style={{
-            left: mousePosition.x + 15,
-            top: mousePosition.y - 80,
+            borderRadius: "6px",
+            padding: "12px",
+            backgroundColor: "#0c0c0c",
+            color: "white",
+            border: "1px solid #000000",
+            maxWidth: "200px",
+            zIndex: 50,
           }}
-        >
-          <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">
-            {chartData[hoveredColumn]?.day}, {chartData[hoveredColumn]?.date?.toLocaleDateString("en-GB")}
-          </span>
-          <div className="flex flex-col gap-2 items-start">
-            <div className="flex items-center gap-1.5">
-              <div className="h-1.5 w-4 bg-[#00e595] rounded-full" />
-              <span className="font-normal text-white text-sm tracking-[0.5px]">
-                {(chartData[hoveredColumn]?.rawIncome || 0).toFixed(2)} QASH
+          render={({ content }) => (
+            <div className="flex flex-col gap-4 items-start justify-center">
+              <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">
+                {content}
               </span>
+              <div className="flex flex-col gap-2 items-start">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-4 bg-[#00e595] rounded-full" />
+                  <span className="font-normal text-white text-sm tracking-[0.5px]">
+                    ${data.rawIncome.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-[#fc2bad] h-1.5 rounded-full w-4" />
+                  <span className="font-normal text-white text-sm tracking-[0.5px]">
+                    ${data.rawExpense.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="bg-[#fc2bad] h-1.5 rounded-full w-4" />
-              <span className="font-normal text-white text-sm tracking-[0.5px]">
-                {(chartData[hoveredColumn]?.rawExpense || 0).toFixed(2)} QASH
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
+        />
+      ))}
     </div>
   );
 };

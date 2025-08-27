@@ -157,7 +157,11 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
   };
 
   return (
-    <div className="bg-[#1e1e1e] flex flex-col gap-1 flex-1 items-start min-h-px min-w-px overflow-hidden rounded-lg w-full pb-2">
+    <div
+      className={`bg-[#1e1e1e] flex flex-col gap-1 flex-1 items-center min-h-px min-w-px overflow-hidden rounded-lg w-full pb-2 ${
+        transactions.length === 0 ? "h-full" : ""
+      }`}
+    >
       {/* Header */}
       <div className="bg-[#292929] flex flex-row items-center justify-between pl-3 pr-2 py-2 w-full">
         <div aria-hidden="true" className="absolute border-[#131313] border-b inset-0 pointer-events-none" />
@@ -180,10 +184,8 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
                     {...register("searchQuery", {
                       onChange: e => {
                         const value = e.target.value;
-                        // Auto-clear filter when input is empty
-                        if (!value.trim()) {
-                          setSearchQuery("");
-                        }
+                        // Start filtering immediately as user types
+                        setSearchQuery(value);
                       },
                     })}
                     className="font-medium text-sm text-[rgba(255,255,255,0.4)] bg-transparent border-none outline-none w-full"
@@ -259,7 +261,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
         </div>
       </div>
 
-      <div className="px-2 w-full cursor-pointer overflow-y-auto">
+      <div className="px-2 w-full cursor-pointer overflow-y-auto h-full">
         {/* Transaction Rows */}
         {filteredTransactions.map((transaction, index) => (
           <div
@@ -347,6 +349,14 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
             <div className="col-span-1 flex items-center justify-center h-full gap-2">{renderValue(transaction)}</div>
           </div>
         ))}
+
+        {/* Empty State */}
+        {filteredTransactions.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full">
+          <img src="/schedule-payment/empty-schedule-payment-icon.svg" alt="Empty State" className="scale-100" />
+          <span className="text-white">You haven’t created any transactions yet.</span>
+        </div>
+        )}
       </div>
     </div>
   );

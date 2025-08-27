@@ -121,12 +121,7 @@ const DashboardMenu: React.FC<DashboardMenuProps> = () => {
   return (
     <div className="bg-[#1a1a1a] h-screen w-[250px]">
       <div className="px-3.5 pt-[68px] flex flex-col gap-2 justify-center items-start">
-        <div className="text-white text-base text-center whitespace-pre leading-none">
-          <p>Dashboard menu</p>
-        </div>
-        <div className="w-full text-sm text-neutral-600 tracking-[-0.45px] leading-[1.1]">
-          <p>Only you and the recipient know about this transaction</p>
-        </div>
+        <span className="text-white text-base text-center whitespace-pre leading-none">Dashboard menu</span>
       </div>
 
       {/* Menu Items */}
