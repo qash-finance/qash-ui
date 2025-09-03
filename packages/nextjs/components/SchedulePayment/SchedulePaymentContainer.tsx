@@ -342,6 +342,8 @@ export const SchedulePaymentContainer = () => {
   }) as { data: any[] | undefined };
   const blockNum = useMidenSdkStore(state => state.blockNum);
 
+  console.log("schedulePayments", schedulePayments);
+
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [claimableDates, setClaimableDates] = useState<{ [key: string]: string }>({});

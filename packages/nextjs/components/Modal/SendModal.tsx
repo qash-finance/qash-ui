@@ -65,10 +65,6 @@ export function SendModal({
   const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const { mutateAsync: acceptRequest } = useAcceptRequest();
-  const blockNum = useMidenSdkStore(state => state.blockNum);
-
-  // Check if component is being used as a modal
-  const isSendModalOpen = isModalOpen(MODAL_IDS.SEND);
 
   // Get initial data based on usage mode
   // If modal: use props data, else: use empty defaults
@@ -203,6 +199,8 @@ export function SendModal({
         recallHeight,
       );
 
+      const noteId = note.id().toString();
+
       // submit transaction to miden
       const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
 
@@ -216,7 +214,7 @@ export function SendModal({
         recallableHeight: noteRecallHeight,
         serialNumber: serialNumbers,
         noteType: CustomNoteType.P2IDR,
-        noteId: note.id().toString(),
+        noteId: noteId,
         transactionId: txId,
         requestPaymentId: props.pendingRequestId ?? null,
       });

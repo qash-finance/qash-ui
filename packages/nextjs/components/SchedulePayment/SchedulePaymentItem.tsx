@@ -510,7 +510,7 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
           return (
             <SchedulePaymentTooltip
               statusText={getStatusText(transaction.status)}
-              sentText={`${transaction.amount} ${currency}`}
+              sentText={transaction.amount ? `${transaction.amount} ${currency}` : ""}
               dateTimeText={transaction.date || ""}
               balanceText={`${calculateRemainingBalance(transactions)} ${currency}`}
               remainingTimeText={formatRemainingTime(transaction.date || "")}

@@ -83,7 +83,6 @@ export const createMidenSdkStore = () =>
 
         try {
           const value = await client.syncState();
-          console.log("🚀 ~ createMidenSdkStore ~ value:", value.blockNum())
           set(state => {
             state.blockNum = value.blockNum();
             state.error = null;

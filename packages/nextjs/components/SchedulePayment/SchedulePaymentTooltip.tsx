@@ -41,12 +41,14 @@ const SchedulePaymentTooltip: React.FC<SchedulePaymentTooltipProps> = ({
         </div>
 
         {/* Row: Sent */}
-        <div className="flex flex-row gap-2 items-center">
-          <span className="text-[#989898] text-[14px] tracking-[0.07px] leading-5">Sent:</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-white text-[14px] tracking-[0.07px] leading-5 font-medium">{sentText}</span>
+        {sentText && (
+          <div className="flex flex-row gap-2 items-center">
+            <span className="text-[#989898] text-[14px] tracking-[0.07px] leading-5">Sent:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-white text-[14px] tracking-[0.07px] leading-5 font-medium">{sentText}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Row: Date/Time */}
         <div className="flex flex-row gap-2 items-center text-[14px] tracking-[0.07px]">

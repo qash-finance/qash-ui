@@ -30,8 +30,48 @@ const getTokenSymbol = (request: RequestPayment): string => {
   return token?.metadata?.symbol || DEFAULT_TOKEN_SYMBOL;
 };
 
-export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pendingRequests = [] }) => {
+// Dedicated row actions component to safely use hooks
+const PendingRequestActions: React.FC<{
+  request: RequestPayment;
+  recipientName?: string;
+  onDeny: (id: number) => void;
+}> = ({ request, recipientName, onDeny }) => {
   const { openModal } = useModal();
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const token = Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
+
+  const handleAccept = () => {
+    openModal<SendModalProps>(MODAL_IDS.SEND, {
+      pendingRequestId: request.id,
+      recipient: request.payee,
+      recipientName,
+      amount: request.amount,
+      message: request.message,
+      tokenAddress: token?.faucetId,
+      isGroupPayment: request.isGroupPayment,
+      isRequestPayment: true,
+      onTransactionConfirmed: async () => {
+        setIsConfirming(true);
+      },
+    });
+  };
+
+  return (
+    <div className="flex gap-1 items-center justify-center">
+      {!isConfirming ? (
+        <>
+          <ActionButton text="Deny" type="deny" className="flex-1" onClick={() => onDeny(request.id)} />
+          <ActionButton text="Accept" className="flex-1" onClick={handleAccept} />
+        </>
+      ) : (
+        <ActionButton text="..." loading className="flex-1 h-8" />
+      )}
+    </div>
+  );
+};
+
+export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pendingRequests = [] }) => {
   const { mutate: denyRequest } = useDenyRequest();
   const { data: addressBooks } = useGetAddressBooks();
 
@@ -79,43 +119,14 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
 
   const actionRenderer = useCallback(
     (rowData: Record<string, CellContent>, index: number) => {
-      const [isConfirming, setIsConfirming] = useState(false);
       const request = pendingRequests[index];
       if (request?.status !== RequestPaymentStatus.PENDING) return null;
 
       const recipientName = findRecipientName(request.payee);
-      const token = Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
 
-      const handleAccept = () => {
-        openModal<SendModalProps>(MODAL_IDS.SEND, {
-          pendingRequestId: request.id,
-          recipient: request.payee,
-          recipientName,
-          amount: request.amount,
-          message: request.message,
-          tokenAddress: token?.faucetId,
-          isGroupPayment: request.isGroupPayment,
-          isRequestPayment: true,
-          onTransactionConfirmed: async () => {
-            setIsConfirming(true);
-          },
-        });
-      };
-
-      return (
-        <div className="flex gap-1 items-center justify-center">
-          {!isConfirming ? (
-            <>
-              <ActionButton text="Deny" type="deny" className="flex-1" onClick={() => denyRequest(request.id)} />
-              <ActionButton text="Accept" className="flex-1" onClick={handleAccept} />
-            </>
-          ) : (
-            <ActionButton text="..." loading className="flex-1 h-8" />
-          )}
-        </div>
-      );
+      return <PendingRequestActions request={request} recipientName={recipientName} onDeny={id => denyRequest(id)} />;
     },
-    [pendingRequests, openModal, findRecipientName, denyRequest],
+    [pendingRequests, findRecipientName, denyRequest],
   );
 
   // Memoized data transformation for better performance

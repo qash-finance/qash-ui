@@ -83,19 +83,13 @@ const useAcceptRequest = () => {
 
 const useDenyRequest = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: number) => {
       return apiClient.putData<RequestPayment>(`/request-payment/${id}/deny`);
     },
     onSuccess: (updatedRequest: RequestPayment) => {
-      queryClient.setQueryData(["request-payment"], (oldData: RequestPaymentResponse | undefined) => {
-        if (!oldData) return { pending: [], accepted: [] };
-        return {
-          ...oldData,
-          pending: oldData.pending.filter(request => request.id !== updatedRequest.id),
-        };
-      });
+      // refetch requests
+      queryClient.invalidateQueries({ queryKey: ["request-payment"] });
     },
   });
 };

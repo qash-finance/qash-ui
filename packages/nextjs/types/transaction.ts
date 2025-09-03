@@ -8,15 +8,15 @@ export enum NoteType {
 }
 
 export enum RecallableNoteType {
-  TRANSACTION = "transaction",
-  GIFT = "gift",
+  TRANSACTION = "TRANSACTION",
+  GIFT = "GIFT",
   SCHEDULE_PAYMENT = "schedule_payment",
 }
 
 export enum TransactionStatus {
-  PENDING = "pending",
-  RECALLED = "recalled",
-  CONSUMED = "consumed",
+  PENDING = "PENDING",
+  RECALLED = "RECALLED",
+  CONSUMED = "CONSUMED",
 }
 
 export interface AssetDto {

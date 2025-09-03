@@ -61,10 +61,7 @@ const DEFAULT_SCHEDULE_PAYMENT = {
   startDate: new Date(),
 };
 
-export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
-  activeTab,
-  onTabChange,
-}) => {
+export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
   // **************** Custom Hooks *******************
   const searchParams = useSearchParams();
   const { openModal } = useModal();
@@ -202,10 +199,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
     data: SendTransactionFormValues,
   ) => {
     try {
-      if(!blockNum) {
+      if (!blockNum) {
         throw new Error("Block number is not available");
       }
-      
+
       if (!schedulePayment.times) {
         throw new Error("Schedule payment times is not available");
       }
@@ -374,6 +371,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
         recallHeight,
       );
 
+      const noteId = note.id().toString();
+
       // submit transaction to miden
       const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
 
@@ -387,7 +386,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
         recallableHeight: noteRecallHeight,
         serialNumber: serialNumbers,
         noteType: CustomNoteType.P2IDR,
-        noteId: note.id().toString(),
+        noteId: noteId,
         transactionId: txId,
       });
 
