@@ -1,16 +1,16 @@
 export enum CustomNoteType {
-  P2ID = "p2id",
-  P2IDR = "p2idr",
-  GIFT = "gift",
+  P2ID = "P2ID",
+  P2IDR = "P2IDR",
+  GIFT = "GIFT",
 }
 
 export enum NoteStatus {
-  PENDING = "pending",
-  RECALLED = "recalled",
-  CONSUMED = "consumed",
+  PENDING = "PENDING",
+  RECALLED = "RECALLED",
+  CONSUMED = "CONSUMED",
 }
 
 export enum WrappedNoteType {
-  PUBLIC = "public",
-  PRIVATE = "private",
+  PUBLIC = "PUBLIC",
+  PRIVATE = "PRIVATE",
 }

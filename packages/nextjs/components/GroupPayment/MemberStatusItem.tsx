@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { MemberStatus } from "@/types/group-payment";
+import { MemberStatus, MemberStatusEnum } from "@/types/group-payment";
 import { useGetAddressBooks } from "@/services/api/address-book";
 
 interface MemberStatusItemProps {
@@ -25,13 +25,13 @@ export const MemberStatusItem: React.FC<MemberStatusItemProps> = ({
 }) => {
   const { data: addressBooks } = useGetAddressBooks();
 
-  const getStatusStyles = (status: string) => {
+  const getStatusStyles = (status: MemberStatusEnum) => {
     switch (status) {
-      case "paid":
+      case MemberStatusEnum.PAID:
         return "text-[#6CFF85] bg-[#304B36] bg-opacity-20";
-      case "denied":
+      case MemberStatusEnum.DENIED:
         return "text-white bg-red-500 bg-opacity-20";
-      case "pending":
+      case MemberStatusEnum.PENDING:
         return "text-white bg-[#4D4D4D] bg-opacity-20";
     }
   };
@@ -56,7 +56,7 @@ export const MemberStatusItem: React.FC<MemberStatusItemProps> = ({
     // Priority 2: Member name (for quick share groups, only show after payment)
     if (isQuickShare) {
       switch (memberStatus.status) {
-        case "paid":
+        case MemberStatusEnum.PAID:
           return formatAddress(memberStatus.memberAddress);
         default:
           return "-";
@@ -97,7 +97,11 @@ export const MemberStatusItem: React.FC<MemberStatusItemProps> = ({
             memberStatus.status,
           )}`}
         >
-          {memberStatus.status === "paid" ? "Paid" : memberStatus.status === "denied" ? "Denied" : "Pending"}
+          {memberStatus.status === MemberStatusEnum.PAID
+            ? "Paid"
+            : memberStatus.status === MemberStatusEnum.DENIED
+              ? "Denied"
+              : "Pending"}
         </div>
       </div>
     </div>

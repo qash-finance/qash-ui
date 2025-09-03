@@ -1,5 +1,11 @@
 import { AssetWithMetadata } from "./faucet";
 
+export enum MemberStatusEnum {
+  PENDING = "PENDING",
+  PAID = "PAID",
+  DENIED = "DENIED",
+}
+
 export interface CreateGroupDto {
   name: string;
   members: {
@@ -39,7 +45,7 @@ export interface MemberStatus {
   id: number;
   memberAddress: string;
   memberName: string;
-  status: "pending" | "paid" | "denied";
+  status: MemberStatusEnum;
   paidAt: string | null;
   createdAt: string;
   updatedAt: string;
