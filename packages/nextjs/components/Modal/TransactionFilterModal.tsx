@@ -14,7 +14,6 @@ import toast from "react-hot-toast";
 export function TransactionFilterModal({ isOpen, onClose, zIndex, hash }: ModalProp<TransactionFilterModalProps>) {
   const { accountId } = useAccount();
   const transactions = useTransactionStore(state => state.transactions);
-  const [searchQuery, setSearchQuery] = useState("");
   const [filteredTransactions, setFilteredTransactions] = useState(transactions);
 
   useEffect(() => {
@@ -30,10 +29,8 @@ export function TransactionFilterModal({ isOpen, onClose, zIndex, hash }: ModalP
         return false;
       });
       setFilteredTransactions(filtered);
-      setSearchQuery(hash);
     } else {
       setFilteredTransactions(transactions);
-      setSearchQuery("");
     }
   }, [hash, transactions, isOpen]);
 

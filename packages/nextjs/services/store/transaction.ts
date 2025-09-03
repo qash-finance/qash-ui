@@ -14,6 +14,7 @@ export interface UITransaction {
   sender: string;
   recipient: string;
   status: "isCommited" | "isPending" | "isFailed";
+  amount: string;
 }
 
 export interface TransactionStore {
@@ -64,6 +65,7 @@ async function transactionRecordToUITransaction({
       recipient: recipientNote[0],
       blockNumber: tr.blockNum().toString(),
       status: statusObject.isCommitted() ? "isCommited" : statusObject.isPending() ? "isPending" : "isFailed",
+      amount: assets[0].amount.toString(),
     };
 
     return result;
@@ -101,6 +103,7 @@ async function transactionRecordToUITransaction({
       recipient: consumer,
       blockNumber: tr.blockNum().toString(),
       status: statusObject.isCommitted() ? "isCommited" : statusObject.isPending() ? "isPending" : "isFailed",
+      amount: assets[0].amount.toString(),
     };
 
     return result;

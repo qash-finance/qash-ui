@@ -118,7 +118,7 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
     try {
       // Get all recallable transactions (filter out create transactions)
       const recallableTransactions = schedulePaymentData.transactions.filter(
-        tx => !tx.id.includes("creation") && tx.status !== "recalled",
+        tx => !tx.id.includes("creation") && tx.status !== TransactionStatus.RECALLED,
       );
 
       if (recallableTransactions.length === 0) {

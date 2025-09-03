@@ -30,6 +30,7 @@ import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useAddMemberToQuickShare, useGetPaymentByLink } from "@/services/api/group-payment";
+import { MemberStatusEnum } from "@/types/group-payment";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -188,7 +189,7 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
       // Check if payment is already complete (for quick share payments)
       if (paymentByLink?.memberStatuses) {
         const allMembersPaid = paymentByLink.memberStatuses.every(
-          memberStatus => memberStatus.status === "paid" || memberStatus.paidAt !== null,
+          memberStatus => memberStatus.status === MemberStatusEnum.PAID || memberStatus.paidAt !== null,
         );
 
         if (allMembersPaid) {
@@ -335,7 +336,7 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
       // Check if payment is already complete (for quick share payments)
       if (paymentByLink?.memberStatuses) {
         const allMembersPaid = paymentByLink.memberStatuses.every(
-          memberStatus => memberStatus.status === "paid" || memberStatus.paidAt !== null,
+          memberStatus => memberStatus.status === MemberStatusEnum.PAID || memberStatus.paidAt !== null,
         );
 
         if (allMembersPaid) {
