@@ -9,9 +9,9 @@ export interface CreateRequestPaymentDto {
 }
 
 export enum RequestPaymentStatus {
-  PENDING = "pending",
-  ACCEPTED = "accepted",
-  DENIED = "denied",
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  DENIED = "DENIED",
 }
 
 export interface RequestPayment {

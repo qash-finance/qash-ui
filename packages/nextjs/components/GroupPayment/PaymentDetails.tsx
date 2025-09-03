@@ -139,6 +139,8 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
   const { mutate: createQuickSharePayment } = useCreateQuickSharePayment();
   const { openModal } = useModal();
 
+  console.log("groupPayments", groupPayments);
+
   //*************** Effects ***************
   useEffect(() => {
     if (!isQuickShare && selectedGroup) {

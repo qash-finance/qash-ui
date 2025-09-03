@@ -134,7 +134,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
           const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
           if (assetMetadata) {
             const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
-            
+
             if (transaction.type === "Incoming" || transaction.type === "Faucet") {
               monthIncoming += assetAmount;
             } else if (transaction.type === "Outgoing") {
@@ -197,7 +197,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
         const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
         if (assetMetadata) {
           const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
-          
+
           if (tx.type === "Incoming" || tx.type === "Faucet") {
             moneyIn += assetAmount;
           } else if (tx.type === "Outgoing") {
@@ -278,7 +278,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
         const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
         if (assetMetadata) {
           const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
-          
+
           if (tx.type === "Incoming" || tx.type === "Faucet") {
             previousMoneyIn += assetAmount;
           } else if (tx.type === "Outgoing") {
@@ -434,3 +434,5 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
 };
 
 export default GeneralStatistics;
+
+// P1GdgFdflcnAwCCT

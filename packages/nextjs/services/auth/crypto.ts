@@ -1,3 +1,5 @@
+import { DeviceType } from "@/types/authentication";
+
 export interface KeyPair {
   publicKey: string;
   privateKey: string;
@@ -173,15 +175,15 @@ export class WalletCrypto {
   /**
    * Get device type based on user agent
    */
-  static getDeviceType(): "desktop" | "mobile" | "tablet" | "unknown" {
-    if (typeof window === "undefined") return "unknown";
+  static getDeviceType(): DeviceType {
+    if (typeof window === "undefined") return DeviceType.UNKNOWN;
 
     const userAgent = navigator.userAgent.toLowerCase();
 
-    if (userAgent.includes("mobile")) return "mobile";
-    if (userAgent.includes("tablet") || userAgent.includes("ipad")) return "tablet";
-    if (userAgent.includes("desktop")) return "desktop";
+    if (userAgent.includes("mobile")) return DeviceType.MOBILE;
+    if (userAgent.includes("tablet") || userAgent.includes("ipad")) return DeviceType.TABLET;
+    if (userAgent.includes("desktop")) return DeviceType.DESKTOP;
 
-    return "unknown";
+    return DeviceType.UNKNOWN;
   }
 }

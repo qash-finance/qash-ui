@@ -3,7 +3,7 @@ import { CellContent, Table } from "@/components/Common/Table";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS, SendModalProps } from "@/types/modal";
-import { RequestPayment } from "@/types/request-payment";
+import { RequestPayment, RequestPaymentStatus } from "@/types/request-payment";
 import { formatDate } from "@/services/utils/formatDate";
 import { useDenyRequest } from "@/services/api/request-payment";
 import { useGetAddressBooks } from "@/services/api/address-book";
@@ -81,7 +81,7 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
     (rowData: Record<string, CellContent>, index: number) => {
       const [isConfirming, setIsConfirming] = useState(false);
       const request = pendingRequests[index];
-      if (request?.status !== "pending") return null;
+      if (request?.status !== RequestPaymentStatus.PENDING) return null;
 
       const recipientName = findRecipientName(request.payee);
       const token = Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
