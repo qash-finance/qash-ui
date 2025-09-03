@@ -523,7 +523,7 @@ export const SchedulePaymentItem: React.FC<SchedulePaymentItemProps> = ({
                       const recallingNote = transaction;
 
                       if (!recallingNote || !recallingNote.noteId) throw new Error("Recalling note not found");
-
+                      console.log("CONSUME BY ID", recallingNote.noteId, accountId);
                       const txId = await consumeNoteByID(accountId, recallingNote.noteId);
                       // recall on server
                       await recallBatch({

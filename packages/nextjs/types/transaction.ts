@@ -1,16 +1,10 @@
 import { AssetWithMetadata, FaucetMetadata } from "./faucet";
 import { CustomNoteType, NoteStatus } from "./note";
 
-export enum NoteType {
-  P2ID = "p2id",
-  P2IDR = "p2idr",
-  GIFT = "gift",
-}
-
 export enum RecallableNoteType {
   TRANSACTION = "TRANSACTION",
   GIFT = "GIFT",
-  SCHEDULE_PAYMENT = "schedule_payment",
+  SCHEDULE_PAYMENT = "SCHEDULE_PAYMENT",
 }
 
 export enum TransactionStatus {
