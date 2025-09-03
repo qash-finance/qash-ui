@@ -1,15 +1,15 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, useState, useEffect, useRef } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { WalletError } from "@demox-labs/miden-wallet-adapter-base";
+import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
-import { ModalProvider } from "@/contexts/ModalManagerProvider";
+import { ModalProvider, useModal } from "@/contexts/ModalManagerProvider";
 import { ModalManager } from "./Common/ModalManager";
 import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
@@ -22,6 +22,13 @@ import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
+import DashboardMenu from "./Dashboard/DashboardMenu";
+import { usePathname } from "next/navigation";
+import { TransactionProviderC } from "@/contexts/TransactionProvider";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { ActionButton } from "./Common/ActionButton";
+import { MODAL_IDS } from "@/types/modal";
+import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -47,6 +54,24 @@ const queryClient = new QueryClient({
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const pathname = usePathname();
+  const { isConnected } = useWalletConnect();
+  const modalRef = useRef<ModalTriggerRef | null>(null);
+
+  // Load sidebar state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("sidebarMinimized");
+    if (savedState !== null) {
+      setIsSidebarMinimized(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save sidebar state to localStorage when it changes
+  const handleSidebarToggle = (minimized: boolean) => {
+    setIsSidebarMinimized(minimized);
+    localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
+  };
 
   const wallets = useMemo(
     () => [
@@ -72,97 +97,112 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <MidenSdkProvider>
-        <WalletProvider wallets={wallets} autoConnect onError={handleError}>
+        <WalletProvider wallets={wallets as unknown as Adapter[]} autoConnect onError={handleError}>
           <WalletModalProvider>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                style: {
-                  padding: "0px",
-                  background: "#2B2B2B",
-                },
-                success: {
-                  icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
+            <TransactionProviderC>
+              <Toaster
+                position="top-right"
+                toastOptions={{
                   style: {
-                    color: "#7CFF96",
+                    padding: "0px",
+                    background: "#2B2B2B",
                   },
-                },
-                error: {
-                  style: {
-                    color: "#FF7C7C",
+                  success: {
+                    icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
+                    style: {
+                      color: "#7CFF96",
+                    },
                   },
-                },
-                loading: {
-                  style: {
-                    color: "#FFFFFF",
+                  error: {
+                    style: {
+                      color: "#FF7C7C",
+                    },
                   },
-                },
-              }}
-              children={t => (
-                <ToastBar
-                  toast={t}
-                  style={{
-                    width: "full",
-                    maxWidth: "900px",
-                    ...t.style,
-                  }}
-                >
-                  {({ icon, message }) => (
-                    <div className="flex gap-0.5 items-center rounded-[13px]">
-                      {icon}
-                      <span className="text-sm">{message}</span>
-                      <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
-                      <span className="text-[#929292] text-xs p-2 cursor-pointer" onClick={() => toast.dismiss(t.id)}>
-                        Close
-                      </span>
-                    </div>
-                  )}
-                </ToastBar>
-              )}
-            />
-            <TourProviderWrapper>
-              <SocketProvider>
-                <ModalProvider>
-                  <AnalyticsProvider config={analyticsConfig}>
-                    <AuthProvider
-                      apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                      autoRefresh={true}
-                      refreshInterval={AUTH_REFRESH_INTERVAL}
-                    >
-                      <AccountProvider>
-                        {/* <ConnectWalletButton /> */}
-                        <ModalManager />
-                        <div className="flex flex-row h-screen">
-                          <div className="w-1/6">
-                            <Sidebar />
-                          </div>
-                          <div className="w-5/6">
-                            <div className="p-[24px]">
-                              <Title />
-                            </div>
+                  loading: {
+                    style: {
+                      color: "#FFFFFF",
+                    },
+                  },
+                }}
+                children={t => (
+                  <ToastBar
+                    toast={t}
+                    style={{
+                      width: "full",
+                      maxWidth: "900px",
+                      ...t.style,
+                    }}
+                  >
+                    {({ icon, message }) => (
+                      <div className="flex gap-0.5 items-center rounded-[13px]">
+                        {icon}
+                        <span className="text-sm">{message}</span>
+                        <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
+                        <span className="text-[#929292] text-xs p-2 cursor-pointer" onClick={() => toast.dismiss(t.id)}>
+                          Close
+                        </span>
+                      </div>
+                    )}
+                  </ToastBar>
+                )}
+              />
+              <TourProviderWrapper>
+                <SocketProvider>
+                  <ModalProvider>
+                    <AnalyticsProvider config={analyticsConfig}>
+                      <AuthProvider
+                        apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                        autoRefresh={true}
+                        refreshInterval={AUTH_REFRESH_INTERVAL}
+                      >
+                        <AccountProvider>
+                          {/* <ConnectWalletButton /> */}
+                          <ModalManager />
+                          <ModalTrigger ref={modalRef} />
+                          <div className="flex flex-row">
                             <div
+                              className={`top-0 ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
                               style={{
-                                backgroundImage: 'url("/background.svg")',
-                                backgroundSize: "contain",
-                                height: "88%",
-                                backgroundClip: "content-box",
-                                backgroundColor: "#101111", // dark gray (tailwind zinc-900)
-                                // You can tweak the color as needed
+                                transition: "width 250ms ease",
+                                willChange: "width",
                               }}
-                              className="ml-[24px] mr-[24px] rounded-lg flex items-center justify-center"
                             >
-                              {children}
+                              <Sidebar minimized={isSidebarMinimized} onToggleMinimize={handleSidebarToggle} />
+                            </div>
+                            {pathname.includes("dashboard") && <DashboardMenu />}
+                            <div className="flex-1 h-screen flex flex-col overflow-hidden">
+                              <Title />
+                              <div
+                                style={{
+                                  backgroundImage: 'url("/background.svg")',
+                                  backgroundSize: "contain",
+                                  backgroundClip: "content-box",
+                                  backgroundColor: "#101111",
+                                }}
+                                className="mx-[24px] mb-[24px] rounded-lg flex justify-center items-center flex-1 overflow-auto relative"
+                              >
+                                {children}
+                                {!isConnected && (
+                                  <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
+                                    <img src="/modal/wallet-icon.gif" alt="connect-wallet-icon" className="w-16 h-16" />
+                                     <span className="text-white text-lg font-medium">
+                                        Please connect your wallet to display information.
+                                    </span>
+                                    <ActionButton text="Connect Wallet" onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)} />
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <FloatingActionButton imgSrc="/token/qash.svg" />
-                        <Background />
-                      </AccountProvider>
-                    </AuthProvider>
-                  </AnalyticsProvider>
-                </ModalProvider>
-              </SocketProvider>
-            </TourProviderWrapper>
+                          <FloatingActionButton imgSrc="/token/qash.svg" />
+                          <Background />
+                        </AccountProvider>
+                      </AuthProvider>
+                    </AnalyticsProvider>
+                  </ModalProvider>
+                </SocketProvider>
+              </TourProviderWrapper>
+            </TransactionProviderC>
           </WalletModalProvider>
         </WalletProvider>
       </MidenSdkProvider>

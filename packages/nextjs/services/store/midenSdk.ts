@@ -1,4 +1,5 @@
 import { NODE_ENDPOINT } from "@/services/utils/constant";
+import { WebClient } from "@demox-labs/miden-sdk";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
@@ -9,9 +10,10 @@ export interface MidenSdkConfig {
 export interface MidenSdkState {
   isLoading: boolean;
   error: string | null;
-  blockNum: number;
+  blockNum: number | null;
   config: MidenSdkConfig;
   account: string;
+  client: unknown;
 }
 
 export interface MidenSdkActions {
@@ -27,8 +29,9 @@ export const createMidenSdkStore = () =>
       isLoading: false,
       error: null,
       config: { endpoint: NODE_ENDPOINT },
-      blockNum: 0,
+      blockNum: null,
       account: "",
+      client: null,
       setAccount: (account: string) => {
         set(state => {
           state.account = account;
@@ -56,6 +59,7 @@ export const createMidenSdkStore = () =>
 
           set(state => {
             state.error = null;
+            state.client = client;
           });
 
           await get().syncState(client);
@@ -71,7 +75,7 @@ export const createMidenSdkStore = () =>
         }
       },
 
-      syncState: async (client: any) => {
+      syncState: async (client: WebClient) => {
         if (!client) {
           console.warn("Cannot sync state: client not initialized");
           return;

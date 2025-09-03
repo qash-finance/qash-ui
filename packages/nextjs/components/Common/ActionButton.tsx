@@ -10,6 +10,7 @@ interface ActionButtonProps {
   className?: string;
   buttonType?: "button" | "submit" | "reset";
   icon?: string;
+  iconPosition?: "left" | "right";
 }
 
 const BUTTON_STYLES = {
@@ -33,7 +34,7 @@ const BUTTON_STYLES = {
     },
     disabled: {
       bg: "bg-[#8B5A5A]/70",
-      shadow: "0px 0px 0px 1px #0F3C8E, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #0F3C8E inset",
+      shadow: "0px 0px 0px 1px #D70000, 0px 1px 3px 0px rgba(15, 60, 142, 0.20), 0px -2.4px 0px 0px #D70000 inset",
       color: "#8E8E8E",
     },
   },
@@ -60,15 +61,15 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   className = "",
   buttonType = "button",
   icon,
+  iconPosition = "left",
 }) => {
-  const isDisabled = disabled || loading;
+  const isDisabled = disabled;
   const buttonStyle = BUTTON_STYLES[type];
   const currentStyle = isDisabled ? buttonStyle.disabled : buttonStyle.enabled;
 
   const buttonStyles = useMemo(
     () => ({
       padding: "6px 10px 8px 10px",
-      borderRadius: "10px",
       fontWeight: "500",
       letterSpacing: "-0.084px",
       lineHeight: "100%",
@@ -79,8 +80,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   );
 
   const buttonClasses = useMemo(() => {
-    const baseClasses = "font-barlow font-medium transition-colors";
-    const stateClasses = isDisabled ? "cursor-not-allowed" : "cursor-pointer";
+    const baseClasses = "font-barlow font-medium transition-colors rounded-[10px]";
+    const stateClasses = isDisabled || loading ? "cursor-not-allowed" : "cursor-pointer";
 
     return `${baseClasses} ${stateClasses} ${currentStyle.bg} ${className}`.trim();
   }, [isDisabled, loading, currentStyle.bg, className]);
@@ -90,15 +91,18 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       type={buttonType}
       className={`${buttonClasses} justify-center items-center flex`}
       style={buttonStyles}
-      disabled={isDisabled}
+      disabled={isDisabled || loading}
       onClick={onClick}
     >
       {loading ? (
         <img src="/loading-square.gif" alt="loading" className="w-6 h-6" />
       ) : (
         <div className="flex items-center gap-1">
-          {icon && <img src={icon} alt="icon" className="w-4 h-4" />}
+          {icon && iconPosition === "left" && <img src={icon} alt="icon" className="w-4 h-4" />}
           <span>{text}</span>
+          {icon && iconPosition === "right" && (
+            <img src={icon} alt="icon" className="w-4 h-4" style={{ filter: "invert(1) brightness(1000%)" }} />
+          )}
         </div>
       )}
     </button>

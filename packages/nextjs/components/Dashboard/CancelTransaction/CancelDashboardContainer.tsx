@@ -10,12 +10,20 @@ import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS, REFETCH_DELAY } from "@/service
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
 import { RecallableNote, RecallableNoteType } from "@/types/transaction";
-import { consumeNoteByID, consumeNoteByIDs } from "@/services/utils/miden/note";
+import {
+  consumeNoteByID,
+  consumeNoteByIDs,
+  consumeUnauthenticatedGiftNote,
+  consumeUnauthenticatedGiftNotes,
+  createGiftNote,
+  stringToSecretArray,
+} from "@/services/utils/miden/note";
 import toast from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
+import { useRecallBatch } from "@/services/api/transaction";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -155,8 +163,11 @@ export const CancelDashboardContainer: React.FC = () => {
     isLoading: recallableNotesLoading,
     refetch: refetchRecallableNotes,
   } = useRecallableNotes();
+  const { refetch: refetchGiftDashboard } = useGiftDashboard();
 
-  const { mutateAsync: recallBatch } = useRecall();
+  console.log("recallableNotes", recallableNotes);
+
+  const { mutateAsync: recallBatch } = useRecallBatch();
   const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { isConnected } = useWalletConnect();
 
@@ -261,20 +272,68 @@ export const CancelDashboardContainer: React.FC = () => {
 
       if (noteIds.length > 0) {
         setRecallingNoteId(Number(noteIds[0]));
-        // consume the notes on blockchain level
-        const txId = await consumeNoteByIDs(walletAddress, noteIds);
 
-        await recallBatch({
-          items: [
-            ...notes
-              .filter(note => note != undefined)
-              .map(note => ({
-                type: RecallableNoteType.TRANSACTION,
-                id: note.id,
-              })),
-          ],
-          txId: txId,
-        });
+        // filter out transaction note ids
+        const transactionNoteIds = notes
+          .filter(note => !note?.isGift)
+          .map(note => note?.noteId)
+          .filter(noteId => noteId !== undefined);
+
+        if (transactionNoteIds.length > 0) {
+          const p2ideTxId = await consumeNoteByIDs(walletAddress, transactionNoteIds);
+
+          // find all transaction note based on transactionNoteIds
+          const transactionNotes = notes.filter(note => transactionNoteIds.includes(note?.noteId!));
+          if (transactionNotes.length > 0) {
+            await recallBatch({
+              items: [
+                ...transactionNotes
+                  .filter(note => note != undefined)
+                  .map(note => ({
+                    type: RecallableNoteType.TRANSACTION,
+                    id: note.id,
+                  })),
+              ],
+              txId: p2ideTxId,
+            });
+          }
+        }
+
+        // prepare list of gift note
+        const giftNotes = notes.filter(note => note?.isGift);
+        let preparedGiftNotes = [];
+        let secrets = [];
+        for (const giftNote of giftNotes) {
+          if (giftNote) {
+            const secret = stringToSecretArray(giftNote.secretHash!);
+            secrets.push(secret);
+            const [note, _] = await createGiftNote(
+              giftNote?.sender!,
+              giftNote?.assets[0].faucetId!,
+              BigInt(Number(giftNote?.assets[0].amount!) * 10 ** giftNote?.assets[0].metadata.decimals!),
+              secret,
+              giftNote?.serialNumber?.map(Number) as [number, number, number, number],
+            );
+            preparedGiftNotes.push(note);
+          }
+        }
+
+        if (preparedGiftNotes.length > 0) {
+          // consume all gift notes
+          const giftTxId = await consumeUnauthenticatedGiftNotes(walletAddress, preparedGiftNotes, secrets);
+
+          await recallBatch({
+            items: [
+              ...giftNotes
+                .filter(note => note != undefined)
+                .map(note => ({
+                  type: RecallableNoteType.GIFT,
+                  id: note.id,
+                })),
+            ],
+            txId: giftTxId,
+          });
+        }
 
         // refetch recallable notes
         await refetchRecallableNotes();
@@ -329,18 +388,46 @@ export const CancelDashboardContainer: React.FC = () => {
             //   AccountId.fromBech32(recallingNote.sender),
             // );
 
-            const txId = await consumeNoteByID(recallingNote.sender, recallingNote.noteId.toString());
+            let txId = "";
 
-            // recall on server
-            await recallBatch({
-              items: [
-                {
-                  type: RecallableNoteType.TRANSACTION,
-                  id: recallingNote.id,
-                },
-              ],
-              txId: txId,
-            });
+            if (recallingNote.isGift) {
+              const secret = stringToSecretArray(recallingNote.secretHash!);
+
+              // we need to build the note and consume with unanthenticated note
+              // build gift note
+              const [note, _] = await createGiftNote(
+                recallingNote?.sender!,
+                recallingNote?.assets[0].faucetId!,
+                BigInt(Number(recallingNote?.assets[0].amount!) * 10 ** recallingNote?.assets[0].metadata.decimals!),
+                secret,
+                recallingNote?.serialNumber?.map(Number) as [number, number, number, number],
+              );
+
+              txId = await consumeUnauthenticatedGiftNote(walletAddress, note, secret);
+
+              await recallBatch({
+                items: [
+                  {
+                    type: RecallableNoteType.GIFT,
+                    id: recallingNote.id,
+                  },
+                ],
+                txId: txId,
+              });
+            } else {
+              txId = await consumeNoteByID(recallingNote.sender, recallingNote.noteId.toString());
+
+              // recall on server
+              await recallBatch({
+                items: [
+                  {
+                    type: RecallableNoteType.TRANSACTION,
+                    id: recallingNote.id,
+                  },
+                ],
+                txId: txId,
+              });
+            }
 
             // refetch recallable notes
             await refetchRecallableNotes();
@@ -359,6 +446,9 @@ export const CancelDashboardContainer: React.FC = () => {
                 </a>
               </div>,
             );
+
+            // refetch gift dashboard
+            await refetchGiftDashboard();
           } catch (error) {
             console.error("Error recalling note:", error);
             toast.dismiss();
@@ -442,13 +532,24 @@ export const CancelDashboardContainer: React.FC = () => {
                         {note.assets[0].metadata?.symbol || "Unknown Token"}
                       </div>
                     </div>
+                    {note.isGift && (
+                      <span className="ml-3 bg-[#292929] flex items-center justify-between px-3 py-0.5 rounded-lg w-fit">
+                        <span className="text-white text-[14px] font-medium tracking-[0.07px] leading-[20px]">
+                          Gift
+                        </span>
+                      </span>
+                    )}
                   </div>
                 ),
                 To: (
                   <div className="items-center bg-opacity-10  flex justify-center">
-                    <span className="text-white py-1 bg-[#363636] px-5 rounded-[34px]">
-                      {formatAddress(note.recipient)}
-                    </span>
+                    {note.isGift ? (
+                      <div className="text-white">-</div>
+                    ) : (
+                      <span className="text-white py-1 bg-[#363636] px-5 rounded-[34px]">
+                        {formatAddress(note.recipient)}
+                      </span>
+                    )}
                   </div>
                 ),
                 "Date/Time": <span className="text-stone-300 text-sm">{formatDate(note.createdAt)}</span>,
@@ -498,13 +599,24 @@ export const CancelDashboardContainer: React.FC = () => {
                         {note.assets[0].metadata?.symbol || "Unknown Token"}
                       </div>
                     </div>
+                    {note.isGift && (
+                      <span className="ml-3 bg-[#292929] flex items-center justify-between px-3 py-0.5 rounded-lg w-fit">
+                        <span className="text-white text-[14px] font-medium tracking-[0.07px] leading-[20px]">
+                          Gift
+                        </span>
+                      </span>
+                    )}
                   </div>
                 ),
                 To: (
                   <div className="items-center bg-opacity-10  flex justify-center">
-                    <span className="text-white py-1 bg-[#363636] px-5 rounded-[34px]">
-                      {formatAddress(note.recipient)}
-                    </span>
+                    {note.isGift ? (
+                      <div className="text-white">-</div>
+                    ) : (
+                      <span className="text-white py-1 bg-[#363636] px-5 rounded-[34px]">
+                        {formatAddress(note.recipient)}
+                      </span>
+                    )}
                   </div>
                 ),
                 "Date/Time": <span className="text-stone-300 text-sm">{formatDate(note.createdAt)}</span>,

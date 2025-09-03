@@ -23,28 +23,9 @@ import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
-import useConsumePublicNotes from "@/hooks/server/useConsumePublicNotes";
-
-const mockData = [
-  {
-    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
-    from: "0xd...s78",
-    dateTime: "25/11/2024, 07:15",
-    action: "Claim",
-  },
-  {
-    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
-    from: "0xd...s78",
-    dateTime: "25/11/2024, 07:15",
-    action: "Claim",
-  },
-  {
-    assets: [{ amount: "120,000", faucetId: "", metadata: { symbol: "USDT" } }] as AssetWithMetadata[],
-    from: "0xd...s78",
-    dateTime: "25/11/2024, 07:15",
-    action: "Claim",
-  },
-];
+import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
+import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
+import { useConsumePublicNotes } from "@/services/api/transaction";
 
 const HeaderColumns = ["Amount", "From", "Action"];
 
@@ -154,16 +135,16 @@ export const PendingRecieveContainer: React.FC = () => {
     error: errorConsumableNotesFromServer,
     isRefetching: isRefetchingConsumableNotesFromServer,
   } = useConsumableNotes();
+  const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
-  console.log("consumableNotesFromServer", consumableNotesFromServer);
+  const { mutateAsync: confirmGroupPaymentRequest } = useConfirmGroupPaymentRequest();
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
-  ("0x67a0fcc1369938d86e0b16630067bd54672950e178f4fa2ecb06d92d6d14323f");
+
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
@@ -238,9 +219,16 @@ export const PendingRecieveContainer: React.FC = () => {
             tokenId: note.assets[0].faucetId,
             tokenName: note.assets[0].metadata?.symbol,
             txId: txId,
+            noteId: note.id,
+            requestPaymentId: consumableNotes.find(n => n.id === note.id)?.requestPaymentId,
           },
         ]);
       }
+
+      if (note.requestPaymentId) {
+        await confirmGroupPaymentRequest(note.requestPaymentId);
+      }
+
       setClaiming(false);
       toast.dismiss();
       toast.success("Payment received successfully");
@@ -249,6 +237,8 @@ export const PendingRecieveContainer: React.FC = () => {
       setConsumableNotes(prev => prev.filter(n => n.id !== note.id));
       // Also update checked rows if this note was checked
       setCheckedRows(prev => prev.filter(index => consumableNotes[index]?.id !== note.id));
+
+      await forceRefetchRecallableNotes();
     } catch (error) {
       console.error("Error consuming note:", error);
       toast.dismiss();
@@ -290,6 +280,8 @@ export const PendingRecieveContainer: React.FC = () => {
               tokenId: note.assets[0].faucetId,
               tokenName: note.assets[0].metadata?.symbol,
               txId: txId,
+              noteId: note.id,
+              requestPaymentId: consumableNotes.find(n => n.id === note.id)?.requestPaymentId,
             },
           ]);
         }
@@ -314,6 +306,8 @@ export const PendingRecieveContainer: React.FC = () => {
       setConsumableNotes(prev => prev.filter(note => !claimedNoteIds.includes(note.id)));
       // Clear the checked rows
       setCheckedRows([]);
+
+      await forceRefetchRecallableNotes();
     } catch (error) {
       console.error("Error consuming notes:", error);
       toast.dismiss();
@@ -358,7 +352,7 @@ export const PendingRecieveContainer: React.FC = () => {
                   {consumableNotes?.length === 0 || !consumableNotes ? (
                     <Empty title="No pending receive" />
                   ) : (
-                    <table className="w-full min-w-[800px]">
+                    <table className="w-full">
                       <TableHeader
                         columns={HeaderColumns}
                         allChecked={isAllChecked || false}
@@ -404,28 +398,7 @@ export const PendingRecieveContainer: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 overflow-x-auto rounded-xl border border-zinc-800">
-                      {true ? (
-                        <Empty title="No pending receive" />
-                      ) : (
-                        <table className="w-full min-w-[800px]">
-                          <TableHeader columns={HeaderColumns} allChecked={false} onCheckAll={() => {}} />
-                          <tbody>
-                            {mockData.map((row, index) => (
-                              <TableRow
-                                key={`pending-${index}`}
-                                assets={row.assets}
-                                from={row.from}
-                                dateTime={row.dateTime}
-                                action={row.action}
-                                checked={false}
-                                onCheck={() => {}}
-                                onClaim={() => {}}
-                                disabled={claiming}
-                              />
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                      <Empty title="No pending receive" />
                     </div>
                   </React.Fragment>
                 )}

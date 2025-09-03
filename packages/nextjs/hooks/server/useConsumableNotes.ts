@@ -6,10 +6,12 @@ import { getConsumableNotes } from "@/services/utils/miden/note";
 import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { ConsumableNote } from "@/types/transaction";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 
 export function useConsumableNotes() {
   const { walletAddress } = useWalletAuth();
   const queryClient = useQueryClient();
+  const blockNum = useMidenSdkStore(state => state.blockNum);
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["consumable-notes", walletAddress],
@@ -27,12 +29,15 @@ export function useConsumableNotes() {
 
       // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
 
+      const latestBlockHeight = blockNum || 0;
+
       let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
         consumableTxs: [],
         recallableTxs: [],
       };
+
       try {
-        consumableNotesFromServer = await getConsumableNotesFromServer();
+        consumableNotesFromServer = await getConsumableNotesFromServer(latestBlockHeight);
       } catch (error) {
         console.log("ERROR GETTING PRIVATE NOTES", error);
       }
@@ -41,10 +46,11 @@ export function useConsumableNotes() {
         id: note.noteId,
         sender: note.sender,
         recipient: note.recipient,
-        private: true,
+        private: note.private,
         recallableHeight: note.recallableHeight,
         recallableTime: note.recallableTime,
         serialNumber: note.serialNumber,
+        requestPaymentId: note.requestPaymentId,
         assets: note.assets.map(asset => ({
           amount: (Number(asset.amount) * 10 ** asset.metadata.decimals).toString(),
           faucetId: asset.faucetId,
@@ -85,6 +91,7 @@ export function useConsumableNotes() {
             recallableHeight: -1,
             recallableTime: "",
             serialNumber: [],
+            requestPaymentId: note.requestPaymentId,
           };
         }),
       );
@@ -92,7 +99,8 @@ export function useConsumableNotes() {
       // filterout the sender and recipient are the same
       const filteredConsumableNotes = consumableNotes.filter(note => note.sender !== note.recipient);
 
-      const returnNotes = [...filteredConsumableNotes, ...consumablePrivateNotes];
+      // Prefer server-enriched notes (which include recallable metadata) when IDs collide
+      const returnNotes = [...consumablePrivateNotes, ...filteredConsumableNotes];
 
       // remove the same note.id
       const filteredNotes = returnNotes.filter(
@@ -100,18 +108,22 @@ export function useConsumableNotes() {
       );
       return filteredNotes;
     },
-    enabled: !!walletAddress,
+    enabled: !!walletAddress && !!blockNum,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
-    refetchInterval: 60000, // Refetch every 60 second
+    refetchInterval: 25000, // Refetch every 25 seconds
     refetchOnWindowFocus: true, // Refetch when window gains focus
     refetchOnMount: true, // Always refetch on mount
   });
 
   // Force fresh fetch by invalidating cache
   const forceFetch = async () => {
-    queryClient.invalidateQueries({ queryKey: ["consumable-notes", walletAddress] });
-    await refetch();
+    // repeat 3 times, each with 3 seconds delay
+    for (let i = 0; i < 5; i++) {
+      queryClient.invalidateQueries({ queryKey: ["consumable-notes", walletAddress] });
+      await refetch();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   };
 
   return {

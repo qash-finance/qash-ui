@@ -17,16 +17,19 @@ export function useRecallableNotes() {
     },
     enabled: !!walletAddress,
     staleTime: STALE_TIME,
-    // Only refetch every 5 minutes and when the window is focused
-    refetchInterval: STALE_TIME,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
+    gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
+    refetchInterval: 25000, // Refetch every 25 seconds
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always refetch on mount
   });
 
   const forceFetch = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ["recallable-notes", walletAddress],
-    });
+    // repeat 3 times, each with 3 seconds delay
+    for (let i = 0; i < 3; i++) {
+      queryClient.invalidateQueries({ queryKey: ["recallable-notes", walletAddress] });
+      await refetch();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
   };
 
   return {

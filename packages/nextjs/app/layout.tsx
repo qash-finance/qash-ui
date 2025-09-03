@@ -16,6 +16,12 @@ const DFVN = localFont({
   display: "swap",
 });
 
+const Complain = localFont({
+  src: "../public/fonts/complain-bold.otf",
+  variable: "--font-complain",
+  display: "swap",
+});
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

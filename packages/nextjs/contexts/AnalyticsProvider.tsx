@@ -36,103 +36,103 @@ export function AnalyticsProvider({ children, config }: AnalyticsProviderProps) 
 
   const router = useRouter();
 
-  useEffect(() => {
-    const initAnalytics = async () => {
-      try {
-        const existingSessionId = localStorage.getItem(ANALYTICS_SESSION_ID_KEY);
-        const sessionStartTime = localStorage.getItem(ANALYTICS_SESSION_START_KEY);
-        const sessionTimeout = config.sessionTimeout || 30; // 30 minutes default
+  // useEffect(() => {
+  //   const initAnalytics = async () => {
+  //     try {
+  //       const existingSessionId = localStorage.getItem(ANALYTICS_SESSION_ID_KEY);
+  //       const sessionStartTime = localStorage.getItem(ANALYTICS_SESSION_START_KEY);
+  //       const sessionTimeout = config.sessionTimeout || 30; // 30 minutes default
 
-        if (existingSessionId && sessionStartTime) {
-          const timeDiff = Date.now() - parseInt(sessionStartTime);
-          const timeoutMs = sessionTimeout * 60 * 1000;
+  //       if (existingSessionId && sessionStartTime) {
+  //         const timeDiff = Date.now() - parseInt(sessionStartTime);
+  //         const timeoutMs = sessionTimeout * 60 * 1000;
 
-          if (timeDiff < timeoutMs) {
-            setSessionId(existingSessionId);
-            setIsTracking(true);
-            return;
-          } else {
-            localStorage.removeItem(ANALYTICS_SESSION_ID_KEY);
-            localStorage.removeItem(ANALYTICS_SESSION_START_KEY);
-          }
-        }
+  //         if (timeDiff < timeoutMs) {
+  //           setSessionId(existingSessionId);
+  //           setIsTracking(true);
+  //           return;
+  //         } else {
+  //           localStorage.removeItem(ANALYTICS_SESSION_ID_KEY);
+  //           localStorage.removeItem(ANALYTICS_SESSION_START_KEY);
+  //         }
+  //       }
 
-        if (config.enableAutoTracking) {
-          await startSession();
-        }
-      } catch (error) {
-        console.error("Failed to initialize analytics:", error);
-      }
-    };
+  //       if (config.enableAutoTracking) {
+  //         await startSession();
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to initialize analytics:", error);
+  //     }
+  //   };
 
-    initAnalytics();
-  }, [config.enableAutoTracking, config.sessionTimeout]);
+  //   initAnalytics();
+  // }, [config.enableAutoTracking, config.sessionTimeout]);
 
-  useEffect(() => {
-    if (!config.enablePageTracking || !sessionId) return;
+  // useEffect(() => {
+  //   if (!config.enablePageTracking || !sessionId) return;
 
-    const handleRouteChange = () => {
-      const currentPath = window.location.pathname;
-      if (!userAddress) return;
+  //   const handleRouteChange = () => {
+  //     const currentPath = window.location.pathname;
+  //     if (!userAddress) return;
 
-      if (currentPage && currentPage !== currentPath) {
-        trackPageView({
-          page: currentPage,
-          sessionId,
-          userAddress,
-          timeSpent: pageTimeTracker.getTimeSpent(),
-        }).catch(console.error);
-      }
+  //     if (currentPage && currentPage !== currentPath) {
+  //       trackPageView({
+  //         page: currentPage,
+  //         sessionId,
+  //         userAddress,
+  //         timeSpent: pageTimeTracker.getTimeSpent(),
+  //       }).catch(console.error);
+  //     }
 
-      setCurrentPage(currentPath);
-      setPageTimeTracker(createTimeTracker());
+  //     setCurrentPage(currentPath);
+  //     setPageTimeTracker(createTimeTracker());
 
-      trackPageView({
-        page: currentPath,
-        sessionId,
-        userAddress,
-      }).catch(console.error);
-    };
+  //     trackPageView({
+  //       page: currentPath,
+  //       sessionId,
+  //       userAddress,
+  //     }).catch(console.error);
+  //   };
 
-    const initialPath = window.location.pathname;
-    setCurrentPage(initialPath);
-    trackPageView({
-      page: initialPath,
-      sessionId,
-      userAddress: userAddress || undefined,
-    }).catch(console.error);
+  //   const initialPath = window.location.pathname;
+  //   setCurrentPage(initialPath);
+  //   trackPageView({
+  //     page: initialPath,
+  //     sessionId,
+  //     userAddress: userAddress || undefined,
+  //   }).catch(console.error);
 
-    // Listen for route changes
-    const originalPush = router.push;
-    router.push = (...args) => {
-      handleRouteChange();
-      return originalPush.apply(router, args);
-    };
+  //   // Listen for route changes
+  //   const originalPush = router.push;
+  //   router.push = (...args) => {
+  //     handleRouteChange();
+  //     return originalPush.apply(router, args);
+  //   };
 
-    return () => {
-      router.push = originalPush;
-    };
-  }, [sessionId, userAddress, currentPage, config.enablePageTracking, pageTimeTracker, router]);
+  //   return () => {
+  //     router.push = originalPush;
+  //   };
+  // }, [sessionId, userAddress, currentPage, config.enablePageTracking, pageTimeTracker, router]);
 
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (currentPage && sessionId) {
-        const data = {
-          page: currentPage,
-          sessionId,
-          userAddress,
-          timeSpent: pageTimeTracker.getTimeSpent(),
-        };
+  // useEffect(() => {
+  //   const handleBeforeUnload = () => {
+  //     if (currentPage && sessionId) {
+  //       const data = {
+  //         page: currentPage,
+  //         sessionId,
+  //         userAddress,
+  //         timeSpent: pageTimeTracker.getTimeSpent(),
+  //       };
 
-        const sessionData = {
-          sessionId,
-        };
-      }
-    };
+  //       const sessionData = {
+  //         sessionId,
+  //       };
+  //     }
+  //   };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [currentPage, sessionId, userAddress, pageTimeTracker, config.baseUrl]);
+  //   window.addEventListener("beforeunload", handleBeforeUnload);
+  //   return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  // }, [currentPage, sessionId, userAddress, pageTimeTracker, config.baseUrl]);
 
   const startSession = useCallback(
     async (address?: string) => {

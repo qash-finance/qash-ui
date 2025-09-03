@@ -211,3 +211,159 @@ input:-moz-autofill:active {
   display: block;
 }
 /************ Custom Checkbox ************/
+
+/************ Table Scrollbar ************/
+/* Table scrollbar styling */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+.overflow-x-auto::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+/* Firefox scrollbar styling */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #404040 #1a1a1a;
+}
+
+/* Table specific scrollbar */
+.table-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+.table-scrollbar::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+.table-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #404040 #1a1a1a;
+}
+/************ Table Scrollbar ************/
+
+/************ Hide Horizontal Scrollbar ************/
+/* Hide horizontal scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide horizontal scrollbar for Firefox */
+.overflow-x-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Universal horizontal scrollbar hiding */
+.hide-scrollbar-x::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar-x {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Hide all scrollbars */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+/************ Hide Horizontal Scrollbar ************/
+
+/* Custom pulse animation for table rows */
+@keyframes pulse-hover {
+  0%,
+  100% {
+    background-color: #1e1e1e;
+  }
+  50% {
+    background-color: #292929;
+  }
+}
+
+.animate-pulse-hover {
+  animation: pulse-hover 2s ease-in-out infinite;
+}
+
+.gift-background {
+  background: linear-gradient(180deg, #a4f3fd 0%, #cff8ff 100%);
+}
+
+.font-complain {
+  font-family: "Complain", sans-serif;
+  /* border: 3px solid #ffc629; */
+}
+
+.gift-text {
+  text-align: center;
+  text-shadow: 7px 4px 0 #ffc629;
+  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-color: #ffc629;
+  font-family: Complain;
+  font-size: 50px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: -1.44px;
+}
+
+/* Custom scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}

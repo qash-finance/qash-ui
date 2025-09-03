@@ -20,6 +20,7 @@ export type PartialConsumableNote = {
   recallableHeight: number;
   recallableTime: string;
   serialNumber: string[];
+  requestPaymentId?: number;
 };
 
 export const AnyToken: AssetWithMetadata = {

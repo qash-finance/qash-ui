@@ -7,7 +7,7 @@ interface TableProps {
   data: Record<string, CellContent>[];
   className?: string;
   headerClassName?: string;
-  rowClassName?: string;
+  rowClassName?: string | ((rowData: Record<string, CellContent>, index: number) => string);
   actionColumn?: boolean;
   actionRenderer?: (rowData: Record<string, CellContent>, index: number) => React.ReactNode;
   columnWidths?: Record<string, string>;
@@ -92,13 +92,14 @@ const TableRow = ({
 }: {
   cells: React.ReactNode[];
   headers: string[];
-  rowClassName?: string;
+  rowClassName?: string | ((rowData: Record<string, CellContent>, index: number) => string);
   columnWidths?: Record<string, string>;
 }) => {
   const defaultRowClass = "bg-[#1E1E1E] border-b border-zinc-800 last:border-b-0 hover:bg-[#292929]";
+  const className = typeof rowClassName === "function" ? "" : rowClassName;
 
   return (
-    <tr className={`${defaultRowClass} ${rowClassName}`}>
+    <tr className={`${defaultRowClass} ${className}`}>
       {cells.map((cell, index) => (
         <td
           key={index}
@@ -124,11 +125,11 @@ export function Table({
   actionRenderer,
   columnWidths = {},
 }: TableProps) {
-  const defaultTableClass = "overflow-x-auto rounded-lg border border-zinc-800";
+  const defaultTableClass = "overflow-x-auto table-scrollbar rounded-lg border border-zinc-800";
 
   return (
     <div className={`${defaultTableClass} ${className}`}>
-      <table className="w-full table-fixed">
+      <table className="w-full table-auto">
         <TableHeader
           columns={headers}
           headerClassName={headerClassName}
@@ -138,14 +139,9 @@ export function Table({
         <tbody>
           {data.map((rowData, index) => {
             const row = createTableRow(rowData, headers, actionRenderer, index);
+            const rowClass = typeof rowClassName === "function" ? rowClassName(rowData, index) : rowClassName;
             return (
-              <TableRow
-                key={index}
-                cells={row}
-                headers={headers}
-                rowClassName={rowClassName}
-                columnWidths={columnWidths}
-              />
+              <TableRow key={index} cells={row} headers={headers} rowClassName={rowClass} columnWidths={columnWidths} />
             );
           })}
         </tbody>

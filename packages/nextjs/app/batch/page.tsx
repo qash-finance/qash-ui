@@ -11,6 +11,7 @@ import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/tran
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
+import { useAcceptRequest } from "@/services/api/request-payment";
 
 export default function BatchPage() {
   // **************** Custom Hooks *******************
@@ -18,6 +19,8 @@ export default function BatchPage() {
   const { getBatchTransactions, clearBatch } = useBatchTransactions();
   const { mutateAsync: sendBatchTransaction } = useSendBatchTransaction();
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
+  const { mutateAsync: acceptRequest } = useAcceptRequest();
+
   const { openModal } = useModal();
 
   // **************** Local State *******************
@@ -70,6 +73,18 @@ export default function BatchPage() {
               transactionId: txId,
             })),
           );
+
+          // we can add multiple request payments to the batch
+          // we need to avoid accepting the same request payment multiple times
+          const acceptedRequestPayments = new Set<number>();
+          for (const transaction of transactions) {
+            if (transaction.pendingRequestId) {
+              if (!acceptedRequestPayments.has(transaction.pendingRequestId)) {
+                await acceptRequest({ id: transaction.pendingRequestId, txid: txId });
+                acceptedRequestPayments.add(transaction.pendingRequestId);
+              }
+            }
+          }
 
           clearBatch(walletAddress);
           await forceRefetchRecallablePayment();
