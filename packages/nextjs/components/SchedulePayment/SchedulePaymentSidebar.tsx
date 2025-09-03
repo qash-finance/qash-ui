@@ -17,6 +17,7 @@ interface ScheduledTransactionItemProps {
   status: TransactionStatus | "ready_to_claim";
   amount: string;
   claimableDate: string;
+  recallableTime: string;
   onCancel: () => void;
 }
 
@@ -25,6 +26,7 @@ const Item: React.FC<ScheduledTransactionItemProps> = ({
   status,
   amount,
   claimableDate,
+  recallableTime,
   onCancel,
 }) => {
   const getStatusColor = (status: TransactionStatus | "ready_to_claim") => {
@@ -47,7 +49,8 @@ const Item: React.FC<ScheduledTransactionItemProps> = ({
     return statusMap[status] || status;
   };
 
-  const isDisabled = status === TransactionStatus.RECALLED || status === TransactionStatus.CONSUMED;
+  const isTimelocked: boolean = Date.now() < new Date(recallableTime).getTime();
+  const isDisabled = status === TransactionStatus.RECALLED || status === TransactionStatus.CONSUMED || isTimelocked;
 
   return (
     <div className="bg-[#1e1e1e] flex flex-col gap-1 items-start justify-center px-3 py-5 rounded-lg w-full relative">
@@ -201,6 +204,7 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
         status,
         amount: `${tx.amount || schedulePaymentData.totalAmount} ${schedulePaymentData.currency}`,
         claimableDate,
+        recallableTime: tx.recallableTime,
         onCancel: handleCancelTransaction,
       };
     });
@@ -281,6 +285,7 @@ const SchedulePaymentSidebar = ({ isOpen, onClose, schedulePaymentData }: ModalP
                   status={transaction.status}
                   amount={transaction.amount}
                   claimableDate={transaction.claimableDate}
+                  recallableTime={transaction.recallableTime}
                   onCancel={transaction.onCancel}
                 />
               ))}

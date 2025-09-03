@@ -26,6 +26,8 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
     schedulePayment,
   } = props;
 
+  const isSchedulePayment = schedulePayment?.times !== undefined;
+
   if (!isOpen) return null;
 
   return (
@@ -36,7 +38,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           <div className="text-[#989898] text-[14px] tracking-[0.07px] leading-[20px]">Total Amount</div>
           <div className="flex items-center gap-2">
             <div className="text-white text-[40px] font-medium tracking-[0.2px] leading-[normal]">
-              {schedulePayment ? (parseFloat(amount || "0") * schedulePayment.times).toString() : amount}
+              {isSchedulePayment ? (parseFloat(amount || "0") * schedulePayment.times).toString() : amount}
             </div>
             <img
               alt={tokenSymbol || "Token"}
@@ -65,7 +67,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           </div>
 
           {/* Schedule Payment Row */}
-          {schedulePayment && (
+          {isSchedulePayment && (
             <ScheduleTransactionDropdown schedulePayment={schedulePayment} amount={amount} tokenSymbol={tokenSymbol} />
           )}
 

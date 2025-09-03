@@ -47,7 +47,6 @@ export const ScheduleTransactionRow: React.FC<{ index: number; amountLabel: stri
 export type ScheduleTransaction = { amountLabel: string; claimableAfterLabel: string };
 
 export const ScheduleTransactionDropdown: React.FC<{
-  transactions?: ScheduleTransaction[];
   schedulePayment?: {
     frequency: SchedulePaymentFrequency;
     times: number;
@@ -57,7 +56,7 @@ export const ScheduleTransactionDropdown: React.FC<{
   tokenSymbol?: string;
   defaultOpen?: boolean;
   className?: string;
-}> = ({ transactions, schedulePayment, amount, tokenSymbol, defaultOpen = false, className = "" }) => {
+}> = ({ schedulePayment, amount, tokenSymbol, defaultOpen = false, className = "" }) => {
   const [open, setOpen] = useState<boolean>(defaultOpen);
   const [isAnimating, setIsAnimating] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -65,34 +64,45 @@ export const ScheduleTransactionDropdown: React.FC<{
   const [displayTransactions, setDisplayTransactions] = useState<ScheduleTransaction[]>([]);
   const blockNum = useMidenSdkStore(state => state.blockNum);
 
-  // Generate transactions from schedulePayment if not provided
+  // Generate transactions from schedulePayment
   useEffect(() => {
-    const fetchTransactions = async () => {
-      if (transactions) {
-        setDisplayTransactions(transactions);
-        return;
-      }
+   (() => {
+    if (schedulePayment && amount && tokenSymbol) {
+      const { frequency, times, startDate } = schedulePayment;
 
-      if (schedulePayment && amount && tokenSymbol && blockNum) {
-        const { frequency, times, startDate } = schedulePayment;
+      const txns = Array.from({ length: times }, (_, index) => {
+        const transactionDate = new Date(startDate);
+        
+        // Calculate the date for this transaction based on frequency
+        switch (frequency) {
+          case SchedulePaymentFrequency.DAILY:
+            transactionDate.setDate(transactionDate.getDate() + index);
+            break;
+          case SchedulePaymentFrequency.WEEKLY:
+            transactionDate.setDate(transactionDate.getDate() + (index * 7));
+            break;
+          case SchedulePaymentFrequency.MONTHLY:
+            transactionDate.setMonth(transactionDate.getMonth() + index);
+            break;
+          case SchedulePaymentFrequency.YEARLY:
+            transactionDate.setFullYear(transactionDate.getFullYear() + index);
+            break;
+          default:
+            transactionDate.setDate(transactionDate.getDate() + index);
+        }
+        
+        const formattedDate = transactionDate.toLocaleDateString("en-GB");
+        
+        return {
+          amountLabel: `${amount} ${tokenSymbol}`,
+          claimableAfterLabel: `Claimable after ${formattedDate}`,
+        };
+      });
 
-        const txns = await Promise.all(
-          Array.from({ length: times }, async (_, index) => {
-            const claimableTimeLabel = await getClaimableTimeLabel(index, frequency, blockNum, startDate);
-
-            return {
-              amountLabel: `${amount} ${tokenSymbol}`,
-              claimableAfterLabel: claimableTimeLabel,
-            };
-          }),
-        );
-
-        setDisplayTransactions(txns);
-      }
-    };
-
-    fetchTransactions();
-  }, [transactions, schedulePayment, amount, tokenSymbol, blockNum]);
+      setDisplayTransactions(txns);
+    }
+   })()
+  }, [schedulePayment, amount, tokenSymbol]);
 
   // Measure content height when transactions change
   useEffect(() => {

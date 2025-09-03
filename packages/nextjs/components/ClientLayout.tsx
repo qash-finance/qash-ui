@@ -1,15 +1,15 @@
 "use client";
 
-import { ReactNode, useMemo, useState, useEffect } from "react";
+import { ReactNode, useMemo, useState, useEffect, useRef } from "react";
 import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { WalletError } from "@demox-labs/miden-wallet-adapter-base";
+import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
-import { ModalProvider } from "@/contexts/ModalManagerProvider";
+import { ModalProvider, useModal } from "@/contexts/ModalManagerProvider";
 import { ModalManager } from "./Common/ModalManager";
 import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
@@ -25,6 +25,10 @@ import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import DashboardMenu from "./Dashboard/DashboardMenu";
 import { usePathname } from "next/navigation";
 import { TransactionProviderC } from "@/contexts/TransactionProvider";
+import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { ActionButton } from "./Common/ActionButton";
+import { MODAL_IDS } from "@/types/modal";
+import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -52,6 +56,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const pathname = usePathname();
+  const { isConnected } = useWalletConnect();
+  const modalRef = useRef<ModalTriggerRef | null>(null);
 
   // Load sidebar state from localStorage on mount
   useEffect(() => {
@@ -91,7 +97,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <MidenSdkProvider>
-        <WalletProvider wallets={wallets} autoConnect onError={handleError}>
+        <WalletProvider wallets={wallets as unknown as Adapter[]} autoConnect onError={handleError}>
           <WalletModalProvider>
             <TransactionProviderC>
               <Toaster
@@ -152,6 +158,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         <AccountProvider>
                           {/* <ConnectWalletButton /> */}
                           <ModalManager />
+                          <ModalTrigger ref={modalRef} />
                           <div className="flex flex-row">
                             <div
                               className={`top-0 ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
@@ -172,9 +179,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                   backgroundClip: "content-box",
                                   backgroundColor: "#101111",
                                 }}
-                                className="mx-[24px] mb-[24px] rounded-lg flex justify-center items-center flex-1 overflow-auto"
+                                className="mx-[24px] mb-[24px] rounded-lg flex justify-center items-center flex-1 overflow-auto relative"
                               >
                                 {children}
+                                {!isConnected && (
+                                  <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
+                                    <img src="/modal/wallet-icon.gif" alt="connect-wallet-icon" className="w-16 h-16" />
+                                     <span className="text-white text-lg font-medium">
+                                        Please connect your wallet to display information.
+                                    </span>
+                                    <ActionButton text="Connect Wallet" onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)} />
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>

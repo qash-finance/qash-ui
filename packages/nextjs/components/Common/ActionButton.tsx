@@ -91,7 +91,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       type={buttonType}
       className={`${buttonClasses} justify-center items-center flex`}
       style={buttonStyles}
-      disabled={isDisabled}
+      disabled={isDisabled || loading}
       onClick={onClick}
     >
       {loading ? (

@@ -155,6 +155,7 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
   schedulePayment?: {
     frequency: SchedulePaymentFrequency;
     times: number;
+    startDate: Date;
   } | null;
 }
 
@@ -283,6 +284,7 @@ export interface SchedulePaymentSidebarProps extends BaseModalProps {
       label: string;
       progress?: number;
       amount?: string;
+      recallableTime: string;
     }>;
   };
 }

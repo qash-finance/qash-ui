@@ -89,11 +89,47 @@ export function RecurringTransferModal({ isOpen, onClose, zIndex }: ModalProp<Re
   const transactionsMap: Record<number, RecurringTransferTransaction[]> = {};
 
   (schedulePayments || []).forEach((payment, index) => {
-    transactionsMap[index] =
-      payment.transactions?.map((tx: any) => ({
+    if (payment.transactions && payment.transactions.length > 0) {
+      // Use existing transactions if available
+      transactionsMap[index] = payment.transactions.map((tx: any) => ({
         amountLabel: `${tx.assets[0]?.amount} ${tx.assets[0]?.metadata?.symbol || "QASH"}`,
         claimableAfterLabel: `Claimable after ${new Date(tx.createdAt).toLocaleDateString("en-GB")}`,
-      })) || [];
+      }));
+    } else {
+      // Generate transactions based on schedule payment data
+      const startDate = new Date(payment.createdAt);
+      const maxExecutions = payment.maxExecutions || 3;
+      const frequency = payment.frequency;
+      
+      transactionsMap[index] = Array.from({ length: maxExecutions }, (_, txIndex) => {
+        const transactionDate = new Date(startDate);
+        
+        // Calculate the date for this transaction based on frequency
+        switch (frequency) {
+          case "DAILY":
+            transactionDate.setDate(transactionDate.getDate() + txIndex);
+            break;
+          case "WEEKLY":
+            transactionDate.setDate(transactionDate.getDate() + (txIndex * 7));
+            break;
+          case "MONTHLY":
+            transactionDate.setMonth(transactionDate.getMonth() + txIndex);
+            break;
+          case "YEARLY":
+            transactionDate.setFullYear(transactionDate.getFullYear() + txIndex);
+            break;
+          default:
+            transactionDate.setDate(transactionDate.getDate() + txIndex);
+        }
+        
+        const formattedDate = transactionDate.toLocaleDateString("en-GB");
+        
+        return {
+          amountLabel: `${payment.amount} ${payment.tokens[0]?.metadata?.symbol || "QASH"}`,
+          claimableAfterLabel: `Claimable after ${formattedDate}`,
+        };
+      });
+    }
   });
 
   if (!isOpen) return null;

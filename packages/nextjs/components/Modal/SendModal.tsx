@@ -343,6 +343,7 @@ export function SendModal({
         },
       });
     } catch (error) {
+      toast.dismiss();
       toast.error("Failed to process transaction");
       console.error(error);
     }

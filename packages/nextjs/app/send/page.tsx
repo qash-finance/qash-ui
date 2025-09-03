@@ -33,8 +33,6 @@ export default function SendPage() {
       <SendTransactionForm
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        // onClose={() => {}}
-        // pendingRequestId={0}
       />
     </Suspense>
   );

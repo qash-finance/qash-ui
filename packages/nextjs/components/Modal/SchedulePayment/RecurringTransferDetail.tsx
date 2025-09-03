@@ -14,6 +14,26 @@ const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label
     <div className="flex items-center gap-2">{children}</div>
   </div>
 );
+/**
+ * 
+ *{
+    "recipientName": "mtst1q...yzuv",
+    "amount": "1",
+    "token": {
+        "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
+        "amount": "1",
+        "metadata": {
+            "symbol": "QASH",
+            "decimals": 8,
+            "maxSupply": 1000000000000000000
+        }
+    },
+    "frequencyLabel": "Daily",
+    "startDateLabel": "From 26/08/2025",
+    "timesLabel": "0/3 times"
+}
+ */
+
 
 export function RecurringTransferDetail({
   isOpen,
@@ -22,6 +42,7 @@ export function RecurringTransferDetail({
   item,
   transactions,
 }: ModalProp<RecurringTransferDetailProps>) {
+
   if (!isOpen) return null;
 
   return (
@@ -90,7 +111,8 @@ export function RecurringTransferDetail({
               <ScheduleTransactionDropdown
                 schedulePayment={{
                   frequency: item.frequencyLabel.toUpperCase() as any,
-                  times: parseInt(item.timesLabel.split("/")[1]),
+                  times: parseInt(item.timesLabel.split("/")[1].split(" ")[0]),
+                  startDate: new Date(item.startDateLabel.replace(/^From\s+/, "").split("/").reverse().join("-")),
                 }}
                 amount={item.amount}
                 tokenSymbol={item.token.metadata.symbol}

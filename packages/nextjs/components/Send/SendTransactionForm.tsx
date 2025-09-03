@@ -45,7 +45,6 @@ export enum AmountInputTab {
 interface SendTransactionFormProps {
   activeTab?: AmountInputTab;
   onTabChange?: (tab: AmountInputTab) => void;
-  onTransactionConfirmed?: () => void;
 }
 
 interface SendTransactionFormValues {
@@ -65,8 +64,6 @@ const DEFAULT_SCHEDULE_PAYMENT = {
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
   activeTab,
   onTabChange,
-  onTransactionConfirmed,
-  ...props
 }) => {
   // **************** Custom Hooks *******************
   const searchParams = useSearchParams();
@@ -205,8 +202,12 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
     data: SendTransactionFormValues,
   ) => {
     try {
-      if (!schedulePayment || !blockNum || !schedulePayment.times) {
-        return;
+      if(!blockNum) {
+        throw new Error("Block number is not available");
+      }
+      
+      if (!schedulePayment.times) {
+        throw new Error("Schedule payment times is not available");
       }
 
       const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
@@ -218,7 +219,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
       }
 
       if (!schedulePayment.startDate) {
-        return;
+        throw new Error("Schedule payment start date is not available");
       }
 
       const startDate = schedulePayment.startDate;
@@ -345,6 +346,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
         setSchedulePayment(DEFAULT_SCHEDULE_PAYMENT);
       }
     } catch (error) {
+      toast.dismiss();
       console.error("Failed to send schedule payment transaction:", error);
       toast.error("Failed to create schedule payment");
     } finally {
@@ -431,6 +433,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
         matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
       }
     } catch (error) {
+      toast.dismiss();
       console.error("Failed to send schedule payment transaction:", error);
       toast.error("Failed to send schedule payment transaction");
     } finally {
@@ -445,85 +448,76 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
       return;
     }
 
-    try {
-      // check if amount > balance
-      if (amount > parseFloat(selectedToken.amount)) {
-        toast.dismiss();
-        toast.error("Insufficient balance");
-        return;
-      }
-
-      if (!validateAddress(recipientAddress)) {
-        toast.dismiss();
-        toast.error("Invalid recipient address");
-        return;
-      }
-
-      // check if recallable time is valid
-      if (recallableTime <= 0) {
-        toast.dismiss();
-        toast.error("Recallable time must be greater than 0");
-        return;
-      }
-
-      // check if amount > 0
-      if (amount <= 0) {
-        toast.dismiss();
-        toast.error("Amount must be greater than 0");
-        return;
-      }
-
-      if (recallableTime <= 0) {
-        toast.error("Recallable time must be greater than 0");
-        return;
-      }
-
-      // Show transaction overview modal first
-      openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
-        amount: `${amount}`,
-        accountName: "My Account", // You can get this from account context if available
-        accountAddress: walletAddress,
-        recipientName: recipientName || null,
-        recipientAddress: recipientAddress,
-        transactionType: isPrivateTransaction ? "Private" : "Public",
-        cancellableTime: `${recallableTime / 3600} hour(s)`,
-        message: data.message || "Transaction details",
-        tokenAddress: selectedToken.faucetId,
-        tokenSymbol: selectedToken.metadata.symbol,
-        schedulePayment: schedulePayment,
-        onConfirm: async () => {
-          if (onTransactionConfirmed) {
-            await onTransactionConfirmed();
-          }
-
-          setIsSending(true);
-          toast.loading("Sending transaction...");
-
-          // each block is 5 seconds, calculate recall height
-          const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
-
-          // Create AccountId objects once to avoid aliasing issues
-          const senderAccountId = walletAddress;
-          const recipientAccountId = recipientAddress;
-          const faucetAccountId = selectedToken.faucetId;
-
-          if (schedulePayment) {
-            await handleSchedulePaymentTransaction(
-              senderAccountId,
-              recipientAccountId,
-              faucetAccountId,
-              recallHeight,
-              data,
-            );
-          } else {
-            await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
-          }
-        },
-      });
-    } catch (error) {
-      toast.error("Failed to process transaction");
-      console.error(error);
+    // check if amount > balance
+    if (amount > parseFloat(selectedToken.amount)) {
+      toast.dismiss();
+      toast.error("Insufficient balance");
+      return;
     }
+
+    if (!validateAddress(recipientAddress)) {
+      toast.dismiss();
+      toast.error("Invalid recipient address");
+      return;
+    }
+
+    // check if recallable time is valid
+    if (recallableTime <= 0) {
+      toast.dismiss();
+      toast.error("Recallable time must be greater than 0");
+      return;
+    }
+
+    // check if amount > 0
+    if (amount <= 0) {
+      toast.dismiss();
+      toast.error("Amount must be greater than 0");
+      return;
+    }
+
+    if (recallableTime <= 0) {
+      toast.error("Recallable time must be greater than 0");
+      return;
+    }
+
+    // Show transaction overview modal first
+    openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
+      amount: `${amount}`,
+      accountName: "My Account", // You can get this from account context if available
+      accountAddress: walletAddress,
+      recipientName: recipientName || null,
+      recipientAddress: recipientAddress,
+      transactionType: isPrivateTransaction ? "Private" : "Public",
+      cancellableTime: `${recallableTime / 3600} hour(s)`,
+      message: data.message || "Transaction details",
+      tokenAddress: selectedToken.faucetId,
+      tokenSymbol: selectedToken.metadata.symbol,
+      schedulePayment: schedulePayment,
+      onConfirm: async () => {
+        setIsSending(true);
+        toast.loading("Sending transaction...");
+
+        // each block is 5 seconds, calculate recall height
+        const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+
+        // Create AccountId objects once to avoid aliasing issues
+        const senderAccountId = walletAddress;
+        const recipientAccountId = recipientAddress;
+        const faucetAccountId = selectedToken.faucetId;
+
+        if (schedulePayment.times !== undefined) {
+          await handleSchedulePaymentTransaction(
+            senderAccountId,
+            recipientAccountId,
+            faucetAccountId,
+            recallHeight,
+            data,
+          );
+        } else {
+          await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
+        }
+      },
+    });
   };
 
   const handleAddToBatch = async (data: SendTransactionFormValues) => {

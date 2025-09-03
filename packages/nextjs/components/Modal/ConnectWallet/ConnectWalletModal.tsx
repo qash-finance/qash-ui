@@ -476,11 +476,11 @@ export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<Connec
                   onClose();
 
                   // if first time, then open this
-                  const isTourSkipped = localStorage.getItem(TOUR_SKIPPED_KEY);
-                  if (!isTourSkipped) {
-                    pathname !== "/" && router.push("/");
-                    setIsOpen(true);
-                  }
+                  // const isTourSkipped = localStorage.getItem(TOUR_SKIPPED_KEY);
+                  // if (!isTourSkipped) {
+                  //   pathname !== "/" && router.push("/");
+                  //   setIsOpen(true);
+                  // }
                 }}
                 className="flex-1 w-full"
               />
