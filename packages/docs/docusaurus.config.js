@@ -10,12 +10,12 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 // @ts-ignore
 const config = {
-  title: "Q3x | Docs",
+  title: "Qash | Docs",
   tagline: "Open-source toolkit for building dapps",
   favicon: "img/icon-starknet.svg",
 
   // Set the production url of your site here
-  url: "https://q3x.io/",
+  url: "https://qash.finance/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/docs/",
@@ -23,14 +23,14 @@ const config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: "q3x-finance",
-  projectName: "Q3x",
+  projectName: "Qash",
 
   scripts: [
     {
       src: "https://plausible.io/js/plausible.js",
       async: true,
       defer: true,
-      "data-domain": "docs.q3x.io",
+      "data-domain": "docs.qash.finance",
     },
   ],
 
@@ -80,19 +80,14 @@ const config = {
       },
       image: "img/icon-starknet.svg",
       navbar: {
-        title: "Q3x | Docs",
+        title: "Qash | Docs",
         logo: {
           alt: "q3x-logo",
-          src: "img/logo-q3x.png",
+          src: "img/logo-qash.png",
         },
         items: [
           {
-            href: "https://github.com/q3x-finance/docs",
-            label: "GitHub Docs",
-            position: "right",
-          },
-          {
-            href: "https://q3x.io",
+            href: "https://qash.finance",
             label: "Website",
             position: "right",
           },
@@ -105,7 +100,7 @@ const config = {
             title: "GitHub",
             items: [
               {
-                label: "Q3x GitHub",
+                label: "Qash GitHub",
                 href: "https://github.com/q3x-finance",
               },
               {
@@ -119,16 +114,16 @@ const config = {
             items: [
               {
                 label: "Twitter",
-                href: "https://x.com/q3x_finance",
+                href: "https://x.com/qash_finance",
               },
               {
                 label: "Telegram",
-                href: "https://t.me/q3xfinance",
+                href: "https://t.me/+GR5eFRAAoNAyMjZl",
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Q3x Docs. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Qash Docs. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

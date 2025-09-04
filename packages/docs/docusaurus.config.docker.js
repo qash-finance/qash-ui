@@ -9,7 +9,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 // @ts-ignore
 const config = {
-  title: "Q3x | Docs",
+  title: "Qash | Docs",
   tagline: "Open-source toolkit for building dapps",
   favicon: "img/icon-starknet.svg",
 
@@ -19,13 +19,13 @@ const config = {
 
   // GitHub pages deployment config.
   organizationName: "q3x-finance",
-  projectName: "Q3x",
+  projectName: "Qash",
 
   scripts: [
     {
       src: "https://plausible.io/js/plausible.js",
       defer: true,
-      "data-domain": "q3x.io",
+      "data-domain": "qash.finance",
       "data-exclude": "/docs*",
     },
   ],
@@ -66,7 +66,7 @@ const config = {
       navbar: {
         title: "",
         logo: {
-          alt: "Q3x Logo",
+          alt: "Qash Logo",
           src: "img/logo-q3x.png",
         },
         items: [
@@ -85,7 +85,7 @@ const config = {
       },
       footer: {
         style: "dark",
-        copyright: `Copyright © ${new Date().getFullYear()} Q3x Labs. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Qash Labs. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

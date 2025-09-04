@@ -72,6 +72,8 @@ const SpendingAverageChart = () => {
   const transactions = useTransactionStore(state => state.transactions);
   const blockNumber = useMidenSdkStore(state => state.blockNum);
 
+  console.log("SPENDING AVERAGE CHART", transactions);
+
   // Calculate transaction statistics based on time range and block numbers
   const transactionStats = useMemo(() => {
     if (!blockNumber) {
@@ -101,11 +103,15 @@ const SpendingAverageChart = () => {
         daysAgo = 5;
     }
 
-    // Calculate block range based on 5-second average block time
-    const secondsPerDay = 24 * 60 * 60; // 86400 seconds per day
-    const blocksPerDay = secondsPerDay / 5; // 17280 blocks per day (assuming 5 second block time)
-    const blocksInTimeRange = Math.floor(blocksPerDay * daysAgo);
-    const cutoffBlockNumber = blockNumber - blocksInTimeRange;
+    // Use local timezone calendar day boundaries by converting day start/end timestamps
+    // to approximate block numbers based on 5s average block time
+    const secondsPerBlock = 5;
+    const msPerBlock = secondsPerBlock * 1000;
+    const blockAtTime = (timeMs: number) => blockNumber - Math.floor((now.getTime() - timeMs) / msPerBlock);
+
+    // Start of the earliest day in range (local timezone)
+    const rangeStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (daysAgo - 1), 0, 0, 0, 0);
+    const cutoffBlockNumber = blockAtTime(rangeStartDate.getTime());
 
     // Filter transactions by block number range
     const filteredTransactions = transactions.filter(transaction => {
@@ -126,12 +132,13 @@ const SpendingAverageChart = () => {
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     for (let i = daysAgo - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(now.getDate() - i);
+      // Start/end of the calendar day in user's local timezone
+      const dayStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 0, 0, 0, 0);
+      const dayEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1, 0, 0, 0, 0);
 
-      // Calculate block range for this specific day
-      const dayStartBlock = blockNumber - Math.floor(blocksPerDay * (i + 1));
-      const dayEndBlock = blockNumber - Math.floor(blocksPerDay * i);
+      // Calculate block range for this specific day based on timestamps
+      const dayStartBlock = blockAtTime(dayStartDate.getTime());
+      const dayEndBlock = blockAtTime(dayEndDate.getTime());
 
       // Filter transactions for this day
       const dayTransactions = filteredTransactions.filter(transaction => {
@@ -151,7 +158,7 @@ const SpendingAverageChart = () => {
           const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
           if (assetMetadata) {
             const assetAmount = Number(asset.amount) / 10 ** assetMetadata.metadata.decimals;
-            
+
             if (transaction.type === "Incoming" || transaction.type === "Faucet") {
               dayIncoming += assetAmount;
               dayIncomingCount++;
@@ -164,8 +171,8 @@ const SpendingAverageChart = () => {
       });
 
       dailyData.push({
-        date,
-        day: dayNames[date.getDay()],
+        date: dayStartDate,
+        day: dayNames[dayStartDate.getDay()],
         income: dayIncoming,
         expense: dayExpense,
         incomingCount: dayIncomingCount,
@@ -314,21 +321,15 @@ const SpendingAverageChart = () => {
           }}
           render={({ content }) => (
             <div className="flex flex-col gap-4 items-start justify-center">
-              <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">
-                {content}
-              </span>
+              <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">{content}</span>
               <div className="flex flex-col gap-2 items-start">
                 <div className="flex items-center gap-1.5">
                   <div className="h-1.5 w-4 bg-[#00e595] rounded-full" />
-                  <span className="font-normal text-white text-sm tracking-[0.5px]">
-                    ${data.rawIncome.toFixed(2)}
-                  </span>
+                  <span className="font-normal text-white text-sm tracking-[0.5px]">${data.rawIncome.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="bg-[#fc2bad] h-1.5 rounded-full w-4" />
-                  <span className="font-normal text-white text-sm tracking-[0.5px]">
-                    ${data.rawExpense.toFixed(2)}
-                  </span>
+                  <span className="font-normal text-white text-sm tracking-[0.5px]">${data.rawExpense.toFixed(2)}</span>
                 </div>
               </div>
             </div>
