@@ -24,21 +24,30 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
   setRecipientName,
   getValues,
 }) => {
-  // Debounced address validation
-  const validateAddress = useCallback((address: string) => {
-    try {
-      if (address.startsWith("mt")) {
-        return true;
-      }
-      // address need to be at least 36 characters
-      if (address.length < 36) {
+  // Validation helpers
+  const isValidMidenAddress = useCallback((value: string) => {
+    if (!value) return false;
+    if (!value.startsWith("mt")) return false;
+    return value.length >= 36;
+  }, []);
+
+  const isValidEmail = useCallback((value: string) => {
+    if (!value) return false;
+    // Simple RFC 5322-inspired email regex for basic validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  }, []);
+
+  const validateAddress = useCallback(
+    (value: string) => {
+      try {
+        return isValidMidenAddress(value) || isValidEmail(value);
+      } catch (error) {
         return false;
       }
-      return false;
-    } catch (error) {
-      return false;
-    }
-  }, []);
+    },
+    [isValidEmail, isValidMidenAddress],
+  );
 
   const handleChooseRecipient = () => {
     onChooseRecipient();
@@ -63,14 +72,13 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
                   {...register("recipientAddress", {
                     validate: (value: string) => {
                       if (!value) return true; // Don't show error when empty
-                      if (!value.startsWith("mt")) return "Address must start with 'mt'";
-                      if (value.length < 36) return "Address must be at least 36 characters";
-                      return true;
+                      if (isValidMidenAddress(value) || isValidEmail(value)) return true;
+                      return "Enter a valid Miden address or email";
                     },
                   })}
                   autoComplete="off"
                   type="text"
-                  placeholder="Enter address or choose from your contacts book"
+                  placeholder="Enter address or email, or choose from your contacts book"
                   className=" flex-1 leading-none text-white bg-transparent outline-none placeholder:text-neutral-600 w-full"
                 />
               </div>
@@ -90,7 +98,7 @@ export const RecipientInput: React.FC<RecipientInputProps> = ({
           </div>
 
           {watch("recipientAddress") && !validateAddress(watch("recipientAddress")) && (
-            <span className="text-sm text-red-500">Invalid recipient address</span>
+            <span className="text-sm text-red-500">Invalid recipient (enter Miden address or email)</span>
           )}
         </section>
       ) : (

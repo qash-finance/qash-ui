@@ -8,7 +8,14 @@ import { SelectTokenInput } from "../Common/SelectTokenInput";
 import { ActionButton } from "../Common/ActionButton";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { createP2IDENote, createBatchNote, createBatchSchedulePaymentNote } from "@/services/utils/miden/note";
+import {
+  createP2IDENote,
+  createBatchNote,
+  createBatchSchedulePaymentNote,
+  generateSecret,
+  secretArrayToString,
+  createGiftNote,
+} from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { getDefaultSelectedToken } from "@/services/utils/tokenSelection";
@@ -36,6 +43,8 @@ import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 import { useCreateSchedulePayment, useGetSchedulePayments } from "@/services/api/schedule-payment";
 import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import useSendGift from "@/hooks/server/useSendGift";
+import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -74,6 +83,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const { mutateAsync: createSchedulePayment } = useCreateSchedulePayment();
   const { refetch: refetchSchedulePayments } = useGetSchedulePayments();
   const blockNum = useMidenSdkStore(state => state.blockNum);
+  const { mutate: sendGift } = useSendGift();
+  const { forceFetch: forceRefetchGiftDashboard } = useGiftDashboard();
 
   // Get initial data based on usage mode
   // Use URL search params for standalone form
@@ -122,21 +133,33 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     startDate: Date | undefined;
   }>(DEFAULT_SCHEDULE_PAYMENT);
 
-  // Debounced address validation
-  const validateAddress = useCallback((address: string) => {
-    try {
-      if (address.startsWith("mt")) {
-        return true;
-      }
-      // address need to be at least 36 characters
-      if (address.length < 36) {
+  // Recipient validation helpers
+  const isValidMidenAddress = useCallback((value: string) => {
+    if (!value) return false;
+    if (!value.startsWith("mt")) return false;
+    return value.length >= 36;
+  }, []);
+
+  const isValidEmail = useCallback((value: string) => {
+    if (!value) return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  }, []);
+
+  const validateAddress = useCallback(
+    (value: string) => {
+      try {
+        return isValidMidenAddress(value) || isValidEmail(value);
+      } catch (error) {
         return false;
       }
-      return false;
-    } catch (error) {
-      return false;
-    }
-  }, []);
+    },
+    [isValidEmail, isValidMidenAddress],
+  );
+
+  // Derived state for recipient type
+  const recipientValue = watch("recipientAddress");
+  const isEmailRecipient = isValidEmail(recipientValue || "");
 
   // ********************************************
   // **************** Effects *******************
@@ -454,9 +477,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
-    if (!validateAddress(recipientAddress)) {
+    // If it's not a valid email and not a Miden address, block
+    if (!isValidEmail(recipientAddress) && !isValidMidenAddress(recipientAddress)) {
       toast.dismiss();
-      toast.error("Invalid recipient address");
+      toast.error("Invalid recipient (enter Miden address or email)");
       return;
     }
 
@@ -479,7 +503,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
-    // Show transaction overview modal first
+    // Block schedule payment for email recipients
+    if (isValidEmail(recipientAddress) && schedulePayment.times !== undefined) {
+      toast.dismiss();
+      toast.error("Schedule payment is not supported for email recipients");
+      return;
+    }
+
+    // Show transaction overview modal first for Miden addresses
     openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
       amount: `${amount}`,
       accountName: "My Account", // You can get this from account context if available
@@ -494,26 +525,122 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       schedulePayment: schedulePayment,
       onConfirm: async () => {
         setIsSending(true);
-        toast.loading("Sending transaction...");
+        toast.loading(isValidEmail(recipientAddress) ? "Creating gift link..." : "Sending transaction...");
 
-        // each block is 5 seconds, calculate recall height
-        const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+        try {
+          if (isValidEmail(recipientAddress)) {
+            // Create a gift note and email the claim link
+            const secret = await generateSecret();
+            const parsedAmount = BigInt(Math.round(Number(amount) * Math.pow(10, selectedToken.metadata.decimals)));
+            const [outputNote, serialNumber] = await createGiftNote(
+              walletAddress,
+              selectedToken.faucetId,
+              parsedAmount,
+              secret,
+            );
 
-        // Create AccountId objects once to avoid aliasing issues
-        const senderAccountId = walletAddress;
-        const recipientAccountId = recipientAddress;
-        const faucetAccountId = selectedToken.faucetId;
+            const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
 
-        if (schedulePayment.times !== undefined) {
-          await handleSchedulePaymentTransaction(
-            senderAccountId,
-            recipientAccountId,
-            faucetAccountId,
-            recallHeight,
-            data,
-          );
-        } else {
-          await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
+            // Persist gift on server so the open page can resolve by code
+            const secretString = secretArrayToString(secret);
+            sendGift({
+              assets: [
+                {
+                  faucetId: selectedToken.faucetId,
+                  amount: amount.toString(),
+                  metadata: selectedToken.metadata,
+                },
+              ],
+              serialNumber: serialNumber,
+              secretNumber: secretString,
+              txId: txId,
+            });
+
+            // Build claim link with all data to reconstruct note client-side
+            const claimBase = typeof window !== "undefined" ? window.location.origin : "";
+            const giftLink = `${claimBase}/claim?code=${encodeURIComponent(secretString)}&sn=${encodeURIComponent(
+              (serialNumber || []).join(","),
+            )}&s=${encodeURIComponent(walletAddress)}&f=${encodeURIComponent(
+              selectedToken.faucetId,
+            )}&amt=${encodeURIComponent(parsedAmount.toString())}&dec=${encodeURIComponent(
+              selectedToken.metadata.decimals.toString(),
+            )}&sym=${encodeURIComponent(selectedToken.metadata.symbol)}`;
+
+            const subject = `You received ${amount} ${selectedToken.metadata.symbol} on Miden`;
+            const bodyLines = [
+              `Hi${recipientName ? ` ${recipientName}` : ""},`,
+              "",
+              `I've sent you ${amount} ${selectedToken.metadata.symbol}. Click the link below to claim:`,
+              giftLink,
+              "",
+              data.message ? `Message: ${data.message}` : "",
+              `Sender account: ${walletAddress}`,
+            ].filter(Boolean);
+            const body = bodyLines.join("\n");
+
+            // Open a share modal instead of launching email immediately
+            // Simple branded HTML (inline-styles for email clients)
+            const htmlBody = `
+<div style="font-family:Inter,Arial,sans-serif;background:#0f0f0f;color:#fff;padding:24px">
+  <div style="max-width:640px;margin:0 auto;background:#1e1e1e;border:1px solid #333;border-radius:12px;overflow:hidden">
+    <div style="background:#2d2d2d;padding:12px 16px">
+      <h2 style="margin:0;font-size:18px;color:#fff">You've received a transfer on Miden</h2>
+    </div>
+    <div style="padding:16px">
+      <p style="margin:0 0 12px 0;color:#cfcfcf">Hi${recipientName ? ` ${recipientName}` : ""},</p>
+      <p style="margin:0 0 12px 0">I've sent you <strong>${amount} ${selectedToken.metadata.symbol}</strong>.</p>
+      ${data.message ? `<p style="margin:0 0 12px 0;color:#cfcfcf">Message: ${data.message}</p>` : ""}
+      <p style="margin:0 0 12px 0;color:#cfcfcf">Sender account: ${walletAddress}</p>
+      <a href="${giftLink}" style="display:inline-block;background:#066eff;color:#fff;text-decoration:none;padding:10px 14px;border-radius:8px">Claim your transfer</a>
+      <p style="margin:12px 0 0 0;color:#888">If the button doesn't work, copy and paste this link into your browser:</p>
+      <p style="word-break:break-all;color:#fff;margin:4px 0 0 0">${giftLink}</p>
+    </div>
+  </div>
+</div>`;
+
+            openModal(MODAL_IDS.EMAIL_SHARE, {
+              link: giftLink,
+              subject,
+              body,
+              htmlBody,
+              recipientEmail: recipientAddress,
+            } as any);
+
+            setTimeout(() => {
+              forceRefetchAssets();
+              forceRefetchGiftDashboard();
+            }, REFETCH_DELAY);
+
+            toast.dismiss();
+            toast.success("Gift link created and email compose opened");
+            reset();
+            setRecipientName("");
+            return;
+          }
+
+          // Normal Miden address flow
+          const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+          const senderAccountId = walletAddress;
+          const recipientAccountId = recipientAddress;
+          const faucetAccountId = selectedToken.faucetId;
+
+          if (schedulePayment.times !== undefined) {
+            await handleSchedulePaymentTransaction(
+              senderAccountId,
+              recipientAccountId,
+              faucetAccountId,
+              recallHeight,
+              data,
+            );
+          } else {
+            await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
+          }
+        } catch (err) {
+          toast.dismiss();
+          toast.error("Failed to process transaction");
+          console.error(err);
+        } finally {
+          setIsSending(false);
         }
       },
     });
@@ -534,10 +661,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         return;
       }
 
-      // check if recipient address is valid bech32
-      if (!validateAddress(recipientAddress)) {
+      // Only allow Miden address for batch transactions
+      if (!isValidMidenAddress(recipientAddress)) {
         toast.dismiss();
-        toast.error("Invalid recipient address");
+        toast.error("Invalid recipient address for batch");
         return;
       }
 
@@ -658,43 +785,45 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         onChooseRecipient={handleChooseRecipient}
       />
 
-      {/* Schedule Payment Option */}
-      <div
-        className={`bg-[#292929] rounded-lg py-2.5 pl-3 pr-[15px] flex items-center justify-between mb-[4px] cursor-pointer`}
-        onClick={() => !schedulePayment.times && handleSetupSchedulePayment()}
-      >
-        <div className="flex flex-col gap-2">
-          <span className="text-white text-[16px] leading-none">Schedule payment</span>
-          <span className="text-[#656565] text-[15px] tracking-[-0.45px] leading-[1.25]">
-            Pick a date and time to automatically send your payment
-          </span>
-        </div>
-
-        {schedulePayment.times ? (
-          <div className="flex items-center gap-2">
-            <ActionButton text="View" onClick={() => handleSetupSchedulePayment()} className="rounded-full" />
-            <ActionButton
-              text="Remove"
-              onClick={() => {
-                openModal(MODAL_IDS.REMOVE_SCHEDULE_PAYMENT, {
-                  onConfirm: async () => {
-                    setSchedulePayment(DEFAULT_SCHEDULE_PAYMENT);
-                  },
-                });
-              }}
-              type="deny"
-              className="rounded-full"
-            />
+      {/* Schedule Payment Option (hidden for email recipient) */}
+      {!isEmailRecipient && (
+        <div
+          className={`bg-[#292929] rounded-lg py-2.5 pl-3 pr-[15px] flex items-center justify-between mb-[4px] cursor-pointer`}
+          onClick={() => !schedulePayment.times && handleSetupSchedulePayment()}
+        >
+          <div className="flex flex-col gap-2">
+            <span className="text-white text-[16px] leading-none">Schedule payment</span>
+            <span className="text-[#656565] text-[15px] tracking-[-0.45px] leading-[1.25]">
+              Pick a date and time to automatically send your payment
+            </span>
           </div>
-        ) : (
-          <img
-            src="/arrow/chevron-right.svg"
-            alt="chevron-right"
-            className="w-6 h-6 cursor-pointer"
-            onClick={() => handleSetupSchedulePayment()}
-          />
-        )}
-      </div>
+
+          {schedulePayment.times ? (
+            <div className="flex items-center gap-2">
+              <ActionButton text="View" onClick={() => handleSetupSchedulePayment()} className="rounded-full" />
+              <ActionButton
+                text="Remove"
+                onClick={() => {
+                  openModal(MODAL_IDS.REMOVE_SCHEDULE_PAYMENT, {
+                    onConfirm: async () => {
+                      setSchedulePayment(DEFAULT_SCHEDULE_PAYMENT);
+                    },
+                  });
+                }}
+                type="deny"
+                className="rounded-full"
+              />
+            </div>
+          ) : (
+            <img
+              src="/arrow/chevron-right.svg"
+              alt="chevron-right"
+              className="w-6 h-6 cursor-pointer"
+              onClick={() => handleSetupSchedulePayment()}
+            />
+          )}
+        </div>
+      )}
 
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
 
@@ -705,7 +834,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             buttonType="submit"
             type="neutral"
             className="w-[30%] h-10 mt-2"
-            disabled={isSending || schedulePayment.times !== undefined}
+            disabled={isSending || schedulePayment.times !== undefined || isEmailRecipient}
             onClick={() => setIsSubmittingAsBatch(true)}
           />
           <ActionButton

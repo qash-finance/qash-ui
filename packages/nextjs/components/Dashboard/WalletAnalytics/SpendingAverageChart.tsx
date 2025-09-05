@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
-import { UITransaction } from "@/services/store/transaction";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { Tooltip } from "react-tooltip";
 import { useAccountContext } from "@/contexts/AccountProvider";
@@ -71,8 +70,6 @@ const SpendingAverageChart = () => {
   const [timeRange, setTimeRange] = useState("Last 5 days");
   const transactions = useTransactionStore(state => state.transactions);
   const blockNumber = useMidenSdkStore(state => state.blockNum);
-
-  console.log("SPENDING AVERAGE CHART", transactions);
 
   // Calculate transaction statistics based on time range and block numbers
   const transactionStats = useMemo(() => {

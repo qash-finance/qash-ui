@@ -18,6 +18,7 @@ import GroupLinkModal from "@/components/Modal/Group/GroupLinkModal";
 import GiftTransactionOverviewModal from "@/components/Modal/Gift/GiftTransactionOverviewModal";
 import GiftSharingModal from "@/components/Modal/Gift/GiftSharingModal";
 import GenerateGiftModal from "@/components/Modal/Gift/GenerateGiftModal";
+import EmailShareModal from "../components/Modal/Gift/EmailShareModal";
 import ValidatingModal from "@/components/Modal/ValidatingModal";
 import SuccessModal from "@/components/Modal/Status/SuccessModal";
 import FailModal from "@/components/Modal/Status/FailModal";
@@ -66,6 +67,7 @@ export const MODAL_IDS = {
   VALIDATING: "VALIDATING",
   SUCCESS: "SUCCESS",
   FAIL: "FAIL",
+  EMAIL_SHARE: "EMAIL_SHARE",
   DELETE_GROUP: "DELETE_GROUP",
   EDIT_GROUP: "EDIT_GROUP",
   RESET_ACCOUNT: "RESET_ACCOUNT",
@@ -219,6 +221,14 @@ export interface FailModalProps extends BaseModalProps {
   tryAgain?: () => Promise<void>;
 }
 
+export interface EmailShareModalProps extends BaseModalProps {
+  link: string;
+  subject: string;
+  body: string;
+  recipientEmail?: string;
+  htmlBody?: string;
+}
+
 export interface EditGroupModalProps extends BaseModalProps {
   group: Group & { memberAddressBooks: { address: string; name?: string }[] };
 }
@@ -321,6 +331,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.VALIDATING]: ValidatingModalProps;
   [MODAL_IDS.SUCCESS]: SuccessModalProps;
   [MODAL_IDS.FAIL]: FailModalProps;
+  [MODAL_IDS.EMAIL_SHARE]: EmailShareModalProps;
   [MODAL_IDS.DELETE_GROUP]: DeleteGroupModalProps;
   [MODAL_IDS.EDIT_GROUP]: EditGroupModalProps;
   [MODAL_IDS.RESET_ACCOUNT]: ResetAccountModalProps;
@@ -363,6 +374,7 @@ export const modalRegistry = {
   [MODAL_IDS.VALIDATING]: ValidatingModal,
   [MODAL_IDS.SUCCESS]: SuccessModal,
   [MODAL_IDS.FAIL]: FailModal,
+  [MODAL_IDS.EMAIL_SHARE]: EmailShareModal,
   [MODAL_IDS.DELETE_GROUP]: DeleteGroupModal,
   [MODAL_IDS.EDIT_GROUP]: EditGroupModal,
   [MODAL_IDS.RESET_ACCOUNT]: ResetAccountModal,
