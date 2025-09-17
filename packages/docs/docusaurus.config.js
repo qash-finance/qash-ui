@@ -105,7 +105,7 @@ const config = {
               },
               {
                 label: "Docs GitHub",
-                href: "https://github.com/q3x-finance/docs",
+                href: "https://github.com/q3x-finance/qash-ui/tree/main/packages/docs",
               },
             ],
           },
