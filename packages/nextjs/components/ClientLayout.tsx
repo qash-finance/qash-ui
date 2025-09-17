@@ -11,6 +11,7 @@ import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
 import { ModalProvider, useModal } from "@/contexts/ModalManagerProvider";
 import { ModalManager } from "./Common/ModalManager";
+import { shouldShowMigrationModal } from "./Modal/MigratingModal";
 import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
@@ -93,6 +94,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         break;
     }
   };
+
+  useEffect(() => {
+    if (isConnected && shouldShowMigrationModal()) {
+      modalRef.current?.openModal(MODAL_IDS.MIGRATING);
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -185,10 +192,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                 {!isConnected && (
                                   <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
                                     <img src="/modal/wallet-icon.gif" alt="connect-wallet-icon" className="w-16 h-16" />
-                                     <span className="text-white text-lg font-medium">
-                                        Please connect your wallet to display information.
+                                    <span className="text-white text-lg font-medium">
+                                      Please connect your wallet to display information.
                                     </span>
-                                    <ActionButton text="Connect Wallet" onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)} />
+                                    <ActionButton
+                                      text="Connect Wallet"
+                                      onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
+                                    />
                                   </div>
                                 )}
                               </div>

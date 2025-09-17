@@ -35,6 +35,7 @@ import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
 import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
 import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
 import InteractAccountTransactionModal from "@/components/Modal/InteractAccountTransactionModal";
+import MigratingModal from "@/components/Modal/MigratingModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -80,6 +81,7 @@ export const MODAL_IDS = {
   DATE_FILTER: "DATE_FILTER",
   TRANSACTION_FILTER: "TRANSACTION_FILTER",
   INTERACT_ACCOUNT_TRANSACTION: "INTERACT_ACCOUNT_TRANSACTION",
+  MIGRATING: "MIGRATING",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -297,6 +299,8 @@ export interface InteractAccountTransactionModalProps extends BaseModalProps {
   address: string;
 }
 
+export interface MigratingModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -335,6 +339,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModalProps;
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePaymentProps;
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModalProps;
+  [MODAL_IDS.MIGRATING]: MigratingModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -377,4 +382,5 @@ export const modalRegistry = {
   [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModal,
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePayment,
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModal,
+  [MODAL_IDS.MIGRATING]: MigratingModal,
 } as const;

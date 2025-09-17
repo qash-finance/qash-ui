@@ -1765,14 +1765,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-sdk@npm:0.10.1":
-  version: 0.10.1
-  resolution: "@demox-labs/miden-sdk@npm:0.10.1"
+"@demox-labs/miden-sdk@npm:0.11.6":
+  version: 0.11.6
+  resolution: "@demox-labs/miden-sdk@npm:0.11.6"
   dependencies:
     chai-as-promised: ^8.0.0
     dexie: ^4.0.1
     glob: ^11.0.0
-  checksum: baefeba4a11783883b805d5ccf363a27263e3bf12f4142fdb7f252de7cce47a90a583ca7ea6c47ce98ddc16b1915771dc9f9c1306732777287951fc2bebb61b6
+  checksum: 158ba66c84cf05ed2cd88d4869b335ade488346cb67a5d3bf8737fe72806f50667b5b6a70baa307fa9cf4a22c607aa65644f7e94c6a9252e6bbf1d22ff052a04
   languageName: node
   linkType: hard
 
@@ -1785,36 +1785,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-base@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@demox-labs/miden-wallet-adapter-base@npm:0.2.0"
+"@demox-labs/miden-wallet-adapter-base@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@demox-labs/miden-wallet-adapter-base@npm:0.6.0"
   dependencies:
     eventemitter3: ^5.0.1
-  checksum: 15cafa02078cd19d1e7a24e9925378a10b88650dec0a546d1373d5401a98a7a06c183a52574c7f785a7e80dcb20ea1c9498512c946634c80db61d7db9b4067db
+  checksum: 747585cddba1a3f77c6ef06b4f65086dc6f324e39827ff9c58f23ae79a5d5a67e4cb2287f0b211ab581b6d64da943847d01f13636dac503aeb70a5048fa7a5e5
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-react@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@demox-labs/miden-wallet-adapter-react@npm:0.2.0"
+"@demox-labs/miden-wallet-adapter-react@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@demox-labs/miden-wallet-adapter-react@npm:0.6.0"
   dependencies:
-    "@demox-labs/miden-wallet-adapter-base": ^0.2.0
+    "@demox-labs/miden-wallet-adapter-base": ^0.6.0
   peerDependencies:
     react: ^19.1.1
-  checksum: 7c4d3e9bd1cf3ca963bf26d56cf15166a8f14b5e622c4428c9a71998dac087a30b771f7b38234525740367cf110ba0fefd5beb45c7fb347c6843cdd92585dca2
+  checksum: e917c04a336c0c835ebd4e07a510b9508129e953ff9b575267a24e32b8a68958731305996601d29984bfdfbce823105cb3067b485a11a6606dd964f71a6fd8ee
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-reactui@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@demox-labs/miden-wallet-adapter-reactui@npm:0.2.0"
+"@demox-labs/miden-wallet-adapter-reactui@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@demox-labs/miden-wallet-adapter-reactui@npm:0.6.0"
   dependencies:
-    "@demox-labs/miden-wallet-adapter-base": ^0.2.0
-    "@demox-labs/miden-wallet-adapter-react": ^0.2.0
+    "@demox-labs/miden-wallet-adapter-base": ^0.6.0
+    "@demox-labs/miden-wallet-adapter-react": ^0.6.0
   peerDependencies:
+    "@types/react": ^19.0.0
+    "@types/react-dom": ^19.0.0
     react: ^19.1.1
     react-dom: ^19.1.1
-  checksum: 9b3e3ed168f89560c62254f51d379aca440b92c6dba1d0be454107c75f39e68ca5bff3be36e6fefafdfd6cc28cdbdd158c7d9fb1e0ea859bd89724adb9bde1eb
+  checksum: 8fc9c727161a54dafc98446557ecadd0ed9aff0524554db0b8217517888e865430d10c4da984f928e0d388479176fd8bd3257a1042833c6c3d7831ae2a095a86
   languageName: node
   linkType: hard
 
@@ -3489,10 +3491,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@q3x/nextjs@workspace:packages/nextjs"
   dependencies:
-    "@demox-labs/miden-sdk": 0.10.1
-    "@demox-labs/miden-wallet-adapter-base": ^0.2.0
-    "@demox-labs/miden-wallet-adapter-react": ^0.2.0
-    "@demox-labs/miden-wallet-adapter-reactui": ^0.2.0
+    "@demox-labs/miden-sdk": 0.11.6
+    "@demox-labs/miden-wallet-adapter-base": ^0.6.0
+    "@demox-labs/miden-wallet-adapter-react": ^0.6.0
+    "@demox-labs/miden-wallet-adapter-reactui": ^0.6.0
     "@demox-labs/miden-wallet-adapter-trident": ^0.1.5
     "@reactour/tour": ^3.8.0
     "@tailwindcss/postcss": ^4
