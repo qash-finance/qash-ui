@@ -1,4 +1,5 @@
 /// the transaction store
+import { FungibleAsset } from "@demox-labs/miden-sdk";
 import { QASH_TOKEN_ADDRESS as FAUCET_ID } from "../utils/constant";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
@@ -31,7 +32,7 @@ async function transactionRecordToUITransaction({
   tr: any;
   inputNote: any | undefined;
 }): Promise<UITransaction> {
-  const { AccountId } = await import("@demox-labs/miden-sdk");
+  const { AccountId, NetworkId, AccountInterface, Address } = await import("@demox-labs/miden-sdk");
 
   const assets: {
     assetId: string;
@@ -44,9 +45,12 @@ async function transactionRecordToUITransaction({
       .notes()
       .map((note: any) => note.intoFull());
     outputNotes.forEach((note: any) => {
-      const fungibleAssets = note.assets().fungibleAssets();
-      fungibleAssets.forEach((asset: any) => {
-        assets.push({ assetId: asset.faucetId().toBech32(), amount: asset.amount() });
+      const fungibleAssets: FungibleAsset[] = note.assets().fungibleAssets();
+      fungibleAssets.forEach((asset: FungibleAsset) => {
+        assets.push({
+          assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+          amount: asset.amount(),
+        });
       });
     });
 
@@ -55,7 +59,7 @@ async function transactionRecordToUITransaction({
     });
 
     const statusObject = tr.transactionStatus();
-    const sender = tr.accountId().toBech32();
+    const sender = tr.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
 
     const result: UITransaction = {
       id: tr.id().toHex(),
@@ -76,23 +80,29 @@ async function transactionRecordToUITransaction({
 
     inputNote.forEach((note: any) => {
       const fungibleAssets = note.details().assets().fungibleAssets();
-      fungibleAssets.forEach((asset: any) => {
-        assets.push({ assetId: asset.faucetId().toBech32(), amount: asset.amount() });
+      fungibleAssets.forEach((asset: FungibleAsset) => {
+        assets.push({
+          assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+          amount: asset.amount(),
+        });
       });
     });
 
     const statusObject = tr.transactionStatus();
-    const consumer = tr.accountId().toBech32();
+    const consumer = tr.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
 
     let transactionType: "Incoming" | "Outgoing" | "Faucet" = "Incoming";
     let sender: string = "";
 
-    if (inputNote[0].metadata()?.sender().toString() === AccountId.fromBech32(FAUCET_ID).toString()) {
+    if (inputNote[0].metadata()?.sender().toString() === Address.fromBech32(FAUCET_ID).toString()) {
       transactionType = "Faucet";
       sender = FAUCET_ID;
     } else {
       transactionType = "Incoming";
-      sender = AccountId.fromHex(inputNote[0].metadata().sender().toString()).toBech32();
+      sender = AccountId.fromHex(inputNote[0].metadata().sender().toString()).toBech32(
+        NetworkId.Testnet,
+        AccountInterface.Unspecified,
+      );
     }
 
     const result: UITransaction = {

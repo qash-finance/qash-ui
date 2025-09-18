@@ -5,14 +5,28 @@ import { MigratingModalProps } from "@/types/modal";
 import { ActionButton } from "../Common/ActionButton";
 import toast from "react-hot-toast";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
-import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
-
-const MIGRATION_VERSION_KEY = "migration_version";
-const CURRENT_MIGRATION_VERSION = "0.11.0";
+import {
+  CURRENT_MIGRATION_VERSION,
+  MIDEN_DB_NAME,
+  MIDEN_WALLET_AUTH_KEY,
+  MIDEN_WALLET_KEYS_KEY,
+  MIGRATION_VERSION_KEY,
+  TOUR_SKIPPED_KEY,
+  WALLET_ADDRESSES_KEY,
+} from "@/services/utils/constant";
 
 export const shouldShowMigrationModal = (): boolean => {
+  // if no MIGRATION_VERSION_KEY, means that its first time user, no need show this
+  // if we have `miden_wallet_auth`,`miden_wallet_keys` or `miden-wallet-addresses` and no MIGRATION_VERSION_KEYs , means that we have to show this
   const storedVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
-  return storedVersion !== CURRENT_MIGRATION_VERSION;
+  const storedAuth = localStorage.getItem(MIDEN_WALLET_AUTH_KEY);
+  const storedKeys = localStorage.getItem(MIDEN_WALLET_KEYS_KEY);
+  const storedAddresses = localStorage.getItem(WALLET_ADDRESSES_KEY);
+  if (storedVersion == CURRENT_MIGRATION_VERSION) return false;
+
+  if (!storedVersion && (storedAuth || storedKeys || storedAddresses)) return true;
+
+  return false;
 };
 
 export function MigratingModal({ isOpen, onClose, zIndex, ...props }: ModalProp<MigratingModalProps>) {
@@ -22,7 +36,7 @@ export function MigratingModal({ isOpen, onClose, zIndex, ...props }: ModalProp<
     await disconnectWallet();
 
     try {
-      indexedDB.deleteDatabase("MidenClientDB");
+      indexedDB.deleteDatabase(MIDEN_DB_NAME);
       localStorage.clear();
       localStorage.setItem(TOUR_SKIPPED_KEY, "true");
       localStorage.setItem(MIGRATION_VERSION_KEY, CURRENT_MIGRATION_VERSION);

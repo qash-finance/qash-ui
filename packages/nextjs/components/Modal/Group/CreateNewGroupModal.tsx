@@ -121,7 +121,7 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
 
   // Add manual address handler
   const handleAddManualAddress = async () => {
-    const { AccountId } = await import("@demox-labs/miden-sdk");
+    const { Address } = await import("@demox-labs/miden-sdk");
 
     const manualAddress = (getValues("manualAddress") as string | undefined)?.trim() || "";
     if (!manualAddress) {
@@ -143,7 +143,7 @@ export function CreateNewGroupModal({ isOpen, onClose, zIndex }: ModalProp<Creat
     }
 
     try {
-      AccountId.fromBech32(manualAddress);
+      Address.fromBech32(manualAddress);
     } catch (error) {
       toast.error("Invalid address");
       return;

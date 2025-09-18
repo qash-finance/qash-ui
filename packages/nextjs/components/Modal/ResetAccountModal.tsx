@@ -7,7 +7,7 @@ import BaseModal from "./BaseModal";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { toast } from "react-hot-toast";
-import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
+import { MIDEN_DB_NAME, TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 
 export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAccountModalProps>) {
   const { disconnectWallet } = useWalletAuth();
@@ -16,7 +16,7 @@ export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAc
     await disconnectWallet();
 
     try {
-      indexedDB.deleteDatabase("MidenClientDB");
+      indexedDB.deleteDatabase(MIDEN_DB_NAME);
       localStorage.clear();
       localStorage.setItem(TOUR_SKIPPED_KEY, "true");
       window.location.reload();

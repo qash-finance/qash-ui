@@ -4,7 +4,6 @@ import { EditGroupModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { Table, CellContent } from "@/components/Common/Table";
-import { formatAddress } from "@/services/utils/miden/address";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useForm } from "react-hook-form";
 import { useDeleteGroup, useUpdateGroup } from "@/services/api/group-payment";
@@ -64,7 +63,7 @@ export function EditGroupModal({ isOpen, onClose, zIndex, group }: ModalProp<Edi
 
   const handleSave = async () => {
     try {
-      const { AccountId } = await import("@demox-labs/miden-sdk");
+      const { Address } = await import("@demox-labs/miden-sdk");
 
       if (!group) return;
 
@@ -100,7 +99,7 @@ export function EditGroupModal({ isOpen, onClose, zIndex, group }: ModalProp<Edi
 
       members.forEach((member, index) => {
         try {
-          AccountId.fromBech32(member.address);
+          Address.fromBech32(member.address);
         } catch (error) {
           toast.error(`Invalid address for member ${index + 1}`);
           return;

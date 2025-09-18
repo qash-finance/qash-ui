@@ -45,7 +45,7 @@ export const importWalletFromJson = async (jsonData: any): Promise<string[]> => 
     const importedAddresses: string[] = [];
 
     // Import AccountId for conversion
-    const { AccountId } = await import("@demox-labs/miden-sdk");
+    const { AccountId, AccountInterface, NetworkId } = await import("@demox-labs/miden-sdk");
 
     // Process each account in the accounts array
     for (const account of jsonData.accounts) {
@@ -56,7 +56,7 @@ export const importWalletFromJson = async (jsonData: any): Promise<string[]> => 
         // Validate account ID format
         if (typeof accountId === "string" && accountId.length > 0) {
           // Convert hex account ID to bech32 format
-          const bech32Address = AccountId.fromHex(accountId).toBech32();
+          const bech32Address = AccountId.fromHex(accountId).toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
           importedAddresses.push(bech32Address);
         }
       }
@@ -84,11 +84,12 @@ export const useWalletConnect = () => {
       // Check from local storage if account is deployed
       if (!walletAddress) {
         toast.loading("Deploying account...");
+        const { AccountId, AccountInterface, NetworkId } = await import("@demox-labs/miden-sdk");
 
         const deployedAccount = await deployAccount(false);
 
         // Get account id (bech32)
-        const accountId = deployedAccount.id().toBech32();
+        const accountId = deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
 
         // Store in local storage via zustand
         setWalletAddress(accountId);
@@ -116,8 +117,10 @@ export const useWalletConnect = () => {
   const handleCreateWallet = async () => {
     try {
       if (!walletAddress) {
+        const { AccountId, AccountInterface, NetworkId } = await import("@demox-labs/miden-sdk");
+
         const deployedAccount = await deployAccount(true);
-        const accountId = deployedAccount.id().toBech32();
+        const accountId = deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
 
         setWalletAddress(accountId);
         addWalletAddress(accountId);
