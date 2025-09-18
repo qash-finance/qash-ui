@@ -1,11 +1,11 @@
 "use client";
 
 import { ReactNode, useMemo, useState, useEffect, useRef } from "react";
-import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
+import { useWallet, WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
 import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
+import { Adapter, PrivateDataPermission, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
@@ -30,6 +30,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ActionButton } from "./Common/ActionButton";
 import { MODAL_IDS } from "@/types/modal";
 import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
+import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -53,11 +54,32 @@ const queryClient = new QueryClient({
   },
 });
 
+// Component that uses the wallet context
+function WalletConnectedContent({
+  children,
+  modalRef,
+}: ClientLayoutProps & { modalRef: React.RefObject<ModalTriggerRef | null> }) {
+  const { connected } = useWallet();
+
+  return (
+    <>
+      {children}
+      {!connected && (
+        <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
+          <img src="/modal/wallet-icon.gif" alt="connect-wallet-icon" className="w-16 h-16" />
+          <span className="text-white text-lg font-medium">Please connect your wallet to display information.</span>
+          <ActionButton text="Connect Wallet" onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)} />
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
+  const [wallets, setWallets] = useState<MidenWalletAdapter[]>([]);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const pathname = usePathname();
-  const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
 
   // Load sidebar state from localStorage on mount
@@ -74,14 +96,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
   };
 
-  const wallets = useMemo(
-    () => [
-      new TridentWalletAdapter({
-        appName: "Qash",
-      }),
-    ],
-    [],
-  );
+  useEffect(() => {
+    const midenAdapter = new MidenWalletAdapter({
+      appName: "Qash",
+    });
+
+    setWallets([midenAdapter]);
+  }, []);
 
   const handleError = (error: WalletError) => {
     console.error(error);
@@ -96,64 +117,69 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   };
 
   useEffect(() => {
-    if (isConnected && shouldShowMigrationModal()) {
+    if (shouldShowMigrationModal()) {
       modalRef.current?.openModal(MODAL_IDS.MIGRATING);
     }
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MidenSdkProvider>
-        <WalletProvider wallets={wallets as unknown as Adapter[]} autoConnect onError={handleError}>
-          <WalletModalProvider>
-            <TransactionProviderC>
-              <Toaster
-                position="top-right"
-                toastOptions={{
+      <WalletProvider
+        wallets={wallets}
+        autoConnect
+        onError={handleError}
+        privateDataPermission={PrivateDataPermission.UponRequest}
+      >
+        <WalletModalProvider>
+          <TransactionProviderC>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                style: {
+                  padding: "0px",
+                  background: "#2B2B2B",
+                },
+                success: {
+                  icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
                   style: {
-                    padding: "0px",
-                    background: "#2B2B2B",
+                    color: "#7CFF96",
                   },
-                  success: {
-                    icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
-                    style: {
-                      color: "#7CFF96",
-                    },
+                },
+                error: {
+                  style: {
+                    color: "#FF7C7C",
                   },
-                  error: {
-                    style: {
-                      color: "#FF7C7C",
-                    },
+                },
+                loading: {
+                  style: {
+                    color: "#FFFFFF",
                   },
-                  loading: {
-                    style: {
-                      color: "#FFFFFF",
-                    },
-                  },
-                }}
-                children={t => (
-                  <ToastBar
-                    toast={t}
-                    style={{
-                      width: "full",
-                      maxWidth: "900px",
-                      ...t.style,
-                    }}
-                  >
-                    {({ icon, message }) => (
-                      <div className="flex gap-0.5 items-center rounded-[13px]">
-                        {icon}
-                        <span className="text-sm">{message}</span>
-                        <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
-                        <span className="text-[#929292] text-xs p-2 cursor-pointer" onClick={() => toast.dismiss(t.id)}>
-                          Close
-                        </span>
-                      </div>
-                    )}
-                  </ToastBar>
-                )}
-              />
-              <TourProviderWrapper>
+                },
+              }}
+              children={t => (
+                <ToastBar
+                  toast={t}
+                  style={{
+                    width: "full",
+                    maxWidth: "900px",
+                    ...t.style,
+                  }}
+                >
+                  {({ icon, message }) => (
+                    <div className="flex gap-0.5 items-center rounded-[13px]">
+                      {icon}
+                      <span className="text-sm">{message}</span>
+                      <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
+                      <span className="text-[#929292] text-xs p-2 cursor-pointer" onClick={() => toast.dismiss(t.id)}>
+                        Close
+                      </span>
+                    </div>
+                  )}
+                </ToastBar>
+              )}
+            />
+            <TourProviderWrapper>
+              <MidenSdkProvider>
                 <SocketProvider>
                   <ModalProvider>
                     <AnalyticsProvider config={analyticsConfig}>
@@ -188,19 +214,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                 }}
                                 className="mx-[24px] mb-[24px] rounded-lg flex justify-center items-center flex-1 overflow-auto relative"
                               >
-                                {children}
-                                {!isConnected && (
-                                  <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
-                                    <img src="/modal/wallet-icon.gif" alt="connect-wallet-icon" className="w-16 h-16" />
-                                    <span className="text-white text-lg font-medium">
-                                      Please connect your wallet to display information.
-                                    </span>
-                                    <ActionButton
-                                      text="Connect Wallet"
-                                      onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
-                                    />
-                                  </div>
-                                )}
+                                <WalletConnectedContent modalRef={modalRef}>{children}</WalletConnectedContent>
                               </div>
                             </div>
                           </div>
@@ -211,11 +225,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                     </AnalyticsProvider>
                   </ModalProvider>
                 </SocketProvider>
-              </TourProviderWrapper>
-            </TransactionProviderC>
-          </WalletModalProvider>
-        </WalletProvider>
-      </MidenSdkProvider>
+              </MidenSdkProvider>
+            </TourProviderWrapper>
+          </TransactionProviderC>
+        </WalletModalProvider>
+      </WalletProvider>
     </QueryClientProvider>
   );
 }

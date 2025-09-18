@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { TransactionItem } from "./TransactionItem";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { ActionButton } from "../Common/ActionButton";
 import { BatchTransaction, useBatchTransactions } from "@/services/store/batchTransactions";
 import { useModal } from "@/contexts/ModalManagerProvider";
@@ -28,21 +28,21 @@ export function BatchTransactionContainer({
   onConfirm,
 }: BatchTransactionContainerProps) {
   // **************** Custom Hooks *******************
-  const { walletAddress, isConnected } = useWalletConnect();
+  const { connected, accountId: walletAddress } = useWallet();
   const { removeTransaction } = useBatchTransactions();
   const { openModal } = useModal();
 
   // Subscribe directly to the store state for automatic reactivity
   const allTransactions = useBatchTransactions(state => state.transactions);
   const transactions = React.useMemo(() => {
-    if (walletAddress && isConnected && allTransactions[walletAddress]) {
+    if (walletAddress && connected && allTransactions[walletAddress]) {
       return allTransactions[walletAddress].map(tx => ({
         ...tx,
         createdAt: new Date(tx.createdAt),
       }));
     }
     return [];
-  }, [walletAddress, isConnected, allTransactions]);
+  }, [walletAddress, connected, allTransactions]);
 
   const handleRemoveTransaction = (transactionId: string) => {
     if (!walletAddress) return;
@@ -92,7 +92,7 @@ export function BatchTransactionContainer({
         )}
       </div>
       {/* Footer */}
-      {isConnected ? (
+      {connected ? (
         <ActionButton
           text="Confirm & Sign"
           buttonType="submit"

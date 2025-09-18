@@ -5,7 +5,7 @@ import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { formatAddress } from "@/services/utils/miden/address";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { BatchTransaction, useBatchTransactions } from "@/services/store/batchTransactions";
 
 export function BatchTransactionOverviewModal({
@@ -16,7 +16,7 @@ export function BatchTransactionOverviewModal({
   const { sender, onConfirm } = props;
   const { openModal } = useModal();
 
-  const { walletAddress } = useWalletConnect();
+  const { accountId: walletAddress } = useWallet();
 
   // Subscribe directly to the store state for automatic reactivity
   const allTransactions = useBatchTransactions(state => state.transactions);

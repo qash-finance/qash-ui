@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { BatchTransactionsModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import { TransactionItem } from "../../Batch/TransactionItem";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 // import BaseModal from "./BatchTransactionOverview/BaseModal";
 import { EmptyBatch } from "../../Batch/BatchTransactionContainer";
@@ -11,7 +11,7 @@ import BaseModal from "../BaseModal";
 
 export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTransactionsModalProps>) {
   const { removeTransaction } = useBatchTransactions();
-  const { walletAddress } = useWalletConnect();
+  const { accountId: walletAddress } = useWallet();
   const { openModal } = useModal();
 
   // Subscribe directly to the store state for automatic reactivity

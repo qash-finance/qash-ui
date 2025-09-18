@@ -15,6 +15,8 @@ import { formatAddress } from "@/services/utils/miden/address";
 import { QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
 
 type SearchFormData = {
   searchQuery: string;
@@ -353,9 +355,9 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
         {/* Empty State */}
         {filteredTransactions.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full">
-          <img src="/schedule-payment/empty-schedule-payment-icon.svg" alt="Empty State" className="scale-100" />
-          <span className="text-white">You haven’t created any transactions yet.</span>
-        </div>
+            <img src="/schedule-payment/empty-schedule-payment-icon.svg" alt="Empty State" className="scale-100" />
+            <span className="text-white">You haven’t created any transactions yet.</span>
+          </div>
         )}
       </div>
     </div>

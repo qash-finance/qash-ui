@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useWalletState } from "@/services/store";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
@@ -15,16 +16,17 @@ enum SelectedWallet {
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
-  const { walletAddress, setIsConnected } = useWalletState(state => state);
+  const { accountId, privateDataPermission, disconnect } = useWallet();
   const { disconnectWallet } = useWalletAuth();
   const clearTransactions = useTransactionStore(state => state.clearTransactions);
 
   const [isBlurred, setIsBlurred] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.MIDEN_WALLET);
+
   const handleDisconnect = async () => {
     try {
-      setIsConnected(false);
+      disconnect();
       clearTransactions();
       await disconnectWallet();
       toast.success("Wallet disconnected");
@@ -38,22 +40,22 @@ export const Account: React.FC<AccountProps> = () => {
       case SelectedWallet.MIDEN_WALLET:
         return {
           name: "Choose account",
-          address: formatAddress(walletAddress || "0x"),
+          address: formatAddress(accountId || "0x"),
         };
       case SelectedWallet.LOCAL_WALLET_1:
         return {
           name: "Q3x",
-          address: walletAddress,
+          address: accountId,
         };
       case SelectedWallet.LOCAL_WALLET_2:
         return {
           name: "Q3x",
-          address: walletAddress,
+          address: accountId,
         };
       default:
         return {
           name: "Choose account",
-          address: formatAddress(walletAddress?.toString() || "0x"),
+          address: formatAddress(accountId?.toString() || "0x"),
         };
     }
   };
@@ -98,13 +100,13 @@ export const Account: React.FC<AccountProps> = () => {
         <header className="flex items-center w-full text-sm font-medium tracking-tight">
           <div className="flex flex-1 gap-1 items-center">
             <img src="/miden-logo.svg" className="w-7 aspect-square" alt="miden logo icon" />
-            <span className="text-base truncate">{formatAddress(walletAddress?.toString() || "0x")}</span>
+            <span className="text-base truncate">{formatAddress(accountId?.toString() || "0x")}</span>
             <img
               src="/copy-icon.svg"
               className="w-4 aspect-square cursor-pointer"
               alt="Copy icon"
               onClick={() => {
-                navigator.clipboard.writeText(walletAddress?.toString() || "");
+                navigator.clipboard.writeText(accountId?.toString() || "");
                 toast.success("Copied to clipboard");
               }}
             />
@@ -145,7 +147,7 @@ export const Account: React.FC<AccountProps> = () => {
                     filter: "invert(32%) sepia(99%) saturate(749%) hue-rotate(186deg) brightness(98%) contrast(101%)",
                   }}
                   onClick={() => {
-                    navigator.clipboard.writeText(walletAddress || "");
+                    navigator.clipboard.writeText(accountId || "");
                     toast.success("Copied to clipboard");
                   }}
                 />
@@ -204,7 +206,7 @@ export const Account: React.FC<AccountProps> = () => {
             <div className="flex justify-between flex-1 gap-0.5 items-center px-1.5 py-1 bg-[white] rounded-lg border border-[#066EFF] shadow-lg">
               <span className="flex-1 text-base tracking-tight text-blue-600">Q3x</span>
               <span className="flex-1 text-base tracking-tight text-blue-600 text-right">
-                {formatAddress(walletAddress || "")}
+                {formatAddress(accountId || "")}
               </span>
             </div>
           </div>

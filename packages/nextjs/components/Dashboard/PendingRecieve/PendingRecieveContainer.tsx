@@ -11,6 +11,8 @@ import {
   consumeAllUnauthenticatedNotes,
   consumeUnauthenticatedNote,
   consumeNoteByID,
+  getConsumableNotes,
+  getNotesTransactionRequest,
 } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
@@ -26,6 +28,10 @@ import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
 import { useConsumePublicNotes } from "@/services/api/transaction";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
+import { NoteAndArgsArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
+import { ConsumeTransaction } from "@demox-labs/miden-wallet-adapter-base";
 
 const HeaderColumns = ["Amount", "From", "Action"];
 
@@ -145,6 +151,17 @@ export const PendingRecieveContainer: React.FC = () => {
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
 
+  const { accountId, connected, requestPrivateNotes, wallet } = useWallet();
+
+  useEffect(() => {
+    (async () => {
+      if (connected && accountId && requestPrivateNotes) {
+        const noteIds = await requestPrivateNotes();
+        console.log("🚀 ~ PendingRecieveContainer ~ noteIds:", noteIds);
+      }
+    })();
+  }, [connected, accountId]);
+
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
@@ -256,58 +273,65 @@ export const PendingRecieveContainer: React.FC = () => {
 
       setClaiming(true);
 
+      await (wallet?.adapter as MidenWalletAdapter).requestConsume({
+        faucetId: "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4",
+        noteId: "0x024da7c19271a4a8c7c4b0d5a660a28559ccf32e11d46c76978a1f484fe5693e",
+        noteType: "private",
+        amount: 1,
+      });
+
       // consume on network level
-      const txId = await consumeAllUnauthenticatedNotes(
-        walletAddress,
-        checkedRows.map(idx => ({
-          isPrivate: consumableNotes[idx].private,
-          noteId: consumableNotes[idx].id,
-          partialNote: consumableNotes[idx],
-        })),
-      );
+      // const txId = await consumeAllUnauthenticatedNotes(
+      //   walletAddress,
+      //   checkedRows.map(idx => ({
+      //     isPrivate: consumableNotes[idx].private,
+      //     noteId: consumableNotes[idx].id,
+      //     partialNote: consumableNotes[idx],
+      //   })),
+      // );
 
-      // loop through the transactions being consume, and if the transaction is public (non recallable + non private), call consume public notes
-      for (const id of checkedRows) {
-        const note = consumableNotes[id];
-        if (!note.private && note.recallableHeight < 0) {
-          await consumePublicNotes([
-            {
-              sender: note.sender,
-              recipient: note.recipient,
-              amount: Number(
-                formatUnits(BigInt(Math.round(Number(note.assets[0].amount))), note.assets[0].metadata?.decimals),
-              ),
-              tokenId: note.assets[0].faucetId,
-              tokenName: note.assets[0].metadata?.symbol,
-              txId: txId,
-              noteId: note.id,
-              requestPaymentId: consumableNotes.find(n => n.id === note.id)?.requestPaymentId,
-            },
-          ]);
-        }
-      }
+      // // loop through the transactions being consume, and if the transaction is public (non recallable + non private), call consume public notes
+      // for (const id of checkedRows) {
+      //   const note = consumableNotes[id];
+      //   if (!note.private && note.recallableHeight < 0) {
+      //     await consumePublicNotes([
+      //       {
+      //         sender: note.sender,
+      //         recipient: note.recipient,
+      //         amount: Number(
+      //           formatUnits(BigInt(Math.round(Number(note.assets[0].amount))), note.assets[0].metadata?.decimals),
+      //         ),
+      //         tokenId: note.assets[0].faucetId,
+      //         tokenName: note.assets[0].metadata?.symbol,
+      //         txId: txId,
+      //         noteId: note.id,
+      //         requestPaymentId: consumableNotes.find(n => n.id === note.id)?.requestPaymentId,
+      //       },
+      //     ]);
+      //   }
+      // }
 
-      // consume on server level
-      await consumeNotes(
-        checkedRows.map(idx => ({
-          noteId: consumableNotes[idx].id,
-          txId: txId,
-        })),
-      );
+      // // consume on server level
+      // await consumeNotes(
+      //   checkedRows.map(idx => ({
+      //     noteId: consumableNotes[idx].id,
+      //     txId: txId,
+      //   })),
+      // );
 
-      // get all private
+      // // get all private
       setClaiming(false);
 
       toast.dismiss();
       toast.success("Payments received successfully");
 
-      // Remove the claimed notes from the list
-      const claimedNoteIds = checkedRows.map(idx => consumableNotes[idx].id);
-      setConsumableNotes(prev => prev.filter(note => !claimedNoteIds.includes(note.id)));
-      // Clear the checked rows
-      setCheckedRows([]);
+      // // Remove the claimed notes from the list
+      // const claimedNoteIds = checkedRows.map(idx => consumableNotes[idx].id);
+      // setConsumableNotes(prev => prev.filter(note => !claimedNoteIds.includes(note.id)));
+      // // Clear the checked rows
+      // setCheckedRows([]);
 
-      await forceRefetchRecallableNotes();
+      // await forceRefetchRecallableNotes();
     } catch (error) {
       console.error("Error consuming notes:", error);
       toast.dismiss();
@@ -376,7 +400,7 @@ export const PendingRecieveContainer: React.FC = () => {
                     </table>
                   )}
                 </div>
-                {checkedRows.length > 0 && (
+                {true && (
                   <div className="flex items-center justify-end mt-2 gap-2">
                     <ActionButton text="Cancel" type="neutral" onClick={() => setCheckedRows([])} />
                     <ActionButton text="Receive all" onClick={() => handleClaimAll()} disabled={claiming} />

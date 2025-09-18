@@ -36,6 +36,9 @@ import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 import { useCreateSchedulePayment, useGetSchedulePayments } from "@/services/api/schedule-payment";
 import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { SendTransaction, WalletAdapter } from "@demox-labs/miden-wallet-adapter-base";
+import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -63,10 +66,10 @@ const DEFAULT_SCHEDULE_PAYMENT = {
 
 export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
   // **************** Custom Hooks *******************
+  const { connected, accountId: walletAddress, wallet, requestPrivateNotes } = useWallet();
   const searchParams = useSearchParams();
   const { openModal } = useModal();
-  const { isConnected } = useWalletConnect();
-  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { assets, forceFetch: forceRefetchAssets } = useAccountContext();
   const { mutateAsync: sendSingleTransaction } = useSendSingleTransaction();
   const { mutateAsync: sendBatchTransaction } = useSendBatchTransaction();
   const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
@@ -374,63 +377,63 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       const noteId = note.id().toString();
 
       // submit transaction to miden
-      const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
+      // const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
 
-      // submit transaction to server
-      const response = await sendSingleTransaction({
-        assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
-        private: isPrivateTransaction,
-        recipient: recipientAddress,
-        recallable: true,
-        recallableTime: new Date(Date.now() + recallableTime * 1000),
-        recallableHeight: noteRecallHeight,
-        serialNumber: serialNumbers,
-        noteType: CustomNoteType.P2IDR,
-        noteId: noteId,
-        transactionId: txId,
-      });
+      // // submit transaction to server
+      // const response = await sendSingleTransaction({
+      //   assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
+      //   private: isPrivateTransaction,
+      //   recipient: recipientAddress,
+      //   recallable: true,
+      //   recallableTime: new Date(Date.now() + recallableTime * 1000),
+      //   recallableHeight: noteRecallHeight,
+      //   serialNumber: serialNumbers,
+      //   noteType: CustomNoteType.P2IDR,
+      //   noteId: noteId,
+      //   transactionId: txId,
+      // });
 
-      setTimeout(() => {
-        forceRefetchAssets();
-        forceRefetchRecallablePayment();
-        if (schedulePayment) {
-          refetchSchedulePayments();
-        }
-      }, REFETCH_DELAY);
+      // setTimeout(() => {
+      //   forceRefetchAssets();
+      //   forceRefetchRecallablePayment();
+      //   if (schedulePayment) {
+      //     refetchSchedulePayments();
+      //   }
+      // }, REFETCH_DELAY);
 
-      if (response) {
-        toast.dismiss();
-        toast.success(
-          <div>
-            {schedulePayment
-              ? `Transaction sent successfully with ${schedulePayment.times} transactions, view transaction on `
-              : "Transaction sent successfully, view transaction on "}
-            <a
-              href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              Miden Explorer
-            </a>
-          </div>,
-        );
+      // if (response) {
+      //   toast.dismiss();
+      //   toast.success(
+      //     <div>
+      //       {schedulePayment
+      //         ? `Transaction sent successfully with ${schedulePayment.times} transactions, view transaction on `
+      //         : "Transaction sent successfully, view transaction on "}
+      //       <a
+      //         href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
+      //         target="_blank"
+      //         rel="noopener noreferrer"
+      //         className="underline"
+      //       >
+      //         Miden Explorer
+      //       </a>
+      //     </div>,
+      //   );
 
-        reset();
-        setRecipientName("");
+      //   reset();
+      //   setRecipientName("");
 
-        const batchTransactions = getBatchTransactions(walletAddress);
-        const matchedTransactions = batchTransactions.filter(tx => {
-          return (
-            tx.tokenAddress === selectedToken.faucetId &&
-            tx.amount === amount.toString() &&
-            tx.recipient === recipientAddress &&
-            tx.isPrivate === isPrivateTransaction &&
-            tx.recallableTime === recallableTime
-          );
-        });
-        matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
-      }
+      //   const batchTransactions = getBatchTransactions(walletAddress);
+      //   const matchedTransactions = batchTransactions.filter(tx => {
+      //     return (
+      //       tx.tokenAddress === selectedToken.faucetId &&
+      //       tx.amount === amount.toString() &&
+      //       tx.recipient === recipientAddress &&
+      //       tx.isPrivate === isPrivateTransaction &&
+      //       tx.recallableTime === recallableTime
+      //     );
+      //   });
+      //   matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
+      // }
     } catch (error) {
       toast.dismiss();
       console.error("Failed to send schedule payment transaction:", error);
@@ -443,16 +446,16 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const handleSendTransaction = async (data: SendTransactionFormValues) => {
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
 
-    if (!isConnected || !walletAddress) {
+    if (!connected) {
       return;
     }
 
     // check if amount > balance
-    if (amount > parseFloat(selectedToken.amount)) {
-      toast.dismiss();
-      toast.error("Insufficient balance");
-      return;
-    }
+    // if (amount > parseFloat(selectedToken.amount)) {
+    //   toast.dismiss();
+    //   toast.error("Insufficient balance");
+    //   return;
+    // }
 
     if (!validateAddress(recipientAddress)) {
       toast.dismiss();
@@ -479,6 +482,18 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
+    if (!wallet) {
+      toast.dismiss();
+      toast.error("Wallet is not available");
+      return;
+    }
+
+    if (!walletAddress) {
+      toast.dismiss();
+      toast.error("Wallet address is not available");
+      return;
+    }
+
     // Show transaction overview modal first
     openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
       amount: `${amount}`,
@@ -502,7 +517,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         // Create AccountId objects once to avoid aliasing issues
         const senderAccountId = walletAddress;
         const recipientAccountId = recipientAddress;
-        const faucetAccountId = selectedToken.faucetId;
+        const faucetAccountId = "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4";
 
         if (schedulePayment.times !== undefined) {
           await handleSchedulePaymentTransaction(
@@ -513,7 +528,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             data,
           );
         } else {
-          await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
+          const midenTransaction = new SendTransaction(
+            walletAddress,
+            recipientAccountId,
+            faucetAccountId,
+            isPrivateTransaction ? "private" : "public",
+            amount!,
+          );
+          await (wallet.adapter as MidenWalletAdapter).requestSend(midenTransaction);
         }
       },
     });
@@ -522,42 +544,44 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   const handleAddToBatch = async (data: SendTransactionFormValues) => {
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
 
-    if (!isConnected || !walletAddress) {
-      return;
-    }
-
     try {
       // check if amount > balance
-      if (amount > parseFloat(selectedToken.amount)) {
-        toast.dismiss();
-        toast.error("Insufficient balance");
-        return;
-      }
+      // if (amount > parseFloat(selectedToken.amount)) {
+      //   toast.dismiss();
+      //   toast.error("Insufficient balance");
+      //   return;
+      // }
 
-      // check if recipient address is valid bech32
-      if (!validateAddress(recipientAddress)) {
-        toast.dismiss();
-        toast.error("Invalid recipient address");
-        return;
-      }
+      // // check if recipient address is valid bech32
+      // if (!validateAddress(recipientAddress)) {
+      //   toast.dismiss();
+      //   toast.error("Invalid recipient address");
+      //   return;
+      // }
 
-      // check if recallable time is valid
-      if (recallableTime <= 0) {
-        toast.dismiss();
-        toast.error("Recallable time must be greater than 0");
-        return;
-      }
+      // // check if recallable time is valid
+      // if (recallableTime <= 0) {
+      //   toast.dismiss();
+      //   toast.error("Recallable time must be greater than 0");
+      //   return;
+      // }
 
-      // check if amount > 0
-      if (amount <= 0) {
+      // // check if amount > 0
+      // if (amount <= 0) {
+      //   toast.dismiss();
+      //   toast.error("Amount must be greater than 0");
+      //   return;
+      // }
+
+      if (!walletAddress) {
         toast.dismiss();
-        toast.error("Amount must be greater than 0");
+        toast.error("Wallet address is not available");
         return;
       }
 
       // add to batch storage
       addTransaction(walletAddress, {
-        tokenAddress: selectedToken.faucetId,
+        tokenAddress: "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4",
         tokenMetadata: selectedToken.metadata,
         amount: amount.toString(),
         recipient: recipientAddress,
@@ -698,7 +722,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
       <TransactionOptions register={register} watch={watch} setValue={setValue} />
 
-      {isConnected ? (
+      {connected ? (
         <div className="flex items-center gap-2 mt-1">
           <ActionButton
             text="Add To Batch"

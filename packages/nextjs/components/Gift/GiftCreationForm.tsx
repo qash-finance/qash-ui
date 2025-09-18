@@ -23,11 +23,16 @@ import useSendGift from "@/hooks/server/useSendGift";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useForm } from "react-hook-form";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { OutputNotesArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
+import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
+import { CustomTransaction, TransactionType } from "@demox-labs/miden-wallet-adapter-base";
 // import { TokenSelector } from "./TokenSelector";
 
 export const GiftCreationForm: React.FC = () => {
   // **************** Custom Hooks *******************
-  const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { assets, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { accountId: walletAddress, wallet } = useWallet();
   const { openModal } = useModal();
   const { isConnected } = useWalletConnect();
   const { mutate: sendGift } = useSendGift();
@@ -78,27 +83,31 @@ export const GiftCreationForm: React.FC = () => {
     if (isConnected) {
       const { amount: currentAmount } = getValues();
 
-      if (!currentAmount) {
-        return toast.error("Invalid amount");
-      }
+      // if (!currentAmount) {
+      //   return toast.error("Invalid amount");
+      // }
 
-      if (Number(currentAmount) <= 0) {
-        return toast.error("Invalid amount");
-      }
+      // if (Number(currentAmount) <= 0) {
+      //   return toast.error("Invalid amount");
+      // }
 
-      // format amount
-      const formattedAmount = formatUnits(
-        BigInt(Math.round(Number(selectedToken.amount))),
-        selectedToken.metadata.decimals,
-      );
+      // // format amount
+      // const formattedAmount = formatUnits(
+      //   BigInt(Math.round(Number(selectedToken.amount))),
+      //   selectedToken.metadata.decimals,
+      // );
 
-      if (Number(formattedAmount) < currentAmount) {
-        console.log(formattedAmount, currentAmount);
-        return toast.error("Insufficient balance");
-      }
+      // if (Number(formattedAmount) < currentAmount) {
+      //   console.log(formattedAmount, currentAmount);
+      //   return toast.error("Insufficient balance");
+      // }
 
-      if (currentAmount <= 0) {
-        return toast.error("Invalid amount");
+      // if (currentAmount <= 0) {
+      //   return toast.error("Invalid amount");
+      // }
+
+      if (!walletAddress) {
+        return toast.error("Please connect your wallet");
       }
 
       // open double confirm modal
@@ -121,53 +130,63 @@ export const GiftCreationForm: React.FC = () => {
                 // generate secret
                 const secret = await generateSecret();
 
-                // parse current amount with decimals
-                const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
-
                 // create gift note
                 const [outputNote, serialNumber] = await createGiftNote(
                   walletAddress,
-                  selectedToken.faucetId,
-                  parsedAmount,
+                  "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4",
+                  BigInt(currentAmount * 10),
                   secret,
                 );
 
                 console.log("serialNumber", serialNumber);
 
+                const transactionRequest = new TransactionRequestBuilder()
+                  .withOwnOutputNotes(new OutputNotesArray([outputNote]))
+                  .build();
+                const customTransaction = new CustomTransaction(
+                  walletAddress, // AccountId the transaction request will be executed against
+                  transactionRequest, // TransactionRequest object (will need to be generated using the Miden Web SDK)
+                );
+
+                const tx = await (wallet?.adapter as MidenWalletAdapter).requestTransaction({
+                  payload: customTransaction,
+                  type: TransactionType.Custom,
+                });
+
                 // submit transaction
-                const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
+                // const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
 
                 // submit to server
 
                 // turn secret to string
-                const secretString = secretArrayToString(secret);
+                // const secretString = secretArrayToString(secret);
 
-                sendGift({
-                  assets: [
-                    {
-                      faucetId: selectedToken.faucetId,
-                      amount: currentAmount.toString(),
-                      metadata: selectedToken.metadata,
-                    },
-                  ],
-                  serialNumber: serialNumber,
-                  secretNumber: secretString,
-                  txId: txId,
-                });
+                // sendGift({
+                //   assets: [
+                //     {
+                //       faucetId: selectedToken.faucetId,
+                //       amount: currentAmount.toString(),
+                //       metadata: selectedToken.metadata,
+                //     },
+                //   ],
+                //   serialNumber: serialNumber,
+                //   secretNumber: secretString,
+                //   txId: tx.executedTransaction().id().toHex(),
+                // });
 
-                // current domain + /gift/open-gift/id
-                const giftLink = `${window.location.origin}/gift/open-gift?code=${encodeURIComponent(secretString)}`;
+                // // current domain + /gift/open-gift/id
+                // const giftLink = `${window.location.origin}/gift/open-gift?code=${encodeURIComponent(secretString)}`;
 
-                // refetch everything
-                await forceRefetchAssets();
-                await forceRefetchGiftDashboard();
-                await forceRefetchRecallableNotes();
+                // // refetch everything
+                // await forceRefetchAssets();
+                // await forceRefetchGiftDashboard();
+                // await forceRefetchRecallableNotes();
 
                 toast.dismiss();
                 toast.success("Gift created successfully");
                 setValue("amount", 0);
 
-                return giftLink;
+                // return giftLink;
               } catch (error) {
                 toast.dismiss();
                 toast.error("Failed to create gift");

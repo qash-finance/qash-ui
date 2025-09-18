@@ -8,6 +8,8 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { BUTTON_STYLES } from "@/services/utils/constant";
+import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 // Custom hook to safely render WalletMultiButton
 const SafeWalletButton = ({
@@ -22,16 +24,16 @@ const SafeWalletButton = ({
   try {
     return (
       <div style={{ position: "relative", width: "100%" }}>
-        {/* <WalletMultiButton
-          onClick={onClick}
+        <WalletMultiButton
           style={{
             ...style,
-            color: "transparent", // Hide original text
-            fontSize: "0", // Hide text
+            backgroundColor: "#3b82f6",
+            // color: "transparent", // Hide original text
+            // fontSize: "0", // Hide text
           }}
           className="wallet-button-custom cursor-pointer"
-        /> */}
-        <button
+        />
+        {/* <button
           onClick={onClick}
           style={{
             ...style,
@@ -39,8 +41,8 @@ const SafeWalletButton = ({
             fontSize: "0", // Hide text
           }}
           className="wallet-button-custom cursor-pointer h-[40px]"
-        />
-        <div
+        /> */}
+        {/* <div
           style={{
             position: "absolute",
             top: "50%",
@@ -57,7 +59,7 @@ const SafeWalletButton = ({
           className="wallet-button-custom cursor-pointer"
         >
           Connect Wallet
-        </div>
+        </div> */}
       </div>
     );
   } catch (error) {
@@ -78,23 +80,22 @@ const SafeWalletButton = ({
 
 export const Connect = () => {
   // **************** Global State *******************
-  const { isConnected, setIsConnected, setFirstTimeConnected, firstTimeConnected } = useWalletState(state => state);
-  const { handleConnect, walletAddress } = useWalletConnect();
   const { openModal } = useModal();
+  const { connected } = useWallet();
+  const { isAuthenticated } = useWalletAuth();
 
   // **************** Custom Hooks *******************
-  const { connectWallet, isAuthenticated } = useWalletAuth();
 
   // **************** Local State *******************
 
   // **************** Effects *******************
   // Auto connect if wallet address exists in local storage
-  useEffect(() => {
-    if (!isConnected && walletAddress && !firstTimeConnected) {
-      setIsConnected(true);
-      setFirstTimeConnected(true);
-    }
-  }, [isConnected, walletAddress]);
+  // useEffect(() => {
+  //   if (!isConnected && walletAddress && !firstTimeConnected) {
+  //     setIsConnected(true);
+  //     setFirstTimeConnected(true);
+  //   }
+  // }, [isConnected, walletAddress]);
 
   // Auto-deploy local authentication account and authenticate when wallet connects
   // useEffect(() => {
@@ -116,7 +117,7 @@ export const Connect = () => {
   // }, [isConnected, walletAddress, isAuthenticated]);
 
   // If connected and authenticated, render Account component
-  if (isConnected && isAuthenticated) {
+  if (connected) {
     return <Account />;
   }
 
@@ -171,9 +172,9 @@ export const Connect = () => {
                 //   }
                 // }
                 // });
-                openModal(MODAL_IDS.CONNECT_WALLET);
+                // openModal(MODAL_IDS.CONNECT_WALLET);
               }}
-              connected={isConnected}
+              connected={connected}
               style={{
                 ...BUTTON_STYLES,
                 backgroundColor: "#3b82f6",

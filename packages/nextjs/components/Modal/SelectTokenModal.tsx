@@ -7,6 +7,7 @@ import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { AssetWithMetadata } from "@/types/faucet";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 export function SelectTokenModal({
   isOpen,
@@ -16,6 +17,7 @@ export function SelectTokenModal({
 }: ModalProp<SelectTokenModalProps> & { zIndex?: number }) {
   // **************** Custom Hooks *******************
   const { assets, isError } = useAccountContext();
+  const { requestAssets, connected } = useWallet();
 
   // **************** Local State *******************
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,6 +48,15 @@ export function SelectTokenModal({
 
     setFilteredAssets(filteredAssets);
   }, [assets, searchQuery, isError]);
+
+  useEffect(() => {
+    (async () => {
+      if (connected) {
+        const assets = await requestAssets?.();
+        console.log("ASSETS", assets);
+      }
+    })();
+  }, [connected]);
 
   if (!isOpen) return null;
 
