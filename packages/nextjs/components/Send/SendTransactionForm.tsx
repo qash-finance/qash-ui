@@ -375,7 +375,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
 
       // submit transaction to miden
       const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
-
+      console.log("isPrivateTransaction", isPrivateTransaction);
       // submit transaction to server
       const response = await sendSingleTransaction({
         assets: [{ faucetId: selectedToken.faucetId, amount: amount.toString(), metadata: selectedToken.metadata }],
@@ -503,7 +503,6 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
         const senderAccountId = walletAddress;
         const recipientAccountId = recipientAddress;
         const faucetAccountId = selectedToken.faucetId;
-
         if (schedulePayment.times !== undefined) {
           await handleSchedulePaymentTransaction(
             senderAccountId,

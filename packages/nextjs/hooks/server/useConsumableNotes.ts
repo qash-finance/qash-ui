@@ -83,7 +83,7 @@ export function useConsumableNotes() {
               } as AssetWithMetadata;
             });
           const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
+          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
 
           return {
             id: id,

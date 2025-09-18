@@ -22,8 +22,8 @@ export const shouldShowMigrationModal = (): boolean => {
   const storedAuth = localStorage.getItem(MIDEN_WALLET_AUTH_KEY);
   const storedKeys = localStorage.getItem(MIDEN_WALLET_KEYS_KEY);
   const storedAddresses = localStorage.getItem(WALLET_ADDRESSES_KEY);
+  if (!storedVersion) return true;
   if (storedVersion == CURRENT_MIGRATION_VERSION) return false;
-
   if (!storedVersion && (storedAuth || storedKeys || storedAddresses)) return true;
 
   return false;

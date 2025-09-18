@@ -96,7 +96,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   };
 
   useEffect(() => {
-    if (isConnected && shouldShowMigrationModal()) {
+    if (shouldShowMigrationModal()) {
       modalRef.current?.openModal(MODAL_IDS.MIGRATING);
     }
   }, []);
