@@ -99,7 +99,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     if (isConnected && shouldShowMigrationModal()) {
       modalRef.current?.openModal(MODAL_IDS.MIGRATING);
     }
-  }, []);
+  }, [isConnected]);
 
   return (
     <QueryClientProvider client={queryClient}>
