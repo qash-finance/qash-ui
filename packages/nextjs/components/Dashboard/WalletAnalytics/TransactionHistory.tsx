@@ -353,9 +353,9 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
         {/* Empty State */}
         {filteredTransactions.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full">
-          <img src="/schedule-payment/empty-schedule-payment-icon.svg" alt="Empty State" className="scale-100" />
-          <span className="text-white">You haven’t created any transactions yet.</span>
-        </div>
+            <img src="/schedule-payment/empty-schedule-payment-icon.svg" alt="Empty State" className="scale-100" />
+            <span className="text-white">You haven’t created any transactions yet.</span>
+          </div>
         )}
       </div>
     </div>

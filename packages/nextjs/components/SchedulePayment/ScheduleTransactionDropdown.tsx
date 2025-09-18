@@ -66,42 +66,42 @@ export const ScheduleTransactionDropdown: React.FC<{
 
   // Generate transactions from schedulePayment
   useEffect(() => {
-   (() => {
-    if (schedulePayment && amount && tokenSymbol) {
-      const { frequency, times, startDate } = schedulePayment;
+    (() => {
+      if (schedulePayment && amount && tokenSymbol) {
+        const { frequency, times, startDate } = schedulePayment;
 
-      const txns = Array.from({ length: times }, (_, index) => {
-        const transactionDate = new Date(startDate);
-        
-        // Calculate the date for this transaction based on frequency
-        switch (frequency) {
-          case SchedulePaymentFrequency.DAILY:
-            transactionDate.setDate(transactionDate.getDate() + index);
-            break;
-          case SchedulePaymentFrequency.WEEKLY:
-            transactionDate.setDate(transactionDate.getDate() + (index * 7));
-            break;
-          case SchedulePaymentFrequency.MONTHLY:
-            transactionDate.setMonth(transactionDate.getMonth() + index);
-            break;
-          case SchedulePaymentFrequency.YEARLY:
-            transactionDate.setFullYear(transactionDate.getFullYear() + index);
-            break;
-          default:
-            transactionDate.setDate(transactionDate.getDate() + index);
-        }
-        
-        const formattedDate = transactionDate.toLocaleDateString("en-GB");
-        
-        return {
-          amountLabel: `${amount} ${tokenSymbol}`,
-          claimableAfterLabel: `Claimable after ${formattedDate}`,
-        };
-      });
+        const txns = Array.from({ length: times }, (_, index) => {
+          const transactionDate = new Date(startDate);
 
-      setDisplayTransactions(txns);
-    }
-   })()
+          // Calculate the date for this transaction based on frequency
+          switch (frequency) {
+            case SchedulePaymentFrequency.DAILY:
+              transactionDate.setDate(transactionDate.getDate() + index);
+              break;
+            case SchedulePaymentFrequency.WEEKLY:
+              transactionDate.setDate(transactionDate.getDate() + index * 7);
+              break;
+            case SchedulePaymentFrequency.MONTHLY:
+              transactionDate.setMonth(transactionDate.getMonth() + index);
+              break;
+            case SchedulePaymentFrequency.YEARLY:
+              transactionDate.setFullYear(transactionDate.getFullYear() + index);
+              break;
+            default:
+              transactionDate.setDate(transactionDate.getDate() + index);
+          }
+
+          const formattedDate = transactionDate.toLocaleDateString("en-GB");
+
+          return {
+            amountLabel: `${amount} ${tokenSymbol}`,
+            claimableAfterLabel: `Claimable after ${formattedDate}`,
+          };
+        });
+
+        setDisplayTransactions(txns);
+      }
+    })();
   }, [schedulePayment, amount, tokenSymbol]);
 
   // Measure content height when transactions change

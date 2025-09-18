@@ -100,17 +100,17 @@ export function RecurringTransferModal({ isOpen, onClose, zIndex }: ModalProp<Re
       const startDate = new Date(payment.createdAt);
       const maxExecutions = payment.maxExecutions || 3;
       const frequency = payment.frequency;
-      
+
       transactionsMap[index] = Array.from({ length: maxExecutions }, (_, txIndex) => {
         const transactionDate = new Date(startDate);
-        
+
         // Calculate the date for this transaction based on frequency
         switch (frequency) {
           case "DAILY":
             transactionDate.setDate(transactionDate.getDate() + txIndex);
             break;
           case "WEEKLY":
-            transactionDate.setDate(transactionDate.getDate() + (txIndex * 7));
+            transactionDate.setDate(transactionDate.getDate() + txIndex * 7);
             break;
           case "MONTHLY":
             transactionDate.setMonth(transactionDate.getMonth() + txIndex);
@@ -121,9 +121,9 @@ export function RecurringTransferModal({ isOpen, onClose, zIndex }: ModalProp<Re
           default:
             transactionDate.setDate(transactionDate.getDate() + txIndex);
         }
-        
+
         const formattedDate = transactionDate.toLocaleDateString("en-GB");
-        
+
         return {
           amountLabel: `${payment.amount} ${payment.tokens[0]?.metadata?.symbol || "QASH"}`,
           claimableAfterLabel: `Claimable after ${formattedDate}`,

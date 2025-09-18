@@ -34,7 +34,6 @@ const InfoRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 }
  */
 
-
 export function RecurringTransferDetail({
   isOpen,
   onClose,
@@ -42,7 +41,6 @@ export function RecurringTransferDetail({
   item,
   transactions,
 }: ModalProp<RecurringTransferDetailProps>) {
-
   if (!isOpen) return null;
 
   return (
@@ -112,7 +110,13 @@ export function RecurringTransferDetail({
                 schedulePayment={{
                   frequency: item.frequencyLabel.toUpperCase() as any,
                   times: parseInt(item.timesLabel.split("/")[1].split(" ")[0]),
-                  startDate: new Date(item.startDateLabel.replace(/^From\s+/, "").split("/").reverse().join("-")),
+                  startDate: new Date(
+                    item.startDateLabel
+                      .replace(/^From\s+/, "")
+                      .split("/")
+                      .reverse()
+                      .join("-"),
+                  ),
                 }}
                 amount={item.amount}
                 tokenSymbol={item.token.metadata.symbol}

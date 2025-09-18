@@ -30,10 +30,7 @@ export default function SendPage() {
     // </div>
     <Suspense fallback={<div>Loading...</div>}>
       {/* @ts-ignore */}
-      <SendTransactionForm
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      <SendTransactionForm activeTab={activeTab} onTabChange={handleTabChange} />
     </Suspense>
   );
 }

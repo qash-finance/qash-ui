@@ -1,11 +1,11 @@
 export enum AnalyticsEventType {
-  PAGE_VIEW = 'page_view',
-  ENDPOINT_CALL = 'endpoint_call',
-  USER_SESSION = 'user_session',
-  TRANSACTION = 'transaction',
-  GIFT = 'gift',
-  GROUP_PAYMENT = 'group_payment',
-  REQUEST_PAYMENT = 'request_payment',
+  PAGE_VIEW = "page_view",
+  ENDPOINT_CALL = "endpoint_call",
+  USER_SESSION = "user_session",
+  TRANSACTION = "transaction",
+  GIFT = "gift",
+  GROUP_PAYMENT = "group_payment",
+  REQUEST_PAYMENT = "request_payment",
 }
 
 export interface TrackEventDto {
@@ -46,9 +46,9 @@ export interface TrackTransactionDto {
 export interface GenerateReportDto {
   startDate: string;
   endDate: string;
-  reportType?: 'daily' | 'weekly' | 'monthly';
+  reportType?: "daily" | "weekly" | "monthly";
   metrics?: string[];
-  format?: 'json' | 'csv' | 'xlsx';
+  format?: "json" | "csv" | "xlsx";
 }
 
 export interface AnalyticsQueryDto {
@@ -163,13 +163,8 @@ export interface AnalyticsContextType {
   trackEvent: (event: TrackEventDto) => Promise<void>;
   trackPageView: (pageView: TrackPageViewDto) => Promise<void>;
   trackTransaction: (transaction: TrackTransactionDto) => Promise<void>;
-  fetchDashboardData: (
-    startDate?: string,
-    endDate?: string,
-  ) => Promise<AnalyticsReport>;
+  fetchDashboardData: (startDate?: string, endDate?: string) => Promise<AnalyticsReport>;
   fetchEvents: (query?: AnalyticsQueryDto) => Promise<AnalyticsEvent[]>;
   fetchActiveSessions: (userAddress?: string) => Promise<AnalyticsSession[]>;
-  generateReport: (
-    report: GenerateReportDto,
-  ) => Promise<AnalyticsReport | Blob>;
+  generateReport: (report: GenerateReportDto) => Promise<AnalyticsReport | Blob>;
 }
