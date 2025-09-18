@@ -7,7 +7,6 @@ import SpendingAverageChart from "./SpendingAverageChart";
 import GeneralStatistics from "./GeneralStatistics";
 import TransactionHistory from "./TransactionHistory";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
-import { NODE_ENDPOINT } from "@/services/utils/constant";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { UITransaction } from "@/services/store/transaction";
@@ -31,13 +30,16 @@ export const WalletAnalyticsContainer: React.FC = () => {
     if (!accountId || !client) return;
 
     (async () => {
+      const { NetworkId, AccountInterface, TransactionFilter, NoteFilter, NoteFilterTypes, WebClient } = await import(
+        "@demox-labs/miden-sdk"
+      );
       console.log("Fetching transactions for account:", accountId);
       setLoading(true);
       try {
-        const { TransactionFilter, NoteFilter, NoteFilterTypes, WebClient } = await import("@demox-labs/miden-sdk");
         if (client instanceof WebClient) {
+          console.log("ACCOUNT ID", accountId);
           const transactionRecords = (await client.getTransactions(TransactionFilter.all())).filter(
-            tx => tx.accountId().toBech32() === accountId,
+            tx => tx.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet) === accountId,
           );
           const inputNotes = await client.getInputNotes(new NoteFilter(NoteFilterTypes.All));
           const zippedInputeNotesAndTr = transactionRecords.map(tr => {

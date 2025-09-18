@@ -18,21 +18,27 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
 
 export async function mintToken(account: string, faucet: string, amount: bigint): Promise<any> {
   try {
-    const { NoteType, WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+    const { NoteType, WebClient, AccountId, Address, NetworkId } = await import("@demox-labs/miden-sdk");
 
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
-    const accountId = AccountId.fromBech32(account);
-    const faucetId = AccountId.fromBech32(faucet);
+    const accountId = Address.fromBech32(account);
+    const faucetId = Address.fromBech32(faucet);
 
     // import faucet
-    const faucetAccount = await importAndGetAccount(faucetId.toBech32());
+    const faucetAccount = await importAndGetAccount(faucetId.toBech32(NetworkId.Testnet));
 
-    const mintTxRequest = client.newMintTransactionRequest(accountId, faucetAccount.id(), NoteType.Public, amount);
-    const txResult = await client.newTransaction(faucetId, mintTxRequest);
+    const mintTxRequest = client.newMintTransactionRequest(
+      accountId.accountId(),
+      faucetId.accountId(),
+      NoteType.Public,
+      amount,
+    );
+    const txResult = await client.newTransaction(faucetId.accountId(), mintTxRequest);
     await client.submitTransaction(txResult);
     return txResult;
   } catch (err) {
+    console.log(err);
     throw new Error("Failed to mint token");
   }
 }

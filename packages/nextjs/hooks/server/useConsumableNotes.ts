@@ -28,6 +28,7 @@ export function useConsumableNotes() {
       // 2. p2ide note as receiver
 
       // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
+      const { NetworkId, AccountInterface } = await import("@demox-labs/miden-sdk");
 
       const latestBlockHeight = blockNum || 0;
 
@@ -72,15 +73,17 @@ export function useConsumableNotes() {
             .assets()
             .fungibleAssets()
             .map(async (asset: any) => {
-              const metadata = await getFaucetMetadata(asset.faucetId().toBech32());
+              const metadata = await getFaucetMetadata(
+                asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+              );
               return {
-                faucetId: asset.faucetId().toBech32(),
+                faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
                 amount: asset.amount().toString(),
                 metadata: metadata,
               } as AssetWithMetadata;
             });
           const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-          const sender = noteMetadata?.sender().toBech32();
+          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
 
           return {
             id: id,

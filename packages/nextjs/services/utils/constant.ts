@@ -9,9 +9,12 @@ export const LAST_CONNECTED_KEY = "miden-last-connected-address";
 export const MIDEN_WALLET_AUTH_KEY = "miden_wallet_auth";
 export const MIDEN_WALLET_KEYS_KEY = "miden_wallet_keys";
 export const QR_STORAGE_KEY = "custom_qr_codes";
+export const MIGRATION_VERSION_KEY = "migration_version";
+export const CURRENT_MIGRATION_VERSION = "0.11.0";
+export const MIDEN_DB_NAME = "MidenClientDB";
 
 // **************** QASH TOKEN *******************
-export const QASH_TOKEN_ADDRESS = "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w";
+export const QASH_TOKEN_ADDRESS = "mtst1qpnnvfxn8m4vygp9kmp9dn6z5pcqq4f80ry";
 export const QASH_TOKEN_SYMBOL = "QASH";
 export const QASH_TOKEN_DECIMALS = 8;
 export const QASH_TOKEN_MAX_SUPPLY = 1000000000000000000;
