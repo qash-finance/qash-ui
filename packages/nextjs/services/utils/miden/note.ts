@@ -523,7 +523,6 @@ export async function customCreateP2IDENote(
   serialNumber: any[],
 ) {
   const {
-    AccountId,
     NoteScript,
     NoteType,
     NoteInputs,

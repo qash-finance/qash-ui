@@ -2,11 +2,9 @@
 
 import React, { useState } from "react";
 import { SchedulePaymentItem, SchedulePaymentItemProps } from "./SchedulePaymentItem";
-import StatusCircle from "./StatusCircle";
 import { useGetSchedulePayments } from "@/services/api/schedule-payment";
 import { SchedulePaymentStatus, SchedulePayment } from "@/types/schedule-payment";
 import { useAccountContext } from "@/contexts/AccountProvider";
-import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
