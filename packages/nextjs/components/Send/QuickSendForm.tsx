@@ -30,92 +30,7 @@ import { useBatchTransactions } from "@/services/store/batchTransactions";
 import { formatUnits } from "viem";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useAddMemberToQuickShare, useGetPaymentByLink } from "@/services/api/group-payment";
-
-/**
- * 
- * 
- * 
- * {
-    "id": 1,
-    "createdAt": "2025-08-06T16:25:59.614Z",
-    "updatedAt": "2025-08-06T16:25:59.614Z",
-    "ownerAddress": "mtst1qqx8hfth5f9axyznr2g8df248gs2m96a",
-    "tokens": [
-        {
-            "amount": "0",
-            "faucetId": "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w",
-            "metadata": {
-                "symbol": "QASH",
-                "decimals": 8,
-                "maxSupply": 1000000000000000000
-            }
-        }
-    ],
-    "amount": "1",
-    "perMember": "0.200000",
-    "linkCode": "TzTtrm8Pn8sYPbCt",
-    "status": "pending",
-    "group": {
-        "id": 2,
-        "createdAt": "2025-08-06T15:22:41.390Z",
-        "updatedAt": "2025-08-06T15:22:41.390Z",
-        "name": "Quick Share",
-        "ownerAddress": "mtst1qqx8hfth5f9axyznr2g8df248gs2m96a",
-        "members": [
-            "-",
-            "-",
-            "-",
-            "-",
-            "-"
-        ]
-    },
-    "memberStatuses": [
-        {
-            "id": 1,
-            "createdAt": "2025-08-06T16:25:59.621Z",
-            "updatedAt": "2025-08-06T16:25:59.621Z",
-            "memberAddress": "-",
-            "status": "pending",
-            "paidAt": null
-        },
-        {
-            "id": 2,
-            "createdAt": "2025-08-06T16:25:59.621Z",
-            "updatedAt": "2025-08-06T16:25:59.621Z",
-            "memberAddress": "-",
-            "status": "pending",
-            "paidAt": null
-        },
-        {
-            "id": 3,
-            "createdAt": "2025-08-06T16:25:59.621Z",
-            "updatedAt": "2025-08-06T16:25:59.621Z",
-            "memberAddress": "-",
-            "status": "pending",
-            "paidAt": null
-        },
-        {
-            "id": 4,
-            "createdAt": "2025-08-06T16:25:59.621Z",
-            "updatedAt": "2025-08-06T16:25:59.621Z",
-            "memberAddress": "-",
-            "status": "pending",
-            "paidAt": null
-        },
-        {
-            "id": 5,
-            "createdAt": "2025-08-06T16:25:59.621Z",
-            "updatedAt": "2025-08-06T16:25:59.621Z",
-            "memberAddress": "-",
-            "status": "pending",
-            "paidAt": null
-        }
-    ],
-    "totalMembers": 5,
-    "paidMembers": 0
-}
- * 
- */
+import { MemberStatusEnum } from "@/types/group-payment";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -219,9 +134,9 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
       }
 
       // Set recipient to owner address
-      if (paymentByLink.group?.ownerAddress) {
-        setValue("recipientAddress", paymentByLink.group.ownerAddress);
-        setRecipientName(paymentByLink.group?.name || "Group Payment");
+      if (paymentByLink.groupPaymentGroup?.ownerAddress) {
+        setValue("recipientAddress", paymentByLink.groupPaymentGroup.ownerAddress);
+        setRecipientName(paymentByLink.groupPaymentGroup?.name || "Group Payment");
       }
 
       // Set token from the first token in the tokens array
@@ -235,9 +150,9 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
       }
 
       // Set message for group payment
-      setValue("message", `Payment for ${paymentByLink.group?.name || "Group Payment"}`);
+      setValue("message", `Payment for ${paymentByLink.groupPaymentGroup?.name || "Group Payment"}`);
     }
-  }, [paymentByLink, assets, setValue]);
+  }, [paymentByLink, assets]);
 
   // ********************************************
   // **************** Handlers ******************
@@ -274,7 +189,7 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
       // Check if payment is already complete (for quick share payments)
       if (paymentByLink?.memberStatuses) {
         const allMembersPaid = paymentByLink.memberStatuses.every(
-          memberStatus => memberStatus.status === "paid" || memberStatus.paidAt !== null,
+          memberStatus => memberStatus.status === MemberStatusEnum.PAID || memberStatus.paidAt !== null,
         );
 
         if (allMembersPaid) {
@@ -421,7 +336,7 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
       // Check if payment is already complete (for quick share payments)
       if (paymentByLink?.memberStatuses) {
         const allMembersPaid = paymentByLink.memberStatuses.every(
-          memberStatus => memberStatus.status === "paid" || memberStatus.paidAt !== null,
+          memberStatus => memberStatus.status === MemberStatusEnum.PAID || memberStatus.paidAt !== null,
         );
 
         if (allMembersPaid) {
@@ -567,7 +482,7 @@ export const QuickSendForm: React.FC<QuickSendFormProps> = ({ activeTab = Amount
                 type="text"
                 placeholder="Enter address or choose from your contacts book"
                 className=" flex-1 leading-none text-white bg-transparent outline-none placeholder:text-neutral-600 w-full"
-                disabled={!!paymentByLink?.group?.ownerAddress} // Disable if payment link specifies recipient
+                disabled={!!paymentByLink?.groupPaymentGroup?.ownerAddress} // Disable if payment link specifies recipient
               />
             </div>
           </div>

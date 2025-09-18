@@ -13,6 +13,8 @@ export function TokenList() {
   const { isConnected } = useWalletConnect();
   const { assets } = useAccount();
 
+  console.log("ASSETS", assets);
+
   // **************** Local State *******************
   const [activeTab, setActiveTab] = useState<"tokens" | "nfts">("tokens");
 

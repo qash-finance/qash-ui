@@ -16,6 +16,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import useOpenGift from "@/hooks/server/useOpenGift";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
+import { NoteStatus } from "@/types/note";
 
 const OpenGiftContainer = () => {
   // **************** Pathname Hooks *******************
@@ -40,12 +41,12 @@ const OpenGiftContainer = () => {
     if (!giftDetail) return;
 
     // Check gift status before proceeding
-    if (giftDetail.status === "consumed") {
+    if (giftDetail.status === NoteStatus.CONSUMED) {
       toast.error("This gift has already been opened");
       return;
     }
 
-    if (giftDetail.status === "recalled") {
+    if (giftDetail.status === NoteStatus.RECALLED) {
       toast.error("This gift has been recalled by the sender");
       return;
     }
@@ -55,7 +56,7 @@ const OpenGiftContainer = () => {
 
     try {
       // decode secret number back to array of 4 numbers
-      const secret = stringToSecretArray(giftDetail?.secretNumber!);
+      const secret = stringToSecretArray(giftDetail?.secretHash!);
       // consume the gift
       const [note, _] = await createGiftNote(
         giftDetail?.sender!,
@@ -121,11 +122,11 @@ const OpenGiftContainer = () => {
     <div
       className="flex w-full h-full justify-center items-center flex-col max-h-screen overflow-y-hidden relative transition-colors duration-700 ease-in-out"
       style={{
-        backgroundColor: giftDetail?.status === "consumed" || showGif ? "#000000" : "transparent",
-        borderRadius: giftDetail?.status === "consumed" ? "10px" : "",
+        backgroundColor: giftDetail?.status === NoteStatus.CONSUMED || showGif ? "#000000" : "transparent",
+        borderRadius: giftDetail?.status === NoteStatus.CONSUMED ? "10px" : "",
       }}
     >
-      {giftDetail?.status === "pending" ? (
+      {giftDetail?.status === NoteStatus.PENDING ? (
         <div className="fixed">
           <div className="flex w-full ">
             <div
@@ -253,7 +254,7 @@ const OpenGiftContainer = () => {
             </div>
           </div>
         </div>
-      ) : giftDetail?.status === "consumed" ? (
+      ) : giftDetail?.status === NoteStatus.CONSUMED ? (
         <div className="flex flex-col items-center justify-center gap-8">
           <img src="/gift/open-gift/consumed-gift-text.svg" alt="" className="scale-110" aria-hidden="true" />
           <ActionButton

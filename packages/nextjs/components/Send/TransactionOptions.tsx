@@ -40,7 +40,7 @@ export const TransactionOptions: React.FC<TransactionOptionsProps> = ({ register
         <ToggleSwitch enabled={sendAsGift} onChange={onSendAsGiftChange} />
       </section> */}
 
-      <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 w-full rounded-lg bg-zinc-800 max-md:max-w-full">
+      <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 w-full rounded-lg bg-[#292929] max-md:max-w-full">
         <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-60">
           <h3 className="self-start text-base leading-none text-center text-white">Private transaction</h3>
           <p className="mt-2 text-base tracking-tight leading-none text-neutral-600">
@@ -54,7 +54,7 @@ export const TransactionOptions: React.FC<TransactionOptionsProps> = ({ register
         />
       </section>
 
-      <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 w-full rounded-lg bg-zinc-800 max-md:max-w-full">
+      <section className="flex flex-wrap gap-2.5 items-center py-2.5 pr-4 pl-3 w-full rounded-lg bg-[#292929] max-md:max-w-full">
         <div className="flex flex-col flex-1 shrink justify-center basis-5 min-w-60">
           <h3 className="self-start text-base leading-none text-center text-white">Cancellable in</h3>
           <p className="mt-2 text-base tracking-tight leading-none text-neutral-600">

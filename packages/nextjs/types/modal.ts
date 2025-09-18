@@ -24,9 +24,24 @@ import FailModal from "@/components/Modal/Status/FailModal";
 import DeleteGroupModal from "@/components/Modal/Group/DeleteGroupModal";
 import EditGroupModal from "@/components/Modal/Group/EditGroupModal";
 import ResetAccountModal from "@/components/Modal/ResetAccountModal";
+import DatePickerModal from "@/components/Modal/Date/DatePickerModal";
+import SetupSchedulePaymentModal from "@/components/Modal/SchedulePayment/SetupSchedulePaymentModal";
+import RecurringTransferModal from "@/components/Modal/SchedulePayment/RecurringTransferModal";
+import RecurringTransferDetail from "@/components/Modal/SchedulePayment/RecurringTransferDetail";
+import CancelPayment from "@/components/Modal/SchedulePayment/CancelPayment";
+import CancelSchedule from "@/components/Modal/SchedulePayment/CancelSchedule";
+import SchedulePaymentSidebar from "@/components/SchedulePayment/SchedulePaymentSidebar";
+import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
+import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
+import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
+import InteractAccountTransactionModal from "@/components/Modal/InteractAccountTransactionModal";
+import MigratingModal from "@/components/Modal/MigratingModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
+import { DateRange } from "react-day-picker";
+import { SchedulePaymentFrequency } from "./schedule-payment";
+import { TransactionStatus } from "./transaction";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -55,6 +70,18 @@ export const MODAL_IDS = {
   DELETE_GROUP: "DELETE_GROUP",
   EDIT_GROUP: "EDIT_GROUP",
   RESET_ACCOUNT: "RESET_ACCOUNT",
+  DATE_PICKER: "DATE_PICKER",
+  SETUP_SCHEDULE_PAYMENT: "SETUP_SCHEDULE_PAYMENT",
+  RECURRING_TRANSFER: "RECURRING_TRANSFER",
+  RECURRING_TRANSFER_DETAIL: "RECURRING_TRANSFER_DETAIL",
+  CANCEL_PAYMENT: "CANCEL_PAYMENT",
+  CANCEL_SCHEDULE: "CANCEL_SCHEDULE",
+  REMOVE_SCHEDULE_PAYMENT: "REMOVE_SCHEDULE_PAYMENT",
+  SCHEDULE_PAYMENT_SIDEBAR: "SCHEDULE_PAYMENT_SIDEBAR",
+  DATE_FILTER: "DATE_FILTER",
+  TRANSACTION_FILTER: "TRANSACTION_FILTER",
+  INTERACT_ACCOUNT_TRANSACTION: "INTERACT_ACCOUNT_TRANSACTION",
+  MIGRATING: "MIGRATING",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -127,6 +154,11 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
   onConfirm?: () => void;
   tokenAddress?: string;
   tokenSymbol?: string;
+  schedulePayment?: {
+    frequency: SchedulePaymentFrequency;
+    times: number;
+    startDate: Date;
+  } | null;
 }
 
 export interface BatchTransactionOverviewModalProps extends BaseModalProps {
@@ -143,6 +175,24 @@ export interface NotificationModalProps extends BaseModalProps {}
 
 export interface GroupLinkModalProps extends BaseModalProps {
   link: string;
+}
+export interface DatePickerModalProps extends BaseModalProps {
+  defaultSelected?: Date;
+  onSelect?: (date: Date | undefined) => void;
+}
+
+export interface DateFilterModalProps extends BaseModalProps {
+  defaultSelected?: DateRange;
+  onSelect?: (date: DateRange | undefined) => void;
+}
+
+export interface SetupSchedulePaymentModalProps extends BaseModalProps {
+  schedulePayment: {
+    frequency: SchedulePaymentFrequency;
+    times: number;
+    startDate?: Date;
+  } | null;
+  onSave: (data: { frequency: SchedulePaymentFrequency; times: number }) => void;
 }
 
 export interface GiftTransactionOverviewModalProps extends BaseModalProps {
@@ -184,6 +234,73 @@ export interface ResetAccountModalProps extends BaseModalProps {}
 
 // Removed duplicate empty interface declaration for EditGroupModalProps
 
+export interface RecurringTransferModalProps extends BaseModalProps {}
+export type RecurringTransferItem = {
+  recipientName: string;
+  amount: string; // display amount
+  token: AssetWithMetadata;
+  frequencyLabel: string;
+  startDateLabel: string; // e.g., "From 01/08/2025"
+  timesLabel: string; // e.g., "3 times"
+};
+
+export type RecurringTransferTransaction = {
+  amountLabel: string; // e.g., "1000 BTC"
+  claimableAfterLabel: string; // e.g., "Claimable after 01/08/2025"
+};
+
+export interface RecurringTransferDetailProps extends BaseModalProps {
+  item: RecurringTransferItem;
+  transactions: RecurringTransferTransaction[];
+}
+
+export interface CancelPaymentProps extends BaseModalProps {
+  onCancel?: () => Promise<void>;
+}
+
+export interface CancelScheduleProps extends BaseModalProps {
+  onCancel?: () => Promise<void>;
+}
+
+export interface RemoveSchedulePaymentProps extends BaseModalProps {
+  onConfirm?: () => Promise<void>;
+}
+
+export interface SchedulePaymentSidebarProps extends BaseModalProps {
+  schedulePaymentData: {
+    recipient: {
+      address: string;
+      avatar?: string;
+      name?: string;
+    };
+    totalAmount: string;
+    claimedAmount: string;
+    currency: string;
+    progress: number;
+    claimProgress: number;
+    transactions: Array<{
+      id: string;
+      noteId: string;
+      date: string;
+      status: TransactionStatus | "ready_to_claim";
+      label: string;
+      progress?: number;
+      amount?: string;
+      recallableTime: string;
+    }>;
+  };
+}
+
+export interface TransactionFilterModalProps extends BaseModalProps {
+  hash: string;
+}
+
+export interface InteractAccountTransactionModalProps extends BaseModalProps {
+  address: string;
+}
+
+export interface MigratingModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -211,7 +328,18 @@ export type ModalPropsMap = {
   [MODAL_IDS.DELETE_GROUP]: DeleteGroupModalProps;
   [MODAL_IDS.EDIT_GROUP]: EditGroupModalProps;
   [MODAL_IDS.RESET_ACCOUNT]: ResetAccountModalProps;
-  // Extend when wiring into registry
+  [MODAL_IDS.DATE_PICKER]: DatePickerModalProps;
+  [MODAL_IDS.SETUP_SCHEDULE_PAYMENT]: SetupSchedulePaymentModalProps;
+  [MODAL_IDS.RECURRING_TRANSFER]: RecurringTransferModalProps;
+  [MODAL_IDS.RECURRING_TRANSFER_DETAIL]: RecurringTransferDetailProps;
+  [MODAL_IDS.CANCEL_PAYMENT]: CancelPaymentProps;
+  [MODAL_IDS.CANCEL_SCHEDULE]: CancelScheduleProps;
+  [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebarProps;
+  [MODAL_IDS.DATE_FILTER]: DateFilterModalProps;
+  [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModalProps;
+  [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePaymentProps;
+  [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModalProps;
+  [MODAL_IDS.MIGRATING]: MigratingModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -243,4 +371,16 @@ export const modalRegistry = {
   [MODAL_IDS.DELETE_GROUP]: DeleteGroupModal,
   [MODAL_IDS.EDIT_GROUP]: EditGroupModal,
   [MODAL_IDS.RESET_ACCOUNT]: ResetAccountModal,
+  [MODAL_IDS.DATE_PICKER]: DatePickerModal,
+  [MODAL_IDS.SETUP_SCHEDULE_PAYMENT]: SetupSchedulePaymentModal,
+  [MODAL_IDS.RECURRING_TRANSFER]: RecurringTransferModal,
+  [MODAL_IDS.RECURRING_TRANSFER_DETAIL]: RecurringTransferDetail,
+  [MODAL_IDS.CANCEL_PAYMENT]: CancelPayment,
+  [MODAL_IDS.CANCEL_SCHEDULE]: CancelSchedule,
+  [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebar,
+  [MODAL_IDS.DATE_FILTER]: DateFilterModal,
+  [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModal,
+  [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePayment,
+  [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModal,
+  [MODAL_IDS.MIGRATING]: MigratingModal,
 } as const;

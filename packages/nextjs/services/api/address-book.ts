@@ -11,7 +11,35 @@ const useGetAddressBooks = () => {
   return useQuery({
     queryKey: ["address-book"],
     queryFn: async () => {
-      return apiServerWithAuth.getData<Category[]>(`/address-book`);
+      // API returns AddressBook items with `categories` field; normalize to Category[]
+      type AddressBookApi = AddressBook & {
+        categories?: { id?: number; name?: string } | null;
+        categoryId?: number | null;
+      };
+
+      const list = await apiServerWithAuth.getData<AddressBookApi[]>(`/address-book`);
+
+      const categoryNameToBooks: Record<string, AddressBook[]> = {};
+      for (const item of list) {
+        const categoryName: string = item?.categories?.name || "Uncategorized";
+        if (!categoryNameToBooks[categoryName]) categoryNameToBooks[categoryName] = [];
+
+        categoryNameToBooks[categoryName].push({
+          id: item.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          userAddress: item.userAddress,
+          name: item.name,
+          address: item.address,
+          token: item.token ?? undefined,
+        });
+      }
+
+      const categories: Category[] = Object.keys(categoryNameToBooks)
+        .sort()
+        .map((name, idx) => ({ id: idx + 1, name, addressBooks: categoryNameToBooks[name] }));
+
+      return categories;
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,

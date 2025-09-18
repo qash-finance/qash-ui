@@ -1,15 +1,17 @@
 import React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import TabContainer from "./TabContainer";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { useGetNotificationsInfinite } from "@/services/api/notification";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { ActionButton } from "./ActionButton";
 
 export const Title = () => {
   const { openModal } = useModal();
   const pathname = usePathname();
   const { walletAddress, isConnected } = useWalletConnect();
+  const router = useRouter();
 
   // Calculate unread count
   const { data } = useGetNotificationsInfinite(walletAddress, 20);
@@ -52,6 +54,19 @@ export const Title = () => {
     case "/address-book":
       title = "Address Book";
       break;
+    case "/dashboard/schedule-payment":
+      title = "Schedule Payment";
+      break;
+    case "/dashboard/wallet-analytics":
+      title = "Overview";
+      break;
+    case "/dashboard/wallet-analytics/transaction-history":
+      title = "Transaction History";
+      break;
+    case "/dashboard/stream-receive":
+      title = "Stream Receive";
+      break;
+
     default:
       title = "Qash";
   }
@@ -73,7 +88,10 @@ export const Title = () => {
         <div className="font-medium font-['Barlow'] uppercase leading-none text-white text-xl font-bolds flex-1">
           <span className="text-left">{title}</span>
         </div>
-        {pathname.startsWith("/dashboard") && <TabContainer tabs={dashboardTabs} className="w-[600px]" />}
+        {/* {pathname.startsWith("/dashboard") && <TabContainer tabs={dashboardTabs} className="w-[600px]" />} */}
+        {pathname.startsWith("/dashboard/schedule-payment") && (
+          <ActionButton text="Create recurring payment" icon="/plus-icon.svg" onClick={() => router.push("/send")} />
+        )}
       </div>
 
       <button

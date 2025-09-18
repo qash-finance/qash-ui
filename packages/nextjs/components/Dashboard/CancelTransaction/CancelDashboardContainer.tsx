@@ -20,10 +20,10 @@ import {
 } from "@/services/utils/miden/note";
 import toast from "react-hot-toast";
 import { Empty } from "@/components/Common/Empty";
-import useRecall from "@/hooks/server/useRecall";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
+import { useRecallBatch } from "@/services/api/transaction";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -167,7 +167,7 @@ export const CancelDashboardContainer: React.FC = () => {
 
   console.log("recallableNotes", recallableNotes);
 
-  const { mutateAsync: recallBatch } = useRecall();
+  const { mutateAsync: recallBatch } = useRecallBatch();
   const { accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { isConnected } = useWalletConnect();
 
@@ -305,7 +305,7 @@ export const CancelDashboardContainer: React.FC = () => {
         let secrets = [];
         for (const giftNote of giftNotes) {
           if (giftNote) {
-            const secret = stringToSecretArray(giftNote.secretNumber!);
+            const secret = stringToSecretArray(giftNote.secretHash!);
             secrets.push(secret);
             const [note, _] = await createGiftNote(
               giftNote?.sender!,
@@ -391,7 +391,7 @@ export const CancelDashboardContainer: React.FC = () => {
             let txId = "";
 
             if (recallingNote.isGift) {
-              const secret = stringToSecretArray(recallingNote.secretNumber!);
+              const secret = stringToSecretArray(recallingNote.secretHash!);
 
               // we need to build the note and consume with unanthenticated note
               // build gift note

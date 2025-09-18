@@ -6,10 +6,12 @@ import { getConsumableNotes } from "@/services/utils/miden/note";
 import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { ConsumableNote } from "@/types/transaction";
+import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 
 export function useConsumableNotes() {
   const { walletAddress } = useWalletAuth();
   const queryClient = useQueryClient();
+  const blockNum = useMidenSdkStore(state => state.blockNum);
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["consumable-notes", walletAddress],
@@ -26,13 +28,17 @@ export function useConsumableNotes() {
       // 2. p2ide note as receiver
 
       // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
+      const { NetworkId, AccountInterface } = await import("@demox-labs/miden-sdk");
+
+      const latestBlockHeight = blockNum || 0;
 
       let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
         consumableTxs: [],
         recallableTxs: [],
       };
+
       try {
-        consumableNotesFromServer = await getConsumableNotesFromServer();
+        consumableNotesFromServer = await getConsumableNotesFromServer(latestBlockHeight);
       } catch (error) {
         console.log("ERROR GETTING PRIVATE NOTES", error);
       }
@@ -45,6 +51,7 @@ export function useConsumableNotes() {
         recallableHeight: note.recallableHeight,
         recallableTime: note.recallableTime,
         serialNumber: note.serialNumber,
+        requestPaymentId: note.requestPaymentId,
         assets: note.assets.map(asset => ({
           amount: (Number(asset.amount) * 10 ** asset.metadata.decimals).toString(),
           faucetId: asset.faucetId,
@@ -66,15 +73,17 @@ export function useConsumableNotes() {
             .assets()
             .fungibleAssets()
             .map(async (asset: any) => {
-              const metadata = await getFaucetMetadata(asset.faucetId().toBech32());
+              const metadata = await getFaucetMetadata(
+                asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+              );
               return {
-                faucetId: asset.faucetId().toBech32(),
+                faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
                 amount: asset.amount().toString(),
                 metadata: metadata,
               } as AssetWithMetadata;
             });
           const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-          const sender = noteMetadata?.sender().toBech32();
+          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
 
           return {
             id: id,
@@ -85,6 +94,7 @@ export function useConsumableNotes() {
             recallableHeight: -1,
             recallableTime: "",
             serialNumber: [],
+            requestPaymentId: note.requestPaymentId,
           };
         }),
       );
@@ -101,7 +111,7 @@ export function useConsumableNotes() {
       );
       return filteredNotes;
     },
-    enabled: !!walletAddress,
+    enabled: !!walletAddress && !!blockNum,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
     refetchInterval: 25000, // Refetch every 25 seconds

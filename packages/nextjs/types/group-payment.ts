@@ -1,5 +1,11 @@
 import { AssetWithMetadata } from "./faucet";
 
+export enum MemberStatusEnum {
+  PENDING = "PENDING",
+  PAID = "PAID",
+  DENIED = "DENIED",
+}
+
 export interface CreateGroupDto {
   name: string;
   members: {
@@ -38,7 +44,8 @@ export interface Group {
 export interface MemberStatus {
   id: number;
   memberAddress: string;
-  status: "pending" | "paid" | "denied";
+  memberName: string;
+  status: MemberStatusEnum;
   paidAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -66,7 +73,7 @@ export interface GroupPaymentsResponse {
 export interface PaymentByLinkResponse {
   id: number;
   groupId: number;
-  group: Group;
+  groupPaymentGroup: Group;
   tokens: AssetWithMetadata[];
   amount: string;
   perMember: number;

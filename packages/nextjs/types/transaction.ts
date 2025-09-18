@@ -1,15 +1,16 @@
 import { AssetWithMetadata, FaucetMetadata } from "./faucet";
 import { CustomNoteType, NoteStatus } from "./note";
 
-export enum NoteType {
-  P2ID = "p2id",
-  P2IDR = "p2idr",
-  GIFT = "gift",
+export enum RecallableNoteType {
+  TRANSACTION = "TRANSACTION",
+  GIFT = "GIFT",
+  SCHEDULE_PAYMENT = "SCHEDULE_PAYMENT",
 }
 
-export enum RecallableNoteType {
-  TRANSACTION = "transaction",
-  GIFT = "gift",
+export enum TransactionStatus {
+  PENDING = "PENDING",
+  RECALLED = "RECALLED",
+  CONSUMED = "CONSUMED",
 }
 
 export interface AssetDto {
@@ -47,6 +48,8 @@ export interface ConsumableNote {
   createdAt: string;
   updatedAt: string;
   assets: AssetWithMetadata[];
+  requestPaymentId?: number;
+  timelockHeight?: number;
 }
 
 export interface RecallRequestDto {
@@ -82,7 +85,7 @@ export interface RecallableNote {
   sender: string;
   serialNumber: string[];
   status: NoteStatus;
-  secretNumber?: string;
+  secretHash?: string;
 }
 
 export interface ConsumePublicTransactionDto {

@@ -1,9 +1,10 @@
+import { DeviceType } from "@/types/authentication";
 import { AuthStorage } from "./storage";
 
 export interface InitiateAuthRequest {
   walletAddress: string;
   deviceFingerprint?: string;
-  deviceType?: "desktop" | "mobile" | "tablet" | "unknown";
+  deviceType?: DeviceType;
   metadata?: Record<string, any>;
 }
 
@@ -19,7 +20,7 @@ export interface RegisterKeyRequest {
   challengeCode: string;
   challengeResponse: string;
   deviceFingerprint?: string;
-  deviceType?: "desktop" | "mobile" | "tablet" | "unknown";
+  deviceType?: DeviceType;
   expirationHours?: number;
 }
 
