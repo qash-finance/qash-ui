@@ -1,5 +1,5 @@
 {
-  "name": "q3x-docs",
+  "name": "@q3x/docs",
   "version": "0.1.17",
   "private": true,
   "scripts": {

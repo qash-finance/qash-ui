@@ -10,6 +10,7 @@
   "scripts": {
     "postinstall": "husky install",
     "next:build": "yarn workspace @q3x/nextjs build",
+    "docs:build": "yarn workspace @q3x/docs build",
     "next:check-types": "yarn workspace @q3x/nextjs check-types",
     "next:format": "yarn workspace @q3x/nextjs format",
     "next:lint": "yarn workspace @q3x/nextjs lint",

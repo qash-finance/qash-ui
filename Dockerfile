@@ -27,7 +27,9 @@ COPY package.json yarn.lock ./
 COPY packages/docs/package.json ./packages/docs/package.json
 COPY packages/docs/.env.example ./packages/docs/.env.example
 RUN yarn install 
-# Now extract docs node_modules
+# Copy docs source and build within workspace (Yarn 3)
+COPY packages/docs/ ./packages/docs
+RUN yarn workspace @q3x/docs build
 WORKDIR /app/packages/docs
 
 FROM base AS builder
@@ -37,12 +39,6 @@ WORKDIR /app/packages/nextjs
 COPY packages/nextjs .
 RUN yarn workspace @q3x/nextjs build
 
-FROM base AS docs-builder
-WORKDIR /app/docs
-COPY --from=docs-deps /app/packages/docs/node_modules ./node_modules
-COPY packages/docs/ ./
-RUN yarn build || (echo "Proceeding with partial build" && mkdir -p build)
-
 FROM base AS runner
 WORKDIR /app
 COPY --from=builder /app/packages/nextjs/public ./packages/nextjs/public
@@ -50,8 +46,7 @@ COPY --from=builder /app/packages/nextjs/.next/standalone/packages/nextjs ./pack
 COPY --from=builder /app/packages/nextjs/.next/static ./packages/nextjs/.next/static
 
 # Copy docs app
-COPY --from=docs-builder /app/docs/build ./docs/build
-COPY --from=docs-builder /app/docs/node_modules ./docs/node_modules
+COPY --from=docs-deps /app/packages/docs/build ./docs/build
 
 # Create a simple start script
 RUN printf '#!/bin/sh\n\
@@ -60,7 +55,7 @@ cd /app/packages/nextjs && node server.js\n' > /app/start.sh
 RUN chmod +x /app/start.sh
 
 ARG PORT=3000
-ENV NODE_ENV production
+ENV NODE_ENV=production
 ENV PORT=$PORT
 ENV GENERATE_SOURCEMAP=false
 EXPOSE $PORT

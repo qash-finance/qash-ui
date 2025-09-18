@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  async rewrites() {
+    return [
+      {
+        source: "/docs/:path*",
+        destination: "http://localhost:3001/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {
