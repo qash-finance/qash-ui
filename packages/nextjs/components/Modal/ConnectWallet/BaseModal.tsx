@@ -27,7 +27,10 @@ const BaseModal: React.FC<BaseModalProps> = ({
   showCreateButton = false,
 }) => {
   return (
-    <div style={{ zIndex }} className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div
+      style={{ zIndex }}
+      className="fixed inset-0 flex items-center justify-center bg-app-background/10 backdrop-blur-sm"
+    >
       <div className="flex flex-col gap-0">
         <ModalHeader
           title={title}

@@ -55,24 +55,12 @@ const queryClient = new QueryClient({
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const pathname = usePathname();
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
 
-  // Load sidebar state from localStorage on mount
-  useEffect(() => {
-    const savedState = localStorage.getItem("sidebarMinimized");
-    if (savedState !== null) {
-      setIsSidebarMinimized(JSON.parse(savedState));
-    }
-  }, []);
-
-  // Save sidebar state to localStorage when it changes
-  const handleSidebarToggle = (minimized: boolean) => {
-    setIsSidebarMinimized(minimized);
-    localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
-  };
+  // Check if current page is not-found
+  const isNotFoundPage = pathname === "/not-found" || pathname === "/404";
 
   const wallets = useMemo(
     () => [
@@ -111,43 +99,42 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 position="top-right"
                 toastOptions={{
                   style: {
-                    padding: "0px",
-                    background: "#2B2B2B",
+                    padding: "6px",
+                    background: "var(--toast-background) !important",
+                    border: "4px solid var(--toast-border) !important",
+                    width: "full",
+                    maxWidth: "900px",
+                    borderRadius: "9999px",
                   },
                   success: {
-                    icon: <img src="/toast/success.svg" alt="success" className="pl-1" />,
-                    style: {
-                      color: "#7CFF96",
-                    },
+                    icon: <img src="/toast/success.svg" alt="success" />,
                   },
                   error: {
-                    style: {
-                      color: "#FF7C7C",
-                    },
+                    icon: <img src="/toast/error.svg" alt="error" />,
                   },
                   loading: {
-                    style: {
-                      color: "#FFFFFF",
-                    },
+                    icon: <img src="/toast/loading.gif" alt="loading" className="w-10.5" />,
                   },
                 }}
                 children={t => (
                   <ToastBar
                     toast={t}
                     style={{
-                      width: "full",
-                      maxWidth: "900px",
                       ...t.style,
                     }}
                   >
                     {({ icon, message }) => (
-                      <div className="flex gap-0.5 items-center rounded-[13px]">
-                        {icon}
-                        <span className="text-sm">{message}</span>
-                        <span className="h-10 w-px bg-white/20 self-stretch" aria-hidden="true" />
-                        <span className="text-[#929292] text-xs p-2 cursor-pointer" onClick={() => toast.dismiss(t.id)}>
-                          Close
-                        </span>
+                      <div className="flex items-center justify-between gap-8 pr-3">
+                        <div className="flex items-center">
+                          {icon}
+                          <span className="text-toast-text leading-none">{message}</span>
+                        </div>
+                        <img
+                          src="/toast/close-icon.svg"
+                          alt="close"
+                          className="w-5 cursor-pointer"
+                          onClick={() => toast.dismiss(t.id)}
+                        />
                       </div>
                     )}
                   </ToastBar>
@@ -166,46 +153,42 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                           {/* <ConnectWalletButton /> */}
                           <ModalManager />
                           <ModalTrigger ref={modalRef} />
-                          <div className="flex flex-row">
-                            <div
-                              className={`top-0 ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
-                              style={{
-                                transition: "width 250ms ease",
-                                willChange: "width",
-                              }}
-                            >
-                              <Sidebar minimized={isSidebarMinimized} onToggleMinimize={handleSidebarToggle} />
-                            </div>
-                            {pathname.includes("dashboard") && <DashboardMenu />}
-                            <div className="flex-1 h-screen flex flex-col overflow-hidden">
-                              <Title />
-                              <div
-                                style={{
-                                  backgroundImage: 'url("/background.svg")',
-                                  backgroundSize: "contain",
-                                  backgroundClip: "content-box",
-                                  backgroundColor: "#101111",
-                                }}
-                                className="mx-[24px] mb-[24px] rounded-lg flex justify-center items-center flex-1 overflow-auto relative"
-                              >
-                                {children}
-                                {!isConnected && (
-                                  <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
-                                    <img src="/modal/wallet-icon.gif" alt="connect-wallet-icon" className="w-16 h-16" />
-                                    <span className="text-white text-lg font-medium">
-                                      Please connect your wallet to display information.
-                                    </span>
-                                    <ActionButton
-                                      text="Connect Wallet"
-                                      onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
-                                    />
-                                  </div>
-                                )}
+                          {isNotFoundPage ? (
+                            // Full-page layout for not-found page
+                            <div className="h-screen w-screen">{children}</div>
+                          ) : (
+                            // Regular layout for other pages
+                            <div className="flex flex-row gap-2">
+                              <div className="top-0 w-[240px]">
+                                <Sidebar />
+                              </div>
+                              {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
+                              <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
+                                <Title />
+                                <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
+                                  {children}
+                                  {!isConnected && (
+                                    <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
+                                      <img
+                                        src="/modal/wallet-icon.gif"
+                                        alt="connect-wallet-icon"
+                                        className="w-16 h-16"
+                                      />
+                                      <span className="text-white text-lg font-medium">
+                                        Please connect your wallet to display information.
+                                      </span>
+                                      <ActionButton
+                                        text="Connect Wallet"
+                                        onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <FloatingActionButton imgSrc="/token/qash.svg" />
-                          <Background />
+                          )}
+                          {!isNotFoundPage && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                          {!isNotFoundPage && <Background />}
                         </AccountProvider>
                       </AuthProvider>
                     </AnalyticsProvider>

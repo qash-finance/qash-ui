@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+
+import { HomeContainer } from "@/components/Home/HomeContainer";
 
 export default function Home() {
-  redirect("/dashboard/wallet-analytics");
+  return <HomeContainer />;
 }

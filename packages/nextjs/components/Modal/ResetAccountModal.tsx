@@ -30,19 +30,15 @@ export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAc
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Reset Account" zIndex={zIndex} icon="/sidebar/address-book.gif">
-      <div className="flex flex-col items-start gap-2.5 p-2 pt-1 bg-[#1E1E1E] rounded-b-xl">
-        <div className="bg-[#292929] w-[500px] rounded-lg flex flex-col items-center justify-center gap-4 py-3">
+      <div className="flex flex-col items-start gap-2.5 p-2 pt-1 bg-background rounded-2xl w-[500px]">
+        <div className=" rounded-lg flex flex-col items-center justify-center">
           <img alt="reset-warning" src="/red-warning.svg" className="h-[120px] w-[135px]" />
-          <div className="flex flex-col gap-2 items-center justify-start leading-[0] not-italic px-10 w-full text-center">
-            <div className="text-white text-[24px] tracking-[0.12px] font-medium w-full">
-              <p className="leading-[26px]">Reset account?</p>
-            </div>
-            <div className="text-[#989898] text-[14px] tracking-[0.07px] w-full">
-              <p className="leading-5">
-                Resetting will permanently remove your current wallet from this app. You’ll lose access to this account
-                and any tokens it holds. A new empty wallet will be created. This can’t be undone.
-              </p>
-            </div>
+          <div className="flex flex-col gap-2 items-center justify-start not-italic px-10 w-full text-center">
+            <span className="text-text-primary text-[24px] font-bold w-full">Reset account</span>
+            <span className="text-text-secondary text-[14px] w-full">
+              Resetting will permanently remove your current wallet from this app. You’ll lose access to this account
+              and any tokens it holds. A new empty wallet will be created. This can’t be undone.
+            </span>
           </div>
         </div>
         <div className="rounded-b-xl flex gap-2 w-full">

@@ -1,0 +1,101 @@
+/* Theme Variables */
+:root {
+  /* Light theme colors */
+
+  /* Background */
+  --app-background: #f5f5f6;
+  --background: #ffffff;
+
+  /* Text */
+  --text-primary: #1b1b1b;
+  --text-secondary: #848484;
+
+  /* Badge */
+  --badge-neutral-background: #e7e7e8;
+  --badge-neutral-text: #7c7c7c;
+
+  /* Divider */
+  --primary-divider: #e7e8ec;
+  --secondary-divider: #848484;
+  --tertiary-divider: #eff0f2;
+
+  /* Button */
+  --primary-button: #0059ff;
+  --primary-button-text: #ffffff;
+  --primary-button-border-top: #4888ff;
+  --primary-button-background: linear-gradient(0deg, #002c69 0%, #0061e7 100%);
+
+  --secondary-button-text: #ffffff;
+  --secondary-button-background: linear-gradient(1deg, #262626 0.47%, #5d5d5d 113.62%);
+  --secondary-button-border-top: #848484;
+
+  /* Toast */
+  --toast-background: #3b3c3b;
+  --toast-text: #ffffff;
+  --toast-border: #898a89;
+
+  /* Card */
+  --card-button-text: #000000;
+  --card-button-background: #f0f0f0;
+  --card-button-border-top: #fbfbfb;
+
+  /* Blue */
+  --primary-blue: #066eff;
+
+  --secondary: #e0e0e0;
+  --tertiary: #0844c5;
+
+  /* Additional colors for Sidebar */
+
+  --surface-light: #f7f7f7;
+  --surface-blue: #edf8ff;
+
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary-foreground: 210 40% 98%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --app-background: #1a1a1a;
+  /* Dark theme colors */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+
+  /* Dark theme overrides for Sidebar colors */
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --divider: #404040;
+  --surface-light: #2a2a2a;
+  --surface-blue: #1a3a5f;
+}

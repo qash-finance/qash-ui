@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <div
       data-testid="not-found"
-      className="bg-[#f6f6f6] absolute size-full w-full h-full top-0 left-0 flex flex-col items-center justify-center overflow-hidden z-9999"
+      className="bg-[#f6f6f6] fixed inset-0 w-screen h-screen flex flex-col items-center justify-center overflow-hidden z-9999"
     >
       {/* Background decorative circles */}
       <div className="absolute left-1/2 size-[838px] top-1/2 translate-x-[-50%] translate-y-[-50%]">
@@ -44,13 +44,11 @@ export default function NotFound() {
       {/* Navigation breadcrumbs */}
       <div className="absolute bottom-[18px] left-4 w-[238px] flex flex-col">
         {actionItems
-          .flatMap(section =>
-            section.items.map(item => ({
-              href: `/${item.link}`,
-              label: item.label.toLowerCase(),
-              disabled: item.disabled,
-            })),
-          )
+          .map(item => ({
+            href: item.link === "" ? "/" : `/${item.link}`,
+            label: item.label.toLowerCase(),
+            disabled: item.disabled,
+          }))
           .map((item, globalIndex) => ({
             ...item,
             number: String(globalIndex + 1).padStart(2, "0"),

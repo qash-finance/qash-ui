@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./theme.css";
 
 @font-face {
   font-family: "Repetition Scrolling";
@@ -16,6 +17,78 @@
   font-display: swap;
 }
 
+@theme inline {
+  /* Background */
+  --color-app-background: var(--app-background);
+  --color-background: var(--background);
+
+  /* Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+
+  /* Badge */
+  --color-badge-neutral-background: var(--badge-neutral-background);
+  --color-badge-neutral-text: var(--badge-neutral-text);
+
+  /* Divider */
+  --color-primary-divider: var(--primary-divider);
+  --color-secondary-divider: var(--secondary-divider);
+  --color-tertiary-divider: var(--tertiary-divider);
+
+  /* Button */
+  --color-primary-button: var(--primary-button);
+  --color-primary-button-text: var(--primary-button-text);
+  --color-primary-button-border-top: var(--primary-button-border-top);
+  --color-primary-button-background: var(--primary-button-background);
+
+  --color-secondary-button-text: var(--secondary-button-text);
+  --color-secondary-button-background: var(--secondary-button-background);
+  --color-secondary-button-border-top: var(--secondary-button-border-top);
+
+  /* Card */
+  --color-card-button-text: var(--card-button-text);
+  --color-card-button-background: var(--card-button-background);
+  --color-card-button-border-top: var(--card-button-border-top);
+
+  /* Toast */
+  --color-toast-background: var(--toast-background);
+  --color-toast-text: var(--toast-text);
+  --color-toast-border: var(--toast-border);
+
+  /* Primary */
+  --color-primary-blue: var(--primary-blue);
+
+  /* --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-divider: var(--divider);
+  --color-surface-light: var(--surface-light);
+  --color-surface-blue: var(--surface-blue);
+  --color-tertiary: var(--tertiary);
+
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring)); */
+  --radius: var(--radius);
+  --font-sans: var(--font-barlow);
+  --font-mono: var(--font-geist-mono);
+}
+
 .font-repetition-scrolling {
   font-family: "Repetition Scrolling", sans-serif;
 }
@@ -26,7 +99,8 @@
 
 html,
 body {
-  background: #1e1e1e;
+  background-color: var(--app-background);
+  font-family: var(--font-barlow), system-ui, sans-serif;
 }
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
@@ -366,4 +440,13 @@ input:-moz-autofill:active {
 .custom-scrollbar {
   scrollbar-width: none;
   scrollbar-color: transparent transparent;
+}
+
+/* Disable image dragging */
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
 }

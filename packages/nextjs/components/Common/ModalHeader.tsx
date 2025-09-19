@@ -10,26 +10,13 @@ interface ModalHeaderProps {
 
 export const ModalHeader: React.FC<ModalHeaderProps> = ({ title, onClose, icon, onClickIcon }) => {
   return (
-    <header className="flex justify-between items-center self-stretch pt-2.5 pr-2.5 pb-2 pl-4 border-b border-solid bg-zinc-800 rounded-t-2xl border-b-neutral-900 max-sm:py-2 max-sm:pr-2 max-sm:pl-3">
-      <div className="flex gap-1.5 items-center">
-        <div
-          className="flex justify-center items-center p-0.5 w-5 h-5 rounded-md bg-neutral-900 cursor-pointer"
-          onClick={onClickIcon}
-        >
-          <img src={icon} alt="" className="shrink-0 w-4 h-4 grayscale" />
-        </div>
-        <h1 className="text-base font-medium tracking-tight leading-4 text-white max-md:text-base max-sm:text-sm">
-          {title}
-        </h1>
+    <header className="flex justify-between items-center self-stretch px-3 py-4 bg-background rounded-t-2xl border-2 border-b-0 border-primary-divider">
+      <div className="flex gap-3 items-center">
+        <img src={icon} alt="" className="w-5 h-5" onClick={onClickIcon} />
+        <h1 className=" text-text-primary font-bold">{title}</h1>
       </div>
-      <div className="flex items-center gap-5 cursor-pointer">
-        <img
-          src="/dark-close-icon.svg"
-          alt="dark-close-icon"
-          className="w-6 h-6 cursor-pointer"
-          onClick={onClose}
-          draggable={false}
-        />
+      <div className="w-[28px] h-[28px] bg-app-background rounded-lg flex justify-center items-center border-b-2 border-secondary-divider cursor-pointer">
+        <img src="/misc/close-icon.svg" alt="close icon" onClick={onClose} />
       </div>
     </header>
   );

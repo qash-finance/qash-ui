@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Barlow } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "../components/ClientLayout";
 import localFont from "next/font/local";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 
 const repetitionScrolling = localFont({
   src: "../public/fonts/repet___.ttf",
@@ -38,17 +39,39 @@ export const metadata: Metadata = {
   title: "Qash",
   description: "Manage your cash on-chain with privacy",
   icons: {
-    icon: "/qash-icon.svg",
+    icon: "/logo/qash-icon.svg",
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* This is a hack to ensure the theme is applied correctly on the server side */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('ui-theme') || 'light';
+                  if (theme === 'system') {
+                    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    document.documentElement.classList.add(systemTheme);
+                  } else {
+                    document.documentElement.classList.add(theme);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${barlow.className} ${repetitionScrolling.variable} antialiased`}
       >
-        <ClientLayout>{children}</ClientLayout>
+        <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+          <ClientLayout>{children}</ClientLayout>
+        </ThemeProvider>
       </body>
     </html>
   );

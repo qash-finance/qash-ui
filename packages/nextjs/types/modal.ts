@@ -36,6 +36,8 @@ import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
 import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
 import InteractAccountTransactionModal from "@/components/Modal/InteractAccountTransactionModal";
 import MigratingModal from "@/components/Modal/MigratingModal";
+import SelectWalletModal from "@/components/Modal/SelectWalletModal";
+import CreateImportWalletModal from "@/components/Modal/CreateImportWalletModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -82,6 +84,8 @@ export const MODAL_IDS = {
   TRANSACTION_FILTER: "TRANSACTION_FILTER",
   INTERACT_ACCOUNT_TRANSACTION: "INTERACT_ACCOUNT_TRANSACTION",
   MIGRATING: "MIGRATING",
+  SELECT_WALLET: "SELECT_WALLET",
+  CREATE_IMPORT_WALLET: "CREATE_IMPORT_WALLET",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -301,6 +305,10 @@ export interface InteractAccountTransactionModalProps extends BaseModalProps {
 
 export interface MigratingModalProps extends BaseModalProps {}
 
+export interface SelectWalletModalProps extends BaseModalProps {}
+
+export interface CreateImportWalletModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -340,6 +348,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePaymentProps;
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModalProps;
   [MODAL_IDS.MIGRATING]: MigratingModalProps;
+  [MODAL_IDS.SELECT_WALLET]: SelectWalletModalProps;
+  [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -383,4 +393,6 @@ export const modalRegistry = {
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePayment,
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModal,
   [MODAL_IDS.MIGRATING]: MigratingModal,
+  [MODAL_IDS.SELECT_WALLET]: SelectWalletModal,
+  [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModal,
 } as const;

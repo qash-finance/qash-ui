@@ -8,6 +8,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { BUTTON_STYLES } from "@/services/utils/constant";
+import { PrimaryButton } from "../Common/PrimaryButton";
 
 // Custom hook to safely render WalletMultiButton
 const SafeWalletButton = ({
@@ -146,40 +147,46 @@ export const Connect = () => {
         }
       `}</style>
 
-      <section className="overflow-hidden w-full font-medium bg-white rounded-xl h-[140px] flex items-center justify-center">
-        <div className="flex flex-col justify-center w-full h-full">
-          <div className="flex flex-col items-center w-full text-sm tracking-tight leading-none text-blue-600">
-            <img src="/qash-icon.svg" alt="Qash" className="w-6 h-6 mb-2" />
-            <p className="text-blue-600">Welcome to Qash</p>
+      <section className="overflow-hidden w-full font-medium bg-white rounded-xl p-2 flex items-center justify-center bo">
+        <div className="flex flex-col justify-center w-full h-full gap-5">
+          <div className="flex flex-col w-full text-sm tracking-tight leading-none gap-1">
+            <img src="/logo/qash-icon.svg" alt="Qash" className="w-7 h-7" />
+            <span className="text-text-primary font-bold text-lg">Welcome to Qash</span>
+            <span className="text-text-secondary">Connect your wallet to power up your journey.</span>
           </div>
-          <div className="mt-1.5 w-full p-2">
-            <SafeWalletButton
-              onClick={async () => {
-                // await handleConnect().then(() => {
-                // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
-                // if (deployedAccounts) {
-                //   try {
-                //     const accounts = JSON.parse(deployedAccounts);
-                //     const account = Object.values(accounts)[0] as any;
-                //     const hasClaimQASH = account.hasClaimQASH;
-                //     // Only open modal if user hasn't claimed QASH
-                //     if (!hasClaimQASH) {
-                //       openModal(MODAL_IDS.ONBOARDING);
-                //     }
-                //   } catch (error) {
-                //     console.error("Error parsing deployed accounts:", error);
-                //   }
-                // }
-                // });
-                openModal(MODAL_IDS.CONNECT_WALLET);
-              }}
-              connected={isConnected}
-              style={{
-                ...BUTTON_STYLES,
-                backgroundColor: "#3b82f6",
-              }}
-            />
-          </div>
+          <PrimaryButton
+            text="Connect Wallet"
+            icon="/misc/wallet-icon.svg"
+            iconPosition="left"
+            onClick={() => openModal(MODAL_IDS.SELECT_WALLET)}
+          />
+
+          {/* <SafeWalletButton
+            onClick={async () => {
+              // await handleConnect().then(() => {
+              // const deployedAccounts = localStorage.getItem(STORAGE_KEY);
+              // if (deployedAccounts) {
+              //   try {
+              //     const accounts = JSON.parse(deployedAccounts);
+              //     const account = Object.values(accounts)[0] as any;
+              //     const hasClaimQASH = account.hasClaimQASH;
+              //     // Only open modal if user hasn't claimed QASH
+              //     if (!hasClaimQASH) {
+              //       openModal(MODAL_IDS.ONBOARDING);
+              //     }
+              //   } catch (error) {
+              //     console.error("Error parsing deployed accounts:", error);
+              //   }
+              // }
+              // });
+              openModal(MODAL_IDS.CONNECT_WALLET);
+            }}
+            connected={isConnected}
+            style={{
+              ...BUTTON_STYLES,
+              backgroundColor: "#3b82f6",
+            }}
+          /> */}
         </div>
       </section>
     </div>
