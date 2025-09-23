@@ -36,6 +36,7 @@ import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 import { useCreateSchedulePayment, useGetSchedulePayments } from "@/services/api/schedule-payment";
 import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { PrimaryButton } from "../Common/PrimaryButton";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -45,6 +46,18 @@ export enum AmountInputTab {
 interface SendTransactionFormProps {
   activeTab?: AmountInputTab;
   onTabChange?: (tab: AmountInputTab) => void;
+  onTransactionData?: (data: {
+    amount: string;
+    accountName: string;
+    accountAddress: string;
+    recipientName: string;
+    recipientAddress: string;
+    transactionType: string;
+    cancellableTime: string;
+    message: string;
+    tokenAddress: string;
+    tokenSymbol: string;
+  }) => void;
 }
 
 interface SendTransactionFormValues {
@@ -61,7 +74,25 @@ const DEFAULT_SCHEDULE_PAYMENT = {
   startDate: new Date(),
 };
 
-export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ activeTab, onTabChange }) => {
+// Common input container styles
+const inputContainerClass = "bg-background rounded-xl p-3 border-b border-primary-divider";
+const inputFieldClass = "text-text-primary text-base bg-transparent border-none outline-none w-full";
+const labelClass = "text-text-secondary text-sm";
+const timeButtonClass =
+  "flex items-center justify-center px-8 py-1.5 rounded-full cursor-pointer text-sm transition-all duration-200";
+
+// Time options data
+const timeOptions = [
+  { value: 3600, label: "1 hour" },
+  { value: 43200, label: "12 hours" },
+  { value: 86400, label: "24 hours" },
+];
+
+export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
+  activeTab,
+  onTabChange,
+  onTransactionData,
+}) => {
   // **************** Custom Hooks *******************
   const searchParams = useSearchParams();
   const { openModal } = useModal();
@@ -105,11 +136,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   // **************** Local State *******************
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
     amount: "0",
-    faucetId: QASH_TOKEN_ADDRESS,
+    faucetId: "",
     metadata: {
-      symbol: QASH_TOKEN_SYMBOL,
-      decimals: QASH_TOKEN_DECIMALS,
-      maxSupply: QASH_TOKEN_MAX_SUPPLY,
+      symbol: "",
+      decimals: 0,
+      maxSupply: 0,
     },
   });
   const [selectedTokenAddress, setSelectedTokenAddress] = useState("");
@@ -142,11 +173,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   // **************** Effects *******************
   // ********************************************
 
-  useEffect(() => {
-    const defaultToken = getDefaultSelectedToken(assets);
-    setSelectedToken(defaultToken);
-    setSelectedTokenAddress(defaultToken.faucetId);
-  }, [assets]);
+  // useEffect(() => {
+  //   const defaultToken = getDefaultSelectedToken(assets);
+  //   setSelectedToken(defaultToken);
+  //   setSelectedTokenAddress(defaultToken.faucetId);
+  // }, [assets]);
 
   // Handle URL parameters for payment requests
   useEffect(() => {
@@ -168,7 +199,8 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     setSelectedToken(token);
 
     // Reset amount when switching tokens
-    setValue("amount", 0);
+    // @ts-ignore
+    setValue("amount", undefined);
 
     // Find the selected token in assets to get its address
     if (token.metadata.symbol === "QASH") {
@@ -448,11 +480,11 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     }
 
     // check if amount > balance
-    if (amount > parseFloat(selectedToken.amount)) {
-      toast.dismiss();
-      toast.error("Insufficient balance");
-      return;
-    }
+    // if (amount > parseFloat(selectedToken.amount)) {
+    //   toast.dismiss();
+    //   toast.error("Insufficient balance");
+    //   return;
+    // }
 
     if (!validateAddress(recipientAddress)) {
       toast.dismiss();
@@ -479,43 +511,54 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       return;
     }
 
-    // Show transaction overview modal first
-    openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
+    // Prepare transaction data
+    const transactionData = {
       amount: `${amount}`,
       accountName: "My Account", // You can get this from account context if available
       accountAddress: walletAddress,
-      recipientName: recipientName || null,
+      recipientName: recipientName || "Unknown",
       recipientAddress: recipientAddress,
       transactionType: isPrivateTransaction ? "Private" : "Public",
       cancellableTime: `${recallableTime / 3600} hour(s)`,
       message: data.message || "Transaction details",
       tokenAddress: selectedToken.faucetId,
       tokenSymbol: selectedToken.metadata.symbol,
-      schedulePayment: schedulePayment,
-      onConfirm: async () => {
-        setIsSending(true);
-        toast.loading("Sending transaction...");
+    };
 
-        // each block is 5 seconds, calculate recall height
-        const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+    // If onTransactionData callback is provided, use it instead of modal
+    if (onTransactionData) {
+      onTransactionData(transactionData);
+      return;
+    }
 
-        // Create AccountId objects once to avoid aliasing issues
-        const senderAccountId = walletAddress;
-        const recipientAccountId = recipientAddress;
-        const faucetAccountId = selectedToken.faucetId;
-        if (schedulePayment.times !== undefined) {
-          await handleSchedulePaymentTransaction(
-            senderAccountId,
-            recipientAccountId,
-            faucetAccountId,
-            recallHeight,
-            data,
-          );
-        } else {
-          await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
-        }
-      },
-    });
+    // Show transaction overview modal first
+    // openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
+    //   ...transactionData,
+    //   schedulePayment: schedulePayment,
+    //   onConfirm: async () => {
+    //     setIsSending(true);
+    //     toast.loading("Sending transaction...");
+
+    //     // each block is 5 seconds, calculate recall height
+    //     const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+
+    //     // Create AccountId objects once to avoid aliasing issues
+    //     const senderAccountId = walletAddress;
+    //     const recipientAccountId = recipientAddress;
+    //     const faucetAccountId = selectedToken.faucetId;
+    //     if (schedulePayment.times !== undefined) {
+    //       await handleSchedulePaymentTransaction(
+    //         senderAccountId,
+    //         recipientAccountId,
+    //         faucetAccountId,
+    //         recallHeight,
+    //         data,
+    //       );
+    //     } else {
+    //       await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
+    //     }
+    //   },
+    // });
   };
 
   const handleAddToBatch = async (data: SendTransactionFormValues) => {
@@ -594,141 +637,171 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   };
 
   return (
-    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleFormSubmit)}>
-      <section
-        className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-lg bg-[#292929] mb-1"
-        style={{
-          backgroundImage: "url('/modal/request-background.svg')",
-          backgroundPosition: "bottom",
-          width: "100%",
-          backgroundRepeat: "repeat-x",
-        }}
-      >
-        {/* Title */}
-        <header className="flex flex-wrap gap-5 justify-between self-stretch px-3 py-2 w-full bg-[#2D2D2D] row-span-1">
-          {/* Tab Navigation */}
-          <nav className={`flex gap-1.5 justify-center items-center self-stretch p-1 rounded-xl h-[34px] row-span-1`}>
-            <button
-              type="button"
-              className={`flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-lg flex-[1_0_0] ${
-                activeTab === "send" ? "" : ""
-              } cursor-pointer`}
-              onClick={() => {
-                onTabChange?.(AmountInputTab.SEND);
-              }}
-            >
-              <span
-                className={`text-base font-medium tracking-tight leading-5 text-white ${
-                  activeTab === AmountInputTab.SEND ? "" : "opacity-50"
-                }`}
-              >
-                Send
-              </span>
-            </button>
-          </nav>
-          <SelectTokenInput
-            selectedToken={selectedToken}
-            onTokenSelect={handleTokenSelect}
-            tokenAddress={selectedTokenAddress}
-          />
-        </header>
-
-        <AmountInput
-          selectedToken={selectedToken}
-          availableBalance={Number(
-            formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
-          )}
-          register={register}
-          errors={errors}
-          setValue={setValue}
-        />
-      </section>
-
-      {/* Recipient Input */}
-      {/* If recipient name is not set, show the input */}
-      <RecipientInput
-        register={register}
-        errors={errors}
-        setValue={setValue}
-        watch={watch}
-        recipientName={recipientName}
-        setRecipientName={setRecipientName}
-        getValues={getValues}
-        onChooseRecipient={handleChooseRecipient}
-      />
-
-      {/* Schedule Payment Option */}
+    <form className="flex flex-col gap-3 p-3" onSubmit={handleSubmit(handleFormSubmit)}>
+      {/* Token Selector */}
       <div
-        className={`bg-[#292929] rounded-lg py-2.5 pl-3 pr-[15px] flex items-center justify-between mb-[4px] cursor-pointer`}
-        onClick={() => !schedulePayment.times && handleSetupSchedulePayment()}
+        className={`${inputContainerClass} flex items-center justify-between cursor-pointer`}
+        onClick={() =>
+          openModal(MODAL_IDS.SELECT_TOKEN, {
+            selectedToken,
+            onTokenSelect: handleTokenSelect,
+          })
+        }
       >
-        <div className="flex flex-col gap-2">
-          <span className="text-white text-[16px] leading-none">Schedule payment</span>
-          <span className="text-[#656565] text-[15px] tracking-[-0.45px] leading-[1.25]">
-            Pick a date and time to automatically send your payment
-          </span>
+        <div className="flex gap-3 items-center">
+          {selectedToken.metadata.symbol ? (
+            <>
+              <div className="relative w-10 h-10">
+                <img
+                  alt=""
+                  className="w-full h-full"
+                  src={selectedToken.metadata.symbol === "QASH" ? "/token/qash.svg" : "/token/eth.svg"}
+                />
+                <img alt="" className="absolute bottom-0 right-0 w-5 h-5" src="/chain/miden.svg" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-text-primary text-sm">{selectedToken.metadata.symbol}</p>
+                <p className="text-text-secondary text-sm">Miden</p>
+              </div>
+            </>
+          ) : (
+            <span className="text-text-primary py-1">Select token</span>
+          )}
         </div>
-
-        {schedulePayment.times ? (
-          <div className="flex items-center gap-2">
-            <ActionButton text="View" onClick={() => handleSetupSchedulePayment()} className="rounded-full" />
-            <ActionButton
-              text="Remove"
-              onClick={() => {
-                openModal(MODAL_IDS.REMOVE_SCHEDULE_PAYMENT, {
-                  onConfirm: async () => {
-                    setSchedulePayment(DEFAULT_SCHEDULE_PAYMENT);
-                  },
-                });
-              }}
-              type="deny"
-              className="rounded-full"
-            />
-          </div>
-        ) : (
-          <img
-            src="/arrow/chevron-right.svg"
-            alt="chevron-right"
-            className="w-6 h-6 cursor-pointer"
-            onClick={() => handleSetupSchedulePayment()}
-          />
-        )}
+        <img alt="" className="w-6 h-6" src="/arrow/chevron-down.svg" />
       </div>
 
-      <TransactionOptions register={register} watch={watch} setValue={setValue} />
-
-      {isConnected ? (
-        <div className="flex items-center gap-2 mt-1">
-          <ActionButton
-            text="Add To Batch"
-            buttonType="submit"
-            type="neutral"
-            className="w-[30%] h-10 mt-2"
-            disabled={isSending || schedulePayment.times !== undefined}
-            onClick={() => setIsSubmittingAsBatch(true)}
-          />
-          <ActionButton
-            text={`${schedulePayment.times !== undefined ? "Schedule now" : "Send Transaction"} `}
-            buttonType="submit"
-            className="w-[70%] h-10 mt-2"
-            loading={isSending}
-            onClick={() => setIsSubmittingAsBatch(false)}
+      {/* Amount Input */}
+      <div className={`${inputContainerClass} flex items-center gap-5`}>
+        <div className="flex flex-col gap-0.5 flex-1">
+          <span className={labelClass}>Amount</span>
+          <input
+            {...register("amount", { required: true })}
+            type="number"
+            step="0.000001"
+            className={inputFieldClass}
+            placeholder="0"
+            autoComplete="off"
           />
         </div>
-      ) : (
-        <div className="relative">
-          <ActionButton
-            text="Connect Wallet"
-            buttonType="submit"
-            className="w-full h-10 mt-2"
-            onClick={() => {
-              openModal(MODAL_IDS.CONNECT_WALLET);
-            }}
+        <span className="text-text-primary text-base">{selectedToken.metadata.symbol}</span>
+        <button
+          className="flex items-center justify-center px-4 py-2 rounded-lg bg-background border border-primary-divider shadow-sm cursor-pointer"
+          onClick={() => setValue("amount", parseFloat(selectedToken.amount))}
+        >
+          <span className="text-text-primary text-sm font-semibold">Max</span>
+        </button>
+      </div>
+      <div className="flex justify-end px-3">
+        <p className="text-xs text-text-secondary">
+          Available:{" "}
+          <span className="text-text-primary">
+            {parseFloat(selectedToken.amount).toFixed(3)} {selectedToken.metadata.symbol}
+          </span>
+        </p>
+      </div>
+
+      {/* Recipient Input */}
+      <div className={`${inputContainerClass} flex items-center justify-between`}>
+        <div className="flex flex-col gap-0.5 flex-1">
+          <p className={labelClass}>Send to</p>
+          <input
+            {...register("recipientAddress", { required: true })}
+            type="text"
+            className={inputFieldClass}
+            autoComplete="off"
+            placeholder="0x2A098898990628505749aBe334547B3f0D0d0F75"
           />
         </div>
-      )}
+        <button
+          className="bg-app-background flex items-center justify-center rounded-lg w-8 h-8 cursor-pointer border border-primary-divider"
+          onClick={handleChooseRecipient}
+        >
+          <img alt="" className="w-4 h-4" src="/misc/address-book-icon.svg" />
+        </button>
+      </div>
 
-      {/* Send button */}
+      {/* Message Input */}
+      <div className={`${inputContainerClass} h-[120px] flex flex-col gap-2`}>
+        <div className="flex flex-col gap-0.5 flex-1">
+          <p className={labelClass}>Message (optional)</p>
+          <textarea
+            {...register("message")}
+            className={`${inputFieldClass} h-full resize-none`}
+            autoComplete="off"
+            placeholder="Hey there! Just a quick note to confirm your cryptocurrency transfer."
+            maxLength={250}
+          />
+        </div>
+      </div>
+      <div className="flex justify-end px-3">
+        <p className="text-xs text-text-secondary">{watch("message")?.length || 0}/250</p>
+      </div>
+
+      {/* Cancellable Time Options */}
+      <div className="flex flex-col gap-2 px-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-text-primary text-sm">Cancellable in</span>
+          <span className="text-text-secondary text-sm">Get your money back after cancellable expires</span>
+        </div>
+        <div className="flex gap-2">
+          {timeOptions.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              className={`${timeButtonClass} ${
+                watch("recallableTime") === value ? "bg-black text-white" : "bg-white text-text-primary"
+              }`}
+              onClick={() => setValue("recallableTime", value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Privacy Toggle */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-primary-divider">
+        <div className="flex flex-col gap-0.5 flex-1">
+          <p className="text-text-primary text-sm">Private transaction</p>
+          <p className="text-text-secondary text-sm">Only you and the recipient know about this transaction</p>
+        </div>
+        <button
+          type="button"
+          className="w-10 h-6 cursor-pointer relative"
+          onClick={() => setValue("isPrivateTransaction", !watch("isPrivateTransaction"))}
+        >
+          <div
+            className={`absolute inset-0 ${watch("isPrivateTransaction") ? "bg-primary-blue" : "bg-background border border-primary-divider"} rounded-xl`}
+          />
+          <div
+            className={`absolute top-0 w-6 h-6 transition-all duration-200 ${
+              watch("isPrivateTransaction") ? "translate-x-4" : "translate-x-0"
+            }`}
+          >
+            <div
+              className={`absolute inset-0 ${
+                watch("isPrivateTransaction")
+                  ? "bg-white border border-primary-blue"
+                  : "bg-background border border-primary-divider"
+              } rounded-full`}
+            />
+          </div>
+        </button>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4">
+        {/* <button
+          type="button"
+          className="bg-white rounded-lg flex items-center gap-2 px-4 py-2 flex-1"
+          onClick={() => setIsSubmittingAsBatch(true)}
+        >
+          <img alt="" className="w-5 h-5" src="/misc/batch-icon.svg" />
+          <span className="text-[#1b1b1b] text-sm">Add to Batch</span>
+        </button> */}
+        <PrimaryButton text="Send" onClick={() => setIsSubmittingAsBatch(false)} containerClassName="flex-1" />
+      </div>
     </form>
   );
 };

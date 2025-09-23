@@ -16,11 +16,8 @@ interface TokenListProps {
 
 export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps) {
   return (
-    <section className="flex flex-col gap-2.5 items-start self-stretch">
-      <h2 className="self-stretch text-base tracking-tighter leading-5 text-white max-sm:px-1 max-sm:py-0 max-sm:text-sm">
-        Your tokens ({assets.length})
-      </h2>
-      <div className="flex flex-col gap-0.5 items-start self-stretch">
+    <section className="flex flex-col gap-2.5 items-start w-full">
+      <div className="flex flex-col gap-0.5 items-start w-full">
         {assets.length === 0 ? (
           <div className="flex flex-col items-center justify-center w-full py-8 gap-2">
             <p className="text-neutral-400 text-sm text-center">

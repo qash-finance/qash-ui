@@ -16,6 +16,7 @@ interface NavProps {
 // Enum for sidebar links
 export enum SidebarLink {
   Home = "",
+  MoveCrypto = "move-crypto",
   Dashboard = "dashboard",
   Send = "send",
   Batch = "batch",
@@ -48,7 +49,7 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-move-crypto.svg",
     label: "Move Crypto",
     isActive: false,
-    link: SidebarLink.AddressBook,
+    link: SidebarLink.MoveCrypto,
     disabled: false,
     hasSubmenu: true,
     submenuType: SubmenuType.MoveCrypto,

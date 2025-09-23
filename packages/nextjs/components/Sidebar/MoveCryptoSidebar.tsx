@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { MOVE_CRYPTO_SIDEBAR_OFFSET } from "./Sidebar";
 
 interface AccountSidebarProps {
@@ -40,6 +41,7 @@ const moveCryptoItems = [
     icon: "/sidebar/send.svg",
     filledIcon: "/sidebar/filled-send.svg",
     label: "Send",
+    link: "/move-crypto?tab=send",
     isActive: false,
     disabled: false,
   },
@@ -47,6 +49,7 @@ const moveCryptoItems = [
     icon: "/sidebar/swap.svg",
     filledIcon: "/sidebar/filled-swap.svg",
     label: "Swap",
+    link: "/move-crypto?tab=swap",
     isActive: false,
     disabled: false,
   },
@@ -54,6 +57,7 @@ const moveCryptoItems = [
     icon: "/sidebar/gift.svg",
     filledIcon: "/sidebar/filled-gift.svg",
     label: "Gift",
+    link: "/gift",
     isActive: false,
     disabled: false,
   },
@@ -61,6 +65,7 @@ const moveCryptoItems = [
     icon: "/sidebar/crypto-ramp.svg",
     filledIcon: "/sidebar/filled-crypto-ramp.svg",
     label: "Crypto on/off-ramps",
+    link: "/crypto-ramp",
     isActive: false,
     disabled: false,
   },
@@ -167,23 +172,54 @@ export const NavSections: React.FC<NavSectionsProps> = ({ sections, onItemClick,
 
 export default function MoveCryptoSidebar({ isOpen, onClose }: AccountSidebarProps) {
   const [items, setItems] = useState(moveCryptoItems);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // Close sub-account sidebar when main sidebar closes
+  // Update active states based on URL and sidebar state
   useEffect(() => {
     if (!isOpen) {
       setItems(prev => prev.map(item => ({ ...item, isActive: false })));
+      return;
     }
-  }, [isOpen]);
+
+    setItems(prev =>
+      prev.map(item => {
+        let isActive = false;
+
+        if (item.link) {
+          // Handle query parameter matching for move-crypto tabs
+          if (item.link.includes("move-crypto?tab=")) {
+            const currentTab = searchParams.get("tab");
+            const itemTab = item.link.split("tab=")[1];
+            isActive = pathname === "/move-crypto" && currentTab === itemTab;
+          } else {
+            // Handle direct path matching for other items
+            isActive = pathname === item.link;
+          }
+        }
+
+        return {
+          ...item,
+          isActive,
+        };
+      }),
+    );
+  }, [isOpen, pathname, searchParams]);
+
+  // Close sidebar when route changes
+  useEffect(() => {
+    if (isOpen) {
+      onClose();
+    }
+  }, [pathname]);
 
   const handleItemClick = (itemIndex: number) => {
-    setItems(prev =>
-      prev.map((item, i) => ({
-        ...item,
-        isActive: i === itemIndex,
-      })),
-    );
-    // Handle navigation or action here
-    console.log(`Clicked: ${items[itemIndex].label}`);
+    // Navigate using the link from the item
+    const item = items[itemIndex];
+    if (item.link) {
+      router.push(item.link);
+    }
   };
 
   return (

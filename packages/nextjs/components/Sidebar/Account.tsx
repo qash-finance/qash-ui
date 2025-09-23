@@ -7,7 +7,7 @@ import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
-
+import { useRouter } from "next/navigation";
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
   LOCAL_WALLET_1 = "local-wallet-1",
@@ -17,10 +17,10 @@ enum SelectedWallet {
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
+  const router = useRouter();
   const { walletAddress, setIsConnected } = useWalletState(state => state);
   const { disconnectWallet } = useWalletAuth();
   const clearTransactions = useTransactionStore(state => state.clearTransactions);
-
   const [isBlurred, setIsBlurred] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<SelectedWallet>(SelectedWallet.MIDEN_WALLET);
@@ -104,40 +104,55 @@ export const Account: React.FC<AccountProps> = () => {
   };
 
   return (
-    <article className="flex flex-col w-full font-medium bg-background rounded-xl flex-1 border-t-2 border-primary-divider p-2 gap-5">
-      {/* Account Info */}
-      <header className="flex items-center w-full text-sm font-medium justify-between pt-2">
-        <div className="flex flex-1 gap-3 items-center">
-          <img src={blo(turnBechToHex(walletAddress || ""))} alt="Recipient avatar" className="w-[36px] rounded-full" />
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1">
-              <span className="text-base truncate text-text-primary leading-none">Q3x</span>
-              <img src="/logo/miden.svg" className="w-4" alt="miden logo icon" />
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-base truncate text-text-secondary leading-none">
-                {formatAddress(walletAddress?.toString() || "0x")}
-              </span>
-              <img
-                src="/misc/copy-icon.svg"
-                className="w-5 cursor-pointer"
-                alt="copy icon"
-                onClick={() => {
-                  navigator.clipboard.writeText(walletAddress || "");
-                  toast.success("Copied to clipboard");
-                }}
-              />
-            </div>
-          </div>
+    <div className="flex flex-col w-full bg-primary-divider rounded-xl border-t-1 border-background">
+      <div className="flex flex-row items-center justify-between w-full rounded-xl py-3 px-4 cursor-pointer">
+        <div className="flex items-center gap-2">
+          <img src="/token/usdt.svg" className="w-5 h-5" alt="usdt icon" />
+          <span className="text-base font-medium text-text-primary leading-none">125,545.00 USDT</span>
         </div>
-        <img src="/arrow/filled-arrow-right.svg" className="w-5 aspect-square" alt="filled arrow right icon" />
-      </header>
-      <div className="flex items-center gap-2">
-        <SubIcon icon="/misc/qr-icon.svg" onClick={() => {}} />
-        <SubIcon icon="/misc/external-link-icon.svg" onClick={() => {}} />
-        <SubIcon icon="/misc/power-button-icon.svg" onClick={handleDisconnect} />
+        <img src="/arrow/chevron-right.svg" className="w-5 h-5" alt="chevron right icon" />
       </div>
-    </article>
+      <div className="flex w-full p-2 border-t-2 border-[#D4D6D9]">
+        <article className="flex flex-col w-full font-medium bg-background rounded-xl flex-1 border-t-2 border-primary-divider p-2 gap-5">
+          {/* Account Info */}
+          <header className="flex items-center w-full text-sm font-medium justify-between pt-2">
+            <div className="flex flex-1 gap-3 items-center">
+              <img
+                src={blo(turnBechToHex(walletAddress || ""))}
+                alt="Recipient avatar"
+                className="w-[36px] rounded-full"
+              />
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-base truncate text-text-primary leading-none">Q3x</span>
+                  <img src="/logo/miden.svg" className="w-4" alt="miden logo icon" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm truncate text-text-secondary leading-none">
+                    {formatAddress(walletAddress?.toString() || "0x")}
+                  </span>
+                  <img
+                    src="/misc/copy-icon.svg"
+                    className="w-4 cursor-pointer"
+                    alt="copy icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(walletAddress || "");
+                      toast.success("Copied to clipboard");
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <img src="/arrow/filled-arrow-right.svg" className="w-5 aspect-square" alt="filled arrow right icon" />
+          </header>
+          <div className="flex items-center gap-2">
+            <SubIcon icon="/misc/qr-icon.svg" onClick={() => router.push("/move-crypto?tab=receive")} />
+            <SubIcon icon="/misc/external-link-icon.svg" onClick={() => {}} />
+            <SubIcon icon="/misc/power-button-icon.svg" onClick={handleDisconnect} />
+          </div>
+        </article>
+      </div>
+    </div>
   );
 };
 

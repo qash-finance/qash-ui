@@ -1,6 +1,5 @@
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import TabContainer from "./TabContainer";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { useGetNotificationsInfinite } from "@/services/api/notification";
@@ -84,10 +83,7 @@ export const Title = () => {
   return (
     <div className="flex flex-row gap-2 mx-[24px] pt-1">
       <div className="w-[100%] px-1 py-2 justify-center items-center flex">
-        <span className="leading-none text-text-secondary text-lg flex-1">
-          {title}
-        </span>
-        {/* {pathname.startsWith("/dashboard") && <TabContainer tabs={dashboardTabs} className="w-[600px]" />} */}
+        <span className="leading-none text-text-secondary text-lg flex-1">{title}</span>
         {pathname.startsWith("/dashboard/schedule-payment") && (
           <ActionButton text="Create recurring payment" icon="/plus-icon.svg" onClick={() => router.push("/send")} />
         )}

@@ -1,0 +1,120 @@
+"use client";
+
+import { BaseContainer } from "@/components/Common/BaseContainer";
+import { TabContainer } from "@/components/Common/TabContainer";
+import SendTransactionForm from "@/components/Send/SendTransactionForm";
+import { Receive } from "@/components/MoveCrypto/Receive";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { TransactionOverview } from "./TransactionOverview";
+
+interface TransactionData {
+  amount: string;
+  accountName: string;
+  accountAddress: string;
+  recipientName: string;
+  recipientAddress: string;
+  transactionType: string;
+  cancellableTime: string;
+  message: string;
+  tokenAddress: string;
+  tokenSymbol: string;
+}
+
+enum STEP {
+  PREPARE = "prepare",
+  OVERVIEW = "overview",
+}
+
+const tabs = [
+  { id: "send", label: "Send" },
+  { id: "receive", label: "Receive" },
+  { id: "swap", label: "Swap", disabled: true },
+];
+
+type TabId = "send" | "receive" | "swap";
+
+const MoveCryptoContainer = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabId>("send");
+  const [step, setStep] = useState<STEP>(STEP.PREPARE);
+  const [transactionData, setTransactionData] = useState<TransactionData | null>(null);
+
+  // Initialize URL with default tab if none exists
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab") as TabId;
+
+    if (!tabFromUrl) {
+      // No tab parameter in URL, set default to send
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", "send");
+      router.replace(`?${params.toString()}`, { scroll: false });
+    } else if (tabs.some(tab => tab.id === tabFromUrl && !tab.disabled)) {
+      // Valid and enabled tab parameter, set active tab
+      setActiveTab(tabFromUrl);
+    } else {
+      // Invalid or disabled tab parameter, redirect to default
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", "send");
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Handle tab change and update URL
+  const handleTabChange = (tab: string) => {
+    const tabId = tab as TabId;
+    const selectedTab = tabs.find(t => t.id === tabId);
+
+    // Only allow switching to enabled tabs
+    if (selectedTab && !selectedTab.disabled) {
+      setActiveTab(tabId);
+
+      // Update URL with new tab parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tabId);
+      router.push(`?${params.toString()}`, { scroll: false });
+    }
+  };
+
+  // Handle transaction data from form
+  const handleTransactionData = (data: TransactionData) => {
+    setTransactionData(data);
+    setStep(STEP.OVERVIEW);
+  };
+
+  // Handle going back to form
+  const handleBackToForm = () => {
+    setStep(STEP.PREPARE);
+  };
+
+  return (
+    <div className="flex flex-col w-full h-full p-3 gap-20">
+      <div className="flex flex-row w-full px-4 gap-2">
+        <img src="/sidebar/move-crypto.svg" alt="send" className="w-6" />
+        <span className="font-semibold text-text-primary text-2xl">Transfer</span>
+      </div>
+      <div className="flex justify-center items-start h-full">
+        {step === STEP.PREPARE && (
+          <BaseContainer
+            header={
+              <div className="flex w-full justify-center items-center">
+                <TabContainer tabs={tabs} activeTab={activeTab} setActiveTab={handleTabChange} />
+              </div>
+            }
+            containerClassName="w-[600px]"
+          >
+            {activeTab === "send" && <SendTransactionForm onTransactionData={handleTransactionData} />}
+            {activeTab === "receive" && <Receive />}
+          </BaseContainer>
+        )}
+
+        {step === STEP.OVERVIEW && transactionData && (
+          <TransactionOverview {...transactionData} onBack={handleBackToForm} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MoveCryptoContainer;

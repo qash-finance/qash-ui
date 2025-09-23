@@ -38,6 +38,7 @@ import InteractAccountTransactionModal from "@/components/Modal/InteractAccountT
 import MigratingModal from "@/components/Modal/MigratingModal";
 import SelectWalletModal from "@/components/Modal/SelectWalletModal";
 import CreateImportWalletModal from "@/components/Modal/CreateImportWalletModal";
+import ProcessingTransactionModal from "@/components/Modal/ProcessingTransactionModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -86,6 +87,7 @@ export const MODAL_IDS = {
   MIGRATING: "MIGRATING",
   SELECT_WALLET: "SELECT_WALLET",
   CREATE_IMPORT_WALLET: "CREATE_IMPORT_WALLET",
+  PROCESSING_TRANSACTION: "PROCESSING_TRANSACTION",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -309,6 +311,8 @@ export interface SelectWalletModalProps extends BaseModalProps {}
 
 export interface CreateImportWalletModalProps extends BaseModalProps {}
 
+export interface ProcessingTransactionModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -350,6 +354,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.MIGRATING]: MigratingModalProps;
   [MODAL_IDS.SELECT_WALLET]: SelectWalletModalProps;
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModalProps;
+  [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -395,4 +400,5 @@ export const modalRegistry = {
   [MODAL_IDS.MIGRATING]: MigratingModal,
   [MODAL_IDS.SELECT_WALLET]: SelectWalletModal,
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModal,
+  [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModal,
 } as const;

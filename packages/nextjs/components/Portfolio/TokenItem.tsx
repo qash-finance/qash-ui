@@ -5,6 +5,7 @@ import { formatAddress } from "@/services/utils/miden/address";
 import { FaucetMetadata } from "@/types/faucet";
 import React from "react";
 import { formatUnits } from "viem";
+import { useBalanceVisibility } from "@/contexts/BalanceVisibilityProvider";
 
 interface Token {
   faucetId: string;
@@ -12,34 +13,50 @@ interface Token {
   value: string;
   icon: string;
   metadata: FaucetMetadata;
+  chain?: string;
 }
 
 interface TokenItemProps {
   token: Token;
-  isLast?: boolean;
 }
 
-export function TokenItem({ token, isLast }: TokenItemProps) {
+export function TokenItem({ token }: TokenItemProps) {
+  const { isBalanceVisible } = useBalanceVisibility();
+
   return (
     <article
-      className={`flex flex-col gap-px items-center self-stretch px-0 py-1.5 rounded-xl ${
-        isLast ? "" : "border-b border-[#323232] "
-      } hover:bg-[#232323] cursor-pointer px-2`}
+      className={`flex flex-col gap-px items-center self-stretch py-1.5 rounded-xl hover:bg-app-background cursor-pointer px-2`}
     >
-      <div className="flex justify-between items-start self-stretch max-sm:px-1 max-sm:py-0">
+      <div className="flex justify-between items-start self-stretch">
         <div className="flex gap-2 items-center">
-          <img src={token.icon} alt={token.metadata.symbol} className="w-6 h-6 rounded-full" />
+          <div className="relative">
+            <img src={token.icon} alt={token.metadata.symbol} className="w-9 rounded-full" />
+            <img
+              src={token.chain === "Miden" ? "/chain/miden.svg" : "/chain/ethereum.svg"}
+              alt={token.chain}
+              className="w-5 rounded-[5px] absolute bottom-0 right-0"
+            />
+          </div>
           <div className="flex flex-col items-start w-[60px]">
-            <h3 className="text-base font-medium leading-6 text-white">{token.metadata.symbol}</h3>
-            <p className="text-sm leading-4 text-neutral-500">{formatAddress(token.faucetId || "")}</p>
+            <h3 className="text-base font-medium leading-6 text-text-primary">{token.metadata.symbol}</h3>
+            <p className="text-sm leading-4 text-text-secondary">{token.chain || "Miden"}</p>
           </div>
         </div>
         <div className="flex flex-col justify-center items-end">
-          <span className="text-base font-medium leading-6 text-white">
-            {formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}
+          <span className="text-base font-medium leading-6 text-text-primary">
+            {isBalanceVisible ? (
+              <>
+                {formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}{" "}
+                {token.metadata.symbol}
+              </>
+            ) : (
+              "****"
+            )}
           </span>
-          <span className="text-sm leading-4 text-neutral-500">
-            $ {formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}
+          <span className="text-sm leading-4 text-text-secondary">
+            {isBalanceVisible
+              ? `$ ${formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}`
+              : "****"}
           </span>
         </div>
       </div>

@@ -123,7 +123,7 @@ export function CreateImportWalletModal({ isOpen, onClose, zIndex }: ModalProp<C
                   </span>
                 </div>
                 <div className="flex justify-center gap-2 items-center w-full">
-                  <SecondaryButton text="Import" icon="/misc/import.svg" iconPosition="left" />
+                  <SecondaryButton text="Import" icon="/misc/import-icon.svg" iconPosition="left" />
                   <PrimaryButton text="Create new wallet" icon="/misc/plus-icon.svg" iconPosition="left" />
                 </div>
               </div>

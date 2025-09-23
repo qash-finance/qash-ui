@@ -369,8 +369,6 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
           groupPayments && Object.keys(groupPayments).length > 0 ? "overflow-y-auto" : ""
         }`}
       >
-        {/* <TabContainer tabs={groups.map(group => ({ id: group, label: group }))} className="w-full" /> */}
-
         {/* Header Section */}
         <div className="flex flex-row gap-2">
           <div className="w-full">

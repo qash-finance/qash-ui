@@ -58,6 +58,11 @@
   /* Primary */
   --color-primary-blue: var(--primary-blue);
 
+  /* Base Container */
+  --color-base-container-main-background: var(--base-container-main-background);
+  --color-base-container-sub-background: var(--base-container-sub-background);
+  --color-base-container-sub-border-top: var(--base-container-sub-border-top);
+
   /* --color-primary: var(--primary);
   --color-secondary: var(--secondary);
 

@@ -8,7 +8,7 @@ export function ValidatingModal({ isOpen, onClose, zIndex }: ModalProp<Validatin
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Validating..." icon="/gift/gift-icon.svg" zIndex={zIndex}>
+    <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
       <div className="bg-[#1E1E1E] rounded-b-xl">
         <div className="flex flex-col gap-2.5 items-start justify-start pb-2 pt-1 px-2">
           <div className="bg-[#292929] flex flex-col gap-8 h-[280px] items-center justify-center py-3 rounded-lg w-full">

@@ -59,8 +59,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
 
-  // Check if current page is not-found
-  const isNotFoundPage = pathname === "/not-found" || pathname === "/404";
+  // Check if current page is not-found or mobile
+  const isNotFoundPage = pathname === "/not-found" || pathname === "/404" || pathname === "/mobile";
 
   const wallets = useMemo(
     () => [

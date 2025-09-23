@@ -5,6 +5,7 @@ import { WalletHeader } from "./WalletHeader";
 import { TokenList } from "./TokenList";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { PortfolioModalProps } from "@/types/modal";
+import { BalanceVisibilityProvider } from "@/contexts/BalanceVisibilityProvider";
 
 const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -41,25 +42,17 @@ const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
       />
       {/* Modal */}
       <main
-        className={`relative flex gap-1 justify-center items-start p-2 rounded-3xl bg-[#1E1E1E] h-full w-[470px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[425px] max-sm:p-1 max-sm:w-full max-sm:h-screen transition-transform duration-300 ease-out ${
+        className={`relative flex gap-1 justify-center items-start p-2 rounded-3xl bg-app-background h-full w-[470px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[425px] max-sm:p-1 max-sm:w-full max-sm:h-screen transition-transform duration-300 ease-out ${
           isAnimating ? "translate-x-0" : "translate-x-full"
         }`}
         style={{ zIndex: 2 }}
       >
-        {/* Back Navigation */}
-        <nav
-          className="flex relative flex-col shrink-0 justify-center items-center self-stretch px-2 py-0 rounded-2xl bg-black w-[42px] cursor-pointer"
-          onClick={handleClose}
-        >
-          <button className="flex absolute justify-center items-center w-7 h-7 top-1/2" aria-label="Close">
-            <img src="/close-icon.svg" alt="close-icon" className="w-7 h-7" />
-          </button>
-        </nav>
-
         {/* Wallet Header */}
         <div className="flex relative flex-col gap-2 items-start self-stretch flex-[1_0_0]">
-          <WalletHeader />
-          <TokenList />
+          <BalanceVisibilityProvider>
+            <WalletHeader onClose={handleClose} />
+            <TokenList />
+          </BalanceVisibilityProvider>
         </div>
       </main>
     </div>

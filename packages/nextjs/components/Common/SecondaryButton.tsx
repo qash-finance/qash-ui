@@ -12,7 +12,14 @@ interface SecondaryButtonProps {
   loading?: boolean;
 }
 
-export const SecondaryButton = ({ text, icon, iconPosition, onClick, buttonClassName }: SecondaryButtonProps) => {
+export const SecondaryButton = ({
+  text,
+  icon,
+  iconPosition,
+  onClick,
+  buttonClassName,
+  iconClassName,
+}: SecondaryButtonProps) => {
   return (
     <button
       className={`cursor-pointer w-full flex gap-2 items-center justify-center rounded-[8px] py-2 border-t-2 ${buttonClassName}`}
@@ -22,11 +29,11 @@ export const SecondaryButton = ({ text, icon, iconPosition, onClick, buttonClass
       }}
       onClick={onClick}
     >
-      {icon && iconPosition === "left" && <img src={icon} alt="Wallet" className="w-5 h-5" />}
+      {icon && iconPosition === "left" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
       <span className="text-[14px]" style={{ color: "var(--secondary-button-text)" }}>
         {text}
       </span>
-      {icon && iconPosition === "right" && <img src={icon} alt="Wallet" className="w-5 h-5" />}
+      {icon && iconPosition === "right" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
     </button>
   );
 };

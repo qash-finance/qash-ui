@@ -4,15 +4,11 @@ import { ModalHeader } from "../Common/ModalHeader";
 type BaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
-  icon?: string;
-  actionButtonIcon?: string;
   zIndex?: number;
   children: React.ReactNode;
-  onClickIcon?: () => void;
 };
 
-const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, icon, zIndex = 950, children, onClickIcon }) => {
+const BaseModal: React.FC<BaseModalProps> = ({ isOpen, zIndex = 950, children }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
