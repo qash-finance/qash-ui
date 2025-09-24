@@ -37,6 +37,7 @@ import { useCreateSchedulePayment, useGetSchedulePayments } from "@/services/api
 import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { PrimaryButton } from "../Common/PrimaryButton";
+import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -57,6 +58,7 @@ interface SendTransactionFormProps {
     message: string;
     tokenAddress: string;
     tokenSymbol: string;
+    recallableTimeSeconds: number;
   }) => void;
 }
 
@@ -476,15 +478,17 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
 
     if (!isConnected || !walletAddress) {
+      toast.dismiss();
+      toast.error("Please connect your wallet");
       return;
     }
 
     // check if amount > balance
-    // if (amount > parseFloat(selectedToken.amount)) {
-    //   toast.dismiss();
-    //   toast.error("Insufficient balance");
-    //   return;
-    // }
+    if (amount > parseFloat(selectedToken.amount)) {
+      toast.dismiss();
+      toast.error("Insufficient balance");
+      return;
+    }
 
     if (!validateAddress(recipientAddress)) {
       toast.dismiss();
@@ -523,6 +527,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
       message: data.message || "Transaction details",
       tokenAddress: selectedToken.faucetId,
       tokenSymbol: selectedToken.metadata.symbol,
+      recallableTimeSeconds: recallableTime, // Pass the recallable time in seconds
     };
 
     // If onTransactionData callback is provided, use it instead of modal
@@ -687,7 +692,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
         <span className="text-text-primary text-base">{selectedToken.metadata.symbol}</span>
         <button
           className="flex items-center justify-center px-4 py-2 rounded-lg bg-background border border-primary-divider shadow-sm cursor-pointer"
-          onClick={() => setValue("amount", parseFloat(selectedToken.amount))}
+          onClick={() =>
+            setValue(
+              "amount",
+              parseFloat(
+                formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
+              ),
+            )
+          }
         >
           <span className="text-text-primary text-sm font-semibold">Max</span>
         </button>
@@ -696,7 +708,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
         <p className="text-xs text-text-secondary">
           Available:{" "}
           <span className="text-text-primary">
-            {parseFloat(selectedToken.amount).toFixed(3)} {selectedToken.metadata.symbol}
+            {formatNumberWithCommas(
+              formatUnits(BigInt(Math.round(Number(selectedToken.amount))), selectedToken.metadata.decimals),
+            )}{" "}
+            {selectedToken.metadata.symbol}
           </span>
         </p>
       </div>
@@ -710,7 +725,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
             type="text"
             className={inputFieldClass}
             autoComplete="off"
-            placeholder="0x2A098898990628505749aBe334547B3f0D0d0F75"
+            placeholder="mtst..."
           />
         </div>
         <button
@@ -791,16 +806,23 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4">
-        {/* <button
-          type="button"
-          className="bg-white rounded-lg flex items-center gap-2 px-4 py-2 flex-1"
-          onClick={() => setIsSubmittingAsBatch(true)}
-        >
-          <img alt="" className="w-5 h-5" src="/misc/batch-icon.svg" />
-          <span className="text-[#1b1b1b] text-sm">Add to Batch</span>
-        </button> */}
-        <PrimaryButton text="Send" onClick={() => setIsSubmittingAsBatch(false)} containerClassName="flex-1" />
+      <div className="flex gap-3">
+        {selectedToken.metadata.symbol && watch("amount") && watch("recipientAddress") && (
+          <button
+            type="button"
+            className="bg-background justify-center border-b-1 border-primary-divider rounded-lg flex items-center gap-2 px-4 py-2 flex-1 cursor-pointer"
+            onClick={() => setIsSubmittingAsBatch(true)}
+          >
+            <img alt="" className="w-5" src="/misc/light-shopping-bag.svg" />
+            <span className="text-text-primary text-sm">Add to Batch</span>
+          </button>
+        )}
+        <PrimaryButton
+          text="Send"
+          onClick={() => setIsSubmittingAsBatch(false)}
+          containerClassName="flex-3"
+          disabled={!selectedToken.metadata.symbol || !watch("amount") || !watch("recipientAddress")}
+        />
       </div>
     </form>
   );

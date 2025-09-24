@@ -11,7 +11,6 @@ import OnboardingModal from "@/components/Modal/OnboardingModal";
 import ConnectWalletModal from "@/components/Modal/ConnectWallet/ConnectWalletModal";
 import TransactionOverviewModal from "@/components/Modal/TransactionOverviewModal";
 import Notification from "@/components/Notification/Notification";
-import ImportWalletModal from "@/components/Modal/ConnectWallet/ImportWallet";
 import BatchTransactionOverviewModal from "@/components/Modal/Batch/BatchTransactionOverviewModal";
 import BatchTransactionsModal from "@/components/Modal/Batch/BatchTransactionsModal";
 import GroupLinkModal from "@/components/Modal/Group/GroupLinkModal";
@@ -23,7 +22,7 @@ import SuccessModal from "@/components/Modal/Status/SuccessModal";
 import FailModal from "@/components/Modal/Status/FailModal";
 import DeleteGroupModal from "@/components/Modal/Group/DeleteGroupModal";
 import EditGroupModal from "@/components/Modal/Group/EditGroupModal";
-import ResetAccountModal from "@/components/Modal/ResetAccountModal";
+import ResetAccountModal from "@/components/Modal/Wallet/ResetAccountModal";
 import DatePickerModal from "@/components/Modal/Date/DatePickerModal";
 import SetupSchedulePaymentModal from "@/components/Modal/SchedulePayment/SetupSchedulePaymentModal";
 import RecurringTransferModal from "@/components/Modal/SchedulePayment/RecurringTransferModal";
@@ -36,9 +35,11 @@ import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
 import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
 import InteractAccountTransactionModal from "@/components/Modal/InteractAccountTransactionModal";
 import MigratingModal from "@/components/Modal/MigratingModal";
-import SelectWalletModal from "@/components/Modal/SelectWalletModal";
-import CreateImportWalletModal from "@/components/Modal/CreateImportWalletModal";
+import SelectWalletModal from "@/components/Modal/Wallet/SelectWalletModal";
+import CreateImportWalletModal from "@/components/Modal/Wallet/CreateImportWalletModal";
 import ProcessingTransactionModal from "@/components/Modal/ProcessingTransactionModal";
+import CreateWalletModal from "@/components/Modal/Wallet/CreateWalletModal";
+import ImportWalletModal from "@/components/Modal/Wallet/ImportWalletModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -88,6 +89,7 @@ export const MODAL_IDS = {
   SELECT_WALLET: "SELECT_WALLET",
   CREATE_IMPORT_WALLET: "CREATE_IMPORT_WALLET",
   PROCESSING_TRANSACTION: "PROCESSING_TRANSACTION",
+  CREATE_WALLET: "CREATE_WALLET",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -165,6 +167,7 @@ export interface TransactionOverviewModalProps extends BaseModalProps {
     times: number;
     startDate: Date;
   } | null;
+  transactionHash?: string;
 }
 
 export interface BatchTransactionOverviewModalProps extends BaseModalProps {
@@ -313,6 +316,8 @@ export interface CreateImportWalletModalProps extends BaseModalProps {}
 
 export interface ProcessingTransactionModalProps extends BaseModalProps {}
 
+export interface CreateWalletModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.SEND]: SendModalProps;
@@ -355,6 +360,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.SELECT_WALLET]: SelectWalletModalProps;
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModalProps;
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModalProps;
+  [MODAL_IDS.CREATE_WALLET]: CreateWalletModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -401,4 +407,5 @@ export const modalRegistry = {
   [MODAL_IDS.SELECT_WALLET]: SelectWalletModal,
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModal,
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModal,
+  [MODAL_IDS.CREATE_WALLET]: CreateWalletModal,
 } as const;

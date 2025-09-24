@@ -7,6 +7,7 @@ import { Receive } from "@/components/MoveCrypto/Receive";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { TransactionOverview } from "./TransactionOverview";
+import { useTitle } from "@/contexts/TitleProvider";
 
 interface TransactionData {
   amount: string;
@@ -37,6 +38,7 @@ type TabId = "send" | "receive" | "swap";
 const MoveCryptoContainer = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
   const [activeTab, setActiveTab] = useState<TabId>("send");
   const [step, setStep] = useState<STEP>(STEP.PREPARE);
   const [transactionData, setTransactionData] = useState<TransactionData | null>(null);
@@ -81,11 +83,22 @@ const MoveCryptoContainer = () => {
   const handleTransactionData = (data: TransactionData) => {
     setTransactionData(data);
     setStep(STEP.OVERVIEW);
+    setTitle(
+      <div className="flex items-center gap-2">
+        <span className="text-text-secondary">Transfer /</span>
+        <span className="text-text-primary">Transaction Overview</span>
+      </div>,
+    );
+    setShowBackArrow(true);
+    setOnBackClick(() => handleBackToForm);
   };
 
   // Handle going back to form
   const handleBackToForm = () => {
     setStep(STEP.PREPARE);
+    setTitle("Welcome to Qash");
+    setShowBackArrow(false);
+    setOnBackClick(undefined);
   };
 
   return (

@@ -40,10 +40,20 @@
   --color-primary-button-text: var(--primary-button-text);
   --color-primary-button-border-top: var(--primary-button-border-top);
   --color-primary-button-background: var(--primary-button-background);
+  --color-primary-button-disabled: var(--primary-button-disabled);
+  --color-primary-button-disabled-text: var(--primary-button-disabled-text);
+  --color-primary-button-disabled-border-top: var(--primary-button-disabled-border-top);
+  --color-primary-button-disabled-background: var(--primary-button-disabled-background);
 
-  --color-secondary-button-text: var(--secondary-button-text);
-  --color-secondary-button-background: var(--secondary-button-background);
-  --color-secondary-button-border-top: var(--secondary-button-border-top);
+  --color-secondary-dark-button-text: var(--secondary-dark-button-text);
+  --color-secondary-dark-button-background: var(--secondary-dark-button-background);
+  --color-secondary-dark-button-border-top: var(--secondary-dark-button-border-top);
+  --color-secondary-light-button-text: var(--secondary-light-button-text);
+  --color-secondary-light-button-background: var(--secondary-light-button-background);
+  --color-secondary-light-button-border-top: var(--secondary-light-button-border-top);
+  --color-secondary-red-button-text: var(--secondary-red-button-text);
+  --color-secondary-red-button-background: var(--secondary-red-button-background);
+  --color-secondary-red-button-border-top: var(--secondary-red-button-border-top);
 
   /* Card */
   --color-card-button-text: var(--card-button-text);
@@ -62,6 +72,16 @@
   --color-base-container-main-background: var(--base-container-main-background);
   --color-base-container-sub-background: var(--base-container-sub-background);
   --color-base-container-sub-border-top: var(--base-container-sub-border-top);
+
+  /* Badge */
+  --color-badge-success-background: var(--badge-success-background);
+  --color-badge-success-text: var(--badge-success-text);
+  --color-badge-success-border: var(--badge-success-border);
+
+  /* Loading Bar */
+  --color-loading-bar-background: var(--loading-bar-background);
+  --color-loading-bar-border: var(--loading-bar-border);
+  --color-loading-bar-gradient: var(--loading-bar-gradient);
 
   /* --color-primary: var(--primary);
   --color-secondary: var(--secondary);

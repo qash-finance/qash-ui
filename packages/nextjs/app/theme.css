@@ -24,10 +24,20 @@
   --primary-button-text: #ffffff;
   --primary-button-border-top: #4888ff;
   --primary-button-background: linear-gradient(0deg, #002c69 0%, #0061e7 100%);
+  --primary-button-disabled: #e7e7e7;
+  --primary-button-disabled-text: #848484;
+  --primary-button-disabled-border-top: transparent;
+  --primary-button-disabled-background: #d7d7d7;
 
-  --secondary-button-text: #ffffff;
-  --secondary-button-background: linear-gradient(1deg, #262626 0.47%, #5d5d5d 113.62%);
-  --secondary-button-border-top: #848484;
+  --secondary-dark-button-text: #ffffff;
+  --secondary-dark-button-background: linear-gradient(1deg, #262626 0.47%, #5d5d5d 113.62%);
+  --secondary-dark-button-border-top: #848484;
+  --secondary-light-button-text: #1b1b1b;
+  --secondary-light-button-background: #f6f6f6;
+  --secondary-light-button-border-top: #e0e1e5;
+  --secondary-red-button-text: #ffffff;
+  --secondary-red-button-background: #e93544;
+  --secondary-red-button-border-top: #ff6875;
 
   /* Toast */
   --toast-background: #3b3c3b;
@@ -46,6 +56,16 @@
   --base-container-main-background: #e7e7e7;
   --base-container-sub-background: #f6f6f6;
   --base-container-sub-border-top: #ffffff;
+
+  /* Badge */
+  --badge-success-background: #cef9d8;
+  --badge-success-text: #007b4b;
+  --badge-success-border: #83ffa0;
+
+  /* Loading Bar */
+  --loading-bar-background: #f6f6f6;
+  --loading-bar-border: #e0e1e5;
+  --loading-bar-gradient: linear-gradient(270deg, #caffef 0%, #6fb2f1 24.4%, #416af9 100%);
 
   --secondary: #e0e0e0;
   --tertiary: #0844c5;

@@ -224,6 +224,16 @@ export default function MoveCryptoSidebar({ isOpen, onClose }: AccountSidebarPro
 
   return (
     <>
+      {/* Backdrop overlay for click outside detection */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[5] bg-transparent"
+          onClick={onClose}
+          style={{
+            pointerEvents: isOpen ? "auto" : "none",
+          }}
+        />
+      )}
       <div
         className="absolute top-0 h-[100%] w-[280px] bg-background z-10 rounded-tr-lg rounded-br-lg p-3 flex flex-col gap-2 transition-all duration-300 ease-in-out"
         style={{
@@ -232,6 +242,7 @@ export default function MoveCryptoSidebar({ isOpen, onClose }: AccountSidebarPro
           pointerEvents: isOpen ? "auto" : "none",
           boxShadow: isOpen ? "50px 0 50px rgba(0,0,0,0.15)" : "none",
         }}
+        onClick={e => e.stopPropagation()}
       >
         <div className="mt-13">
           <NavSections sections={items} onItemClick={handleItemClick} />

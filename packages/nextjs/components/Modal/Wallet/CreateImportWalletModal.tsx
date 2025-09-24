@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { CreateImportWalletModalProps, MODAL_IDS } from "@/types/modal";
 import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
-import { ModalHeader } from "../Common/ModalHeader";
-import { PrimaryButton } from "../Common/PrimaryButton";
-import { SecondaryButton } from "../Common/SecondaryButton";
+import BaseModal from "../BaseModal";
+import { ModalHeader } from "../../Common/ModalHeader";
+import { PrimaryButton } from "../../Common/PrimaryButton";
+import { SecondaryButton } from "../../Common/SecondaryButton";
 import { getLastConnectedAddress, getWalletAddresses, useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { formatAddress } from "@/services/utils/miden/address";
 import toast from "react-hot-toast";
@@ -77,7 +77,7 @@ export function CreateImportWalletModal({ isOpen, onClose, zIndex }: ModalProp<C
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Validating..." icon="/gift/gift-icon.svg" zIndex={zIndex}>
+    <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
       <div className="flex flex-col w-[920px] h-[450px]">
         <ModalHeader title="Create or Import Your Wallet" onClose={onClose} icon="/modal/blue-wallet-icon.gif" />
         <div className="bg-background rounded-b-2xl border-2 border-primary-divider border-t-0 flex-1">
@@ -123,8 +123,21 @@ export function CreateImportWalletModal({ isOpen, onClose, zIndex }: ModalProp<C
                   </span>
                 </div>
                 <div className="flex justify-center gap-2 items-center w-full">
-                  <SecondaryButton text="Import" icon="/misc/import-icon.svg" iconPosition="left" />
-                  <PrimaryButton text="Create new wallet" icon="/misc/plus-icon.svg" iconPosition="left" />
+                  <SecondaryButton
+                    text="Import"
+                    icon="/misc/import-icon.svg"
+                    iconPosition="left"
+                    onClick={() => openModal(MODAL_IDS.IMPORT_WALLET)}
+                  />
+                  <PrimaryButton
+                    text="Create new wallet"
+                    icon="/misc/plus-icon.svg"
+                    iconPosition="left"
+                    onClick={() => {
+                      onClose();
+                      openModal(MODAL_IDS.CREATE_WALLET);
+                    }}
+                  />
                 </div>
               </div>
             </div>

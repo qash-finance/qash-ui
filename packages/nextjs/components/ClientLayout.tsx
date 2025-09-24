@@ -15,6 +15,7 @@ import { shouldShowMigrationModal } from "./Modal/MigratingModal";
 import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
+import { TitleProvider } from "@/contexts/TitleProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
@@ -150,45 +151,47 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         refreshInterval={AUTH_REFRESH_INTERVAL}
                       >
                         <AccountProvider>
-                          {/* <ConnectWalletButton /> */}
-                          <ModalManager />
-                          <ModalTrigger ref={modalRef} />
-                          {isNotFoundPage ? (
-                            // Full-page layout for not-found page
-                            <div className="h-screen w-screen">{children}</div>
-                          ) : (
-                            // Regular layout for other pages
-                            <div className="flex flex-row gap-2">
-                              <div className="top-0 w-[240px]">
-                                <Sidebar />
-                              </div>
-                              {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
-                              <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
-                                <Title />
-                                <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
-                                  {children}
-                                  {!isConnected && (
-                                    <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
-                                      <img
-                                        src="/modal/wallet-icon.gif"
-                                        alt="connect-wallet-icon"
-                                        className="w-16 h-16"
-                                      />
-                                      <span className="text-white text-lg font-medium">
-                                        Please connect your wallet to display information.
-                                      </span>
-                                      <ActionButton
-                                        text="Connect Wallet"
-                                        onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
-                                      />
-                                    </div>
-                                  )}
+                          <TitleProvider>
+                            {/* <ConnectWalletButton /> */}
+                            <ModalManager />
+                            <ModalTrigger ref={modalRef} />
+                            {isNotFoundPage ? (
+                              // Full-page layout for not-found page
+                              <div className="h-screen w-screen">{children}</div>
+                            ) : (
+                              // Regular layout for other pages
+                              <div className="flex flex-row gap-2">
+                                <div className="top-0 w-[240px]">
+                                  <Sidebar />
+                                </div>
+                                {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
+                                <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
+                                  <Title />
+                                  <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
+                                    {children}
+                                    {!isConnected && (
+                                      <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
+                                        <img
+                                          src="/modal/wallet-icon.gif"
+                                          alt="connect-wallet-icon"
+                                          className="w-16 h-16"
+                                        />
+                                        <span className="text-white text-lg font-medium">
+                                          Please connect your wallet to display information.
+                                        </span>
+                                        <ActionButton
+                                          text="Connect Wallet"
+                                          onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
-                          {!isNotFoundPage && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                          {!isNotFoundPage && <Background />}
+                            )}
+                            {!isNotFoundPage && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                            {!isNotFoundPage && <Background />}
+                          </TitleProvider>
                         </AccountProvider>
                       </AuthProvider>
                     </AnalyticsProvider>

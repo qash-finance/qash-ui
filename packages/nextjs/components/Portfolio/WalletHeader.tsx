@@ -53,7 +53,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="flex gap-2 items-center self-stretch">
+        <div className={`flex gap-2 items-center self-stretch ${isBalanceVisible ? "mb-0" : "mb-8"}`}>
           <span className="text-4xl leading-9 text-text-secondary uppercase">$</span>
           {isBalanceVisible ? (
             <span className="text-4xl font-bold tracking-tighter leading-9 text-text-primary uppercase">

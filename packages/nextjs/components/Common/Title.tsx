@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { useGetNotificationsInfinite } from "@/services/api/notification";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
+import { useTitle } from "@/contexts/TitleProvider";
 import { ActionButton } from "./ActionButton";
 
 export const Title = () => {
@@ -11,64 +12,18 @@ export const Title = () => {
   const pathname = usePathname();
   const { walletAddress, isConnected } = useWalletConnect();
   const router = useRouter();
+  const { title, showBackArrow, onBackClick, resetTitle } = useTitle();
+
+  // Reset title when route changes
+  useEffect(() => {
+    resetTitle();
+  }, [pathname]);
 
   // Calculate unread count
   const { data } = useGetNotificationsInfinite(walletAddress, 20);
   const unreadCount = data?.pages
     ? data.pages.flatMap(page => page.notifications).filter((item: any) => item.status === "UNREAD").length
     : 0;
-
-  let title;
-  switch (pathname) {
-    case "/send":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/pending-receive":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/pending-request":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/cancel-transaction":
-      title = "Welcome to Qash";
-      break;
-    case "/batch":
-      title = "Welcome to Qash";
-      break;
-    case "/group-payment":
-      title = "Welcome to Qash";
-      break;
-    case "/account-management":
-      title = "Welcome to Qash";
-      break;
-    case "/transactions":
-      title = "Welcome to Qash";
-      break;
-    case "/gift":
-      title = "Welcome to Qash";
-      break;
-    case "/gift/open-gift":
-      title = "Welcome to Qash";
-      break;
-    case "/address-book":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/schedule-payment":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/wallet-analytics":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/wallet-analytics/transaction-history":
-      title = "Welcome to Qash";
-      break;
-    case "/dashboard/stream-receive":
-      title = "Welcome to Qash";
-      break;
-
-    default:
-      title = "Welcome to Qash";
-  }
 
   const dashboardTabs = [
     { id: "pending-receive", label: "Receive", href: "/dashboard/pending-receive" },
@@ -82,8 +37,11 @@ export const Title = () => {
 
   return (
     <div className="flex flex-row gap-2 mx-[24px] pt-1">
-      <div className="w-[100%] px-1 py-2 justify-center items-center flex">
-        <span className="leading-none text-text-secondary text-lg flex-1">{title}</span>
+      <div className="w-[100%] px-1 py-2 justify-center items-center flex gap-3">
+        {showBackArrow && (
+          <img src="/arrow/thin-arrow-left.svg" alt="back" className="w-5 cursor-pointer" onClick={onBackClick} />
+        )}
+        <div className="leading-none text-text-secondary text-lg flex-1">{title}</div>
         {pathname.startsWith("/dashboard/schedule-payment") && (
           <ActionButton text="Create recurring payment" icon="/plus-icon.svg" onClick={() => router.push("/send")} />
         )}
@@ -93,7 +51,7 @@ export const Title = () => {
         className="cursor-pointer flex flex-row gap-1 items-center justify-center px-6 py-2 bg-background rounded-lg leading-none border-t-1 border-t-primary-divider"
         onClick={() => openModal(MODAL_IDS.PORTFOLIO)}
       >
-        <img src="/misc/shopping-bag.svg" alt="coin-icon" className="w-5 h-5 " />
+        <img src="/misc/dark-shopping-bag.svg" alt="coin-icon" className="w-5 h-5 " />
         Batch
       </button>
 

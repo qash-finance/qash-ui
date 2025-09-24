@@ -55,10 +55,19 @@ export const LoadingBar: React.FC<LoadingBarProps> = ({ progress, className = ""
 
   return (
     <div className={`flex flex-row gap-2 items-center justify-start p-0 relative w-full ${className}`}>
-      <div className="basis-0 bg-[#292929] flex flex-row grow h-10 items-center justify-start min-h-px min-w-px overflow-clip p-[6px] relative rounded shrink-0">
+      <div
+        className="basis-0 flex flex-row grow h-10 items-center justify-start min-h-px min-w-px overflow-clip p-[6px] relative rounded-[4px] shrink-0"
+        style={{
+          backgroundColor: "var(--color-loading-bar-background)",
+          border: "1px solid var(--color-loading-bar-border)",
+        }}
+      >
         <div
-          className="bg-gradient-to-l from-[#caffef] h-full relative rounded shrink-0 to-[#416af9] via-[#6fb2f1] will-change-[width]"
-          style={{ width }}
+          className="h-full relative rounded-[4px] shrink-0 will-change-[width]"
+          style={{
+            width,
+            background: "var(--color-loading-bar-gradient)",
+          }}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -74,9 +83,7 @@ export const LoadingBar: React.FC<LoadingBarProps> = ({ progress, className = ""
           />
         </div>
       </div>
-      <div className="font-['Barlow:Medium',_sans-serif] leading-[0] not-italic relative shrink-0 text-[#fbfeff] text-[24px] text-right w-14">
-        <p className="block leading-[normal]">{Math.round(animatedProgress)}%</p>
-      </div>
+      <span className="text-text-primary font-bold text-2xl">{Math.round(animatedProgress)}%</span>
     </div>
   );
 };

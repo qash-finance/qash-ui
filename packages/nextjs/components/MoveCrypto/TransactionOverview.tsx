@@ -16,6 +16,8 @@ import { sendSingleTransaction } from "@/services/api/transaction";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS } from "@/types/modal";
 
 interface SendTransactionFormValues {
   amount: number;
@@ -39,6 +41,7 @@ interface TransactionOverviewProps {
   onBack?: () => void;
   tokenAddress?: string;
   tokenSymbol?: string;
+  recallableTimeSeconds?: number; // Add recallable time in seconds
 }
 
 export const TransactionOverview = ({
@@ -53,25 +56,31 @@ export const TransactionOverview = ({
   onBack,
   tokenAddress,
   tokenSymbol,
+  recallableTimeSeconds,
 }: TransactionOverviewProps) => {
   const { addTransaction, getBatchTransactions, removeTransaction } = useBatchTransactions(state => state);
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
+  const { openModal, closeModal } = useModal();
   const [isSending, setIsSending] = useState(false);
-  const [recallableTime, setRecallableTime] = useState(0);
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
+  const recallableTime = recallableTimeSeconds || 3600; // Default to 1 hour if not provided
+
+  // Find the selected token from assets based on tokenAddress
+  const selectedToken = assets.find(asset => asset.faucetId === tokenAddress) || {
     amount: "0",
-    faucetId: "",
+    faucetId: tokenAddress || "",
     metadata: {
-      symbol: "",
-      decimals: 0,
+      symbol: tokenSymbol || "",
+      decimals: 8, // Default decimals for QASH
       maxSupply: 0,
     },
-  });
+  };
 
   const onConfirm = async () => {
+    // Open processing modal first
+    openModal(MODAL_IDS.PROCESSING_TRANSACTION, {});
+
     setIsSending(true);
-    toast.loading("Sending transaction...");
 
     // each block is 5 seconds, calculate recall height
     const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
@@ -144,20 +153,24 @@ export const TransactionOverview = ({
       }, REFETCH_DELAY);
 
       if (response) {
-        toast.dismiss();
-        toast.success(
-          <div>
-            Transaction sent successfully, view transaction on{" "}
-            <a
-              href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              Miden Explorer
-            </a>
-          </div>,
-        );
+        // Close processing modal and open transaction overview modal
+        closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
+
+        openModal(MODAL_IDS.TRANSACTION_OVERVIEW, {
+          amount,
+          accountName,
+          accountAddress,
+          recipientName,
+          recipientAddress,
+          transactionType,
+          cancellableTime,
+          message,
+          tokenAddress,
+          tokenSymbol,
+          transactionHash: txId,
+        });
+
+        onBack?.();
 
         const batchTransactions = getBatchTransactions(walletAddress);
         const matchedTransactions = batchTransactions.filter(tx => {
@@ -172,7 +185,8 @@ export const TransactionOverview = ({
         matchedTransactions.forEach(tx => removeTransaction(walletAddress, tx.id));
       }
     } catch (error) {
-      toast.dismiss();
+      // Close processing modal on error
+      closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
       console.error("Failed to send transaction:", error);
       toast.error("Failed to send transaction :(");
     } finally {
@@ -232,7 +246,7 @@ export const TransactionOverview = ({
 
       <div className={itemStyle}>
         <span>Message</span>
-        <span className="text-right word-wrap break-words w-[360px]">{message}</span>
+        <span className="text-right word-wrap break-words w-[360px] truncate">{message}</span>
       </div>
 
       <div className="flex flex-rol justify-between items-center p-4 gap-20">
