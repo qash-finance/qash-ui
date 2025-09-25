@@ -36,7 +36,7 @@ const Card = ({ text, subtitle, icon }: { text: string; subtitle: string; icon: 
 
 export const CardContainer = () => {
   return (
-    <div className="w-full h-full flex flex-row gap-2">
+    <div className="w-full flex flex-row gap-2">
       <Card text="Create payroll" subtitle="Run private payroll that stays compliant" icon="/card/star-icon.svg" />
       <Card text="Create automation" subtitle="Automate your received money movement" icon="/card/code-icon.svg" />
       <Card

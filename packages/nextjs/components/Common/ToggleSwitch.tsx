@@ -1,5 +1,5 @@
 "use client";
-import * as React from "react";
+import React, { useState } from "react";
 
 interface ToggleSwitchProps {
   enabled: boolean;
@@ -8,23 +8,29 @@ interface ToggleSwitchProps {
 }
 
 export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, disabled }) => {
+  const [value, setValue] = useState(enabled);
   return (
     <button
       type="button"
-      onClick={() => !disabled && onChange(!enabled)}
-      className={`${
-        disabled ? "cursor-not-allowed" : "cursor-pointer"
-      } flex flex-col items-start w-10 rounded-md border-2 border-solid shadow-sm transition-colors ${
-        enabled ? "bg-blue-500 border-blue-400" : "bg-zinc-100 border-zinc-300"
-      }`}
-      aria-pressed={enabled}
-      role="switch"
+      className="w-10 h-6 cursor-pointer relative"
+      onClick={() => {
+        setValue(!value);
+        onChange(value);
+      }}
+      disabled={disabled}
     >
       <div
-        className={`flex shrink-0 gap-1 w-5 h-4 rounded-md shadow transition-transform ${
-          enabled ? "bg-white translate-x-4" : "bg-zinc-400 translate-x-0"
-        }`}
+        className={`absolute inset-0 ${value ? "bg-primary-blue" : "bg-background border border-primary-divider"} rounded-xl`}
       />
+      <div
+        className={`absolute top-0 w-6 h-6 transition-all duration-200 ${value ? "translate-x-4" : "translate-x-0"}`}
+      >
+        <div
+          className={`absolute inset-0 ${
+            value ? "bg-white border border-primary-blue" : "bg-background border border-primary-divider"
+          } rounded-full`}
+        />
+      </div>
     </button>
   );
 };

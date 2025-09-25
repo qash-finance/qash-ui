@@ -83,6 +83,15 @@
   --color-loading-bar-border: var(--loading-bar-border);
   --color-loading-bar-gradient: var(--loading-bar-gradient);
 
+  /* Table */
+  --color-table-header-background: var(--table-header-background);
+  --color-table-header-text: var(--table-header-text);
+  --color-table-header-border: var(--table-header-border);
+  --color-table-row-background: var(--table-row-background);
+  --color-table-row-text: var(--table-row-text);
+  --color-table-row-border: var(--table-row-border);
+  --color-table-row-selected-background: var(--table-row-selected-background);
+
   /* --color-primary: var(--primary);
   --color-secondary: var(--secondary);
 
@@ -271,8 +280,8 @@ input:-moz-autofill:active {
   left: 0;
   width: 16px;
   height: 16px;
-  background: #363636;
-  border: none;
+  background: #f6f6f6;
+  border: 1px solid #e7e8ea;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
@@ -282,13 +291,8 @@ input:-moz-autofill:active {
 }
 
 .custom-checkbox input[type="checkbox"]:checked ~ .checkmark {
-  background: linear-gradient(
-    158.39deg,
-    rgba(255, 255, 255, 0.1) 14.19%,
-    rgba(255, 255, 255, 0.025) 50.59%,
-    rgba(255, 255, 255, 0.025) 68.79%,
-    rgba(255, 255, 255, 0.1) 105.18%
-  );
+  background: #000000;
+  border: none;
 }
 
 .custom-checkbox .checkmark::after {
@@ -297,9 +301,9 @@ input:-moz-autofill:active {
   display: none;
   left: 50%;
   top: 50%;
-  transform: translate(-40%, -60%);
-  width: 19px;
-  height: 19px;
+  transform: translate(-45%, -50%);
+  width: 13px;
+  height: 13px;
   background-image: url("/custom-check-icon.svg");
   background-size: contain;
   background-repeat: no-repeat;

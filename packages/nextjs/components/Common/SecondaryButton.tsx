@@ -2,7 +2,7 @@
 import React from "react";
 
 interface SecondaryButtonProps {
-  text: string;
+  text: string | React.ReactNode;
   icon?: string;
   iconPosition?: "left" | "right";
   onClick?: () => void;
@@ -58,9 +58,13 @@ export const SecondaryButton = ({
       onClick={onClick}
     >
       {icon && iconPosition === "left" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
-      <span className="text-[14px]" style={{ color: variantStyles.color }}>
-        {text}
-      </span>
+      {typeof text === "string" ? (
+        <span className="text-[14px]" style={{ color: variantStyles.color }}>
+          {text}
+        </span>
+      ) : (
+        text
+      )}
       {icon && iconPosition === "right" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
     </button>
   );

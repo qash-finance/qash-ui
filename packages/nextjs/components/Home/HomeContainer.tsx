@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Header } from "./Header";
 import { CardContainer } from "./CardContainer";
+import { PaymentInteraction } from "./PaymentInteraction";
 
 export const HomeContainer = () => {
   return (
@@ -9,6 +10,7 @@ export const HomeContainer = () => {
       <div className="w-full h-full flex flex-col gap-4 px-5">
         <Header />
         <CardContainer />
+        <PaymentInteraction />
       </div>
     </div>
   );

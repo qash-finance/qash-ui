@@ -38,7 +38,7 @@ import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
-
+import { ToggleSwitch } from "../Common/ToggleSwitch";
 export enum AmountInputTab {
   SEND = "send",
   STREAM = "stream",
@@ -781,28 +781,10 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
           <p className="text-text-primary text-sm">Private transaction</p>
           <p className="text-text-secondary text-sm">Only you and the recipient know about this transaction</p>
         </div>
-        <button
-          type="button"
-          className="w-10 h-6 cursor-pointer relative"
-          onClick={() => setValue("isPrivateTransaction", !watch("isPrivateTransaction"))}
-        >
-          <div
-            className={`absolute inset-0 ${watch("isPrivateTransaction") ? "bg-primary-blue" : "bg-background border border-primary-divider"} rounded-xl`}
-          />
-          <div
-            className={`absolute top-0 w-6 h-6 transition-all duration-200 ${
-              watch("isPrivateTransaction") ? "translate-x-4" : "translate-x-0"
-            }`}
-          >
-            <div
-              className={`absolute inset-0 ${
-                watch("isPrivateTransaction")
-                  ? "bg-white border border-primary-blue"
-                  : "bg-background border border-primary-divider"
-              } rounded-full`}
-            />
-          </div>
-        </button>
+        <ToggleSwitch
+          enabled={watch("isPrivateTransaction")}
+          onChange={enabled => setValue("isPrivateTransaction", enabled)}
+        />
       </div>
 
       {/* Action Buttons */}

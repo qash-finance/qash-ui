@@ -67,6 +67,15 @@
   --loading-bar-border: #e0e1e5;
   --loading-bar-gradient: linear-gradient(270deg, #caffef 0%, #6fb2f1 24.4%, #416af9 100%);
 
+  /* Table */
+  --table-header-background: #e7e7e7;
+  --table-header-text: #1b1b1b;
+  --table-header-border: #d4d6d9;
+  --table-row-background: #ffffff;
+  --table-row-text: #1b1b1b;
+  --table-row-border: #e7e8ec;
+  --table-row-selected-background: #f1f3ff;
+
   --secondary: #e0e0e0;
   --tertiary: #0844c5;
 

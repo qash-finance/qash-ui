@@ -5,11 +5,13 @@ interface TabContainerProps {
   tabs: { id: string; label: string; disabled?: boolean }[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  textSize?: "sm" | "base";
+  tabWidth?: number;
 }
 
 const ANIMATION_DURATION = 150; // Animation duration in milliseconds
 
-export function TabContainer({ tabs, activeTab, setActiveTab }: TabContainerProps) {
+export function TabContainer({ tabs, activeTab, setActiveTab, textSize = "base", tabWidth = 150 }: TabContainerProps) {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -31,15 +33,14 @@ export function TabContainer({ tabs, activeTab, setActiveTab }: TabContainerProp
   }, [activeTab, tabs]);
 
   // Base styles for all tab buttons
-  const baseTabStyles =
-    "flex gap-0.5 justify-center items-center self-stretch px-4 py-1.5 rounded-xl flex-[1_0_0] relative z-10";
+  const baseTabStyles = `flex gap-0.5 justify-center items-center self-stretch py-1.5 rounded-xl flex-[1_0_0] relative z-10 w-[${tabWidth}px]`;
   // Active tab styles
   const activeTabStyles = "text-text-primary cursor-pointer";
   // Disabled tab styles
   const disabledTabStyles = "cursor-not-allowed opacity-50";
 
   // Base styles for all tab text
-  const baseTextStyles = `text-base font-medium transition-colors duration-${ANIMATION_DURATION} ease-in-out`;
+  const baseTextStyles = `text-${textSize} font-medium transition-colors duration-${ANIMATION_DURATION} ease-in-out w-full`;
   // Non-active text styles
   const inactiveTextStyles = "text-text-primary opacity-20";
 
