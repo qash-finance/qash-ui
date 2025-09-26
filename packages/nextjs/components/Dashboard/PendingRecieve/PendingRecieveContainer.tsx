@@ -12,7 +12,6 @@ import {
   consumeUnauthenticatedNote,
   consumeNoteByID,
   getConsumableNotes,
-  getNotesTransactionRequest,
 } from "@/services/utils/miden/note";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
@@ -30,8 +29,6 @@ import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
 import { useConsumePublicNotes } from "@/services/api/transaction";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
-import { NoteAndArgsArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
-import { ConsumeTransaction } from "@demox-labs/miden-wallet-adapter-base";
 
 const HeaderColumns = ["Amount", "From", "Action"];
 

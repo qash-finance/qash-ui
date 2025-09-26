@@ -4,7 +4,7 @@ import { PartialConsumableNote } from "@/types/faucet";
 import { GIFT_NOTE_SCRIPT, NODE_ENDPOINT } from "../constant";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { WrappedNoteType } from "@/types/note";
-import { NoteFilter, NoteFilterTypes } from "@demox-labs/miden-sdk";
+import { importAndGetAccount } from "./account";
 
 // **************** GET METHODS ********************
 
@@ -13,13 +13,11 @@ export async function getConsumableNotes(accountId: string) {
     const { WebClient, Address } = await import("@demox-labs/miden-sdk");
 
     const client = await WebClient.createClient(NODE_ENDPOINT);
-    console.log("🚀 ~ getConsumableNotes ~ client:", client);
-    const account = Address.fromBech32(accountId).accountId();
-    console.log("🚀 ~ getConsumableNotes ~ account:", account);
+    console.log("getConsumableNotes: ", accountId);
+    // need to import account id
+    const account = await importAndGetAccount(accountId);
 
-    await client.syncState();
-
-    const notes = await client.getConsumableNotes(account);
+    const notes = await client.getConsumableNotes(Address.fromBech32(accountId).accountId());
 
     return notes;
   } catch (error) {
@@ -37,19 +35,16 @@ export async function createP2IDNote(
   amount: number,
   noteType: WrappedNoteType,
 ) {
-  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt, AccountId, NoteType } = await import(
+  const { FungibleAsset, OutputNote, Note, NoteAssets, Word, Felt, AccountId, NoteType, Address } = await import(
     "@demox-labs/miden-sdk"
   );
 
-  const serialNumbers = await randomSerialNumbers();
-
   return OutputNote.full(
     Note.createP2IDNote(
-      AccountId.fromBech32(sender),
-      AccountId.fromBech32(receiver),
-      new NoteAssets([new FungibleAsset(AccountId.fromBech32(faucet), BigInt(amount))]),
+      Address.fromBech32(sender).accountId(),
+      Address.fromBech32(receiver).accountId(),
+      new NoteAssets([new FungibleAsset(Address.fromBech32(faucet).accountId(), BigInt(amount))]),
       noteType == WrappedNoteType.PUBLIC ? NoteType.Public : NoteType.Private,
-      Word.newFromFelts(serialNumbers),
       new Felt(BigInt(0)),
     ),
   );
@@ -88,8 +83,8 @@ export async function createP2IDENote(
 
     return [OutputNote.full(note), serialNumbersCopy, recallHeight];
   } catch (error) {
-    console.log(error);
     throw new Error("Failed to create P2IDENote");
+    console.log(error);
   }
 }
 
@@ -102,7 +97,7 @@ export async function consumeAllUnauthenticatedNotes(
   }[],
 ) {
   try {
-    const { WebClient, AccountId, Felt, NoteAndArgs, Note, TransactionRequestBuilder, NoteAndArgsArray } = await import(
+    const { WebClient, Address, Felt, NoteAndArgs, Note, TransactionRequestBuilder, NoteAndArgsArray } = await import(
       "@demox-labs/miden-sdk"
     );
 
@@ -145,9 +140,9 @@ export async function consumeAllUnauthenticatedNotes(
       .withUnauthenticatedInputNotes(new NoteAndArgsArray(inputNotes))
       .build();
 
-    const accountId = AccountId.fromBech32(account);
+    const accountId = Address.fromBech32(account);
 
-    const txResult = await client.newTransaction(accountId, transactionRequest);
+    const txResult = await client.newTransaction(accountId.accountId(), transactionRequest);
     await client.submitTransaction(txResult);
 
     return txResult.executedTransaction().id().toHex();
@@ -158,9 +153,8 @@ export async function consumeAllUnauthenticatedNotes(
 
 export async function consumeUnauthenticatedNote(account: string, partialNote: PartialConsumableNote) {
   try {
-    const { WebClient, AccountId, Felt, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs } = await import(
-      "@demox-labs/miden-sdk"
-    );
+    const { WebClient, AccountId, Felt, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Address } =
+      await import("@demox-labs/miden-sdk");
 
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
@@ -185,9 +179,9 @@ export async function consumeUnauthenticatedNote(account: string, partialNote: P
       .withUnauthenticatedInputNotes(new NoteAndArgsArray([new NoteAndArgs(note)]))
       .build();
 
-    const accountId = AccountId.fromBech32(account);
+    const accountId = Address.fromBech32(account);
 
-    const txResult = await client.newTransaction(accountId, transactionRequest);
+    const txResult = await client.newTransaction(accountId.accountId(), transactionRequest);
     await client.submitTransaction(txResult);
 
     return txResult.executedTransaction().id().toHex();
@@ -202,7 +196,7 @@ export async function consumeUnauthenticatedGiftNote(
   secret: [number, number, number, number],
 ) {
   try {
-    const { WebClient, AccountId, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Word, Felt } = await import(
+    const { WebClient, Address, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Word, Felt } = await import(
       "@demox-labs/miden-sdk"
     );
 
@@ -214,7 +208,7 @@ export async function consumeUnauthenticatedGiftNote(
       )
       .build();
 
-    const accountId = AccountId.fromBech32(account);
+    const accountId = Address.fromBech32(account).accountId();
 
     const txResult = await client.newTransaction(accountId, transactionRequest);
     await client.submitTransaction(txResult);
@@ -232,7 +226,7 @@ export async function consumeUnauthenticatedGiftNotes(
   secrets: [number, number, number, number][],
 ) {
   try {
-    const { WebClient, AccountId, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Word, Felt } = await import(
+    const { WebClient, Address, TransactionRequestBuilder, NoteAndArgsArray, NoteAndArgs, Word, Felt } = await import(
       "@demox-labs/miden-sdk"
     );
 
@@ -252,7 +246,7 @@ export async function consumeUnauthenticatedGiftNotes(
       .withUnauthenticatedInputNotes(new NoteAndArgsArray(inputNotes))
       .build();
 
-    const accountId = AccountId.fromBech32(account);
+    const accountId = Address.fromBech32(account).accountId();
 
     const txResult = await client.newTransaction(accountId, transactionRequest);
     await client.submitTransaction(txResult);
@@ -284,11 +278,11 @@ export async function consumeNoteByID(account: string, noteId: string) {
 
 export async function consumeNoteByIDs(account: string, noteIds: string[]) {
   try {
-    const { WebClient, AccountId } = await import("@demox-labs/miden-sdk");
+    const { WebClient, Address } = await import("@demox-labs/miden-sdk");
 
     const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
-    const accountId = AccountId.fromBech32(account);
+    const accountId = Address.fromBech32(account).accountId();
     const txResult = await client.newTransaction(accountId, consumeTxRequest);
     await client.submitTransaction(txResult);
 
@@ -310,8 +304,8 @@ export async function createGiftNote(
     OutputNote,
     NoteType,
     NoteTag,
+    AccountId,
     Address,
-    Rpo256,
     Felt,
     FeltArray,
     NoteInputs,
@@ -334,15 +328,6 @@ export async function createGiftNote(
 
   // hash the secret
   const secretFelts = secret.map(felt => new Felt(BigInt(felt)));
-
-  // todo: put hash to note inputs
-  const paddedSecretArray = [
-    new Felt(BigInt(0)),
-    new Felt(BigInt(0)),
-    new Felt(BigInt(0)),
-    new Felt(BigInt(0)),
-    ...secretFelts,
-  ];
 
   // prepare note
   const noteInput = new NoteInputs(new FeltArray(secretFelts));
@@ -386,7 +371,7 @@ export async function createBatchNote(
         caller,
         transaction.recipient,
         transaction.tokenAddress,
-        Math.round(amount * 1000),
+        Math.round(amount * Math.pow(10, transaction.tokenMetadata.decimals)),
         transaction.isPrivate ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
         recallHeight,
       );
@@ -542,7 +527,6 @@ export async function customCreateP2IDENote(
   serialNumber: any[],
 ) {
   const {
-    Address,
     NoteScript,
     NoteType,
     NoteInputs,
@@ -556,6 +540,7 @@ export async function customCreateP2IDENote(
     NoteAssets,
     FungibleAsset,
     Note,
+    Address,
   } = await import("@demox-labs/miden-sdk");
 
   const senderId = Address.fromBech32(sender).accountId();

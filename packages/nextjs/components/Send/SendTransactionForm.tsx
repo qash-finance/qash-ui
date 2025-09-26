@@ -36,9 +36,7 @@ import { SchedulePaymentFrequency } from "@/types/schedule-payment";
 import { useCreateSchedulePayment, useGetSchedulePayments } from "@/services/api/schedule-payment";
 import { calculateClaimableTime } from "@/services/utils/claimableTime";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { SendTransaction, WalletAdapter } from "@demox-labs/miden-wallet-adapter-base";
-import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
+import { useWallet, SendTransaction, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 
 export enum AmountInputTab {
   SEND = "send",
@@ -528,19 +526,20 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
             data,
           );
         } else {
+          console.log(window?.midenWallet, window?.miden);
           const midenTransaction = new SendTransaction(
             walletAddress,
             recipientAccountId,
-            faucetAccountId,
+            QASH_TOKEN_ADDRESS,
             isPrivateTransaction ? "private" : "public",
-            amount!,
+            amount * 10 ** QASH_TOKEN_DECIMALS,
           );
-          await (wallet.adapter as MidenWalletAdapter).requestSend(midenTransaction);
+          const res = await (wallet.adapter as MidenWalletAdapter).requestSend(midenTransaction);
+          console.log("SendTransactionForm:", res);
         }
       },
     });
   };
-
   const handleAddToBatch = async (data: SendTransactionFormValues) => {
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
 

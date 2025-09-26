@@ -11,10 +11,12 @@ import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { mintToken } from "@/services/utils/miden/faucet";
 import toast from "react-hot-toast";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalProps>) {
   // **************** Custom Hooks *******************
   const { walletAddress } = useWalletAuth();
+  const { connected, accountId } = useWallet();
   const { forceFetch: forceRefetchConsumableNotes } = useConsumableNotes();
   const router = useRouter();
   const pathname = usePathname();
@@ -25,13 +27,13 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
 
   const handleMintToken = async () => {
     if (!walletAddress) return toast.error("Please connect your wallet to mint tokens");
-
+    console.log("walletAddress", accountId);
     try {
       setLoading(true);
       toast.loading("Minting...");
 
       // mint qash token to user
-      const txId = await mintToken(walletAddress, QASH_TOKEN_ADDRESS, BigInt(10 * 10 ** QASH_TOKEN_DECIMALS));
+      const txId = await mintToken(accountId || "", QASH_TOKEN_ADDRESS, BigInt(10 * 10 ** QASH_TOKEN_DECIMALS));
       toast.dismiss();
       toast.success(
         <div>

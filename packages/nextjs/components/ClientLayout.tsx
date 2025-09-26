@@ -77,7 +77,6 @@ function WalletConnectedContent({
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
-  const [wallets, setWallets] = useState<MidenWalletAdapter[]>([]);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const pathname = usePathname();
   const modalRef = useRef<ModalTriggerRef | null>(null);
@@ -96,13 +95,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
   };
 
-  useEffect(() => {
-    const midenAdapter = new MidenWalletAdapter({
-      appName: "Qash",
-    });
-
-    setWallets([midenAdapter]);
-  }, []);
+  const wallets = [new MidenWalletAdapter({ appName: "Qash" })];
 
   const handleError = (error: WalletError) => {
     console.error(error);

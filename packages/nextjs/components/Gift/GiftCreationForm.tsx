@@ -23,10 +23,14 @@ import useSendGift from "@/hooks/server/useSendGift";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useForm } from "react-hook-form";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { OutputNotesArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
-import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter-miden";
-import { CustomTransaction, TransactionType } from "@demox-labs/miden-wallet-adapter-base";
+import {
+  CustomTransaction,
+  MidenWalletAdapter,
+  Transaction,
+  TransactionType,
+  useWallet,
+} from "@demox-labs/miden-wallet-adapter";
 // import { TokenSelector } from "./TokenSelector";
 
 export const GiftCreationForm: React.FC = () => {
@@ -133,16 +137,16 @@ export const GiftCreationForm: React.FC = () => {
                 // create gift note
                 const [outputNote, serialNumber] = await createGiftNote(
                   walletAddress,
-                  "mtst1qzp4jgq9cy75wgp7c833ynr9f4cqzraplt4",
+                  QASH_TOKEN_ADDRESS,
                   BigInt(currentAmount * 10),
                   secret,
                 );
 
                 console.log("serialNumber", serialNumber);
-
                 const transactionRequest = new TransactionRequestBuilder()
                   .withOwnOutputNotes(new OutputNotesArray([outputNote]))
                   .build();
+
                 const customTransaction = new CustomTransaction(
                   walletAddress, // AccountId the transaction request will be executed against
                   transactionRequest, // TransactionRequest object (will need to be generated using the Miden Web SDK)
@@ -152,6 +156,8 @@ export const GiftCreationForm: React.FC = () => {
                   payload: customTransaction,
                   type: TransactionType.Custom,
                 });
+
+                console.log("CREATE GIFT NOTE: ", tx);
 
                 // submit transaction
                 // const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);

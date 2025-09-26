@@ -2,14 +2,14 @@ import { NODE_ENDPOINT } from "../constant";
 
 export async function submitTransactionWithOwnOutputNotes(sender: string, notes: any[]): Promise<string> {
   try {
-    const { WebClient, AccountId, OutputNotesArray, TransactionRequestBuilder } = await import("@demox-labs/miden-sdk");
+    const { WebClient, Address, OutputNotesArray, TransactionRequestBuilder } = await import("@demox-labs/miden-sdk");
 
     const client = await WebClient.createClient(NODE_ENDPOINT);
 
-    const senderId = AccountId.fromBech32(sender);
+    const senderId = Address.fromBech32(sender);
 
     const transactionRequest = new TransactionRequestBuilder().withOwnOutputNotes(new OutputNotesArray(notes)).build();
-    const txResult = await client.newTransaction(senderId, transactionRequest);
+    const txResult = await client.newTransaction(senderId.accountId(), transactionRequest);
     const txResultId = txResult.executedTransaction().id().toHex();
     await client.submitTransaction(txResult);
 
@@ -26,15 +26,15 @@ export async function submitTransactionWithOwnOutputNotes(sender: string, notes:
 }
 
 export async function submitTransactionWithOwnInputNotes(notes: any[], sender: string): Promise<string> {
-  const { WebClient, AccountId, NoteAndArgsArray, TransactionRequestBuilder } = await import("@demox-labs/miden-sdk");
+  const { WebClient, Address, NoteAndArgsArray, TransactionRequestBuilder } = await import("@demox-labs/miden-sdk");
 
   const client = await WebClient.createClient(NODE_ENDPOINT);
-  const senderId = AccountId.fromBech32(sender);
+  const senderId = Address.fromBech32(sender);
 
   const transactionRequest = new TransactionRequestBuilder()
     .withUnauthenticatedInputNotes(new NoteAndArgsArray(notes))
     .build();
-  const txResult = await client.newTransaction(senderId, transactionRequest);
+  const txResult = await client.newTransaction(senderId.accountId(), transactionRequest);
   const txResultId = txResult.executedTransaction().id().toHex();
   await client.submitTransaction(txResult);
 

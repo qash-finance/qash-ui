@@ -7,14 +7,15 @@ import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { ConsumableNote } from "@/types/transaction";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 
 export function useConsumableNotes() {
-  const { walletAddress } = useWalletAuth();
+  const { accountId } = useWallet();
   const queryClient = useQueryClient();
   const blockNum = useMidenSdkStore(state => state.blockNum);
 
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ["consumable-notes", walletAddress],
+    queryKey: ["consumable-notes", accountId],
     queryFn: async (): Promise<PartialConsumableNote[]> => {
       // sender can get
       // 1. p2id note
@@ -58,7 +59,7 @@ export function useConsumableNotes() {
         })),
       }));
 
-      const notes: any[] = await getConsumableNotes(walletAddress!);
+      const notes: any[] = await getConsumableNotes(accountId!);
 
       const consumableNotes: PartialConsumableNote[] = await Promise.all(
         notes.map(async note => {
@@ -86,7 +87,7 @@ export function useConsumableNotes() {
             id: id,
             private: false,
             sender: sender!,
-            recipient: walletAddress!,
+            recipient: accountId!,
             assets: assets,
             recallableHeight: -1,
             recallableTime: "",
@@ -108,7 +109,7 @@ export function useConsumableNotes() {
       );
       return filteredNotes;
     },
-    enabled: !!walletAddress && !!blockNum,
+    enabled: !!accountId && !!blockNum,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
     refetchInterval: 25000, // Refetch every 25 seconds
@@ -120,7 +121,7 @@ export function useConsumableNotes() {
   const forceFetch = async () => {
     // repeat 3 times, each with 3 seconds delay
     for (let i = 0; i < 5; i++) {
-      queryClient.invalidateQueries({ queryKey: ["consumable-notes", walletAddress] });
+      queryClient.invalidateQueries({ queryKey: ["consumable-notes", accountId] });
       await refetch();
       await new Promise(resolve => setTimeout(resolve, 3000));
     }

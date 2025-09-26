@@ -11,7 +11,7 @@ export const MIDEN_WALLET_KEYS_KEY = "miden_wallet_keys";
 export const QR_STORAGE_KEY = "custom_qr_codes";
 
 // **************** QASH TOKEN *******************
-export const QASH_TOKEN_ADDRESS = "mtst1qpuzxzy5au9n2gq5vhsvyyl9jsaq5a7w";
+export const QASH_TOKEN_ADDRESS = "mtst1qpnnvfxn8m4vygp9kmp9dn6z5pcqq4f80ry";
 export const QASH_TOKEN_SYMBOL = "QASH";
 export const QASH_TOKEN_DECIMALS = 8;
 export const QASH_TOKEN_MAX_SUPPLY = 1000000000000000000;
