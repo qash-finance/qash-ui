@@ -1,5 +1,5 @@
 import SelectTokenModal from "@/components/Modal/SelectTokenModal";
-import SendModal from "@/components/Modal/SendModal";
+import EditTransactionModal from "@/components/Modal/EditTransactionModal";
 import SelectRecipientModal from "@/components/Modal/SelectRecipientModal";
 import SetupModulesModal from "@/components/Modal/SetupModulesModal";
 import TransactionDetailModal from "@/components/Modal/TransactionDetailModal";
@@ -40,6 +40,7 @@ import CreateImportWalletModal from "@/components/Modal/Wallet/CreateImportWalle
 import ProcessingTransactionModal from "@/components/Modal/ProcessingTransactionModal";
 import CreateWalletModal from "@/components/Modal/Wallet/CreateWalletModal";
 import ImportWalletModal from "@/components/Modal/Wallet/ImportWalletModal";
+import RemoveTransactionConfirmationModal from "@/components/Modal/Batch/RemoveTransactionConfirmationModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -49,7 +50,7 @@ import { TransactionStatus } from "./transaction";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
-  SEND: "SEND",
+  EDIT_TRANSACTION: "EDIT_TRANSACTION",
   SELECT_RECIPIENT: "SELECT_RECIPIENT",
   MODULES_SETUP: "MODULES_SETUP",
   TRANSACTION_DETAIL: "TRANSACTION_DETAIL",
@@ -90,6 +91,7 @@ export const MODAL_IDS = {
   CREATE_IMPORT_WALLET: "CREATE_IMPORT_WALLET",
   PROCESSING_TRANSACTION: "PROCESSING_TRANSACTION",
   CREATE_WALLET: "CREATE_WALLET",
+  REMOVE_TRANSACTION_CONFIRMATION: "REMOVE_TRANSACTION_CONFIRMATION",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -103,18 +105,24 @@ export interface SelectTokenModalProps extends BaseModalProps {
   onTokenSelect?: (token: AssetWithMetadata | null) => void;
 }
 
-export interface SendModalProps extends BaseModalProps {
+export interface EditTransactionModalProps extends BaseModalProps {
   pendingRequestId: number;
-
+  transactionId: string;
   recipient?: string;
   recipientName?: string;
   amount?: string;
   message?: string;
   tokenAddress?: string;
   tokenSymbol?: string;
-  isGroupPayment?: boolean;
-  isRequestPayment?: boolean;
-  onTransactionConfirmed?: () => Promise<void>;
+  isPrivate?: boolean;
+  recallableTime?: number;
+  onSaveChanges?: (updatedData: {
+    amount: string;
+    recipient: string;
+    message: string;
+    isPrivate: boolean;
+    recallableTime: number;
+  }) => void;
 }
 
 export interface SelectRecipientModalProps extends BaseModalProps {
@@ -318,9 +326,13 @@ export interface ProcessingTransactionModalProps extends BaseModalProps {}
 
 export interface CreateWalletModalProps extends BaseModalProps {}
 
+export interface RemoveTransactionConfirmationModalProps extends BaseModalProps {
+  onRemove?: () => Promise<void>;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
-  [MODAL_IDS.SEND]: SendModalProps;
+  [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
   [MODAL_IDS.SELECT_RECIPIENT]: SelectRecipientModalProps;
   [MODAL_IDS.MODULES_SETUP]: ModulesSetupProps;
   [MODAL_IDS.TRANSACTION_DETAIL]: TransactionDetailModalProps;
@@ -367,7 +379,7 @@ export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
 
 export const modalRegistry = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModal,
-  [MODAL_IDS.SEND]: SendModal,
+  [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModal,
   [MODAL_IDS.SELECT_RECIPIENT]: SelectRecipientModal,
   [MODAL_IDS.MODULES_SETUP]: SetupModulesModal,
   [MODAL_IDS.TRANSACTION_DETAIL]: TransactionDetailModal,
@@ -408,4 +420,5 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModal,
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModal,
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModal,
+  [MODAL_IDS.REMOVE_TRANSACTION_CONFIRMATION]: RemoveTransactionConfirmationModal,
 } as const;

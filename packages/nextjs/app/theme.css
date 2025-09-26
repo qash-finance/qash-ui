@@ -61,6 +61,12 @@
   --badge-success-background: #cef9d8;
   --badge-success-text: #007b4b;
   --badge-success-border: #83ffa0;
+  --badge-private-background: #e9e3fc;
+  --badge-private-text: #7d52f4;
+  --badge-private-border: #7d52f4;
+  --badge-public-background: #fbe9dd;
+  --badge-public-text: #e97135;
+  --badge-public-border: #e97135;
 
   /* Loading Bar */
   --loading-bar-background: #f6f6f6;
@@ -72,6 +78,7 @@
   --table-header-text: #1b1b1b;
   --table-header-border: #d4d6d9;
   --table-row-background: #ffffff;
+  --table-row-background-hover: #fafafa;
   --table-row-text: #1b1b1b;
   --table-row-border: #e7e8ec;
   --table-row-selected-background: #f1f3ff;

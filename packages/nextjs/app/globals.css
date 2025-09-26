@@ -77,6 +77,12 @@
   --color-badge-success-background: var(--badge-success-background);
   --color-badge-success-text: var(--badge-success-text);
   --color-badge-success-border: var(--badge-success-border);
+  --color-badge-private-background: var(--badge-private-background);
+  --color-badge-private-text: var(--badge-private-text);
+  --color-badge-private-border: var(--badge-private-border);
+  --color-badge-public-background: var(--badge-public-background);
+  --color-badge-public-text: var(--badge-public-text);
+  --color-badge-public-border: var(--badge-public-border);
 
   /* Loading Bar */
   --color-loading-bar-background: var(--loading-bar-background);
@@ -88,6 +94,7 @@
   --color-table-header-text: var(--table-header-text);
   --color-table-header-border: var(--table-header-border);
   --color-table-row-background: var(--table-row-background);
+  --color-table-row-background-hover: var(--table-row-background-hover);
   --color-table-row-text: var(--table-row-text);
   --color-table-row-border: var(--table-row-border);
   --color-table-row-selected-background: var(--table-row-selected-background);

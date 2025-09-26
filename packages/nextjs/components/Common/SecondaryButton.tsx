@@ -20,6 +20,7 @@ export const SecondaryButton = ({
   onClick,
   buttonClassName,
   iconClassName,
+  disabled,
   variant = "dark",
 }: SecondaryButtonProps) => {
   const getVariantStyles = () => {
@@ -50,12 +51,15 @@ export const SecondaryButton = ({
 
   return (
     <button
-      className={`cursor-pointer flex gap-2 items-center justify-center rounded-[8px] py-2 border-t-2 ${buttonClassName || "w-full"}`}
+      className={`transition-opacity duration-300 flex gap-2 items-center justify-center rounded-[8px] py-2 border-t-2 ${buttonClassName || "w-full"}`}
       style={{
         background: variantStyles.background,
         borderTopColor: variantStyles.borderTopColor,
+        opacity: disabled ? 0.6 : 1,
+        cursor: disabled ? "not-allowed" : "pointer",
       }}
       onClick={onClick}
+      disabled={disabled}
     >
       {icon && iconPosition === "left" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
       {typeof text === "string" ? (

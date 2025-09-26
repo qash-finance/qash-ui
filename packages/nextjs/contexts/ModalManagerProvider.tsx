@@ -38,6 +38,8 @@ const ModalContext = createContext<ModalContextType>({
 });
 
 export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
+  const MODALS_IGNORE_ESCAPE_KEY = [MODAL_IDS.PROCESSING_TRANSACTION];
+
   const initialModalStates: Record<ModalId, ModalState> = Object.keys(MODAL_IDS).reduce(
     (acc, key) => {
       acc[key as ModalId] = { isOpen: false, props: { onClose: () => {} } };
@@ -81,6 +83,11 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle ESC key to close only the latest modal
   const handleEscape = useCallback(() => {
     const latestModalId = getLatestOpenModal();
+
+    if (MODALS_IGNORE_ESCAPE_KEY.includes(latestModalId as any)) {
+      return;
+    }
+
     if (latestModalId) {
       closeModal(latestModalId);
     }

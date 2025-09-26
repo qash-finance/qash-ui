@@ -97,8 +97,8 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
             <PrimaryButton
               text="Ready to Claim!"
               onClick={() => {
-                if (pathname !== "/dashboard/pending-receive") {
-                  router.push("/dashboard/pending-receive");
+                if (pathname !== "/") {
+                  router.push("/");
                 }
                 onClose();
                 setSuccess(false);

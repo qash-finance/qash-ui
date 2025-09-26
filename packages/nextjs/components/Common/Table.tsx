@@ -67,6 +67,19 @@ const createTableRow = (
   return row;
 };
 
+const getRowClasses = (isSelected: boolean) => {
+  return `border-b last:border-b-0 transition-colors ${
+    isSelected
+      ? "bg-[var(--color-table-row-selected-background)]"
+      : "bg-[var(--color-table-row-background)] hover:bg-[var(--color-table-row-background-hover)]"
+  }`;
+};
+
+const getRowStyle = () => ({
+  color: "var(--color-table-row-text)",
+  borderColor: "var(--color-table-row-border)",
+});
+
 const SortableTableRow = ({
   id,
   cells,
@@ -99,13 +112,9 @@ const SortableTableRow = ({
     opacity: isSortableDragging ? 0.5 : 1,
   };
 
-  const defaultRowClass = "border-b last:border-b-0 hover:opacity-80 transition-opacity";
+  const defaultRowClass = getRowClasses(isSelected);
   const className = typeof rowClassName === "function" ? "" : rowClassName;
-  const rowStyle = {
-    backgroundColor: isSelected ? "var(--color-table-row-selected-background)" : "var(--color-table-row-background)",
-    color: "var(--color-table-row-text)",
-    borderColor: "var(--color-table-row-border)",
-  };
+  const rowStyle = getRowStyle();
 
   return (
     <tr
@@ -115,7 +124,7 @@ const SortableTableRow = ({
       {...attributes}
     >
       <td
-        className="px-3 py-2 cursor-grab active:cursor-grabbing"
+        className="px-3 py-4 cursor-grab active:cursor-grabbing"
         style={{
           width: "40px",
           borderColor: "var(--color-table-row-border)",
@@ -234,20 +243,16 @@ const TableRow = ({
   columnWidths?: Record<string, string>;
   isSelected?: boolean;
 }) => {
-  const defaultRowClass = "border-b last:border-b-0 hover:opacity-80 transition-opacity";
+  const defaultRowClass = getRowClasses(isSelected);
   const className = typeof rowClassName === "function" ? "" : rowClassName;
-  const rowStyle = {
-    backgroundColor: isSelected ? "var(--color-table-row-selected-background)" : "var(--color-table-row-background)",
-    color: "var(--color-table-row-text)",
-    borderColor: "var(--color-table-row-border)",
-  };
+  const rowStyle = getRowStyle();
 
   return (
     <tr className={`${defaultRowClass} ${className}`} style={rowStyle}>
       {cells.map((cell, index) => (
         <td
           key={index}
-          className={`px-3 py-2 text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
+          className={`px-3 py-4 text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
           style={{
             width: columnWidths[index.toString()],
             borderColor: "var(--color-table-row-border)",
@@ -256,6 +261,32 @@ const TableRow = ({
           {cell}
         </td>
       ))}
+    </tr>
+  );
+};
+
+const EmptyRow = ({
+  headers,
+  actionColumn,
+  draggable,
+}: {
+  headers: (string | React.ReactNode)[];
+  actionColumn: boolean;
+  draggable: boolean;
+}) => {
+  return (
+    <tr>
+      <td
+        colSpan={headers.length + (actionColumn ? 1 : 0) + (draggable ? 1 : 0)}
+        className="px-3 py-[155px] text-center"
+        style={{
+          backgroundColor: "var(--color-table-row-background)",
+          color: "var(--color-table-row-text)",
+        }}
+      >
+        <img src="/misc/hexagon-magnifer-icon.svg" alt="No data" className="w-20 m-auto" />
+        <span className="text-sm tracking-tight leading-4 text-text-secondary">No results found</span>
+      </td>
     </tr>
   );
 };
@@ -303,9 +334,11 @@ export function Table({
     }
   };
 
+  const tableBodyStyle = "overflow-y-auto";
   const defaultTableClass = "overflow-x-auto table-scrollbar rounded-2xl border";
   const tableStyle = {
     borderColor: "var(--color-table-row-border)",
+    maxHeight: "455px",
   };
 
   if (draggable) {
@@ -320,21 +353,9 @@ export function Table({
               columnWidths={columnWidths}
               draggable={draggable}
             />
-            <tbody>
+            <tbody className={tableBodyStyle}>
               {items.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={headers.length + (actionColumn ? 1 : 0) + (draggable ? 1 : 0)}
-                    className="px-3 py-8 text-center"
-                    style={{
-                      backgroundColor: "var(--color-table-row-background)",
-                      color: "var(--color-table-row-text)",
-                    }}
-                  >
-                    <img src="/misc/hexagon-magnifer-icon.svg" alt="No data" className="w-20 m-auto" />
-                    <span className="text-sm tracking-tight leading-4 text-text-secondary">No results found</span>
-                  </td>
-                </tr>
+                <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
               ) : (
                 <SortableContext items={items.map((_, index) => `row-${index}`)} strategy={verticalListSortingStrategy}>
                   {items.map((rowData, index) => {
@@ -387,21 +408,9 @@ export function Table({
           columnWidths={columnWidths}
           draggable={draggable}
         />
-        <tbody>
+        <tbody className={tableBodyStyle}>
           {data.length === 0 ? (
-            <tr>
-              <td
-                colSpan={headers.length + (actionColumn ? 1 : 0)}
-                className="px-3 py-8 text-center "
-                style={{
-                  backgroundColor: "var(--color-table-row-background)",
-                  color: "var(--color-table-row-text)",
-                }}
-              >
-                <img src="/misc/hexagon-magnifer-icon.svg" alt="No data" className="w-20 m-auto" />
-                <span className="text-sm tracking-tight leading-4 text-text-secondary">No results found</span>
-              </td>
-            </tr>
+            <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
           ) : (
             data.map((rowData, index) => {
               const row = createTableRow(rowData, headers, actionRenderer, index);

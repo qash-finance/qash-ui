@@ -33,7 +33,7 @@ export function TabContainer({ tabs, activeTab, setActiveTab, textSize = "base",
   }, [activeTab, tabs]);
 
   // Base styles for all tab buttons
-  const baseTabStyles = `flex gap-0.5 justify-center items-center self-stretch py-1.5 rounded-xl flex-[1_0_0] relative z-10 w-[${tabWidth}px]`;
+  const baseTabStyles = `flex gap-0.5 justify-center items-center self-stretch py-1.5 rounded-xl flex-[1_0_0] relative z-0 w-[${tabWidth}px]`;
   // Active tab styles
   const activeTabStyles = "text-text-primary cursor-pointer";
   // Disabled tab styles
