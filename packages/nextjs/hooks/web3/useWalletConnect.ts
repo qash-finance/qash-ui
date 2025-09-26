@@ -56,7 +56,7 @@ export const importWalletFromJson = async (jsonData: any): Promise<string[]> => 
         // Validate account ID format
         if (typeof accountId === "string" && accountId.length > 0) {
           // Convert hex account ID to bech32 format
-          const bech32Address = AccountId.fromHex(accountId).toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
+          const bech32Address = AccountId.fromHex(accountId).toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
           importedAddresses.push(bech32Address);
         }
       }
@@ -89,8 +89,15 @@ export const useWalletConnect = () => {
         const deployedAccount = await deployAccount(false);
 
         // Get account id (bech32)
-        const accountId = deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
-
+        const accountId = deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
+        console.log(
+          "DEPLOYED ACCOUNT ID (BASIC WALLET)",
+          deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+        );
+        console.log(
+          "DEPLOYED ACCOUNT ID (UNSPECIFIED)",
+          deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+        );
         // Store in local storage via zustand
         setWalletAddress(accountId);
         addWalletAddress(accountId);
@@ -117,11 +124,18 @@ export const useWalletConnect = () => {
   const handleCreateWallet = async () => {
     try {
       if (!walletAddress) {
-        const { AccountId, AccountInterface, NetworkId } = await import("@demox-labs/miden-sdk");
+        const { AccountInterface, NetworkId } = await import("@demox-labs/miden-sdk");
 
-        const deployedAccount = await deployAccount(true);
-        const accountId = deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
-
+        const deployedAccount = await deployAccount(false);
+        const accountId = deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
+        console.log(
+          "DEPLOYED ACCOUNT ID (BASIC WALLET)",
+          deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+        );
+        console.log(
+          "DEPLOYED ACCOUNT ID (UNSPECIFIED)",
+          deployedAccount.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+        );
         setWalletAddress(accountId);
         addWalletAddress(accountId);
         setLastConnectedAddress(accountId);

@@ -19,10 +19,13 @@ export const QASH_TOKEN_SYMBOL = "QASH";
 export const QASH_TOKEN_DECIMALS = 8;
 export const QASH_TOKEN_MAX_SUPPLY = 1000000000000000000;
 
+// **************** MIDEN NETWORK ERROR *******************
+export const FAILED_SUBMIT_PROVEN_TRANSACTION = "failed for submit_proven_transaction";
+
 // **************** MIDEN NETWORK *******************
 export const BLOCK_TIME = 5; // seconds
 export const NODE_ENDPOINT = process.env.NEXT_PUBLIC_NODE_ENDPOINT || "https://rpc.testnet.miden.io:443";
-export const REFETCH_DELAY = 6000;
+export const REFETCH_DELAY = 500;
 export const SYNC_STATE_INTERVAL = 3000;
 export const MIDEN_EXPLORER_URL = "https://testnet.midenscan.com";
 export const MIDEN_NETWORK_ID = "mtst";

@@ -367,3 +367,8 @@ input:-moz-autofill:active {
   scrollbar-width: none;
   scrollbar-color: transparent transparent;
 }
+
+/* Sidebar visibility helpers */
+.sidebar-hidden {
+  display: none !important;
+}

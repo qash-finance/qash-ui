@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useWalletState } from "@/services/store";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
+import { useAccount } from "@/hooks/web3/useAccount";
 
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
@@ -15,7 +16,8 @@ enum SelectedWallet {
 interface AccountProps {}
 
 export const Account: React.FC<AccountProps> = () => {
-  const { walletAddress, setIsConnected } = useWalletState(state => state);
+  const { setIsConnected } = useWalletState(state => state);
+  const { accountId: walletAddress } = useAccount();
   const { disconnectWallet } = useWalletAuth();
   const clearTransactions = useTransactionStore(state => state.clearTransactions);
 
@@ -116,7 +118,7 @@ export const Account: React.FC<AccountProps> = () => {
             alt="power button icon"
           />
         </header>
-        <div
+        {/* <div
           className={`flex relative gap-1 items-center w-full leading-tight ${
             selectedWallet !== SelectedWallet.MIDEN_WALLET && " pl-8"
           }`}
@@ -160,7 +162,7 @@ export const Account: React.FC<AccountProps> = () => {
               alt="Status indicator"
             />
           )}
-        </div>
+        </div> */}
       </div>
 
       {isBlurred && (

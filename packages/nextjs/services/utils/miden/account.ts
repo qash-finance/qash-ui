@@ -8,7 +8,7 @@ export async function deployAccount(isPublic: boolean) {
   const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
 
   const client = await WebClient.createClient(NODE_ENDPOINT);
-  const account = await client.newWallet(isPublic ? AccountStorageMode.public() : AccountStorageMode.private(), true);
+  const account = await client.newWallet(AccountStorageMode.private(), true);
   return account;
 }
 
@@ -125,7 +125,7 @@ export const getAccounts = async () => {
     }),
   );
 
-  return accountsWeOwn.map(account => account.id().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet));
+  return accountsWeOwn.map(account => account.id().toBech32(NetworkId.Testnet, AccountInterface.Unspecified));
 };
 
 export const exportAccounts = async () => {

@@ -235,11 +235,11 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
   };
 
   return (
-    <div className="flex flex-1 gap-2.5 mt-2.5 rounded-xl h-full max-md:max-w-full">
+    <div className="flex 2xl:flex-row flex-col flex-1 gap-2.5 mt-2.5 rounded-xl h-full max-md:max-w-full">
       {/* Left Panel - Payment Details */}
       <div className="flex flex-col p-2 rounded-xl bg-zinc-900 flex-1 min-w-60">
         {/* Header */}
-        <div className="flex gap-3 justify-between items-center px-3.5 py-2 w-full text-white bg-[#2D2D2D] rounded-t-xl">
+        <div className=" flex gap-3 justify-between items-center px-3.5 py-2 w-full text-white bg-[#2D2D2D] rounded-t-xl">
           <div className="flex items-center gap-3">
             <span className="text-base leading-none">{isQuickShare ? "Quick sharing" : "Group sharing"}</span>
           </div>
@@ -251,7 +251,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
         </div>
         {/* Main Payment Display */}
         <div
-          className=" flex-1 w-full rounded-b-xl bg-zinc-800 flex flex-col justify-center items-center"
+          className="flex-1 w-full rounded-b-xl bg-zinc-800 flex flex-col justify-center items-center"
           style={{
             backgroundImage: "url('/group-payment/input-background.svg')",
             backgroundSize: "cover",
@@ -260,7 +260,7 @@ export const PaymentDetails: React.FC<PaymentDetailsProps> = ({ selectedGroup, g
           }}
         >
           {/* Amount Display */}
-          <div className="flex flex-col justify-center items-center w-full text-center">
+          <div className="h-[250px] 2xl:h-auto flex flex-col justify-center items-center w-full text-center">
             <input
               {...register("amount", {
                 required: "Amount is required",

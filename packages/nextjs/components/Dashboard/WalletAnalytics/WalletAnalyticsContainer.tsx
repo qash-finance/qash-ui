@@ -39,7 +39,7 @@ export const WalletAnalyticsContainer: React.FC = () => {
         if (client instanceof WebClient) {
           console.log("ACCOUNT ID", accountId);
           const transactionRecords = (await client.getTransactions(TransactionFilter.all())).filter(
-            tx => tx.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet) === accountId,
+            tx => tx.accountId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified) === accountId,
           );
           const inputNotes = await client.getInputNotes(new NoteFilter(NoteFilterTypes.All));
           const zippedInputeNotesAndTr = transactionRecords.map(tr => {
@@ -90,16 +90,16 @@ export const WalletAnalyticsContainer: React.FC = () => {
   useEscapeKey(handleBackToHistory, showTransactionDetail);
 
   return (
-    <div className="flex flex-col gap-2 items-start justify-start w-full h-full p-2 bg-black">
+    <div className="flex flex-col gap-2 items-start justify-start overflow-y-scroll w-full h-full p-2 bg-black">
       {/* Top Row - Cards */}
-      <div className="flex flex-row gap-[5px] h-[250px] items-start w-full">
+      <div className="flex 2xl:flex-row flex-col gap-[5px] h-full 2xl:h-[250px] items-start w-full">
         <GeneralStatistics timePeriod={timePeriod} onTimePeriodChange={setTimePeriod} />
         <TopInteractedAddresses />
         <SpendingAverageChart />
       </div>
 
       {/* Bottom Row - Transaction History or Transaction Detail */}
-      <div className="relative w-full flex-1 min-h-0 overflow-hidden rounded-lg">
+      <div className="relative w-full min-h-[500px] flex-1 overflow-x-hidden rounded-lg">
         {/* Transaction History */}
         <div
           className={`transition-transform duration-[${ANIMATION_DURATION}ms] ease-in-out h-full ${

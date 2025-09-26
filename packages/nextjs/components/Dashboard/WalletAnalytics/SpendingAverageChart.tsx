@@ -72,8 +72,6 @@ const SpendingAverageChart = () => {
   const transactions = useTransactionStore(state => state.transactions);
   const blockNumber = useMidenSdkStore(state => state.blockNum);
 
-  console.log("SPENDING AVERAGE CHART", transactions);
-
   // Calculate transaction statistics based on time range and block numbers
   const transactionStats = useMemo(() => {
     if (!blockNumber) {
@@ -227,7 +225,7 @@ const SpendingAverageChart = () => {
   const chartContainerStyle = { gap: `${COLUMN_GAP}px` };
 
   return (
-    <div className="h-full overflow-hidden relative rounded-xl bg-[#1e1e1e] flex-1 flex justify-center items-start">
+    <div className="2xl:h-full h-[250px] w-full overflow-hidden relative rounded-xl bg-[#1e1e1e] 2xl:flex-1 flex justify-center items-start">
       {/* Header */}
       <div className="flex items-start justify-between p-4 w-full">
         <div className="flex flex-col gap-1 items-start w-[177px]">

@@ -7,7 +7,7 @@ import BaseModal from "./BaseModal";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { toast } from "react-hot-toast";
-import { MIDEN_DB_NAME, TOUR_SKIPPED_KEY } from "@/services/utils/constant";
+import { MIDEN_DB_NAME, MIGRATION_VERSION_KEY, TOUR_SKIPPED_KEY } from "@/services/utils/constant";
 
 export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAccountModalProps>) {
   const { disconnectWallet } = useWalletAuth();
@@ -17,8 +17,15 @@ export function ResetAccountModal({ isOpen, onClose, zIndex }: ModalProp<ResetAc
 
     try {
       indexedDB.deleteDatabase(MIDEN_DB_NAME);
+      // get MIGRATION_VERSION_KEY, if `MIGRATION_VERSION_KEY` exist, first get the value, then set again after clear
+      const migrationVersion = localStorage.getItem(MIGRATION_VERSION_KEY);
       localStorage.clear();
       localStorage.setItem(TOUR_SKIPPED_KEY, "true");
+
+      if (migrationVersion) {
+        localStorage.setItem(MIGRATION_VERSION_KEY, migrationVersion);
+      }
+
       window.location.reload();
     } catch (error) {
       console.error("Failed to burn wallet:", error);

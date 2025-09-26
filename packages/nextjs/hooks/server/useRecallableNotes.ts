@@ -24,8 +24,8 @@ export function useRecallableNotes() {
   });
 
   const forceFetch = async () => {
-    // repeat 3 times, each with 3 seconds delay
-    for (let i = 0; i < 3; i++) {
+    // repeat 5 times, each with 3 seconds delay
+    for (let i = 0; i < 5; i++) {
       queryClient.invalidateQueries({ queryKey: ["recallable-notes", walletAddress] });
       await refetch();
       await new Promise(resolve => setTimeout(resolve, 3000));

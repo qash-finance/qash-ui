@@ -7,7 +7,11 @@ import { useGetNotificationsInfinite } from "@/services/api/notification";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ActionButton } from "./ActionButton";
 
-export const Title = () => {
+interface TitleProps {
+  onOpenSidebar?: () => void;
+}
+
+export const Title = ({ onOpenSidebar }: TitleProps) => {
   const { openModal } = useModal();
   const pathname = usePathname();
   const { walletAddress, isConnected } = useWalletConnect();
@@ -83,6 +87,20 @@ export const Title = () => {
 
   return (
     <div className="flex flex-row gap-2 m-[24px]">
+      {/* Mobile hamburger button */}
+      <button
+        type="button"
+        aria-label="Open sidebar"
+        onClick={onOpenSidebar}
+        className="cursor-pointer lg:hidden flex items-center justify-center w-[50px] h-[50px] bg-[#292929] rounded-lg z-20"
+      >
+        {/* inline hamburger icon */}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="6" width="18" height="2" rx="1" fill="white" />
+          <rect x="3" y="11" width="18" height="2" rx="1" fill="white" />
+          <rect x="3" y="16" width="18" height="2" rx="1" fill="white" />
+        </svg>
+      </button>
       <div className="w-[100%] px-1 py-2 bg-[#292929] rounded-lg inline-flex justify-between items-center h-[50px]">
         <div className="w-8 h-[0.1px] rotate-90 outline-[2px] outline-[#06FFB4] rounded-full" />
         <div className="font-medium font-['Barlow'] uppercase leading-none text-white text-xl font-bolds flex-1">

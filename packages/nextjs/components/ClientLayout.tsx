@@ -54,8 +54,9 @@ const queryClient = new QueryClient({
 });
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
-  useMobileDetection();
+  const { isMobile } = useMobileDetection({ disableRedirect: true });
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
@@ -73,6 +74,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     setIsSidebarMinimized(minimized);
     localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
   };
+
+  const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
+  const openMobileSidebar = () => setIsMobileSidebarOpen(true);
 
   const wallets = useMemo(
     () => [
@@ -167,8 +171,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                           <ModalManager />
                           <ModalTrigger ref={modalRef} />
                           <div className="flex flex-row">
+                            {/* Desktop sidebar */}
                             <div
-                              className={`top-0 ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
+                              className={`top-0 hidden lg:block ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
                               style={{
                                 transition: "width 250ms ease",
                                 willChange: "width",
@@ -176,9 +181,33 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             >
                               <Sidebar minimized={isSidebarMinimized} onToggleMinimize={handleSidebarToggle} />
                             </div>
+
+                            {/* Mobile drawer and overlay */}
+                            {isMobile && (
+                              <>
+                                {/* Overlay */}
+                                {isMobileSidebarOpen && (
+                                  <div className="fixed inset-0 bg-black/50 z-40" onClick={closeMobileSidebar} />
+                                )}
+                                {/* Drawer */}
+                                <div
+                                  className={`fixed z-50 top-0 left-0 h-screen w-[260px] transform transition-transform duration-300 ease-in-out ${
+                                    isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                                  }`}
+                                >
+                                  <Sidebar
+                                    minimized={false}
+                                    onToggleMinimize={() => {}}
+                                    showMinimizeToggle={false}
+                                    includeDashboardGroup={true}
+                                    onActionItemClick={() => setIsMobileSidebarOpen(false)}
+                                  />
+                                </div>
+                              </>
+                            )}
                             {pathname.includes("dashboard") && <DashboardMenu />}
-                            <div className="flex-1 h-screen flex flex-col overflow-hidden">
-                              <Title />
+                            <div className="flex-1 min-h-screen flex flex-col overflow-hidden">
+                              <Title onOpenSidebar={openMobileSidebar} />
                               <div
                                 style={{
                                   backgroundImage: 'url("/background.svg")',

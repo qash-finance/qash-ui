@@ -60,7 +60,7 @@ export function useConsumableNotes() {
       }));
 
       const notes: any[] = await getConsumableNotes(walletAddress!);
-
+      console.log("CONSUMABLE NOTES FROM SDK", notes);
       const consumableNotes: PartialConsumableNote[] = await Promise.all(
         notes.map(async note => {
           // if note is in recallableTxs, dont include it
@@ -83,7 +83,7 @@ export function useConsumableNotes() {
               } as AssetWithMetadata;
             });
           const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
+          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
 
           return {
             id: id,

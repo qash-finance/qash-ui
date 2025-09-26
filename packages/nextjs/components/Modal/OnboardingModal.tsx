@@ -2,10 +2,15 @@
 
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { OnboardingModalProps } from "@/types/modal";
-import { ModalProp } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS, OnboardingModalProps } from "@/types/modal";
+import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
+import {
+  FAILED_SUBMIT_PROVEN_TRANSACTION,
+  MIDEN_EXPLORER_URL,
+  QASH_TOKEN_ADDRESS,
+  QASH_TOKEN_DECIMALS,
+} from "@/services/utils/constant";
 import { ActionButton } from "../Common/ActionButton";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { mintToken } from "@/services/utils/miden/faucet";
@@ -18,6 +23,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
   const { forceFetch: forceRefetchConsumableNotes } = useConsumableNotes();
   const router = useRouter();
   const pathname = usePathname();
+  const { openModal } = useModal();
 
   // **************** Local State *******************
   const [loading, setLoading] = useState(false);
@@ -45,7 +51,10 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
       // Wait for network propagation then force fresh fetch
       setTimeout(async () => {
         try {
+          toast.loading("Fetching your free tokens...");
           await forceRefetchConsumableNotes();
+          toast.dismiss();
+          toast.success("Tokens fetched successfully");
         } catch (error) {
           // Retry after additional delay if needed
           setTimeout(async () => {
@@ -58,6 +67,13 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
 
       setSuccess(true);
     } catch (error) {
+      if (error) {
+        openModal(MODAL_IDS.SOMETHING_WRONG, {
+          tryAgain: async () => {
+            await handleMintToken();
+          },
+        } as any);
+      }
       toast.dismiss();
       toast.error("Failed to mint tokens, it might because the faucet was drained!");
       console.error(error);

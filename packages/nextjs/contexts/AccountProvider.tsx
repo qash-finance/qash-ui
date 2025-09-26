@@ -10,8 +10,6 @@ interface AccountContextType {
   isAccountDeployed: boolean;
   accountId: string;
   isError: boolean;
-  refreshAccount: () => Promise<void>;
-  refetchAssets: () => Promise<void>;
   forceFetch: () => Promise<void>;
 }
 
@@ -20,11 +18,6 @@ const AccountContext = createContext<AccountContextType | undefined>(undefined);
 export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { assets, refetchAssets, loading, error, isAccountDeployed, accountId, isError, forceFetch } = useAccount();
 
-  const refreshAccount = async () => {
-    // This will trigger a re-fetch in useAccount due to dependency change
-    // We can add more refresh logic here if needed in the future
-  };
-
   const value = {
     assets,
     loading,
@@ -32,10 +25,6 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isAccountDeployed,
     accountId: accountId || "",
     isError,
-    refreshAccount,
-    refetchAssets: async () => {
-      await refetchAssets();
-    },
     forceFetch,
   };
 

@@ -59,7 +59,7 @@ async function transactionRecordToUITransaction({
     });
 
     const statusObject = tr.transactionStatus();
-    const sender = tr.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
+    const sender = tr.accountId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
 
     const result: UITransaction = {
       id: tr.id().toHex(),
@@ -89,7 +89,7 @@ async function transactionRecordToUITransaction({
     });
 
     const statusObject = tr.transactionStatus();
-    const consumer = tr.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
+    const consumer = tr.accountId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified);
 
     let transactionType: "Incoming" | "Outgoing" | "Faucet" = "Incoming";
     let sender: string = "";
