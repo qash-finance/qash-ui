@@ -36,6 +36,7 @@ import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
 import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
 import InteractAccountTransactionModal from "@/components/Modal/InteractAccountTransactionModal";
 import MigratingModal from "@/components/Modal/MigratingModal";
+import SomethingWrongModal from "@/components/Modal/SomethingWrongModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -82,6 +83,7 @@ export const MODAL_IDS = {
   TRANSACTION_FILTER: "TRANSACTION_FILTER",
   INTERACT_ACCOUNT_TRANSACTION: "INTERACT_ACCOUNT_TRANSACTION",
   MIGRATING: "MIGRATING",
+  SOMETHING_WRONG: "SOMETHING_WRONG",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -221,6 +223,10 @@ export interface FailModalProps extends BaseModalProps {
   tryAgain?: () => Promise<void>;
 }
 
+export interface SomethingWrongModalProps extends BaseModalProps {
+  tryAgain?: () => Promise<void>;
+}
+
 export interface EditGroupModalProps extends BaseModalProps {
   group: Group & { memberAddressBooks: { address: string; name?: string }[] };
 }
@@ -340,6 +346,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePaymentProps;
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModalProps;
   [MODAL_IDS.MIGRATING]: MigratingModalProps;
+  [MODAL_IDS.SOMETHING_WRONG]: SomethingWrongModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -383,4 +390,5 @@ export const modalRegistry = {
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePayment,
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModal,
   [MODAL_IDS.MIGRATING]: MigratingModal,
+  [MODAL_IDS.SOMETHING_WRONG]: SomethingWrongModal,
 } as const;

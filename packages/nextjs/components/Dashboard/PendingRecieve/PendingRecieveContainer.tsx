@@ -19,13 +19,14 @@ import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
-import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { FAILED_SUBMIT_PROVEN_TRANSACTION, QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import SkeletonLoading from "@/components/Common/SkeletonLoading";
 import { CustomCheckbox } from "@/components/Common/CustomCheckbox";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
 import { useConsumePublicNotes } from "@/services/api/transaction";
+import { useAccount } from "@/hooks/web3/useAccount";
 
 const HeaderColumns = ["Amount", "From", "Action"];
 
@@ -127,6 +128,7 @@ export const PendingRecieveContainer: React.FC = () => {
   // **************** Custom Hooks *******************
   const { walletAddress, isConnected } = useWalletConnect();
   const { openModal } = useModal();
+  const { forceFetch: forceRefetchAccount } = useAccount();
 
   // **************** Server Hooks *******************
   const {
@@ -139,12 +141,13 @@ export const PendingRecieveContainer: React.FC = () => {
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
   const { mutateAsync: confirmGroupPaymentRequest } = useConfirmGroupPaymentRequest();
+
   // **************** Local State *******************
   const [autoClaim, setAutoClaim] = useState(false);
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  console.log("consumableNotesFromServer", consumableNotesFromServer);
+
   useEffect(() => {
     (async () => {
       if (walletAddress && isConnected) {
@@ -238,12 +241,20 @@ export const PendingRecieveContainer: React.FC = () => {
       // Also update checked rows if this note was checked
       setCheckedRows(prev => prev.filter(index => consumableNotes[index]?.id !== note.id));
 
-      await forceRefetchRecallableNotes();
+      await Promise.all([forceRefetchRecallableNotes(), forceRefetchAccount()]);
     } catch (error) {
       console.error("Error consuming note:", error);
       toast.dismiss();
       toast.error("Failed to receive payment: " + String(error));
       setClaiming(false);
+
+      if (String(error).includes(FAILED_SUBMIT_PROVEN_TRANSACTION)) {
+        openModal(MODAL_IDS.SOMETHING_WRONG, {
+          tryAgain: async () => {
+            await handleClaim(note);
+          },
+        } as any);
+      }
     }
   };
 
@@ -307,17 +318,25 @@ export const PendingRecieveContainer: React.FC = () => {
       // Clear the checked rows
       setCheckedRows([]);
 
-      await forceRefetchRecallableNotes();
+      await Promise.all([forceRefetchRecallableNotes(), forceRefetchAccount()]);
     } catch (error) {
       console.error("Error consuming notes:", error);
       toast.dismiss();
       toast.error("Failed to receive payments: " + String(error));
       setClaiming(false);
+
+      if (error) {
+        openModal(MODAL_IDS.SOMETHING_WRONG, {
+          tryAgain: async () => {
+            await handleClaimAll();
+          },
+        } as any);
+      }
     }
   };
 
   return (
-    <div className="flex w-full h-full bg-neutral-900  rounded-xl text-white p-6 space-y-6 gap-4">
+    <div className="flex flex-col 2xl:flex-row w-full h-full bg-neutral-900  rounded-xl text-white p-6 space-y-6 gap-4">
       {
         <div className="flex-3">
           <div>
@@ -334,10 +353,10 @@ export const PendingRecieveContainer: React.FC = () => {
                 </header>
               </div>
 
-              <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
+              {/* <div className="cursor-not-allowed flex items-center gap-2 bg-white rounded-lg px-3 py-1">
                 <span className="text-lg text-black">Auto Claim</span>
                 <ToggleSwitch disabled={true} enabled={autoClaim} onChange={() => setAutoClaim(!autoClaim)} />
-              </div>
+              </div> */}
             </div>
             {!isConnected ? (
               <div className="mt-2">

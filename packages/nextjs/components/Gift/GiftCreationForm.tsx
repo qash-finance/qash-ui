@@ -186,7 +186,7 @@ export const GiftCreationForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-1 items-start self-stretch p-2 rounded-2xl bg-[#1E1E1E] w-[25%]">
+    <div className="flex flex-col gap-1 items-start self-stretch p-2 rounded-2xl bg-[#1E1E1E] w-full 2xl:w-[25%]">
       <div className="flex relative flex-col items-center self-stretch rounded-xl flex-[1_0_0] bg-black">
         <div className="flex relative gap-20 justify-end items-center self-stretch pt-2.5 pr-2 pb-2 pl-4 bg-[#323232] rounded-t-xl">
           <h2 className="absolute top-4 left-4 text-base leading-4 text-white h-[17px] w-fit">New gift</h2>

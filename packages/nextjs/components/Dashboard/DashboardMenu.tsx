@@ -119,7 +119,7 @@ const DashboardMenu: React.FC<DashboardMenuProps> = () => {
   );
 
   return (
-    <div className="bg-[#1a1a1a] h-screen w-[250px]">
+    <div className="bg-[#1a1a1a] min-h-screen w-[250px]">
       <div className="px-3.5 pt-[68px] flex flex-col gap-2 justify-center items-start">
         <span className="text-white text-base text-center whitespace-pre leading-none">Dashboard menu</span>
       </div>

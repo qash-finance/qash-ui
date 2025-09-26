@@ -29,6 +29,7 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
   const [savedQRs, setSavedQRs] = useState<CustomQRData[]>([]);
   const [qrCodeInstances, setQrCodeInstances] = useState<Map<string, QRCodeStyling>>(new Map());
   const ref = useRef<HTMLDivElement>(null);
+  const qrContainerRef = useRef<HTMLDivElement>(null);
   const savedQRRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const [options, setOptions] = useState<Options>({
@@ -109,6 +110,28 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
     qrCode?.update(options);
   }, [qrCode, options]);
 
+  // Resize QR code based on container width
+  useEffect(() => {
+    if (!qrContainerRef.current) return;
+
+    const element = qrContainerRef.current;
+
+    const updateSize = () => {
+      const width = element.clientWidth || 350;
+      const size = Math.max(120, Math.min(350, Math.floor(width)));
+      qrCode?.update({ width: size, height: size });
+    };
+
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(() => updateSize());
+    resizeObserver.observe(element);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [qrCode]);
+
   // Update QR code data when wallet address changes
   useEffect(() => {
     if (isConnected && walletAddress) {
@@ -152,7 +175,7 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
   };
 
   return (
-    <main className="receive-address mx-auto rounded-2xl bg-neutral-700 w-full max-w-[380px] p-4 flex flex-col gap-4 h-full max-h-[800px]">
+    <main className="receive-address mx-auto rounded-2xl bg-neutral-700 w-full 2xl:max-w-[380px] p-4 flex flex-col gap-4 h-full max-h-[800px]">
       {/* Header */}
       <header className="flex-col gap-2">
         <h1 className="text-lg font-medium leading-5 text-white">Receive Address</h1>
@@ -172,10 +195,12 @@ export const ReceiveAddress: React.FC<ReceiveAddressProps> = ({
 
           {/* QR Code Section */}
           <section className=" flex flex-col items-center relative">
-            <div className="flex flex-col">
-              <div ref={ref} className={`mx-auto ${showQR ? "block" : "hidden"}`} />
+            <div className="flex flex-col w-full">
+              <div ref={qrContainerRef} className="w-full max-w-[350px] mx-auto">
+                <div ref={ref} className={`w-full ${showQR ? "block" : "hidden"}`} />
+              </div>
               <div
-                className={`flex flex-row w-[350px] h-[348px] bg-transparent ${showQR && "hidden"} flex flex-wrap content-start gap-1 overflow-y-auto relative`}
+                className={`flex flex-row w-full max-w-[350px] h-[348px] bg-transparent ${showQR && "hidden"} flex flex-wrap content-start gap-1 overflow-y-auto relative`}
                 style={{
                   maskImage: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)",
                   WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)",

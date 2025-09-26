@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import { useRouter, usePathname } from "next/navigation";
-import { FloatingActionButton } from "../Common/FloatingActionButton";
 
 interface NavProps {
   onActionItemClick?: (sectionIndex: number, itemIndex: number) => void;
@@ -11,6 +10,8 @@ interface NavProps {
   onConnectWallet?: () => void;
   minimized?: boolean;
   onToggleMinimize?: (value: boolean) => void;
+  showMinimizeToggle?: boolean;
+  includeDashboardGroup?: boolean;
 }
 
 // Enum for sidebar links
@@ -68,45 +69,101 @@ export const actionItems = [
       },
     ],
   },
-  {
-    title: "Team",
-    items: [
-      {
-        icon: "/sidebar/account-management.gif",
-        label: "Manage Accounts",
-        isActive: false,
-        link: SidebarLink.AccountManagement,
-        disabled: true,
-      },
-      {
-        icon: "/sidebar/transactions.gif",
-        label: "Transactions",
-        isActive: false,
-        link: SidebarLink.Transactions,
-        disabled: true,
-      },
-    ],
-  },
+  // {
+  //   title: "Team",
+  //   items: [
+  //     {
+  //       icon: "/sidebar/account-management.gif",
+  //       label: "Manage Accounts",
+  //       isActive: false,
+  //       link: SidebarLink.AccountManagement,
+  //       disabled: true,
+  //     },
+  //     {
+  //       icon: "/sidebar/transactions.gif",
+  //       label: "Transactions",
+  //       isActive: false,
+  //       link: SidebarLink.Transactions,
+  //       disabled: true,
+  //     },
+  //   ],
+  // },
 ];
 
-export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: minimizedProp, onToggleMinimize }) => {
-  const [action, setActions] = useState(actionItems);
+export const Sidebar: React.FC<NavProps> = ({
+  onActionItemClick,
+  minimized: minimizedProp,
+  onToggleMinimize,
+  showMinimizeToggle = true,
+  includeDashboardGroup = false,
+}) => {
+  const [action, setActions] = useState<any[]>(actionItems);
   const minimized = minimizedProp ?? false;
   const router = useRouter();
   const pathname = usePathname();
 
   // **************** Effect ****************
   useEffect(() => {
-    setActions(prev =>
-      prev.map(section => ({
-        ...section,
-        items: section.items.map(item => ({
-          ...item,
-          isActive: pathname?.startsWith(`/${item.link}`),
-        })),
+    const baseSections = actionItems.map(section => ({
+      ...section,
+      items: section.items.map(item => ({
+        ...item,
+        isActive: pathname?.startsWith(`/${item.link}`),
       })),
-    );
-  }, [pathname]);
+    }));
+
+    if (includeDashboardGroup && pathname?.startsWith("/dashboard")) {
+      const segments = pathname.split("/");
+      const dashboardIndex = segments.indexOf("dashboard");
+      const activeSection =
+        dashboardIndex !== -1 && segments[dashboardIndex + 1] ? segments[dashboardIndex + 1] : "wallet-analytics";
+
+      const dashboardSection = {
+        title: "Dashboard",
+        items: [
+          {
+            icon: "/sidebar/dashboard/wallet-analytics.gif",
+            label: "Overview",
+            isActive: activeSection === "wallet-analytics",
+            disabled: false,
+            href: "/dashboard/wallet-analytics",
+          },
+          {
+            icon: "/sidebar/dashboard/pending-request.gif",
+            label: "Payment Request",
+            isActive: activeSection === "pending-request",
+            disabled: false,
+            href: "/dashboard/pending-request",
+          },
+          {
+            icon: "/sidebar/dashboard/pending-receive.gif",
+            label: "Receive",
+            isActive: activeSection === "pending-receive",
+            disabled: false,
+            href: "/dashboard/pending-receive",
+          },
+          {
+            icon: "/sidebar/dashboard/cancel-payment.gif",
+            label: "Cancel Payment",
+            isActive: activeSection === "cancel-payment",
+            disabled: false,
+            href: "/dashboard/cancel-payment",
+          },
+          {
+            icon: "/sidebar/dashboard/schedule-payment.gif",
+            label: "Schedule Payment",
+            isActive: activeSection === "schedule-payment",
+            disabled: false,
+            href: "/dashboard/schedule-payment",
+          },
+        ],
+      } as any;
+
+      setActions([...baseSections, dashboardSection]);
+    } else {
+      setActions(baseSections);
+    }
+  }, [pathname, includeDashboardGroup]);
 
   // **************** Handlers ****************
   const handleActionItemClick = (sectionIndex: number, itemIndex: number) => {
@@ -117,23 +174,25 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: mini
       return;
     }
 
-    const link = item.link;
+    const link = (item as any).link ? `/${(item as any).link}` : (item as any).href;
     setActions(prev =>
       prev.map((section, sIdx) => ({
         ...section,
-        items: section.items.map((item, i) => ({
+        items: section.items.map((item: any, i: number) => ({
           ...item,
           isActive: sIdx === sectionIndex && i === itemIndex,
         })),
       })),
     );
-    router.push(`/${link}`);
+    if (link) {
+      router.push(link);
+    }
     onActionItemClick?.(sectionIndex, itemIndex);
   };
 
   return (
     <nav
-      className="sidebar overflow-visible pt-3 rounded-lg bg-[#111212] w-full relative h-screen"
+      className="fixed sidebar overflow-visible pt-3 rounded-lg bg-[#111212] w-[225px]  h-screen"
       style={{ transition: "padding 200ms ease" }}
     >
       <div className="flex flex-col justify-between h-full">
@@ -228,25 +287,27 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick, minimized: mini
       </div>
 
       {/* Minimize toggle */}
-      <button
-        type="button"
-        aria-label={minimized ? "Expand sidebar" : "Minimize sidebar"}
-        onClick={() => {
-          const next = !minimized;
-          onToggleMinimize?.(next);
-        }}
-        className="absolute top-[13px] py-1.5 z-20 cursor-pointer hover:bg-white bg-[#111212]"
-        style={{
-          paddingLeft: minimized ? "5px" : "8px",
-          paddingRight: minimized ? "5px" : "8px",
-          border: minimized ? "1px 1px 1px 0px solid #292929" : "none",
-          borderRadius: minimized ? "0px 6px 6px 0px" : "6px",
-          right: minimized ? "-30px" : "14px",
-          transition: "right 200ms ease",
-        }}
-      >
-        <img src="/sidebar/minimize-icon.svg" alt="" className="w-5 h-5" />
-      </button>
+      {showMinimizeToggle && (
+        <button
+          type="button"
+          aria-label={minimized ? "Expand sidebar" : "Minimize sidebar"}
+          onClick={() => {
+            const next = !minimized;
+            onToggleMinimize?.(next);
+          }}
+          className="absolute top-[13px] py-1.5 z-20 cursor-pointer hover:bg-white bg-[#111212]"
+          style={{
+            paddingLeft: minimized ? "5px" : "8px",
+            paddingRight: minimized ? "5px" : "8px",
+            border: minimized ? "1px 1px 1px 0px solid #292929" : "none",
+            borderRadius: minimized ? "0px 6px 6px 0px" : "6px",
+            right: minimized ? "-30px" : "14px",
+            transition: "right 200ms ease",
+          }}
+        >
+          <img src="/sidebar/minimize-icon.svg" alt="" className="w-5 h-5" />
+        </button>
+      )}
     </nav>
   );
 };

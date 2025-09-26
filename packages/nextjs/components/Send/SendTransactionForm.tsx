@@ -346,6 +346,20 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       toast.dismiss();
       console.error("Failed to send schedule payment transaction:", error);
       toast.error("Failed to create schedule payment");
+
+      if (error) {
+        openModal(MODAL_IDS.SOMETHING_WRONG, {
+          tryAgain: async () => {
+            await handleSchedulePaymentTransaction(
+              senderAccountId,
+              recipientAccountId,
+              faucetAccountId,
+              recallHeight,
+              data,
+            );
+          },
+        } as any);
+      }
     } finally {
       setIsSending(false);
     }
@@ -359,7 +373,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
     data: SendTransactionFormValues,
   ) => {
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
-
+    console.log("handleSingleSendTransaction, senderAccountId", senderAccountId, recipientAccountId);
     try {
       // create note
       const [note, serialNumbers, noteRecallHeight] = await createP2IDENote(
@@ -435,6 +449,14 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
       toast.dismiss();
       console.error("Failed to send schedule payment transaction:", error);
       toast.error("Failed to send schedule payment transaction");
+
+      if (error) {
+        openModal(MODAL_IDS.SOMETHING_WRONG, {
+          tryAgain: async () => {
+            await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, data);
+          },
+        } as any);
+      }
     } finally {
       setIsSending(false);
     }
@@ -594,7 +616,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({ active
   };
 
   return (
-    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[600px]`} onSubmit={handleSubmit(handleFormSubmit)}>
+    <form className={`p-2 rounded-b-2xl bg-zinc-900 w-[80%] lg:w-[600px]`} onSubmit={handleSubmit(handleFormSubmit)}>
       <section
         className="grid grid-rows-7 overflow-hidden flex-col items-center pb-3 w-full text-white whitespace-nowrap rounded-lg bg-[#292929] mb-1"
         style={{

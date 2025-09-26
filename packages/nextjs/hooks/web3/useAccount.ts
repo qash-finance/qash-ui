@@ -97,7 +97,7 @@ export function useAccount() {
   });
 
   const forceFetch = async () => {
-    // repeat 3 times, each with 3 seconds delay
+    // repeat 5 times, each with 3 seconds delay
     for (let i = 0; i < 5; i++) {
       queryClient.invalidateQueries({ queryKey: ["account-data", walletAddress] });
       await refetchAssets();

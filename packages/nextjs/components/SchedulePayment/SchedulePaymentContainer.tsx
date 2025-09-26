@@ -115,9 +115,9 @@ const UpcomingPaymentHeader = ({ schedulePayments }: { schedulePayments: any[] |
 
   if (!nextPayment) {
     return (
-      <div className="flex flex-col justify-center items-center flex-1 h-fit">
+      <div className="h-[150px] flex flex-col justify-center items-center flex-1">
         <article
-          className="relative flex-1 text-white rounded-xl bg-[#1E1E1E] min-w-60 w-full"
+          className="relative flex-1 text-white rounded-xl bg-[#1E1E1E] min-w-60 h-full w-full"
           style={{
             backgroundImage: "url('/schedule-payment/upcoming-payment-background.svg')",
             backgroundSize: "cover",
@@ -136,7 +136,7 @@ const UpcomingPaymentHeader = ({ schedulePayments }: { schedulePayments: any[] |
             <span className="text-black font-normal">Next upcoming payment</span>
           </div>
           <div
-            className="rounded-[10px] flex justify-center items-center h-[90px] m-2 bg-black"
+            className="rounded-[10px] flex justify-center items-center h-[100px] m-2 bg-black"
             style={{
               backgroundImage: "url('/schedule-payment/header-inner-background.svg')",
               backgroundSize: "contain",
@@ -293,7 +293,7 @@ const LockedAmountHeader = ({ schedulePayments }: { schedulePayments: any[] | un
   const lockedAmount = calculateLockedAmount();
 
   return (
-    <div className="flex flex-col justify-center items-center flex-1 h-fit">
+    <div className="h-[150px] flex flex-col justify-center items-center flex-1">
       <article
         className="relative flex-1 text-white rounded-xl bg-[#1E1E1E] min-w-60 w-full"
         style={{
@@ -314,7 +314,7 @@ const LockedAmountHeader = ({ schedulePayments }: { schedulePayments: any[] | un
           <span className="text-black text-lg font-normal">Locked Amount</span>
         </div>
         <div
-          className="rounded-[10px]  flex justify-center items-center h-[90px] m-2 bg-black"
+          className="rounded-[10px]  flex justify-center items-center h-[100px] m-2 bg-black"
           style={{
             backgroundImage: "url('/schedule-payment/header-inner-background.svg')",
             backgroundSize: "contain",
@@ -339,8 +339,6 @@ export const SchedulePaymentContainer = () => {
     status: SchedulePaymentStatus.ACTIVE,
   }) as { data: any[] | undefined };
   const blockNum = useMidenSdkStore(state => state.blockNum);
-
-  console.log("schedulePayments", schedulePayments);
 
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -404,23 +402,6 @@ export const SchedulePaymentContainer = () => {
       console.error("Error calculating transaction-based progress:", error);
       return 0;
     }
-  };
-
-  // Demo: Simulate loading progress
-  const startDemo = () => {
-    setIsLoading(true);
-    setProgress(0);
-
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsLoading(false);
-          return 100;
-        }
-        return prev + 2; // Increase by 2% every 100ms
-      });
-    }, 100);
   };
 
   const renderSchedulePaymentItem = () => {
@@ -553,7 +534,7 @@ export const SchedulePaymentContainer = () => {
 
   return (
     <div className="flex flex-col justify-start gap-2 p-2 w-full h-full overflow-hidden overflow-y-auto">
-      <div className="flex flex-row gap-2">
+      <div className="flex 2xl:flex-row flex-col gap-2">
         <UpcomingPaymentHeader schedulePayments={schedulePayments} />
         <LockedAmountHeader schedulePayments={schedulePayments} />
       </div>

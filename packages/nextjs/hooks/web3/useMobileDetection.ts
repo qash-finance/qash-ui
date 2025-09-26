@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-export function useMobileDetection() {
+type UseMobileDetectionOptions = {
+  disableRedirect?: boolean;
+};
+
+export function useMobileDetection(options: UseMobileDetectionOptions = {}) {
   const [isMobile, setIsMobile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -16,13 +20,15 @@ export function useMobileDetection() {
       setIsMobile(isMobileDevice);
       setIsLoading(false);
 
-      // Redirect to mobile page if on mobile and not already on mobile page
-      if (isMobileDevice && pathname !== "/mobile") {
-        router.push("/mobile");
-      }
-      // Redirect to home if not mobile and on mobile page
-      if (!isMobileDevice && pathname === "/mobile") {
-        router.push("/");
+      if (!options.disableRedirect) {
+        // Redirect to mobile page if on mobile and not already on mobile page
+        if (isMobileDevice && pathname !== "/mobile") {
+          router.push("/mobile");
+        }
+        // Redirect to home if not mobile and on mobile page
+        if (!isMobileDevice && pathname === "/mobile") {
+          router.push("/");
+        }
       }
     };
 
@@ -30,7 +36,7 @@ export function useMobileDetection() {
     window.addEventListener("resize", checkMobile);
 
     return () => window.removeEventListener("resize", checkMobile);
-  }, [router, pathname]);
+  }, [router, pathname, options.disableRedirect]);
 
   return { isMobile, isLoading };
 }

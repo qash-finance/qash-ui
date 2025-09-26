@@ -73,7 +73,7 @@ const TopInteractedAddresses = () => {
 
   return (
     <div
-      className="flex flex-col gap-6 h-[250px] items-center pb-2 pt-4 px-2 relative rounded-xl overflow-hidden flex-1"
+      className="flex flex-col gap-6 h-[250px] 2xl:h-full w-full items-center pb-2 pt-4 px-2 relative rounded-xl overflow-hidden 2xl:flex-1"
       style={{
         background: "linear-gradient(180deg, #06ffb4 0%, #04AED9 100%)",
       }}
@@ -82,7 +82,7 @@ const TopInteractedAddresses = () => {
         {/* Header */}
         <div className="flex flex-row gap-1 items-center w-full">
           <img src="/wallet-analytics/trophy-icon.gif" alt="trophy" className="w-5 h-5" />
-          <span className="capitalize font-medium text-[#292929] text-base">top interacted address</span>
+          <span className="capitalize font-medium text-[#292929] text-base">top received from</span>
         </div>
 
         {/* Addresses List */}
@@ -120,7 +120,7 @@ const TopInteractedAddresses = () => {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-black text-center w-full">
-                <span>No top interacted addresses found!</span>
+                <span>No top received addresses found!</span>
               </div>
             )}
           </div>

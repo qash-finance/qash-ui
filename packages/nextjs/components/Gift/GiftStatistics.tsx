@@ -41,9 +41,9 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
             </div>
 
             {/* Stats Cards Container */}
-            <div className="h-[180px] flex gap-1.5  md:flex-row flex-col md:gap-1.5">
+            <div className="h-[180px] flex gap-1.5 flex-row md:gap-1.5">
               {/* Total gift value sent */}
-              <div className="w-[85%] relative flex flex-col justify-between p-4 rounded-xl gift-background flex-1 min-h-32 overflow-hidden">
+              <div className="w-[70%] lg:w-[85%] relative flex flex-col justify-between p-4 rounded-xl gift-background flex-1 min-h-32 overflow-hidden">
                 <h3 className="text-base text-neutral-700 leading-5">Total gift value sent</h3>
                 <div className="text-5xl font-medium text-black sm:text-5xl leading-tight">
                   $ {giftDashboard?.totalAmount}
@@ -61,7 +61,7 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
                   backgroundRepeat: "no-repeat",
                   backgroundSize: "cover",
                 }}
-                className="w-[15%] relative flex flex-col justify-between items-left p-3 rounded-xl  overflow-hidden"
+                className="w-[30%] lg:w-[15%] relative flex flex-col justify-between items-left p-3 rounded-xl  overflow-hidden"
               >
                 <h3 className="relative text-base text-black leading-5 z-10">Gift opened</h3>
                 <div className="relative font-medium text-white z-10 text-6xl">{giftDashboard?.totalOpenedGifts}</div>

@@ -468,8 +468,8 @@ export const CancelDashboardContainer: React.FC = () => {
       ) : (
         <div className="flex-1 w-full max-md:max-w-full">
           <article className="overflow-hidden flex-1 text-white rounded-xl bg-[#1E1E1E] min-w-60"></article>
-          <div className="flex flex-wrap gap-2 p-1.5 w-full rounded-2xl bg-neutral-950 min-h-[164px] max-md:max-w-full">
-            <article className=" flex-1 text-white rounded-xl bg-[#1E1E1E] ">
+          <div className="flex flex-col 2xl:flex-row 2xl:flex-wrap gap-5 2xl:gap-2 p-1.5 w-full rounded-2xl bg-neutral-950 min-h-[164px] max-md:max-w-full">
+            <article className="h-[150px] 2xl:flex-1 text-white rounded-xl bg-[#1E1E1E] ">
               <div
                 className=" relative flex-1 shrink rounded-2xl basis-0 bg-[#1150AE] min-w-60 border-white border-solid shadow-md border-[3px] mt-5 h-[87%]"
                 style={{

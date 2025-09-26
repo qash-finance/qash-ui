@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { useAccountContext } from "@/contexts/AccountProvider";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface GeneralStatisticsProps {
   timePeriod: "month" | "year";
@@ -316,7 +316,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
 
   return (
     <div
-      className="h-full overflow-hidden relative rounded-xl flex-1 transition-all duration-300"
+      className="w-full 2xl:h-full h-[250px] overflow-hidden relative rounded-xl 2xl:flex-1 transition-all duration-300"
       style={{
         background: timePeriod === "month" ? "linear-gradient(90deg, #0059FF 0%, #003699 100%)" : "#1E1E1E",
       }}
