@@ -61,6 +61,19 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
 
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
   // Load sidebar state from localStorage on mount
   useEffect(() => {
     const savedState = localStorage.getItem("sidebarMinimized");
@@ -75,8 +88,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     localStorage.setItem("sidebarMinimized", JSON.stringify(minimized));
   };
 
-  const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
-  const openMobileSidebar = () => setIsMobileSidebarOpen(true);
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false);
+  };
+  const openMobileSidebar = () => {
+    console.log("TOGGLE");
+    setIsMobileSidebarOpen(true);
+  };
 
   const wallets = useMemo(
     () => [
@@ -173,7 +191,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                           <div className="flex flex-row">
                             {/* Desktop sidebar */}
                             <div
-                              className={`top-0 hidden lg:block ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"}`}
+                              className={`top-0 ${isSidebarMinimized ? "w-[54px]" : "w-[230px]"} ${isSmallScreen ? "hidden" : "block"}`}
                               style={{
                                 transition: "width 250ms ease",
                                 willChange: "width",
@@ -183,7 +201,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             </div>
 
                             {/* Mobile drawer and overlay */}
-                            {isMobile && (
+                            {isSmallScreen && (
                               <>
                                 {/* Overlay */}
                                 {isMobileSidebarOpen && (
@@ -205,7 +223,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                 </div>
                               </>
                             )}
-                            {pathname.includes("dashboard") && <DashboardMenu />}
+                            {pathname.includes("dashboard") && !isSmallScreen && <DashboardMenu />}
                             <div className="flex-1 min-h-screen flex flex-col overflow-hidden">
                               <Title onOpenSidebar={openMobileSidebar} />
                               <div

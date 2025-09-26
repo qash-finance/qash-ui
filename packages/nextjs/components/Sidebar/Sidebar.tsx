@@ -192,7 +192,7 @@ export const Sidebar: React.FC<NavProps> = ({
 
   return (
     <nav
-      className="sidebar overflow-visible pt-3 rounded-lg bg-[#111212] w-full relative h-screen"
+      className="fixed sidebar overflow-visible pt-3 rounded-lg bg-[#111212] w-[225px]  h-screen"
       style={{ transition: "padding 200ms ease" }}
     >
       <div className="flex flex-col justify-between h-full">
