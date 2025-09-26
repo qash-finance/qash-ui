@@ -90,7 +90,7 @@ export const WalletAnalyticsContainer: React.FC = () => {
   useEscapeKey(handleBackToHistory, showTransactionDetail);
 
   return (
-    <div className="flex flex-col gap-2 items-start justify-start overflow-y-scroll w-full h-full p-2 bg-black">
+    <div className="custom-scrollbar flex flex-col gap-2 items-start justify-start overflow-y-scroll w-full h-full p-2 bg-black">
       {/* Top Row - Cards */}
       <div className="flex 2xl:flex-row flex-col gap-[5px] h-full 2xl:h-[250px] items-start w-full">
         <GeneralStatistics timePeriod={timePeriod} onTimePeriodChange={setTimePeriod} />
