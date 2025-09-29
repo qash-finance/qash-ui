@@ -3,6 +3,7 @@ import React from "react";
 
 export enum BadgeStatus {
   SUCCESS = "success",
+  FAIL = "fail",
   PRIVATE = "private",
   PUBLIC = "public",
 }
@@ -17,6 +18,8 @@ export const Badge: React.FC<BadgeProps> = ({ status, text = status }) => {
     switch (status) {
       case BadgeStatus.SUCCESS:
         return "bg-badge-success-background text-badge-success-text border-badge-success-border";
+      case BadgeStatus.FAIL:
+        return "bg-badge-fail-background text-badge-fail-text border-badge-fail-border";
       case BadgeStatus.PRIVATE:
         return "bg-badge-private-background text-badge-private-text border-badge-private-border";
       case BadgeStatus.PUBLIC:

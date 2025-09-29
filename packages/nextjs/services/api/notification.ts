@@ -88,6 +88,23 @@ const useMarkAllNotificationsAsRead = () => {
           })),
         };
       });
+
+      // Also update the infinite query cache
+      queryClient.setQueriesData({ queryKey: ["notification-infinite"] }, (oldData: any) => {
+        if (!oldData?.pages) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: NotificationResponse) => ({
+            ...page,
+            notifications: page.notifications.map(notification => ({
+              ...notification,
+              status: "READ" as const,
+              readAt: new Date(),
+            })),
+          })),
+        };
+      });
     },
   });
 };

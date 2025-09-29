@@ -8,6 +8,8 @@ import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { useRouter } from "next/navigation";
+import { Tooltip } from "react-tooltip";
+import { MIDEN_EXPLORER_URL } from "@/services/utils/constant";
 enum SelectedWallet {
   MIDEN_WALLET = "miden-wallet",
   LOCAL_WALLET_1 = "local-wallet-1",
@@ -90,17 +92,43 @@ export const Account: React.FC<AccountProps> = () => {
     }
   };
 
-  const SubIcon = ({ icon, onClick }: { icon: string; onClick: () => void }) => {
+  const SubIcon = ({
+    icon,
+    onClick,
+    tooltipId,
+    tooltipContent,
+  }: {
+    icon: string;
+    onClick: () => void;
+    tooltipId?: string;
+    tooltipContent?: string;
+  }) => {
     return (
       <div
         className="flex justify-center items-center w-[32px] h-[32px] rounded-lg bg-app-background border-t-2 border-primary-divider cursor-pointer"
         onClick={() => {
           onClick();
         }}
+        data-tooltip-id={tooltipId}
+        data-tooltip-content={tooltipContent}
       >
         <img src={icon} className="w-4" alt={icon} />
       </div>
     );
+  };
+
+  const tooltipConfig = {
+    noArrow: true,
+    style: {
+      zIndex: 20,
+      borderRadius: "12px",
+      padding: "0",
+    },
+    render: ({ content }: { content: string | null }) => (
+      <div className="bg-[#121212] rounded-lg p-2 px-4">
+        <span className="text-white">{content}</span>
+      </div>
+    ),
   };
 
   return (
@@ -146,12 +174,34 @@ export const Account: React.FC<AccountProps> = () => {
             <img src="/arrow/filled-arrow-right.svg" className="w-5 aspect-square" alt="filled arrow right icon" />
           </header>
           <div className="flex items-center gap-2">
-            <SubIcon icon="/misc/qr-icon.svg" onClick={() => router.push("/move-crypto?tab=receive")} />
-            <SubIcon icon="/misc/external-link-icon.svg" onClick={() => {}} />
-            <SubIcon icon="/misc/power-button-icon.svg" onClick={handleDisconnect} />
+            <SubIcon
+              icon="/misc/qr-icon.svg"
+              onClick={() => router.push("/move-crypto?tab=receive")}
+              tooltipId="qr-tooltip"
+              tooltipContent="Scan QR Code"
+            />
+            <SubIcon
+              icon="/misc/external-link-icon.svg"
+              onClick={() => {
+                window.open(`${MIDEN_EXPLORER_URL}/account/${walletAddress}`, "_blank");
+              }}
+              tooltipId="explorer-tooltip"
+              tooltipContent="View on Explorer"
+            />
+            <SubIcon
+              icon="/misc/power-button-icon.svg"
+              onClick={handleDisconnect}
+              tooltipId="disconnect-tooltip"
+              tooltipContent="Disconnect"
+            />
           </div>
         </article>
       </div>
+
+      {/* Tooltips */}
+      {["qr-tooltip", "explorer-tooltip", "disconnect-tooltip"].map(tooltipId => (
+        <Tooltip key={tooltipId} id={tooltipId} {...tooltipConfig} />
+      ))}
     </div>
   );
 };

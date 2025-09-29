@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from "react";
 
 interface TabContainerProps {
-  tabs: { id: string; label: string; disabled?: boolean }[];
+  tabs: { id: string; label: string | React.ReactNode; disabled?: boolean }[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
   textSize?: "sm" | "base";
@@ -71,7 +71,11 @@ export function TabContainer({ tabs, activeTab, setActiveTab, textSize = "base",
           onClick={() => !tab.disabled && setActiveTab(tab.id)}
           disabled={tab.disabled}
         >
-          <span className={`${baseTextStyles} ${activeTab !== tab.id && inactiveTextStyles}`}>{tab.label}</span>
+          {typeof tab.label === "string" ? (
+            <span className={`${baseTextStyles} ${activeTab !== tab.id && inactiveTextStyles}`}>{tab.label}</span>
+          ) : (
+            <div className={`${baseTextStyles} ${activeTab !== tab.id && inactiveTextStyles}`}>{tab.label}</div>
+          )}
         </button>
       ))}
     </nav>

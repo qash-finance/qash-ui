@@ -31,6 +31,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ActionButton } from "./Common/ActionButton";
 import { MODAL_IDS } from "@/types/modal";
 import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
+import { PrimaryButton } from "./Common/PrimaryButton";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -176,12 +177,15 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                           alt="connect-wallet-icon"
                                           className="w-16 h-16"
                                         />
-                                        <span className="text-white text-lg font-medium">
+                                        <span className="text-text-primary text-lg font-medium">
                                           Please connect your wallet to display information.
                                         </span>
-                                        <ActionButton
+                                        <PrimaryButton
                                           text="Connect Wallet"
-                                          onClick={() => modalRef.current?.openModal(MODAL_IDS.CONNECT_WALLET)}
+                                          onClick={() => modalRef.current?.openModal(MODAL_IDS.SELECT_WALLET)}
+                                          containerClassName="w-[190px]"
+                                          icon="/misc/wallet-icon.svg"
+                                          iconPosition="left"
                                         />
                                       </div>
                                     )}

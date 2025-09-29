@@ -72,58 +72,51 @@ const TopInteractedAddresses = () => {
   }, [transactions, accountId, assets]);
 
   return (
-    <div
-      className="flex flex-col gap-6 h-[250px] items-center pb-2 pt-4 px-2 relative rounded-xl overflow-hidden flex-1"
-      style={{
-        background: "linear-gradient(180deg, #06ffb4 0%, #04AED9 100%)",
-      }}
-    >
-      <div className="flex flex-col gap-4 flex-1 w-full relative">
-        {/* Header */}
-        <div className="flex flex-row gap-1 items-center w-full">
-          <img src="/wallet-analytics/trophy-icon.gif" alt="trophy" className="w-5 h-5" />
-          <span className="capitalize font-medium text-[#292929] text-base">top interacted address</span>
-        </div>
+    <div className="flex flex-col gap-2 h-[250px] items-center pb-2 pt-4 px-4 relative overflow-hidden flex-1 border-r border-primary-divider">
+      {/* Header */}
+      <div className="flex flex-row gap-1 items-center w-full">
+        <img src="/wallet-analytics/trophy-icon.gif" alt="trophy" className="w-5 h-5" />
+        <span className="capitalize text-text-primary">Frequent Addresses</span>
+      </div>
 
-        {/* Addresses List */}
-        <div className="flex-1 flex items-center justify-center w-full">
-          <div className="bg-white flex flex-col gap-1 items-start p-2 rounded-[10px] shadow-[0px_0px_0px_1px_#0059ff,0px_1px_3px_0px_rgba(9,65,143,0.2)] w-full h-full">
-            {topInteractedAddresses.length > 0 ? (
-              topInteractedAddresses.map((address: TopInteractedAddressesProps, index: number) => (
-                <div
-                  key={index}
-                  onClick={() => {
-                    openModal<InteractAccountTransactionModalProps>(MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION, {
-                      address: address.walletAddress,
-                    });
-                  }}
-                  className="flex flex-row gap-3 items-center px-2 py-1.5 rounded-lg w-full cursor-pointer"
-                >
-                  <img src={blo(turnBechToHex(address.walletAddress))} alt="avatar" className="w-8 h-8 rounded-full" />
-                  <div className="flex flex-col gap-0.5 flex-1">
-                    <div className="font-medium h-5 flex items-center text-[#292929] text-sm tracking-[-0.2px] w-full">
-                      <span className="block leading-[20px]">{formatAddress(address.walletAddress)}</span>
-                    </div>
-                    <div className="flex flex-row gap-1 items-center">
-                      <img src="/wallet-analytics/coin-icon.gif" alt="coin" className="w-4 h-4" />
-                      <span className="font-semibold text-[#066eff] text-sm tracking-[-0.2px]">
-                        {address.accumulatedAmount.toLocaleString()}
-                      </span>
-                    </div>
+      {/* Addresses List */}
+      <div className="flex-1 flex items-center justify-center w-full">
+        <div className="bg-background flex flex-col gap-1 items-start p-2 rounded-[10px] w-full h-full">
+          {topInteractedAddresses.length > 0 ? (
+            topInteractedAddresses.map((address: TopInteractedAddressesProps, index: number) => (
+              <div
+                key={index}
+                onClick={() => {
+                  openModal<InteractAccountTransactionModalProps>(MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION, {
+                    address: address.walletAddress,
+                  });
+                }}
+                className="flex flex-row gap-3 items-center px-2 py-1.5 rounded-lg w-full cursor-pointer"
+              >
+                <img src={blo(turnBechToHex(address.walletAddress))} alt="avatar" className="w-8 h-8 rounded-full" />
+                <div className="flex flex-col gap-0.5 flex-1">
+                  <div className="font-medium h-5 flex items-center text-[#292929] text-sm tracking-[-0.2px] w-full">
+                    <span className="block leading-[20px]">{formatAddress(address.walletAddress)}</span>
                   </div>
-                  {address.rank === 1 ? (
-                    <img src="/wallet-analytics/medal.svg" alt="medal" className="w-7 h-7" />
-                  ) : (
-                    <div className="font-medium text-[#464646] text-sm tracking-[-0.2px]">#{address.rank}</div>
-                  )}
+                  <div className="flex flex-row gap-1 items-center">
+                    <img src="/wallet-analytics/coin-icon.gif" alt="coin" className="w-4 h-4" />
+                    <span className="font-semibold text-[#066eff] text-sm tracking-[-0.2px]">
+                      {address.accumulatedAmount.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-black text-center w-full">
-                <span>No top interacted addresses found!</span>
+                {address.rank === 1 ? (
+                  <img src="/wallet-analytics/medal.svg" alt="medal" className="w-7 h-7" />
+                ) : (
+                  <div className="font-medium text-[#464646] text-sm tracking-[-0.2px]">#{address.rank}</div>
+                )}
               </div>
-            )}
-          </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-black text-center w-full">
+              <span>No top interacted addresses found!</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

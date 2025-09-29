@@ -61,6 +61,9 @@
   --badge-success-background: #cef9d8;
   --badge-success-text: #007b4b;
   --badge-success-border: #83ffa0;
+  --badge-fail-background: #ffd7d7;
+  --badge-fail-text: #e93544;
+  --badge-fail-border: #ff6875;
   --badge-private-background: #e9e3fc;
   --badge-private-text: #7d52f4;
   --badge-private-border: #7d52f4;

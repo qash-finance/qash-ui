@@ -80,6 +80,13 @@ const getRowStyle = () => ({
   borderColor: "var(--color-table-row-border)",
 });
 
+const tableBodyStyle = "overflow-y-auto";
+const defaultTableClass = "overflow-x-auto table-scrollbar rounded-2xl border";
+const tableStyle = {
+  borderColor: "var(--color-table-row-border)",
+  maxHeight: "440px",
+};
+
 const SortableTableRow = ({
   id,
   cells,
@@ -124,7 +131,7 @@ const SortableTableRow = ({
       {...attributes}
     >
       <td
-        className="px-3 py-4 cursor-grab active:cursor-grabbing"
+        className="px-3 py-2 cursor-grab active:cursor-grabbing"
         style={{
           width: "40px",
           borderColor: "var(--color-table-row-border)",
@@ -252,7 +259,7 @@ const TableRow = ({
       {cells.map((cell, index) => (
         <td
           key={index}
-          className={`px-3 py-4 text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
+          className={`px-3 py-2 text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
           style={{
             width: columnWidths[index.toString()],
             borderColor: "var(--color-table-row-border)",
@@ -332,13 +339,6 @@ export function Table({
         return newItems;
       });
     }
-  };
-
-  const tableBodyStyle = "overflow-y-auto";
-  const defaultTableClass = "overflow-x-auto table-scrollbar rounded-2xl border";
-  const tableStyle = {
-    borderColor: "var(--color-table-row-border)",
-    maxHeight: "455px",
   };
 
   if (draggable) {

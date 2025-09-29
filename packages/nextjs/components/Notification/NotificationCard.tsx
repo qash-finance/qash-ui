@@ -20,6 +20,22 @@ export interface NotificationCardProps {
   onClick?: () => void;
 }
 
+const ViewOnExplorer = ({ txId }: { txId: string | undefined }) => {
+  if (!txId) return null;
+
+  return (
+    <a
+      href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2  text-sm border-2 border-primary-divider rounded-lg p-2 w-fit cursor-pointer"
+    >
+      <span className="text-text-primary">View on Explorer</span>
+      <img src="/misc/external-link-icon.svg" alt="send" className="w-4 h-4" />
+    </a>
+  );
+};
+
 const NotificationCard: React.FC<NotificationCardProps> = ({
   type,
   title,
@@ -36,16 +52,6 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   giftOpener,
   onClick,
 }) => {
-  // Common styles
-  const notificationItemStyles = "bg-[#1e1e1e] flex items-center justify-between px-3 py-4 rounded-xl w-full relative";
-  const iconContainerStyles = "bg-[#066eff] rounded-lg size-10 relative shrink-0";
-  const iconWrapperStyles = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-6 overflow-hidden";
-  const contentStyles = "flex flex-col gap-1 grow text-left leading-none min-w-0";
-  const titleStyles = "font-['Barlow:Medium',_sans-serif] text-white tracking-[-0.16px] leading-[20px]";
-  const subtitleStyles = "font-['Barlow:Regular',_sans-serif] text-sm text-[#DCDCDC] leading-[20px]";
-  const timeStyles = "font-['Barlow:Regular',_sans-serif] text-[#989898] text-[13px] tracking-[-0.13px] leading-[1.1]";
-  const dotStyles = "size-2.5 shrink-0";
-
   // Get icon based on notification type
   const getIcon = () => {
     switch (type) {
@@ -78,7 +84,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
       case NotificationType.SEND:
         return (
           <div>
-            <span className={titleStyles}>
+            <span className="text-text-primary tracking-[-0.16px] leading-[20px]">
               {title} for{" "}
               <span className="text-[#1e8fff]">
                 {amount} {tokenName} ({formatAddress(tokenAddress || "")})
@@ -86,173 +92,73 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               to {formatAddress(address || "")}
             </span>
             <div className="my-1.5">
-              <a
-                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm w-fit"
-              >
-                <span>View on explorer</span>
-                <svg
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
+              <ViewOnExplorer txId={txId} />
             </div>
           </div>
         );
       case NotificationType.GIFT_SEND:
         return (
           <div>
-            <span className={titleStyles}>
+            <span className="text-text-primary tracking-[-0.16px] leading-[20px]">
               {title} for{" "}
               <span className="text-[#1e8fff]">
                 {amount} {tokenName}
               </span>{" "}
             </span>
             <div className="my-1.5">
-              <a
-                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm w-fit"
-              >
-                <span>View on explorer</span>
-                <svg
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
+              <ViewOnExplorer txId={txId} />
             </div>
           </div>
         );
       case NotificationType.GIFT_OPEN:
         return (
           <div>
-            <span className={titleStyles}>
+            <span className="text-text-primary tracking-[-0.16px] leading-[20px]">
               Gift worth{" "}
-              <span className="text-[#1e8fff]">
+              <span className="text-primary-blue">
                 {amount} {tokenName}
               </span>{" "}
               opened by {formatAddress(giftOpener || "")}
             </span>
             <div className="my-1.5">
-              <a
-                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm w-fit"
-              >
-                <span>View on explorer</span>
-                <svg
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
+              <ViewOnExplorer txId={txId} />
             </div>
           </div>
         );
       case NotificationType.CLAIM:
         return (
           <div>
-            <span className={titleStyles}>
+            <span className="text-text-primary leading-[20px]">
               {title}{" "}
-              <span className="text-[#1e8fff]">
+              <span className="text-primary-blue">
                 {amount} {tokenName} ({formatAddress(tokenAddress || "")})
               </span>{" "}
             </span>
             <div className="my-1.5">
-              <a
-                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm w-fit"
-              >
-                <span>View on explorer</span>
-                <svg
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
+              <ViewOnExplorer txId={txId} />
             </div>
           </div>
         );
       case NotificationType.REFUND:
         return (
           <div>
-            <span className={titleStyles}>
+            <span className="text-text-primary leading-[20px]">
               {title}{" "}
-              <span className="text-[#1e8fff]">
+              <span className="text-primary-blue">
                 {amount} {tokenName} ({formatAddress(tokenAddress || "")})
               </span>{" "}
               to your wallet
             </span>
             <div className="my-1.5">
-              <a
-                href={`${MIDEN_EXPLORER_URL}/tx/${txId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white text-sm w-fit"
-              >
-                <span>View on explorer</span>
-                <svg
-                  className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
+              <ViewOnExplorer txId={txId} />
             </div>
           </div>
         );
       case NotificationType.BATCH_SEND:
         return (
-          <span className={titleStyles}>
+          <span className="text-text-primary leading-[20px]">
             {title}{" "}
-            <span className="text-[#1e8fff]">
+            <span className="text-primary-blue">
               {amount} {tokenName} ({formatAddress(tokenAddress || "")})
             </span>{" "}
             in total to <span className="text-white">{recipientCount} accounts</span>
@@ -265,59 +171,59 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         const formattedPayee = isPayeeAddress ? formatAddress(payeeAddress) : payeeAddress;
 
         return (
-          <span className={titleStyles}>
-            <span className="text-white">{formattedPayee}</span> has requested you to transfer{" "}
-            <span className="text-[#1e8fff]">
+          <span className="text-text-primary leading-[20px]">
+            <span className="text-text-primary">{formattedPayee}</span> has requested you to transfer{" "}
+            <span className="text-primary-blue">
               {amount} {tokenName}
             </span>
           </span>
         );
       case NotificationType.WALLET_CREATE:
         return (
-          <div className="flex flex-col gap-1 w-full text-sm tracking-[-0.16px]">
-            <span className="font-['Barlow:Medium',_sans-serif] text-white leading-[20px]">{title}</span>
-            {subtitle && <span className={subtitleStyles}>{subtitle}.</span>}
+          <div className="flex flex-col gap-1 w-full">
+            <span className="text-text-primary leading-[20px]">{title}</span>
+            {subtitle && <span className="text-text-secondary leading-[20px]">{subtitle}.</span>}
           </div>
         );
       case NotificationType.GIFT_CLAIM:
         return (
           <>
-            <span className={titleStyles}>{title}</span>
-            <span className={subtitleStyles}>
-              You’ve successfully claimed{" "}
-              <span className="text-[#1e8fff]">
+            <span className="text-text-primary leading-[20px]">{title}</span>
+            <span className="text-text-secondary leading-[20px]">
+              You've successfully claimed{" "}
+              <span className="text-primary-blue">
                 {amount} {tokenName}.
               </span>
             </span>
           </>
         );
       default:
-        return <span className={titleStyles}>{title}</span>;
+        return <span className="text-text-primary leading-[20px]">{title}</span>;
     }
   };
 
   return (
     <div
-      className={`${notificationItemStyles} ${onClick ? "cursor-pointer hover:bg-[#292929] transition-colors duration-200" : ""}`}
+      className={`bg-background flex items-center justify-between p-4 rounded-xl w-full border-b-2 border-primary-divider cursor-pointer`}
       onClick={onClick}
     >
-      <div className="absolute inset-0 border-b border-[#3d3d3d] rounded-xl pointer-events-none" />
       <div className={`flex gap-3 items-start ${type === NotificationType.WALLET_CREATE ? "w-[295px]" : "w-[350px]"}`}>
-        <div className={iconContainerStyles}>
-          <div className={iconWrapperStyles}>{getIcon()}</div>
+        <div
+          className=" rounded-full size-10 relative shrink-0 border-b-2 border-primary-divider"
+          style={{
+            backgroundColor: "var(--app-background)",
+          }}
+        >
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-6 overflow-hidden">
+            <div className="filter invert-0 brightness-0 saturate-100">{getIcon()}</div>
+          </div>
         </div>
-        <div className={contentStyles}>
+        <div className="flex flex-col gap-1 grow text-left leading-none min-w-0">
           {renderContent()}
-          <p className={timeStyles}>{time}</p>
+          <p className="text-text-secondary text-[13px] tracking-[-0.13px] leading-[1.1]">{time}</p>
         </div>
       </div>
-      {!isRead && (
-        <div className={dotStyles}>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="5" cy="5" r="5" fill="#83CFFF" />
-          </svg>
-        </div>
-      )}
+      {!isRead && <div className="w-2.5 h-2.5 bg-[#3EE089] rounded-full"></div>}
     </div>
   );
 };

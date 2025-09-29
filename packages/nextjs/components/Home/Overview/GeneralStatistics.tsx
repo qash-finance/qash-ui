@@ -5,6 +5,7 @@ import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { Badge, BadgeStatus } from "@/components/Common/Badge";
 
 interface GeneralStatisticsProps {
   timePeriod: "month" | "year";
@@ -29,26 +30,26 @@ const TimePeriodDropdown: React.FC<{
   return (
     <div className="relative" onBlur={() => setIsOpen(false)} tabIndex={0}>
       <div
-        className={`bg-[#0C0C0C] flex items-center justify-between p-0.5 rounded-b-lg text-white min-w-[100px] ${isOpen ? "" : "rounded-t-lg"}`}
+        className={`bg-background border border-primary-divider flex items-center justify-between p-0.5 rounded-t-lg text-text-primary min-w-[100px] ${isOpen ? "" : "rounded-b-lg"}`}
       >
         <button
           type="button"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           onClick={() => setIsOpen(o => !o)}
-          className="bg-[#1E1E1E] flex items-center justify-between gap-2 h-8 px-2.5 py-1.5 rounded-lg text-white min-w-[100px] cursor-pointer"
+          className="flex items-center justify-center gap-2 py-1.5 rounded-lg text-text-primary min-w-[100px] cursor-pointer outline-none"
         >
-          <span className="text-sm leading-none truncate">{timePeriod === "year" ? "This year" : "This month"}</span>
+          <span className="text-sm leading-none">{timePeriod === "year" ? "This year" : "This month"}</span>
           <img
             src="/arrow/chevron-down.svg"
             alt="Toggle dropdown"
-            className={`w-4 h-4 transition-transform ${!isOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
         </button>
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 bottom-full w-full bg-[#0c0c0c] rounded-t-lg p-0.5 shadow-lg">
+        <div className="absolute z-10 top-full w-full bg-background border border-primary-divider rounded-b-lg p-0.5 shadow-lg">
           {timeOptions.map(option => (
             <button
               key={option.value}
@@ -56,7 +57,7 @@ const TimePeriodDropdown: React.FC<{
               aria-selected={option.value === timePeriod}
               onMouseDown={e => e.preventDefault()}
               onClick={() => handleSelect(option.value as "month" | "year")}
-              className="w-full text-left text-white text-sm tracking-[-0.42px] p-2 rounded-lg hover:bg-[#3a3a3a] transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
+              className="w-full text-left text-text-primary text-sm p-2 rounded-lg hover:bg-app-background transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
             >
               {option.label}
             </button>
@@ -298,13 +299,13 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0c0c0c] rounded-md p-3 border border-[#000000]">
-          <div className="text-white text-xs opacity-50 mb-2">{label}</div>
+        <div className="bg-background rounded-md p-3 border border-primary-divider">
+          <div className="text-text-primary text-xs opacity-50 mb-2">{label}</div>
           <div className="flex flex-col gap-2">
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex gap-1.5 items-center">
                 <div className={`h-1.5 w-4 rounded`} style={{ backgroundColor: entry.color }}></div>
-                <div className="text-white text-sm">${entry.value?.toLocaleString()}</div>
+                <div className="text-text-primary text-sm">${entry.value?.toLocaleString()}</div>
               </div>
             ))}
           </div>
@@ -315,120 +316,100 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
   };
 
   return (
-    <div
-      className="h-full overflow-hidden relative rounded-xl flex-1 transition-all duration-300"
-      style={{
-        background: timePeriod === "month" ? "linear-gradient(90deg, #0059FF 0%, #003699 100%)" : "#1E1E1E",
-      }}
-    >
-      <div className="absolute inset-0 p-3 flex flex-col justify-between gap-2">
-        {/* Header */}
-        <div className="flex flex-row gap-1 items-center">
-          <img src="/wallet-analytics/money-icon.gif" alt="money-icon" className="w-8 h-4" />
-          <div className="flex-1">
-            <span className="capitalize font-medium text-white text-base">General Statistics</span>
-          </div>
+    <div className="overflow-hidden relative flex-1 transition-all duration-300 p-3 px-4 flex flex-col justify-between gap-2 h-[250px] border-r border-primary-divider">
+      {/* Header */}
+      <div className="flex flex-row gap-1 items-center">
+        <img src="/wallet-analytics/money-icon.gif" alt="money-icon" className="w-8 h-4" />
+        <div className="flex-1">
+          <span className="capitalize font-medium text-text-primary">Summary Stats</span>
         </div>
+        <TimePeriodDropdown timePeriod={timePeriod} onTimePeriodChange={onTimePeriodChange} />
+      </div>
 
-        {/* Money In Section */}
-        {timePeriod === "month" ? (
-          <>
+      {/* Money In Section */}
+      {timePeriod === "month" ? (
+        <div className="flex flex-col gap-2 w-full border-t-2 border-primary-divider bg-background rounded-xl p-3">
+          <div className="flex flex-col">
+            <span className="font-medium text-text-secondary text-sm">Income</span>
             <div className="flex flex-col">
-              <span className="font-medium text-[#B2C6EB] text-sm">Income</span>
+              <div className="flex flex-row gap-1.5 items-center text-text-primary text-2xl uppercase">
+                <span className="font-normal">${loading ? "..." : moneyIn.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-row gap-2 items-center">
+                <span className="font-medium text-[#02BE75] text-base">+${moneyInChange.toFixed(2)}</span>
+                <Badge status={BadgeStatus.SUCCESS} text={`${moneyInChange.toFixed(2)}%`} />
+              </div>
+            </div>
+          </div>
+
+          {/* Money Out Section */}
+          <div className="flex flex-row gap-5 items-end justify-end">
+            <div className="flex-1">
+              <span className="font-medium text-text-secondary text-sm">Expense</span>
               <div className="flex flex-col">
-                <div className="flex flex-row gap-1.5 items-center text-white text-2xl uppercase">
-                  <span className="font-normal">${loading ? "..." : moneyIn.toLocaleString()}</span>
+                <div className="flex flex-row items-center text-text-primary text-2xl uppercase">
+                  <span className="font-normal">${loading ? "..." : moneyOut.toLocaleString()}</span>
                 </div>
                 <div className="flex flex-row gap-2 items-center">
-                  <span className="font-medium text-[#7cff96] text-base">+${moneyInChange.toFixed(2)}</span>
-                  <div className="bg-white flex items-center px-[7px] py-[5px] rounded-full">
-                    <span className="font-semibold text-[#059022] text-sm leading-[12px]">{moneyInChange}%</span>
-                  </div>
+                  <span className="font-medium text-[#FB3748] text-base">${moneyOutChange.toFixed(2)}</span>
+                  <Badge status={BadgeStatus.FAIL} text={`${moneyOutChange.toFixed(2)}%`} />
                 </div>
               </div>
             </div>
-
-            {/* Money Out Section */}
-            <div className="flex flex-row gap-5 items-end justify-end">
-              <div className="flex-1">
-                <span className="font-medium text-[#B2C6EB] text-sm">Expense</span>
-                <div className="flex flex-col">
-                  <div className="flex flex-row items-center text-white text-2xl uppercase">
-                    <span className="font-normal">${loading ? "..." : moneyOut.toLocaleString()}</span>
-                  </div>
-                  <div className="flex flex-row gap-2 items-center">
-                    <span className="font-medium text-[#fc2bad] text-base">${moneyOutChange.toFixed(2)}</span>
-                    <div className="bg-white flex items-center px-[7px] py-[5px] rounded-full">
-                      <span className="font-semibold text-[#ff2323] text-sm leading-[12px]">
-                        {Math.abs(moneyOutChange)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Time Period Dropdown */}
-              <TimePeriodDropdown timePeriod={timePeriod} onTimePeriodChange={onTimePeriodChange} />
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Chart Legend */}
+          <div className="flex gap-3 items-center">
+            <div className="flex gap-1.5 items-center">
+              <div className="h-2 w-4 bg-[#00E595] rounded"></div>
+              <span className="text-text-primary text-xs opacity-50 tracking-[0.5px]">Income</span>
             </div>
-          </>
-        ) : (
-          <>
-            {/* Chart Legend */}
-            <div className="flex gap-3 items-center">
-              <div className="flex gap-1.5 items-center">
-                <div className="h-2 w-4 bg-[#00E595] rounded"></div>
-                <span className="text-white text-xs opacity-50 tracking-[0.5px]">Income</span>
-              </div>
-              <div className="flex gap-1.5 items-center">
-                <div className="h-2 w-4 bg-[#fc2bad] rounded"></div>
-                <span className="text-white text-xs opacity-50 tracking-[0.5px]">Expense</span>
-              </div>
+            <div className="flex gap-1.5 items-center">
+              <div className="h-2 w-4 bg-[#fc2bad] rounded"></div>
+              <span className="text-text-primary text-xs opacity-50 tracking-[0.5px]">Expense</span>
             </div>
+          </div>
 
-            {/* Chart */}
-            <div className="flex-1 relative outline-none">
-              <ResponsiveContainer width="100%" height="80%" className="">
-                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                  {/*
+          {/* Chart */}
+          <ResponsiveContainer width="100%" height="80%" className="outline-none">
+            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }} className="outline-none">
+              {/*
                     // Dotted grid 
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" /> 
                   */}
-                  <XAxis
-                    dataKey="month"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
-                    tickMargin={8}
-                    interval={0}
-                    minTickGap={0}
-                  />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "var(--text-primary)", fontSize: 12 }}
+                tickMargin={8}
+                interval={0}
+                minTickGap={0}
+              />
 
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="moneyIn"
-                    stroke="#00E595"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 7, fill: "#00E595", stroke: "#ffffff", strokeWidth: 2 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="moneyOut"
-                    stroke="#fc2bad"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 7, fill: "#fc2bad", stroke: "#ffffff", strokeWidth: 2 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-              <div className="flex items-end justify-end">
-                <TimePeriodDropdown timePeriod={timePeriod} onTimePeriodChange={onTimePeriodChange} />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+              <Tooltip content={<CustomTooltip />} />
+              <Line
+                type="monotone"
+                dataKey="moneyIn"
+                stroke="#00E595"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 7, fill: "#00E595", stroke: "#ffffff", strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="moneyOut"
+                stroke="#fc2bad"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 7, fill: "#fc2bad", stroke: "#ffffff", strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </>
+      )}
     </div>
   );
 };

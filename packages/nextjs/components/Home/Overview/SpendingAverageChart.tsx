@@ -28,16 +28,16 @@ const TimeRangeDropdown: React.FC<{ timeRange: string; onTimeRangeChange: (range
   return (
     <div className="relative" onBlur={() => setIsOpen(false)} tabIndex={0}>
       <div
-        className={`bg-[#0C0C0C] flex items-center justify-between rounded-t-lg p-0.5 text-white min-w-[120px] ${isOpen ? "" : "rounded-b-lg"}`}
+        className={`bg-background border border-primary-divider flex items-center justify-between p-0.5 rounded-t-lg text-text-primary min-w-[100px] ${isOpen ? "" : "rounded-b-lg"}`}
       >
         <button
           type="button"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           onClick={() => setIsOpen(o => !o)}
-          className="bg-[#1E1E1E] flex items-center justify-between gap-2 h-8 px-2.5 py-1.5 rounded-lg text-white min-w-[120px] cursor-pointer"
+          className="flex items-center justify-center gap-2 py-1.5 rounded-lg text-text-primary min-w-[100px] cursor-pointer outline-none"
         >
-          <span className="text-sm leading-none truncate">{timeRange}</span>
+          <span className="text-sm leading-none">{timeRange === "Last 5 days" ? "Last 5 days" : "Last 7 days"}</span>
           <img
             src="/arrow/chevron-down.svg"
             alt="Toggle dropdown"
@@ -47,15 +47,15 @@ const TimeRangeDropdown: React.FC<{ timeRange: string; onTimeRangeChange: (range
       </div>
 
       {isOpen && (
-        <div className="absolute z-10 top-full w-full bg-[#0c0c0c] rounded-b-lg p-0.5 shadow-lg">
+        <div className="absolute z-10 top-full w-full bg-background border border-primary-divider rounded-b-lg p-0.5 shadow-lg">
           {timeRangeOptions.map(option => (
             <button
               key={option.value}
               role="option"
               aria-selected={option.value === timeRange}
               onMouseDown={e => e.preventDefault()}
-              onClick={() => handleSelect(option.value)}
-              className="w-full text-left text-white text-sm tracking-[-0.42px] p-2 rounded-lg hover:bg-[#3a3a3a] transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
+              onClick={() => handleSelect(option.value as string)}
+              className="w-full text-left text-text-primary text-sm p-2 rounded-lg hover:bg-app-background transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
             >
               {option.label}
             </button>
@@ -227,22 +227,22 @@ const SpendingAverageChart = () => {
   const chartContainerStyle = { gap: `${COLUMN_GAP}px` };
 
   return (
-    <div className="h-full overflow-hidden relative rounded-xl bg-[#1e1e1e] flex-1 flex justify-center items-start">
+    <div className="h-[250px] overflow-hidden relative flex-1 flex items-start flex-col px-4 pt-4 pb-2 gap-2">
       {/* Header */}
-      <div className="flex items-start justify-between p-4 w-full">
+      <div className="flex items-start justify-between w-full">
         <div className="flex flex-col gap-1 items-start w-[177px]">
           <div className="flex items-center gap-1 w-full">
             <img src="/wallet-analytics/bar-chart-icon.gif" alt="chart" className="w-5 h-5" />
-            <span className="font-normal text-white text-sm">Spending Average</span>
+            <span className="font-normal text-text-primary text-sm">Spending Average</span>
           </div>
           <div className="flex gap-3 ml-2">
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-4 bg-[#00e595] rounded-full" />
-              <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">Income</span>
+              <span className="font-normal opacity-50 text-text-primary text-xs tracking-[0.5px]">Income</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="bg-[#fc2bad] h-2 rounded-full w-4" />
-              <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">Expense</span>
+              <span className="font-normal opacity-50 text-text-primary text-xs tracking-[0.5px]">Expense</span>
             </div>
           </div>
         </div>
@@ -251,9 +251,9 @@ const SpendingAverageChart = () => {
       </div>
 
       {/* Chart */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center justify-center pb-4 pt-0 px-3 top-[62px] w-[345px]">
-        <div className="flex flex-col gap-0.5 flex-1 h-full items-start justify-center">
-          <div className="flex grow items-end w-full" style={chartContainerStyle}>
+      <div className="flex-1 flex justify-around w-full">
+        <div className="flex flex-col h-full items-center justify-center bg-background border-t border-primary-divider rounded-xl w-full">
+          <div className="flex grow items-end justify-center w-full" style={chartContainerStyle}>
             {chartData.map((data, index) => (
               <div
                 key={index}
@@ -285,10 +285,7 @@ const SpendingAverageChart = () => {
           </div>
 
           {/* Day Labels */}
-          <div
-            className="flex font-medium items-end text-white text-xs text-center tracking-[-0.24px] w-full"
-            style={chartContainerStyle}
-          >
+          <div className="flex text-text-primary text-xs text-center w-full justify-center" style={chartContainerStyle}>
             {chartData.map((data, index) => (
               <div
                 key={index}
@@ -309,27 +306,31 @@ const SpendingAverageChart = () => {
         <Tooltip
           key={index}
           id={`chart-tooltip-${index}`}
-          className="bg-[#0c0c0c] text-white p-3 rounded-md border border-[#000000] max-w-[200px] z-50"
+          className="bg-background text-text-primary p-3 rounded-md border border-primary-divider max-w-[200px] z-50"
           style={{
-            borderRadius: "6px",
+            borderRadius: "12px",
             padding: "12px",
-            backgroundColor: "#0c0c0c",
-            color: "white",
+            backgroundColor: "background",
+            color: "text-text-primary",
             border: "1px solid #000000",
             maxWidth: "200px",
             zIndex: 50,
           }}
           render={({ content }) => (
             <div className="flex flex-col gap-4 items-start justify-center">
-              <span className="font-normal opacity-50 text-white text-xs tracking-[0.5px]">{content}</span>
+              <span className="font-normal opacity-50 text-text-primary text-xs tracking-[0.5px]">{content}</span>
               <div className="flex flex-col gap-2 items-start">
                 <div className="flex items-center gap-1.5">
                   <div className="h-1.5 w-4 bg-[#00e595] rounded-full" />
-                  <span className="font-normal text-white text-sm tracking-[0.5px]">${data.rawIncome.toFixed(2)}</span>
+                  <span className="font-normal text-text-primary text-sm tracking-[0.5px]">
+                    ${data.rawIncome.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="bg-[#fc2bad] h-1.5 rounded-full w-4" />
-                  <span className="font-normal text-white text-sm tracking-[0.5px]">${data.rawExpense.toFixed(2)}</span>
+                  <span className="font-normal text-text-primary text-sm tracking-[0.5px]">
+                    ${data.rawExpense.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>

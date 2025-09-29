@@ -107,7 +107,12 @@ export function CreateImportWalletModal({ isOpen, onClose, zIndex }: ModalProp<C
                   </div>
                 </div>
                 <div className="flex justify-center items-center border-t-[1.5px] border-t-tertiary-divider p-3">
-                  <span className="text-primary-blue font-bold text-left w-full cursor-pointer">
+                  <span
+                    className="text-primary-blue font-bold text-left w-full cursor-pointer"
+                    onClick={() => {
+                      onClose();
+                    }}
+                  >
                     Continue as a guest
                   </span>
                 </div>

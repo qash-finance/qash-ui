@@ -77,6 +77,9 @@
   --color-badge-success-background: var(--badge-success-background);
   --color-badge-success-text: var(--badge-success-text);
   --color-badge-success-border: var(--badge-success-border);
+  --color-badge-fail-background: var(--badge-fail-background);
+  --color-badge-fail-text: var(--badge-fail-text);
+  --color-badge-fail-border: var(--badge-fail-border);
   --color-badge-private-background: var(--badge-private-background);
   --color-badge-private-text: var(--badge-private-text);
   --color-badge-private-border: var(--badge-private-border);

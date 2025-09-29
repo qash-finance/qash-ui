@@ -6,11 +6,33 @@ import { NotificationModalProps } from "@/types/modal";
 import NotificationCard from "./NotificationCard";
 import { NotificationType } from "@/types/notification";
 import { useSocket } from "@/contexts/SocketProvider";
-import { useGetNotificationsInfinite, useMarkNotificationAsRead } from "@/services/api/notification";
+import {
+  useGetNotificationsInfinite,
+  useMarkAllNotificationsAsRead,
+  useMarkNotificationAsRead,
+} from "@/services/api/notification";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { NotificationCardType, NotificationResponseDto } from "@/types/notification";
 import { formatRelativeTime } from "@/services/utils/formatDate";
+import { TabContainer } from "../Common/TabContainer";
+
+const tabs = (unreadCount: number) => [
+  {
+    id: "unread",
+    label: (
+      <div className="flex justify-center items-center gap-2">
+        <span>Unread</span>
+        {unreadCount > 0 && (
+          <div className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#FF4444]">
+            <span className="text-white text-xs font-medium">{unreadCount}</span>
+          </div>
+        )}
+      </div>
+    ),
+  },
+  { id: "all", label: "All" },
+];
 
 const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) => {
   const { walletAddress, isConnected } = useWalletConnect();
@@ -27,6 +49,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     20,
   );
   const markAsReadMutation = useMarkNotificationAsRead();
+  const markAllAsReadMutation = useMarkAllNotificationsAsRead();
 
   useEffect(() => {
     if (data?.pages) {
@@ -160,6 +183,16 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    if (unreadCount === 0) return;
+
+    try {
+      await markAllAsReadMutation.mutateAsync();
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
+  };
+
   // Convert server notification to client format
   const convertNotification = (notification: NotificationResponseDto): NotificationCardType => {
     return {
@@ -180,8 +213,6 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     };
   };
 
-  if (!isOpen) return null;
-
   // Convert API notifications to client format
   const clientNotifications = data?.pages
     ? data.pages.flatMap(page => page.notifications).map(convertNotification)
@@ -192,6 +223,8 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
     activeTab === "unread"
       ? clientNotifications?.filter((notification: any) => !notification.isRead)
       : clientNotifications;
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -208,85 +241,50 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
 
       {/* Modal */}
       <main
-        className={`relative flex gap-1 justify-center items-start p-2 rounded-3xl bg-[#1E1E1E] h-full w-[470px] max-md:mx-auto max-md:my-0 max-md:w-full max-md:max-w-[425px] max-sm:p-1 max-sm:w-full max-sm:h-screen transition-transform duration-300 ease-out z-[2] ${
+        className={`relative flex gap-1 justify-center items-start p-2 rounded-3xl bg-app-background h-full w-[470px] transition-transform duration-300 ease-out z-[2] ${
           isAnimating ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Back Navigation */}
-        <nav
-          className="flex flex-col shrink-0 justify-center items-center self-stretch px-2 py-0 rounded-2xl bg-[#292929] w-[42px] cursor-pointer relative"
+        {/* <nav
+          className="flex flex-col shrink-0 justify-center items-center self-stretch px-2 py-0 rounded-2xl w-[42px] cursor-pointer relative"
           onClick={handleClose}
         >
           <button className="flex absolute justify-center items-center w-7 h-7 top-1/2" aria-label="Close">
-            <img src="/close-icon.svg" alt="close-icon" className="w-7 h-7" />
+            <img src="/misc/close-icon.svg" alt="close-icon" className="w-7 h-7" />
           </button>
-        </nav>
+        </nav> */}
 
         {/* Main Content */}
         <div className="flex flex-col gap-2 items-start justify-start p-0 size-full relative">
           {/* Header */}
-          <div className="flex items-center justify-center px-3 py-2 w-full shrink-0">
-            <div className="flex items-center gap-2 shrink-0">
-              <h1 className="font-['Barlow:Medium',_sans-serif] text-white text-2xl uppercase leading-[1.1]">
-                notification
-              </h1>
-              <div className="bg-[#ff4444] flex items-center justify-center px-4 py-1 rounded-[51px] shrink-0">
-                {isConnected ? (
-                  <span className="font-['Barlow:SemiBold',_sans-serif] text-white text-[15px] tracking-[-0.45px] leading-[1.2]">
-                    {unreadCount}+
-                  </span>
-                ) : (
-                  <span className="font-['Barlow:SemiBold',_sans-serif] text-white text-[15px] tracking-[-0.45px] leading-[1.2]">
-                    0
-                  </span>
-                )}
-              </div>
+          <div className="flex items-center justify-between px-3 py-2 w-full">
+            <h1 className=" text-text-primary text-2xl leading-none">Notifications</h1>
+
+            <div className="flex items-center justify-center gap-1 cursor-pointer" onClick={handleMarkAllAsRead}>
+              <img src="/misc/double-check-icon.svg" alt="double-check-icon" className="w-5 h-5" />
+              <span className="leading-none text-primary-blue">Mark all as read</span>
             </div>
           </div>
 
           {/* Main Container */}
-          <div className="bg-[#0c0c0c] flex flex-col items-center justify-between p-3 rounded-2xl w-full h-full overflow-hidden">
+          <div className=" flex flex-col items-center justify-between p-3 rounded-2xl w-full h-full overflow-hidden">
             {/* Filter Tabs */}
-            <div className="bg-[#1e1e1e] flex gap-[5px] h-[34px] items-center justify-center p-[3px] rounded-xl w-full">
-              <div
-                className={`flex items-center justify-center h-full px-4 py-1.5 rounded-lg grow cursor-pointer transition-all duration-200 ${
-                  activeTab === "unread" ? "bg-[#292929]" : ""
-                }`}
-                onClick={() => handleTabClick("unread")}
-              >
-                <span
-                  className={`font-['Barlow:Regular',_sans-serif] text-white text-base tracking-[-0.48px] leading-[1.2] transition-all duration-200 ${
-                    activeTab === "unread" ? "font-['Barlow:Medium',_sans-serif] opacity-100" : "opacity-50"
-                  }`}
-                >
-                  Unread
-                </span>
-              </div>
-              <div
-                className={`flex items-center justify-center h-full px-4 py-1.5 rounded-lg grow cursor-pointer transition-all duration-200 ${
-                  activeTab === "all" ? "bg-[#292929]" : ""
-                }`}
-                onClick={() => handleTabClick("all")}
-              >
-                <span
-                  className={`font-['Barlow:Regular',_sans-serif] text-white text-base tracking-[-0.48px] leading-[1.2] transition-all duration-200 ${
-                    activeTab === "all" ? "font-['Barlow:Medium',_sans-serif] opacity-100" : "opacity-50"
-                  }`}
-                >
-                  All
-                </span>
-              </div>
-            </div>
+            <TabContainer
+              tabs={tabs(unreadCount)}
+              activeTab={activeTab}
+              setActiveTab={(tab: string) => handleTabClick(tab as "unread" | "all")}
+            />
 
             {/* Notification List */}
             <div className="flex flex-col gap-1 w-full overflow-y-auto h-full my-2">
               {!isConnected ? (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-[#989898] text-sm">Please connect your wallet to view notifications</span>
+                  <span className="text-text-secondary text-sm">Please connect your wallet to view notifications</span>
                 </div>
               ) : isLoading || error ? (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-[#989898] text-sm">Loading notifications...</span>
+                  <span className="text-text-secondary text-sm">Loading notifications...</span>
                 </div>
               ) : filteredNotifications.length > 0 ? (
                 filteredNotifications.map((notification: NotificationCardType) => (
@@ -310,7 +308,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                 ))
               ) : (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-[#989898] text-sm">No notifications</span>
+                  <span className="text-text-secondary text-sm">No notifications</span>
                 </div>
               )}
             </div>
@@ -320,7 +318,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                 className="bg-[#292929] flex items-center justify-center gap-1.5 pb-3.5 pt-3 px-[15px] rounded-[10px] w-full overflow-hidden relative cursor-pointer hover:bg-[#3d3d3d] transition-colors duration-200"
                 onClick={handleLoadMore}
               >
-                <span className="font-['Barlow:Medium',_sans-serif] text-[#989898] text-base tracking-[-0.084px] leading-none">
+                <span className=" text-[#989898] text-base tracking-[-0.084px] leading-none">
                   {isFetchingNextPage ? "Loading..." : "Load more"}
                 </span>
                 <div className="absolute inset-0 pointer-events-none shadow-[0px_-2.4px_0px_0px_inset_#3d3d3d]" />

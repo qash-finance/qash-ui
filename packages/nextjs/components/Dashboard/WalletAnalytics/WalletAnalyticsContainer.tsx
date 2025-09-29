@@ -2,9 +2,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import TransactionDetail from "./TransactionDetail";
-import TopInteractedAddresses from "./TopInteractedAddresses";
-import SpendingAverageChart from "./SpendingAverageChart";
-import GeneralStatistics from "./GeneralStatistics";
+import TopInteractedAddresses from "../../Home/Overview/TopInteractedAddresses";
+import SpendingAverageChart from "../../Home/Overview/SpendingAverageChart";
+import GeneralStatistics from "../../Home/Overview/GeneralStatistics";
 import TransactionHistory from "./TransactionHistory";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { useAccount } from "@/hooks/web3/useAccount";
