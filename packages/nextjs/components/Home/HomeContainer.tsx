@@ -4,6 +4,7 @@ import { Header } from "./Header";
 import { CardContainer } from "./CardContainer";
 import { PaymentInteraction } from "./PaymentInteraction";
 import { Overview } from "./Overview";
+import { TransactionHistory } from "./TransactionHistory";
 
 export const HomeContainer = () => {
   return (
@@ -14,6 +15,7 @@ export const HomeContainer = () => {
       </div>
       <PaymentInteraction />
       <Overview />
+      <TransactionHistory />
     </div>
   );
 };

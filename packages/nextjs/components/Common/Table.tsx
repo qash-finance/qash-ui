@@ -81,10 +81,14 @@ const getRowStyle = () => ({
 });
 
 const tableBodyStyle = "overflow-y-auto";
-const defaultTableClass = "overflow-x-auto table-scrollbar rounded-2xl border";
+const getTableClass = (headerClassName: string = "", className: string = "") => {
+  const baseClass = "overflow-x-auto table-scrollbar border";
+  const roundedClass = headerClassName.includes("!rounded-none") ? "" : "rounded-2xl";
+  return `${baseClass} ${roundedClass} ${className}`;
+};
 const tableStyle = {
   borderColor: "var(--color-table-row-border)",
-  maxHeight: "440px",
+  maxHeight: "480px",
 };
 
 const SortableTableRow = ({
@@ -171,7 +175,7 @@ const TableHeader = ({
   columnWidths?: Record<string, string>;
   draggable?: boolean;
 }) => {
-  const defaultHeaderClass = "px-3 py-2 text-sm font-medium";
+  const defaultHeaderClass = `px-3 py-2 text-sm font-medium`;
   const headerStyle = {
     backgroundColor: "var(--color-table-header-background)",
     color: "var(--color-table-header-text)",
@@ -183,7 +187,7 @@ const TableHeader = ({
       <tr style={headerStyle}>
         {draggable && (
           <th
-            className={`border-b-1 ${defaultHeaderClass} rounded-tl-2xl text-center ${headerClassName}`}
+            className={`border-b-1 ${defaultHeaderClass} rounded-tl-2xl text-center `}
             style={{
               width: "40px",
               backgroundColor: "var(--color-table-header-background)",
@@ -343,7 +347,7 @@ export function Table({
 
   if (draggable) {
     return (
-      <div className={`${defaultTableClass} ${className}`} style={tableStyle}>
+      <div className={getTableClass(headerClassName, className)} style={tableStyle}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <table className="w-full table-auto">
             <TableHeader
@@ -399,7 +403,7 @@ export function Table({
   }
 
   return (
-    <div className={`${defaultTableClass} ${className}`} style={tableStyle}>
+    <div className={getTableClass(headerClassName, className)} style={tableStyle}>
       <table className="w-full table-auto relative">
         <TableHeader
           columns={headers}

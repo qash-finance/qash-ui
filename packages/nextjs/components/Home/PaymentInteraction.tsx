@@ -59,7 +59,7 @@ export const PaymentInteraction = () => {
           </div>
         }
       >
-        <div className="flex flex-col min-h-[540px] max-h-[540px]">
+        <div className="flex flex-col min-h-[570px] max-h-[570px]">
           <div className="w-full justify-between items-center flex p-5 pb-3">
             <div className="flex flex-col gap-2">
               <span className="text-text-primary text-xl leading-none">{activeTab.label}</span>

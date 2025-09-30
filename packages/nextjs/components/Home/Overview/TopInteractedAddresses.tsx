@@ -81,7 +81,7 @@ const TopInteractedAddresses = () => {
 
       {/* Addresses List */}
       <div className="flex-1 flex items-center justify-center w-full">
-        <div className="bg-background flex flex-col gap-1 items-start p-2 rounded-[10px] w-full h-full">
+        <div className="bg-background flex flex-col gap-1 items-start p-2 rounded-[10px] w-full h-full border-t-2 border-primary-divider">
           {topInteractedAddresses.length > 0 ? (
             topInteractedAddresses.map((address: TopInteractedAddressesProps, index: number) => (
               <div

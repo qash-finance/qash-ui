@@ -373,8 +373,12 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
           </div>
 
           {/* Chart */}
-          <ResponsiveContainer width="100%" height="80%" className="outline-none">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }} className="outline-none">
+          <ResponsiveContainer
+            width="100%"
+            height="80%"
+            className="bg-background rounded-xl border-t-2 border-primary-divider"
+          >
+            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }} className="!outline-none">
               {/*
                     // Dotted grid 
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" /> 
@@ -383,7 +387,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
                 dataKey="month"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "var(--text-primary)", fontSize: 12 }}
+                tick={{ fill: "var(--text-secondary)", fontSize: 12 }}
                 tickMargin={8}
                 interval={0}
                 minTickGap={0}

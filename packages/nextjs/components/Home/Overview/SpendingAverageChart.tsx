@@ -252,7 +252,7 @@ const SpendingAverageChart = () => {
 
       {/* Chart */}
       <div className="flex-1 flex justify-around w-full">
-        <div className="flex flex-col h-full items-center justify-center bg-background border-t border-primary-divider rounded-xl w-full">
+        <div className="flex flex-col h-full items-center justify-center bg-background border-t-2 border-primary-divider rounded-xl w-full">
           <div className="flex grow items-end justify-center w-full" style={chartContainerStyle}>
             {chartData.map((data, index) => (
               <div

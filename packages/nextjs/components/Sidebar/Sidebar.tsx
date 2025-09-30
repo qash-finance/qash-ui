@@ -19,7 +19,7 @@ export enum SidebarLink {
   MoveCrypto = "move-crypto",
   Dashboard = "dashboard",
   Send = "send",
-  Batch = "batch",
+  ContactBook = "contact-book",
   Gift = "gift",
   AIAssistant = "ai-assistant",
   GroupPayment = "group-payment",
@@ -67,7 +67,7 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-payroll.svg",
     label: "Payroll",
     isActive: false,
-    link: SidebarLink.Batch,
+    // link: SidebarLink.Batch,
     disabled: false,
   },
   {
@@ -75,7 +75,7 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-contact-book.svg",
     label: "Contact Book",
     isActive: false,
-    link: SidebarLink.Gift,
+    link: SidebarLink.ContactBook,
     disabled: false,
   },
   {

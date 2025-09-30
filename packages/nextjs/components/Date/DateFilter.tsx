@@ -12,13 +12,13 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
   return (
     <DayPicker
       classNames={{
-        month: "text-white",
+        month: "text-text-secondary",
         today: `text-[#1E8FFF]`,
-        chevron: `fill-white`,
-        caption_label: `text-[#DCDCDC] flex items-center justify-center`,
-        range_middle: `bg-[#113355]`,
-        range_end: `bg-[#113355] rounded-tr-full rounded-br-full`,
-        range_start: `bg-[#113355] rounded-tl-full rounded-bl-full`,
+        chevron: `fill-black`,
+        caption_label: `text-text-primary font-medium flex items-center justify-center`,
+        range_middle: `bg-[#BBDDFF]`,
+        range_end: `bg-[#BBDDFF] rounded-tr-full rounded-br-full`,
+        range_start: `bg-[#BBDDFF] rounded-tl-full rounded-bl-full`,
       }}
       disabled={{ after: new Date() }}
       animate
@@ -27,7 +27,6 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
           alignItems: "center",
           justifyContent: "center",
           display: "flex",
-          backgroundColor: "#0C0C0C",
           borderRadius: "10px",
           fontSize: "18px",
           padding: "10px",
@@ -65,7 +64,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
 
           const selectedStyle = isSelected
             ? {
-                backgroundColor: "#1E8FFF",
+                backgroundColor: "var(--primary-blue)",
                 color: "white",
                 borderRadius: "50%",
                 border: "none",
@@ -73,7 +72,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
               }
             : isInRange
               ? {
-                  color: "#989898",
+                  color: "var(--text-secondary)",
                   border: "none",
                   fontSize: "20px",
                 }
@@ -83,7 +82,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
         Chevron: props => {
           const { className, ...buttonProps } = props;
           return (
-            <div className="flex items-center justify-center p-1 rounded-lg bg-[#3D3D3D]">
+            <div className="flex items-center justify-center p-1 rounded-lg bg-background border-b-2 border-primary-divider">
               <Chevron className={className} {...buttonProps} size={20} />
             </div>
           );
@@ -91,7 +90,7 @@ const DateFilter: React.FC<DateFilterProps> = ({ defaultSelected, onSelect, onRa
         MonthCaption: props => {
           const { className, ...buttonProps } = props;
           return (
-            <div className="flex items-center justify-center w-full bg-[#292929] rounded-lg">
+            <div className="flex items-center justify-center w-full bg-app-background rounded-lg">
               <MonthCaption className={className} {...buttonProps} />
             </div>
           );

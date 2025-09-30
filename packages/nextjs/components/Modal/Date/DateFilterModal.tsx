@@ -8,6 +8,8 @@ import toast from "react-hot-toast";
 import { DateFilterModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import _ from "lodash";
+import { SecondaryButton } from "@/components/Common/SecondaryButton";
+import { PrimaryButton } from "@/components/Common/PrimaryButton";
 
 const formatDate = (date: Date | undefined) => {
   if (!date) return "";
@@ -46,8 +48,8 @@ export function DateFilterModal({
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Choose date" icon="/modal/coin-icon.gif" zIndex={zIndex}>
-      <div className="flex flex-col gap-1 p-1.5 bg-[#1E1E1E] rounded-b-2xl ">
+    <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
+      <div className="flex flex-col gap-2 p-1.5 bg-background border border-primary-divider rounded-2xl ">
         <DateFilter
           defaultSelected={selected}
           onRangeChange={range => {
@@ -56,10 +58,10 @@ export function DateFilterModal({
         />
         {/* Date Range Display */}
         <div className="flex items-center gap-1 w-full my-1">
-          <div className="flex-1 bg-[#3d3d3d] flex items-center gap-[5px] h-10 px-2 py-2.5 rounded-lg">
+          <div className="flex-1 bg-app-background flex items-center gap-[5px] h-10 px-2 py-2.5 rounded-lg">
             <div className="flex-1 flex items-center justify-between text-sm leading-5">
-              <span className="text-[#989898]">Start date</span>
-              <span className="text-white">{selected?.from ? formatDate(selected.from) : "Select date"}</span>
+              <span className="text-text-secondary">Start date</span>
+              <span className="text-text-primary">{selected?.from ? formatDate(selected.from) : "Select date"}</span>
             </div>
           </div>
 
@@ -69,10 +71,10 @@ export function DateFilterModal({
             </svg>
           </div>
 
-          <div className="flex-1 bg-[#3d3d3d] flex items-center gap-[5px] h-10 px-3 py-2.5 rounded-lg">
+          <div className="flex-1 bg-app-background flex items-center gap-[5px] h-10 px-3 py-2.5 rounded-lg">
             <div className="flex-1 flex items-center justify-between text-sm leading-5">
-              <span className="text-[#989898]">End date</span>
-              <span className="text-white">
+              <span className="text-text-secondary">End date</span>
+              <span className="text-text-primary">
                 {selected?.to && selected.to !== selected.from ? formatDate(selected.to) : "Select date"}
               </span>
             </div>
@@ -80,9 +82,9 @@ export function DateFilterModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center h-8 gap-1">
-          <ActionButton onClick={onClose} text="Cancel" type="neutral" className="flex-1 h-full" />
-          <ActionButton onClick={handleApply} text="Confirm" className="flex-3 h-full" />
+        <div className="flex justify-center gap-1">
+          <SecondaryButton onClick={onClose} text="Cancel" buttonClassName="flex-1" variant="light" />
+          <PrimaryButton onClick={handleApply} text="Confirm" containerClassName="flex-1" />
         </div>
       </div>
     </BaseModal>
