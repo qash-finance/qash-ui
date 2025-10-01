@@ -2,8 +2,11 @@
 import React from "react";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import { SecondaryButton } from "../Common/SecondaryButton";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { MODAL_IDS } from "@/types/modal";
 
 export const Header = () => {
+  const { openModal } = useModal();
   return (
     <div className="flex flex-row items-center justify-between w-full">
       <div className="flex flex-row items-center justify-center gap-3">
@@ -15,7 +18,7 @@ export const Header = () => {
           text="Add new contact"
           icon="/misc/plus-icon.svg"
           iconPosition="left"
-          onClick={() => {}}
+          onClick={() => openModal(MODAL_IDS.CREATE_NEW_CONTACT)}
           containerClassName="w-[190px]"
         />
         <SecondaryButton

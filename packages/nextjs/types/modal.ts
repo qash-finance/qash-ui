@@ -41,6 +41,8 @@ import ProcessingTransactionModal from "@/components/Modal/ProcessingTransaction
 import CreateWalletModal from "@/components/Modal/Wallet/CreateWalletModal";
 import ImportWalletModal from "@/components/Modal/Wallet/ImportWalletModal";
 import RemoveTransactionConfirmationModal from "@/components/Modal/Batch/RemoveTransactionConfirmationModal";
+import CreateCategoryModal from "@/components/Modal/CreateCategoryModal";
+import CreateNewContactModal from "@/components/Modal/CreateNewContactModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -92,6 +94,8 @@ export const MODAL_IDS = {
   PROCESSING_TRANSACTION: "PROCESSING_TRANSACTION",
   CREATE_WALLET: "CREATE_WALLET",
   REMOVE_TRANSACTION_CONFIRMATION: "REMOVE_TRANSACTION_CONFIRMATION",
+  CREATE_CATEGORY: "CREATE_CATEGORY",
+  CREATE_NEW_CONTACT: "CREATE_NEW_CONTACT",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -330,6 +334,10 @@ export interface RemoveTransactionConfirmationModalProps extends BaseModalProps 
   onRemove?: () => Promise<void>;
 }
 
+export interface CreateCategoryModalProps extends BaseModalProps {}
+
+export interface CreateNewContactModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -373,6 +381,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModalProps;
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModalProps;
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModalProps;
+  [MODAL_IDS.CREATE_CATEGORY]: CreateCategoryModalProps;
+  [MODAL_IDS.CREATE_NEW_CONTACT]: CreateNewContactModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -421,4 +431,6 @@ export const modalRegistry = {
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModal,
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModal,
   [MODAL_IDS.REMOVE_TRANSACTION_CONFIRMATION]: RemoveTransactionConfirmationModal,
+  [MODAL_IDS.CREATE_CATEGORY]: CreateCategoryModal,
+  [MODAL_IDS.CREATE_NEW_CONTACT]: CreateNewContactModal,
 } as const;

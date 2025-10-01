@@ -1,11 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiServerWithAuth, AuthenticatedApiClient } from "./index";
 import { AuthStorage } from "../auth/storage";
-import { AddressBook, AddressBookDto, Category } from "@/types/address-book";
+import { AddressBook, AddressBookDto, Category, CategoryDto, CategoryShape } from "@/types/address-book";
 
 // *************************************************
 // **************** GET METHODS *******************
 // *************************************************
+const useGetCategories = () => {
+  return useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      return apiServerWithAuth.getData<Category[]>("/address-book/category");
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
+};
 
 const useGetAddressBooks = () => {
   return useQuery({
@@ -37,7 +49,13 @@ const useGetAddressBooks = () => {
 
       const categories: Category[] = Object.keys(categoryNameToBooks)
         .sort()
-        .map((name, idx) => ({ id: idx + 1, name, addressBooks: categoryNameToBooks[name] }));
+        .map((name, idx) => ({
+          id: idx + 1,
+          name,
+          addressBooks: categoryNameToBooks[name],
+          shape: CategoryShape.CIRCLE, // Default shape since API doesn't provide it
+          color: "#000000", // Default color since API doesn't provide it
+        }));
 
       return categories;
     },
@@ -58,13 +76,27 @@ const useCheckNameDuplicate = (name: string, category: string) => {
   });
 };
 
-const useCheckCategoryExists = (category: string) => {
+// const useCheckCategoryExists = (category: string) => {
+//   return useQuery({
+//     queryKey: ["address-book", "check-category-exists", category],
+//     queryFn: async () => {
+//       return apiServerWithAuth.getData<boolean>(`/address-book/check-category-exists?category=${category}`);
+//     },
+//     enabled: !!category,
+//   });
+// };
+
+const useGetAddressBooksByCategory = (category: string) => {
   return useQuery({
-    queryKey: ["address-book", "check-category-exists", category],
+    queryKey: ["address-book", "by-category", category],
     queryFn: async () => {
-      return apiServerWithAuth.getData<boolean>(`/address-book/check-category-exists?category=${category}`);
+      return apiServerWithAuth.getData<AddressBook[]>(`/address-book/by-category?category=${category}`);
     },
-    enabled: !!category,
+    enabled: category.length > 0,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 };
 
@@ -100,9 +132,53 @@ const useCreateAddressBook = () => {
         }
       });
 
+      // Also invalidate categories query to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+
       return newAddressBook;
     },
   });
 };
 
-export { useGetAddressBooks, useCreateAddressBook, useCheckNameDuplicate, useCheckCategoryExists };
+const useCreateCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CategoryDto) => {
+      return apiServerWithAuth.postData<Category>("/address-book/category", data);
+    },
+    onSuccess: (newCategory: Category) => {
+      queryClient.setQueryData(["categories"], (oldData: Category[] | undefined) => {
+        if (!oldData) return [newCategory];
+        return [...oldData, newCategory];
+      });
+    },
+  });
+};
+
+const useUpdateCategoryOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (categoryIds: number[]) => {
+      return apiServerWithAuth.patchData<Category[]>("/address-book/category/update-order", {
+        categoryIds,
+      });
+    },
+    onSuccess: () => {
+      // Invalidate queries to refetch with updated order
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["address-book"] });
+    },
+  });
+};
+
+export {
+  useGetAddressBooks,
+  useCreateAddressBook,
+  useCheckNameDuplicate,
+  useCreateCategory,
+  useGetCategories,
+  useUpdateCategoryOrder,
+  useGetAddressBooksByCategory,
+};
