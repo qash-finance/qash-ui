@@ -163,6 +163,29 @@ export const TransactionHistory = ({
     toast.success("Date filter cleared");
   };
 
+  const formatDateRange = (dateRange: DateRange | undefined) => {
+    if (!dateRange?.from || !dateRange?.to) {
+      return "Filter";
+    }
+
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    };
+
+    return (
+      <span>
+        Filter by{" "}
+        <span className="text-primary-blue font-semibold">
+          {formatDate(dateRange.from)} - {formatDate(dateRange.to)}
+        </span>
+      </span>
+    );
+  };
+
   // Prepare table data
   const tableHeaders = ["Transaction Hash", "Type", "Block", "From", "To", "Value"];
 
@@ -279,7 +302,7 @@ export const TransactionHistory = ({
               {/* Filter Button */}
               <div className="flex items-center gap-2">
                 <SecondaryButton
-                  text="Filter"
+                  text={formatDateRange(selectedDateRange)}
                   icon="/wallet-analytics/setting-icon.gif"
                   onClick={() =>
                     openModal<DateFilterModalProps>(MODAL_IDS.DATE_FILTER, {
@@ -290,17 +313,9 @@ export const TransactionHistory = ({
                   iconPosition="left"
                   variant="light"
                   buttonClassName="px-2"
+                  closeIcon={selectedDateRange?.from && selectedDateRange?.to ? true : false}
+                  onCloseIconClick={clearDateFilter}
                 />
-
-                {/* Clear Filter Button - only show when date filter is active */}
-                {selectedDateRange?.from && selectedDateRange?.to && (
-                  <button
-                    onClick={clearDateFilter}
-                    className=" text-[#ff6b6b] hover:text-white transition-colors cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                )}
               </div>
               {/* Export Button */}
               <SecondaryButton

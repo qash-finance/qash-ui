@@ -5,8 +5,8 @@ import { createShapeElement } from "../ContactBook/ShapeSelectionTooltip";
 
 interface CategoryDropdownProps {
   categories: Category[];
-  selectedCategory: string;
-  onCategorySelect: (categoryName: string) => void;
+  selectedCategory?: string;
+  onCategorySelect: (category: Category) => void;
   disabled?: boolean;
 }
 
@@ -18,10 +18,6 @@ export const CategoryDropdown = ({
 }: CategoryDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const selectedCategoryData = useMemo(() => {
-    return categories.find(cat => cat.name === selectedCategory);
-  }, [categories, selectedCategory]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -36,8 +32,8 @@ export const CategoryDropdown = ({
     };
   }, []);
 
-  const handleCategoryClick = (categoryName: string) => {
-    onCategorySelect(categoryName);
+  const handleCategoryClick = (category: Category) => {
+    onCategorySelect(category);
     setIsOpen(false);
   };
 
@@ -71,7 +67,7 @@ export const CategoryDropdown = ({
               <button
                 key={category.id}
                 type="button"
-                onClick={() => handleCategoryClick(category.name)}
+                onClick={() => handleCategoryClick(category)}
                 className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-app-background transition-colors cursor-pointer ${
                   selectedCategory === category.name ? "bg-app-background" : ""
                 }`}

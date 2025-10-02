@@ -41,8 +41,10 @@ import ProcessingTransactionModal from "@/components/Modal/ProcessingTransaction
 import CreateWalletModal from "@/components/Modal/Wallet/CreateWalletModal";
 import ImportWalletModal from "@/components/Modal/Wallet/ImportWalletModal";
 import RemoveTransactionConfirmationModal from "@/components/Modal/Batch/RemoveTransactionConfirmationModal";
-import CreateCategoryModal from "@/components/Modal/CreateCategoryModal";
-import CreateNewContactModal from "@/components/Modal/CreateNewContactModal";
+import CreateCategoryModal from "@/components/Modal/Contact/CreateCategoryModal";
+import CreateContactModal from "@/components/Modal/Contact/CreateContactModal";
+import EditContactModal from "@/components/Modal/Contact/EditContactModal";
+import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveContactConfirmationModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -95,7 +97,9 @@ export const MODAL_IDS = {
   CREATE_WALLET: "CREATE_WALLET",
   REMOVE_TRANSACTION_CONFIRMATION: "REMOVE_TRANSACTION_CONFIRMATION",
   CREATE_CATEGORY: "CREATE_CATEGORY",
-  CREATE_NEW_CONTACT: "CREATE_NEW_CONTACT",
+  CREATE_CONTACT: "CREATE_CONTACT",
+  EDIT_CONTACT: "EDIT_CONTACT",
+  REMOVE_CONTACT_CONFIRMATION: "REMOVE_CONTACT_CONFIRMATION",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -336,7 +340,24 @@ export interface RemoveTransactionConfirmationModalProps extends BaseModalProps 
 
 export interface CreateCategoryModalProps extends BaseModalProps {}
 
-export interface CreateNewContactModalProps extends BaseModalProps {}
+export interface CreateContactModalProps extends BaseModalProps {}
+
+export interface EditContactModalProps extends BaseModalProps {
+  contactData: {
+    id: string;
+    name: string;
+    address: string;
+    email?: string;
+    category: string;
+    token?: AssetWithMetadata;
+  };
+}
+
+export interface RemoveContactConfirmationModalProps extends BaseModalProps {
+  onRemove?: () => Promise<void>;
+  contactName: string;
+  contactAddress: string;
+}
 
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
@@ -382,7 +403,9 @@ export type ModalPropsMap = {
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModalProps;
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModalProps;
   [MODAL_IDS.CREATE_CATEGORY]: CreateCategoryModalProps;
-  [MODAL_IDS.CREATE_NEW_CONTACT]: CreateNewContactModalProps;
+  [MODAL_IDS.CREATE_CONTACT]: CreateContactModalProps;
+  [MODAL_IDS.EDIT_CONTACT]: EditContactModalProps;
+  [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -432,5 +455,7 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModal,
   [MODAL_IDS.REMOVE_TRANSACTION_CONFIRMATION]: RemoveTransactionConfirmationModal,
   [MODAL_IDS.CREATE_CATEGORY]: CreateCategoryModal,
-  [MODAL_IDS.CREATE_NEW_CONTACT]: CreateNewContactModal,
+  [MODAL_IDS.CREATE_CONTACT]: CreateContactModal,
+  [MODAL_IDS.EDIT_CONTACT]: EditContactModal,
+  [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModal,
 } as const;

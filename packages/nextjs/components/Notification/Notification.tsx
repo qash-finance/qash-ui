@@ -307,8 +307,9 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
                   />
                 ))
               ) : (
-                <div className="flex items-center justify-center py-8">
-                  <span className="text-text-secondary text-sm">No notifications</span>
+                <div className="flex items-center justify-center h-full flex-col gap-4">
+                  <img src="/notification/hexagon-bell-icon.svg" alt="No notifications" className="w-30 h-30" />
+                  <span className="text-text-secondary">You don’t have any notifications yet</span>
                 </div>
               )}
             </div>

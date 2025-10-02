@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiServerWithAuth, AuthenticatedApiClient } from "./index";
 import { AuthStorage } from "../auth/storage";
-import { AddressBook, AddressBookDto, Category, CategoryDto, CategoryShape } from "@/types/address-book";
+import {
+  AddressBook,
+  CreateAddressBookDto,
+  UpdateAddressBookDto,
+  DeleteAddressBookDto,
+  AddressBookOrderDto,
+  Category,
+  CategoryDto,
+  CategoryShape,
+} from "@/types/address-book";
 
 // *************************************************
 // **************** GET METHODS *******************
@@ -11,6 +20,19 @@ const useGetCategories = () => {
     queryKey: ["categories"],
     queryFn: async () => {
       return apiServerWithAuth.getData<Category[]>("/address-book/category");
+    },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
+};
+
+const useGetAllAddressBooks = () => {
+  return useQuery({
+    queryKey: ["address-book", "all"],
+    queryFn: async () => {
+      return apiServerWithAuth.getData<AddressBook[]>(`/address-book`);
     },
     staleTime: 0,
     refetchOnMount: true,
@@ -86,13 +108,13 @@ const useCheckNameDuplicate = (name: string, category: string) => {
 //   });
 // };
 
-const useGetAddressBooksByCategory = (category: string) => {
+const useGetAddressBooksByCategory = (categoryId: number | null) => {
   return useQuery({
-    queryKey: ["address-book", "by-category", category],
+    queryKey: ["address-book", "by-category", categoryId],
     queryFn: async () => {
-      return apiServerWithAuth.getData<AddressBook[]>(`/address-book/by-category?category=${category}`);
+      return apiServerWithAuth.getData<AddressBook[]>(`/address-book/by-category?categoryId=${categoryId}`);
     },
-    enabled: category.length > 0,
+    enabled: categoryId !== null,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -108,10 +130,10 @@ const useCreateAddressBook = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: AddressBookDto) => {
+    mutationFn: async (data: CreateAddressBookDto) => {
       return apiServerWithAuth.postData<AddressBook>("/address-book", data);
     },
-    onSuccess: (newAddressBook: AddressBook, variables: AddressBookDto): AddressBook => {
+    onSuccess: (newAddressBook: AddressBook, variables: CreateAddressBookDto): AddressBook => {
       queryClient.setQueryData(["address-book"], (oldData: Category[] | undefined) => {
         if (!oldData) return [{ id: 1, name: variables.category, addressBooks: [newAddressBook] }];
 
@@ -173,9 +195,61 @@ const useUpdateCategoryOrder = () => {
   });
 };
 
+const useUpdateAddressBook = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateAddressBookDto }) => {
+      return apiServerWithAuth.patchData<AddressBook>(`/address-book/${id}`, data);
+    },
+    onSuccess: () => {
+      // Invalidate queries to refetch with updated data
+      queryClient.invalidateQueries({ queryKey: ["address-book"] });
+      queryClient.invalidateQueries({ queryKey: ["address-book-by-category"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
+const useDeleteAddressBook = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteAddressBookDto) => {
+      return apiServerWithAuth.deleteData("/address-book", data);
+    },
+    onSuccess: () => {
+      // Invalidate queries to refetch with updated data
+      queryClient.invalidateQueries({ queryKey: ["address-book"] });
+      queryClient.invalidateQueries({ queryKey: ["address-book-by-category"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
+const useUpdateAddressBookOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: AddressBookOrderDto) => {
+      return apiServerWithAuth.patchData("/address-book/update-order", data);
+    },
+    onSuccess: () => {
+      // Invalidate queries to refetch with updated data
+      queryClient.invalidateQueries({ queryKey: ["address-book"] });
+      queryClient.invalidateQueries({ queryKey: ["address-book-by-category"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
 export {
   useGetAddressBooks,
+  useGetAllAddressBooks,
   useCreateAddressBook,
+  useUpdateAddressBook,
+  useDeleteAddressBook,
+  useUpdateAddressBookOrder,
   useCheckNameDuplicate,
   useCreateCategory,
   useGetCategories,

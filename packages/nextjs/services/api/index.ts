@@ -103,8 +103,8 @@ export class AuthenticatedApiClient {
     return response.data;
   }
 
-  async deleteData<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.delete<T>(url, config);
+  async deleteData<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.delete<T>(url, { ...config, data });
     return response.data;
   }
 }

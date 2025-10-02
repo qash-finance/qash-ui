@@ -18,7 +18,7 @@ export const Header = () => {
           text="Add new contact"
           icon="/misc/plus-icon.svg"
           iconPosition="left"
-          onClick={() => openModal(MODAL_IDS.CREATE_NEW_CONTACT)}
+          onClick={() => openModal(MODAL_IDS.CREATE_CONTACT)}
           containerClassName="w-[190px]"
         />
         <SecondaryButton

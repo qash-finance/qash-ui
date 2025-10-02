@@ -293,43 +293,41 @@ export const ReceivePayment: React.FC = () => {
           </div>
         </div>
       ),
+      Action: (
+        <div className="flex items-center justify-center w-full">
+          <div
+            className="w-[130px] flex gap-1 p-0.5"
+            style={{
+              borderRadius: "10px",
+              background: "linear-gradient(0deg, #002C69 0%, #0061E7 100%)",
+            }}
+          >
+            <PrimaryButton
+              text="Claim"
+              onClick={() => handleClaim(consumableNotes[index])}
+              loading={claiming}
+              containerClassName="flex-2"
+            />
+            <SecondaryButton
+              variant="light"
+              text={<img src="/misc/blue-shopping-bag.svg" alt="Receive all" className="w-5 h-5" />}
+              onClick={() => {}}
+              disabled={claiming}
+              iconPosition="left"
+              buttonClassName="flex-1"
+            />
+          </div>
+        </div>
+      ),
     };
   });
-
-  // Action renderer for receive table
-  const receiveActionRenderer = (rowData: Record<string, CellContent>, index: number) => (
-    <div className="flex items-center justify-center w-full">
-      <div
-        className="w-[130px] flex gap-1 p-0.5"
-        style={{
-          borderRadius: "10px",
-          background: "linear-gradient(0deg, #002C69 0%, #0061E7 100%)",
-        }}
-      >
-        <PrimaryButton
-          text="Claim"
-          onClick={() => handleClaim(consumableNotes[index])}
-          loading={claiming}
-          containerClassName="flex-2"
-        />
-        <SecondaryButton
-          variant="light"
-          text={<img src="/misc/blue-shopping-bag.svg" alt="Receive all" className="w-5 h-5" />}
-          onClick={() => {}}
-          disabled={claiming}
-          iconPosition="left"
-          buttonClassName="flex-1"
-        />
-      </div>
-    </div>
-  );
 
   const renderFooterContent = () => {
     return (
       <div className="flex items-center justify-center gap-2 w-[350px]">
         <button
           type="button"
-          className="bg-background justify-center border-b-1 border-primary-divider rounded-lg flex items-center gap-2 px-4 py-2 flex-1 cursor-pointer"
+          className="bg-background justify-center border-t-1 border-primary-divider rounded-lg flex items-center gap-2 px-4 py-2 flex-1 cursor-pointer"
           onClick={() => {}}
         >
           <img alt="" className="w-5" src="/misc/light-shopping-bag.svg" />
@@ -353,11 +351,9 @@ export const ReceivePayment: React.FC = () => {
         "From",
         "Date/Time",
         "Applied automation",
+        "Action",
       ]}
       data={receiveTableData}
-      columnWidths={{ 0: "0%", 1: "10%", 2: "15%", 3: "25%", 4: "25%", 5: "20%" }}
-      actionColumn={consumableNotes?.length > 0}
-      actionRenderer={consumableNotes?.length > 0 ? receiveActionRenderer : undefined}
       selectedRows={checkedRows}
       footerRenderer={renderFooterContent}
     />

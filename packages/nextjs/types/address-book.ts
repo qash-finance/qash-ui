@@ -28,16 +28,45 @@ export interface AddressBook {
   name: string;
   address: string;
   email?: string;
-  token?: string;
+  token?: AssetWithMetadata;
   category?: Category;
+  categories?: {
+    id: number;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    shape: string;
+    color: string;
+    order: number;
+    ownerAddress: string;
+  };
+  categoryId?: number;
+  order?: number;
 }
 
-export interface AddressBookDto {
+export interface CreateAddressBookDto {
   category: string;
   name: string;
   address: string;
   email?: string;
   token: AssetWithMetadata;
+}
+
+export interface UpdateAddressBookDto {
+  categoryId: number;
+  name?: string;
+  address?: string;
+  email?: string;
+  token?: AssetWithMetadata;
+}
+
+export interface DeleteAddressBookDto {
+  ids: number[];
+}
+
+export interface AddressBookOrderDto {
+  categoryId: number;
+  entryIds: number[];
 }
 
 export interface CategoryDto {

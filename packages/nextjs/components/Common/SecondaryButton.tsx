@@ -11,6 +11,8 @@ interface SecondaryButtonProps {
   disabled?: boolean;
   loading?: boolean;
   variant?: "dark" | "light" | "red";
+  closeIcon?: boolean;
+  onCloseIconClick?: () => void;
 }
 
 export const SecondaryButton = ({
@@ -22,6 +24,8 @@ export const SecondaryButton = ({
   iconClassName,
   disabled,
   variant = "dark",
+  closeIcon = false,
+  onCloseIconClick,
 }: SecondaryButtonProps) => {
   const getVariantStyles = () => {
     switch (variant) {
@@ -70,6 +74,17 @@ export const SecondaryButton = ({
         text
       )}
       {icon && iconPosition === "right" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
+      {closeIcon && (
+        <img
+          src="/misc/circle-close-icon.svg"
+          alt="Close"
+          className={`w-4 h-4 cursor-pointer`}
+          onClick={e => {
+            e.stopPropagation();
+            onCloseIconClick?.();
+          }}
+        />
+      )}
     </button>
   );
 };
