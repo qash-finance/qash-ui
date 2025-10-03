@@ -17,6 +17,7 @@ interface NavProps {
 export enum SidebarLink {
   Home = "",
   MoveCrypto = "move-crypto",
+  PaymentLink = "payment-link",
   Dashboard = "dashboard",
   Send = "send",
   ContactBook = "contact-book",
@@ -59,7 +60,7 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-payment-link.svg",
     label: "Payment Link",
     isActive: false,
-    link: SidebarLink.Send,
+    link: SidebarLink.PaymentLink,
     disabled: false,
   },
   {
@@ -68,7 +69,7 @@ export const actionItems = [
     label: "Payroll",
     isActive: false,
     // link: SidebarLink.Batch,
-    disabled: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/contact-book.svg",
@@ -84,7 +85,7 @@ export const actionItems = [
     label: "Transactions",
     isActive: false,
     link: SidebarLink.GroupPayment,
-    disabled: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/ai-assistant.svg",
@@ -92,7 +93,7 @@ export const actionItems = [
     label: "AI Assistant",
     isActive: false,
     link: SidebarLink.AccountManagement,
-    disabled: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/setting.svg",
@@ -100,7 +101,7 @@ export const actionItems = [
     label: "Setting",
     isActive: false,
     link: SidebarLink.Transactions,
-    disabled: false,
+    disabled: true,
   },
 ];
 

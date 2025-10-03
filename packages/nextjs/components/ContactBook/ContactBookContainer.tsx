@@ -7,6 +7,7 @@ import { TabContainer } from "../Common/TabContainer";
 import { Table, CellContent } from "../Common/Table";
 import { CategorySelectionTooltip } from "./CategorySelectionTooltip";
 import { MoreActionsTooltip } from "./MoreActionsTooltip";
+import { MultipleContactActionsTooltip } from "./MultipleContactActionsTooltip";
 import {
   useGetCategories,
   useUpdateCategoryOrder,
@@ -62,6 +63,7 @@ const ContactBookContainer = () => {
   const { data: allAddressBooks, isLoading: isLoadingAllAddressBooks } = useGetAllAddressBooks();
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
+  const [showMultipleActions, setShowMultipleActions] = useState<boolean>(false);
 
   // Close tooltip when clicking outside
   useEffect(() => {
@@ -70,17 +72,18 @@ const ContactBookContainer = () => {
       // Check if click is outside any tooltip trigger or tooltip content
       if (!target.closest("[data-tooltip-id]") && !target.closest(".tooltip-content")) {
         setActiveTooltipId(null);
+        setShowMultipleActions(false);
       }
     };
 
-    if (activeTooltipId) {
+    if (activeTooltipId || showMultipleActions) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [activeTooltipId]);
+  }, [activeTooltipId, showMultipleActions]);
 
   // Get address books based on active tab
   const getCategoryId = () => {
@@ -256,6 +259,42 @@ const ContactBookContainer = () => {
     }
   };
 
+  // Multiple contact action handlers
+  const handleMultipleExport = () => {
+    const selectedContacts = checkedRows.map(index => addressBooks?.[index]).filter(Boolean);
+    console.log("Export multiple contacts:", selectedContacts);
+    // TODO: Implement multiple export functionality
+    setShowMultipleActions(false);
+  };
+
+  const handleMultipleRemove = () => {
+    const selectedContacts = checkedRows.map(index => addressBooks?.[index]).filter(Boolean);
+    if (selectedContacts.length > 0) {
+      const contactIds = selectedContacts.map(contact => contact?.id).filter(Boolean) as number[];
+
+      openModal(MODAL_IDS.REMOVE_CONTACT_CONFIRMATION, {
+        contactName: `${selectedContacts.length} contacts`,
+        contactAddress: "",
+        onRemove: () => {
+          deleteAddressBook(
+            { ids: contactIds },
+            {
+              onSuccess: () => {
+                toast.success(`${selectedContacts.length} contacts deleted successfully`);
+                setCheckedRows([]);
+                setShowMultipleActions(false);
+              },
+              onError: error => {
+                console.error("Failed to delete contacts:", error);
+                toast.error("Failed to delete contacts");
+              },
+            },
+          );
+        },
+      });
+    }
+  };
+
   const handleReorder = (reorderedData: Record<string, CellContent>[]) => {
     if (!addressBooks) return;
 
@@ -376,11 +415,17 @@ const ContactBookContainer = () => {
         " ": (
           <div className="flex justify-center items-center">
             <div
-              data-tooltip-id={`more-actions-${index}`}
+              data-tooltip-id={checkedRows.length > 0 ? "multiple-actions-tooltip" : `more-actions-${index}`}
               className="cursor-pointer"
               onClick={e => {
                 e.stopPropagation();
-                setActiveTooltipId(activeTooltipId === `more-actions-${index}` ? null : `more-actions-${index}`);
+                if (checkedRows.length > 0) {
+                  setShowMultipleActions(!showMultipleActions);
+                  setActiveTooltipId(null);
+                } else {
+                  setActiveTooltipId(activeTooltipId === `more-actions-${index}` ? null : `more-actions-${index}`);
+                  setShowMultipleActions(false);
+                }
               }}
             >
               <img src="/misc/three-dot-icon.svg" alt="more actions" className="w-6 h-6" />
@@ -434,6 +479,7 @@ const ContactBookContainer = () => {
             columnWidths={{ "0": "40px", "3": "20px" }}
             onDragEnd={handleReorder}
             selectedRows={checkedRows}
+            showFooter={false}
           />
         </div>
       </BaseContainer>
@@ -491,6 +537,33 @@ const ContactBookContainer = () => {
           )}
         />
       ))}
+
+      {/* Multiple Contact Actions Tooltip */}
+      <Tooltip
+        id="multiple-actions-tooltip"
+        clickable
+        style={{
+          zIndex: 30,
+          borderRadius: "16px",
+          padding: "0",
+        }}
+        place="left"
+        openOnClick
+        noArrow
+        border="none"
+        opacity={1}
+        isOpen={showMultipleActions}
+        afterHide={() => setShowMultipleActions(false)}
+        render={() => (
+          <div className="tooltip-content">
+            <MultipleContactActionsTooltip
+              addressCount={checkedRows.length}
+              onExport={handleMultipleExport}
+              onRemove={handleMultipleRemove}
+            />
+          </div>
+        )}
+      />
     </div>
   );
 };

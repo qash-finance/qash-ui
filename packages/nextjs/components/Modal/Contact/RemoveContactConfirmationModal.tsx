@@ -19,9 +19,15 @@ export function RemoveContactConfirmationModal({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
       <div className="bg-background rounded-2xl w-[380px] gap-10 flex flex-col justify-center items-center p-4 pt-8">
-        <span className="text-text-primary font-bold text-xl text-center w-[220px]">
-          Are you sure you want to remove this {contactName} ({formatAddress(contactAddress)})?
-        </span>
+        {contactName && contactAddress ? (
+          <span className="text-text-primary font-bold text-xl text-center w-[280px]">
+            Are you sure you want to remove this {contactName} ({formatAddress(contactAddress)})?
+          </span>
+        ) : (
+          <span className="text-text-primary font-bold text-xl text-center w-[280px]">
+            Are you sure you want to remove these addresses?
+          </span>
+        )}
         <div className="flex gap-2 w-full">
           <SecondaryButton text="Cancel" variant="light" onClick={onClose} />
           <SecondaryButton

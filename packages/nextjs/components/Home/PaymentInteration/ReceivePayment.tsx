@@ -47,8 +47,13 @@ export const ReceivePaymentHeader: React.FC = () => {
   );
 };
 
-export const ReceivePayment: React.FC = () => {
-  const [checkedRows, setCheckedRows] = useState<number[]>([]);
+interface ReceivePaymentProps {
+  checkedRows: number[];
+  setCheckedRows: React.Dispatch<React.SetStateAction<number[]>>;
+  onClaimSelected?: React.MutableRefObject<(() => void) | null>;
+}
+
+export const ReceivePayment: React.FC<ReceivePaymentProps> = ({ checkedRows, setCheckedRows, onClaimSelected }) => {
   const [claiming, setClaiming] = useState(false);
   const [autoClaim, setAutoClaim] = useState(false);
 
@@ -112,6 +117,7 @@ export const ReceivePayment: React.FC = () => {
     );
 
   const handleClaim = async (note: PartialConsumableNote) => {
+    console.log("🚀 ~ handleClaim ~ note:", note);
     try {
       if (!walletAddress) {
         return toast.error("Please connect your wallet");
@@ -191,6 +197,11 @@ export const ReceivePayment: React.FC = () => {
       if (!walletAddress) {
         return toast.error("Please connect your wallet");
       }
+
+      if (checkedRows.length === 0) {
+        return toast.error("Please select at least one payment");
+      }
+
       toast.loading("Receiving payments...");
 
       setClaiming(true);
@@ -255,6 +266,13 @@ export const ReceivePayment: React.FC = () => {
       setClaiming(false);
     }
   };
+
+  // Expose handleClaimSelected to parent component
+  useEffect(() => {
+    if (onClaimSelected) {
+      onClaimSelected.current = handleClaimSelected;
+    }
+  }, [onClaimSelected, handleClaimSelected]);
 
   // Convert receive data to table format
   const receiveTableData = consumableNotes.map((note, index) => {
@@ -356,6 +374,7 @@ export const ReceivePayment: React.FC = () => {
       data={receiveTableData}
       selectedRows={checkedRows}
       footerRenderer={renderFooterContent}
+      showFooter={false}
     />
   );
 };

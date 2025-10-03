@@ -25,17 +25,13 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({
   const token = selectedToken || AnyToken;
 
   return (
-    <div className="flex gap-5 justify-between py-0.5 pr-0.5 pl-2 rounded-[10px] bg-neutral-900 text-sm font-medium leading-none">
-      <input
-        type="text"
-        readOnly
-        value={formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}
-        placeholder="0.00"
-        className="bg-transparent text-white outline-none w-20"
-      />
+    <div className="flex items-center justify-between p-0.5 pl-2 rounded-[10px] bg-app-background text-sm leading-none gap-10">
+      <span className="text-text-primary">
+        {formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}
+      </span>
       <button
         type="button"
-        className="flex flex-col justify-center py-1 px-2 rounded-[10px] bg-zinc-800 hover:bg-zinc-700 transition-colors outline-none"
+        className="flex flex-col justify-center rounded-[10px] bg-background py-1.5 px-1 transition-colors outline-none border-b-1 border-primary-divider"
         disabled={disabled}
       >
         <div
@@ -49,11 +45,14 @@ export const SelectTokenInput: React.FC<SelectTokenInputProps> = ({
             alt={token.metadata.symbol}
             className="w-5 h-5 rounded-full"
           />
-          <span className="text-white">{token.metadata.symbol}</span>
+          <span className="text-text-primary">{token.metadata.symbol}</span>
           <img
             src="/arrow/filled-arrow-down.svg"
             alt="Dropdown arrow"
-            className="object-contain shrink-0 aspect-[1.75] fill-white w-[7px]"
+            className="w-3"
+            style={{
+              filter: "brightness(0)",
+            }}
           />
         </div>
       </button>

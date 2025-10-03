@@ -31,6 +31,7 @@ interface TableProps {
   draggable?: boolean;
   onDragEnd?: (newData: Record<string, CellContent>[]) => void;
   selectedRows?: number[];
+  showFooter?: boolean;
   footerRenderer?: () => React.ReactNode;
 }
 
@@ -314,6 +315,7 @@ export function Table({
   draggable = false,
   onDragEnd,
   selectedRows = [],
+  showFooter = true,
   footerRenderer,
 }: TableProps) {
   const [items, setItems] = useState(data);
@@ -381,7 +383,7 @@ export function Table({
               )}
             </tbody>
 
-            {selectedRows.length > 0 && (
+            {selectedRows.length > 0 && showFooter && (
               <tfoot>
                 <tr>
                   <td
@@ -433,7 +435,7 @@ export function Table({
           )}
         </tbody>
 
-        {selectedRows.length > 0 && (
+        {selectedRows.length > 0 && showFooter && (
           <tfoot>
             <tr>
               <td

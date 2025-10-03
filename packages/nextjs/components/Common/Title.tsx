@@ -59,7 +59,7 @@ export const Title = () => {
         className="cursor-pointer flex flex-row gap-1 items-center justify-center px-6 py-2 bg-background rounded-lg leading-none"
         onClick={() => openModal(MODAL_IDS.PORTFOLIO)}
       >
-        <img src="/misc/star-icon.svg" alt="coin-icon" className="w-5 h-5 " />
+        <img src="/misc/two-star-icon.svg" alt="coin-icon" className="w-5 h-5 " />
         Portfolio
       </button>
 

@@ -355,8 +355,8 @@ export interface EditContactModalProps extends BaseModalProps {
 
 export interface RemoveContactConfirmationModalProps extends BaseModalProps {
   onRemove?: () => Promise<void>;
-  contactName: string;
-  contactAddress: string;
+  contactName?: string;
+  contactAddress?: string;
 }
 
 export type ModalPropsMap = {
