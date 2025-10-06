@@ -101,11 +101,7 @@ const config = {
             items: [
               {
                 label: "Qash GitHub",
-                href: "https://github.com/q3x-finance",
-              },
-              {
-                label: "Docs GitHub",
-                href: "https://github.com/q3x-finance/qash-ui/tree/main/packages/docs",
+                href: "https://github.com/qash-finance",
               },
             ],
           },
