@@ -1,29 +1,93 @@
 "use client";
 
 import * as React from "react";
-import { GiftRow } from "./GiftRow";
 import { useGiftDashboard } from "@/hooks/server/useGiftDashboard";
 import SkeletonLoading from "../Common/SkeletonLoading";
 import { NoteStatus } from "@/types/note";
 import { GiftCreationForm } from "./GiftCreationForm";
-
-interface Transaction {
-  id: string;
-  amount: string;
-  dateTime: string;
-  link: string;
-  isOpened?: boolean;
-}
+import { Table } from "../Common/Table";
+import { Gift } from "@/types/gift";
+import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { blo } from "blo";
+import { PrimaryButton } from "../Common/PrimaryButton";
+import { Badge, BadgeStatus } from "../Common/Badge";
+import toast from "react-hot-toast";
 
 interface GiftStatisticsProps {
-  totalValue?: string;
-  giftOpenedCount?: string;
-  transactions?: Transaction[];
   onCopyLink?: (link: string) => void;
+}
+
+// Function to format date from ISO to DD/MM/YYYY, HH:MM format
+function formatDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear().toString().slice(-2);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${day}/${month}/${year}, ${hours}:${minutes}`;
+}
+
+// Function to generate gift link (similar to GiftRow logic)
+function generateGiftLink(secretHash: string): string {
+  return `${window.location.origin}/gift/open-gift?code=${secretHash}`;
 }
 
 export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) => {
   const { data: giftDashboard, isLoading: isLoadingGiftDashboard } = useGiftDashboard();
+
+  // Transform gift data for table
+  const tableData = React.useMemo(() => {
+    if (!giftDashboard?.gifts) return [];
+
+    return giftDashboard.gifts.map((gift: Gift, index: number) => {
+      const isOpened = gift.status === NoteStatus.CONSUMED;
+      const giftLink = generateGiftLink(gift.secretHash);
+
+      return {
+        Amount: (
+          <div className="flex gap-1 items-center">
+            <img
+              alt={gift.assets[0]?.metadata?.symbol || "Token"}
+              className="w-6 h-6"
+              src={
+                gift.assets[0]?.faucetId === QASH_TOKEN_ADDRESS
+                  ? "/token/qash.svg"
+                  : blo(turnBechToHex(gift.assets[0]?.faucetId || ""))
+              }
+            />
+            <span className="text-lg text-text-primary">{gift.assets[0]?.amount || "0"}</span>
+          </div>
+        ),
+        Timestamp: <span className="text-text-primary">{formatDateTime(gift.createdAt)}</span>,
+        Status: (
+          <div className="flex items-center justify-center">
+            <Badge
+              status={isOpened ? BadgeStatus.NEUTRAL : BadgeStatus.SUCCESS}
+              text={isOpened ? "Opened" : "Active"}
+              className="!px-5 !py-1.5"
+            />
+          </div>
+        ),
+        Action: (
+          <div className="flex items-center justify-center w-full">
+            <PrimaryButton
+              text="Copy Link"
+              icon="/misc/thin-copy-icon.svg"
+              containerClassName="w-[55%]"
+              iconPosition="left"
+              onClick={() => {
+                toast.success("Link copied to clipboard");
+                navigator.clipboard.writeText(giftLink);
+                onCopyLink?.(giftLink);
+              }}
+            />
+          </div>
+        ),
+      };
+    });
+  }, [giftDashboard?.gifts, onCopyLink]);
   return (
     <div className="flex flex-col h-full overflow-hidden w-full gap-4">
       {isLoadingGiftDashboard ? (
@@ -121,7 +185,9 @@ export const GiftStatistics: React.FC<GiftStatisticsProps> = ({ onCopyLink }) =>
               Once you accept, you're committing to send the amount to the request address
             </span>
             <div className="flex justify-center items-center flex-row gap-2 w-full h-full">
-              <span className="text-text-primary text-sm font-semibold w-[75%]">Gift sent</span>
+              <div className=" w-[75%] h-full">
+                <Table headers={["Amount", "Timestamp", "Status", "Action"]} data={tableData} />
+              </div>
               <GiftCreationForm />
             </div>
           </div>

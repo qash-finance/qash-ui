@@ -86,6 +86,9 @@
   --color-badge-public-background: var(--badge-public-background);
   --color-badge-public-text: var(--badge-public-text);
   --color-badge-public-border: var(--badge-public-border);
+  --color-badge-neutral-background: var(--badge-neutral-background);
+  --color-badge-neutral-text: var(--badge-neutral-text);
+  --color-badge-neutral-border: var(--badge-neutral-border);
 
   /* Loading Bar */
   --color-loading-bar-background: var(--loading-bar-background);
@@ -131,6 +134,29 @@
   --radius: var(--radius);
   --font-sans: var(--font-barlow);
   --font-mono: var(--font-geist-mono);
+
+  --animate-wiggle: wiggle 1s ease-in-out infinite;
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(-1deg);
+    }
+    50% {
+      transform: rotate(1deg);
+    }
+  }
+}
+
+.nanum-pen-script-regular {
+  font-family: "Nanum Pen Script", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.anton-regular {
+  font-family: "Anton", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 .font-repetition-scrolling {
@@ -488,4 +514,19 @@ img {
   -moz-user-drag: none;
   -o-user-drag: none;
   user-drag: none;
+}
+
+/* Infinity scroll animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-10%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 60s linear infinite;
+  width: 1000%;
 }

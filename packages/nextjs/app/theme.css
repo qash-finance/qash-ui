@@ -70,6 +70,9 @@
   --badge-public-background: #fbe9dd;
   --badge-public-text: #e97135;
   --badge-public-border: #e97135;
+  --badge-neutral-background: #f6f6f6;
+  --badge-neutral-text: #848484;
+  --badge-neutral-border: #d1d4d9;
 
   /* Loading Bar */
   --loading-bar-background: #f6f6f6;

@@ -25,6 +25,7 @@ import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { FieldErrors, useForm, UseFormRegister } from "react-hook-form";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { PrimaryButton } from "../Common/PrimaryButton";
 // import { TokenSelector } from "./TokenSelector";
 
 const GiftAmountInput = ({
@@ -75,6 +76,12 @@ const GiftAmountInput = ({
             min={0.00001}
             placeholder="0.00"
             autoComplete="off"
+            onKeyDown={e => {
+              // Prevent 'e', 'E', '+', '-' characters
+              if (["e", "E", "+", "-"].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
             {...register("amount", {
               min: {
                 value: 0.00001,
@@ -95,6 +102,7 @@ export const GiftCreationForm: React.FC = () => {
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { openModal } = useModal();
   const { isConnected } = useWalletConnect();
+  console.log("🚀 ~ GiftCreationForm ~ isConnected:", isConnected);
   const { mutate: sendGift } = useSendGift();
   const { forceFetch: forceRefetchGiftDashboard } = useGiftDashboard();
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
@@ -140,114 +148,101 @@ export const GiftCreationForm: React.FC = () => {
   };
 
   const handleGenerateLink = async () => {
-    if (isConnected) {
-      const { amount: currentAmount } = getValues();
-
-      if (!currentAmount) {
-        return toast.error("Invalid amount");
-      }
-
-      if (Number(currentAmount) <= 0) {
-        return toast.error("Invalid amount");
-      }
-
-      // format amount
-      const formattedAmount = formatUnits(
-        BigInt(Math.round(Number(selectedToken.amount))),
-        selectedToken.metadata.decimals,
-      );
-
-      if (Number(formattedAmount) < currentAmount) {
-        console.log(formattedAmount, currentAmount);
-        return toast.error("Insufficient balance");
-      }
-
-      if (currentAmount <= 0) {
-        return toast.error("Invalid amount");
-      }
-
-      // open double confirm modal
-      // Show transaction overview modal first
-      openModal(MODAL_IDS.GIFT_TRANSACTION_OVERVIEW, {
-        amount: `${currentAmount}`,
-        accountAddress: walletAddress,
-        transactionType: "Private",
-        cancellableTime: `24 hour(s)`,
-        tokenAddress: selectedToken.faucetId,
-        tokenSymbol: selectedToken.metadata.symbol,
-        onConfirm: async () => {
-          // Open the GenerateGiftModal with the gift generation logic
-          openModal(MODAL_IDS.GENERATE_GIFT, {
-            onGiftGeneration: async () => {
-              try {
-                setIsLoading(true);
-                toast.loading("Generating gift...");
-
-                // generate secret
-                const secret = await generateSecret();
-
-                // parse current amount with decimals
-                const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
-
-                // create gift note
-                const [outputNote, serialNumber] = await createGiftNote(
-                  walletAddress,
-                  selectedToken.faucetId,
-                  parsedAmount,
-                  secret,
-                );
-
-                console.log("serialNumber", serialNumber);
-
-                // submit transaction
-                const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
-
-                // submit to server
-
-                // turn secret to string
-                const secretString = secretArrayToString(secret);
-
-                sendGift({
-                  assets: [
-                    {
-                      faucetId: selectedToken.faucetId,
-                      amount: currentAmount.toString(),
-                      metadata: selectedToken.metadata,
-                    },
-                  ],
-                  serialNumber: serialNumber,
-                  secretNumber: secretString,
-                  txId: txId,
-                });
-
-                // current domain + /gift/open-gift/id
-                const giftLink = `${window.location.origin}/gift/open-gift?code=${encodeURIComponent(secretString)}`;
-
-                // refetch everything
-                await forceRefetchAssets();
-                await forceRefetchGiftDashboard();
-                await forceRefetchRecallableNotes();
-
-                toast.dismiss();
-                toast.success("Gift created successfully");
-                setValue("amount", 0);
-
-                return giftLink;
-              } catch (error) {
-                toast.dismiss();
-                toast.error("Failed to create gift");
-                console.error(error);
-                throw error; // Re-throw to let the modal handle the error
-              } finally {
-                setIsLoading(false);
-              }
-            },
-          });
-        },
-      });
-    } else {
-      openModal(MODAL_IDS.CONNECT_WALLET);
+    if (!isConnected) {
+      return openModal(MODAL_IDS.CONNECT_WALLET);
     }
+
+    const { amount: currentAmount } = getValues();
+
+    if (!currentAmount) {
+      return toast.error("Invalid amount");
+    }
+
+    if (Number(currentAmount) <= 0) {
+      return toast.error("Invalid amount");
+    }
+
+    // format amount
+    const formattedAmount = formatUnits(
+      BigInt(Math.round(Number(selectedToken.amount))),
+      selectedToken.metadata.decimals,
+    );
+
+    if (Number(formattedAmount) < currentAmount) {
+      console.log(formattedAmount, currentAmount);
+      return toast.error("Insufficient balance");
+    }
+
+    if (currentAmount <= 0) {
+      return toast.error("Invalid amount");
+    }
+
+    openModal(MODAL_IDS.GENERATE_GIFT, {
+      onGiftGeneration: async () => {
+        try {
+          setIsLoading(true);
+          toast.loading("Generating gift...");
+
+          // generate secret
+          const secret = await generateSecret();
+
+          // parse current amount with decimals
+          const parsedAmount = BigInt(currentAmount * Math.pow(10, selectedToken.metadata.decimals));
+
+          // create gift note
+          const [outputNote, serialNumber] = await createGiftNote(
+            walletAddress,
+            selectedToken.faucetId,
+            parsedAmount,
+            secret,
+          );
+
+          console.log("serialNumber", serialNumber);
+
+          // submit transaction
+          const txId = await submitTransactionWithOwnOutputNotes(walletAddress, [outputNote]);
+
+          // submit to server
+
+          // turn secret to string
+          const secretString = secretArrayToString(secret);
+
+          sendGift({
+            assets: [
+              {
+                faucetId: selectedToken.faucetId,
+                amount: currentAmount.toString(),
+                metadata: selectedToken.metadata,
+              },
+            ],
+            serialNumber: serialNumber,
+            secretNumber: secretString,
+            txId: txId,
+          });
+
+          // current domain + /gift/open-gift/id
+          const giftLink = `${window.location.origin}/gift/open-gift?code=${encodeURIComponent(secretString)}`;
+
+          // refetch everything
+          await forceRefetchAssets();
+          await forceRefetchGiftDashboard();
+          await forceRefetchRecallableNotes();
+
+          toast.dismiss();
+          toast.success("Gift created successfully");
+          setValue("amount", 0);
+
+          return giftLink;
+        } catch (error) {
+          toast.dismiss();
+          toast.error("Failed to create gift");
+          console.error(error);
+          throw error; // Re-throw to let the modal handle the error
+        } finally {
+          setIsLoading(false);
+        }
+      },
+    });
   };
 
   return (
@@ -265,7 +260,7 @@ export const GiftCreationForm: React.FC = () => {
         />
       </div>
       <div
-        className="flex flex-col h-full justify-between items-center rounded-b-xl"
+        className="flex flex-col h-full justify-between items-center rounded-2xl"
         style={{
           backgroundImage: "url('/gift/create-gift-background.png')",
           backgroundPosition: "bottom",
@@ -278,25 +273,19 @@ export const GiftCreationForm: React.FC = () => {
         </div>
         <div className="w-full h-full flex justify-end items-end p-2">
           {!isConnected ? (
-            <ActionButton
+            <PrimaryButton
               text="Connect Wallet"
-              buttonType="submit"
-              className="w-full h-10 mt-2"
+              iconPosition="left"
+              disabled={isLoading}
+              loading={isLoading}
+              containerClassName="w-full"
               onClick={() => {
                 openModal(MODAL_IDS.CONNECT_WALLET);
               }}
             />
           ) : (
-            // <ActionButton
-            //   loading={isLoading}
-            //   text="Generate link gift"
-            //   onClick={handleGenerateLink}
-            //   className="mt-2 w-full h-10"
-            //   disabled={watch("amount") <= 0}
-            // />
-
             <div
-              className="w-full p-2 rounded-lg"
+              className="w-full p-2 rounded-lg cursor-pointer"
               style={{
                 background: "linear-gradient(172deg, #029266 50%, #006848 50%)",
               }}
@@ -304,7 +293,7 @@ export const GiftCreationForm: React.FC = () => {
               <button
                 onClick={handleGenerateLink}
                 disabled={isLoading || watch("amount") <= 0}
-                className="relative w-full h-10 bg-[#26D17A] rounded-lg overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative w-full h-10 bg-[#26D17A] rounded-lg overflow-hidden group disabled:opacity-80 disabled:cursor-not-allowed cursor-pointer"
               >
                 <div className="absolute top-0 left-4 flex items-center justify-center flex-row w-13 h-full">
                   <img

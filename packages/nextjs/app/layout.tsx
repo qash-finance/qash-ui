@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Barlow } from "next/font/google";
+import { Geist, Geist_Mono, Barlow, Nanum_Pen_Script } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "../components/ClientLayout";
 import localFont from "next/font/local";
@@ -35,6 +35,11 @@ const barlow = Barlow({
   weight: "500",
   subsets: ["latin"],
 });
+const nanumPenScript = Nanum_Pen_Script({
+  weight: "400",
+  variable: "--font-nanum-pen-script",
+  subsets: ["latin"],
+});
 export const metadata: Metadata = {
   title: "Qash",
   description: "Manage your cash on-chain with privacy",
@@ -47,6 +52,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
         {/* This is a hack to ensure the theme is applied correctly on the server side */}
         <script
           dangerouslySetInnerHTML={{
@@ -67,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${barlow.className} ${repetitionScrolling.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${barlow.className} ${repetitionScrolling.variable} ${nanumPenScript.variable} antialiased`}
       >
         <ThemeProvider defaultTheme="light" storageKey="ui-theme">
           <ClientLayout>{children}</ClientLayout>

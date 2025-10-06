@@ -1,17 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { GiftCreationForm } from "./GiftCreationForm";
 import { GiftStatistics } from "./GiftStatistics";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { ActionButton } from "../Common/ActionButton";
-import { MODAL_IDS } from "@/types/modal";
-import { useModal } from "@/contexts/ModalManagerProvider";
 
 export const GiftContainer: React.FC = () => {
-  const { openModal } = useModal();
-  const { isConnected } = useWalletConnect();
-
   return (
     <main className="flex flex-col gap-4 items-start h-full p-4 w-full">
       <div className="w-full flex items-center gap-2 font-semibold">
