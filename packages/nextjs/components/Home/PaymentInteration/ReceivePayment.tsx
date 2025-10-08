@@ -9,7 +9,6 @@ import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
 import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { useConfirmGroupPaymentRequest } from "@/services/api/request-payment";
@@ -51,9 +50,17 @@ interface ReceivePaymentProps {
   checkedRows: number[];
   setCheckedRows: React.Dispatch<React.SetStateAction<number[]>>;
   onClaimSelected?: React.MutableRefObject<(() => void) | null>;
+  consumableNotes: PartialConsumableNote[];
+  setConsumableNotes: React.Dispatch<React.SetStateAction<PartialConsumableNote[]>>;
 }
 
-export const ReceivePayment: React.FC<ReceivePaymentProps> = ({ checkedRows, setCheckedRows, onClaimSelected }) => {
+export const ReceivePayment: React.FC<ReceivePaymentProps> = ({
+  checkedRows,
+  setCheckedRows,
+  onClaimSelected,
+  consumableNotes,
+  setConsumableNotes,
+}) => {
   const [claiming, setClaiming] = useState(false);
   const [autoClaim, setAutoClaim] = useState(false);
 
@@ -62,35 +69,10 @@ export const ReceivePayment: React.FC<ReceivePaymentProps> = ({ checkedRows, set
   const { openModal } = useModal();
 
   // **************** Server Hooks *******************
-  const {
-    data: consumableNotesFromServer,
-    isLoading: isLoadingConsumableNotesFromServer,
-    error: errorConsumableNotesFromServer,
-    isRefetching: isRefetchingConsumableNotesFromServer,
-  } = useConsumableNotes();
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
   const { mutateAsync: confirmGroupPaymentRequest } = useConfirmGroupPaymentRequest();
-
-  // **************** Local State *******************
-  const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      if (walletAddress && isConnected) {
-        if (!errorConsumableNotesFromServer) {
-          if (consumableNotesFromServer) {
-            setConsumableNotes(consumableNotesFromServer);
-          } else {
-            setConsumableNotes([]);
-          }
-        } else {
-          setConsumableNotes([]);
-        }
-      }
-    })();
-  }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
 
   const isAllChecked = consumableNotes.length > 0 && checkedRows.length === consumableNotes.length;
 

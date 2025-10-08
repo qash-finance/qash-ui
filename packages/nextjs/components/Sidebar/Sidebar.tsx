@@ -215,8 +215,8 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
                   style={{ transition: "width 200ms ease" }}
                 />
               </div>
-              <div className="flex items-center justify-start px-3 bg-badge-neutral-background rounded-full">
-                <p className="text-[13px] font-semibold text-badge-neutral-text">Beta</p>
+              <div className="flex items-center justify-start px-3 bg-[#E7E7E8] rounded-full">
+                <p className="text-[13px] text-badge-neutral-text">Beta</p>
               </div>
             </header>
             <div className="h-[2px] bg-primary-divider my-3" />

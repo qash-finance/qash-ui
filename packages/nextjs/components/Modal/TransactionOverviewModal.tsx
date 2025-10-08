@@ -162,6 +162,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
             text="Done"
             onClick={() => {
               onClose();
+              onConfirm?.();
             }}
             buttonClassName="flex-1"
           />

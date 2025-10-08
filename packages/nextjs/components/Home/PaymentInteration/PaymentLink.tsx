@@ -1,10 +1,9 @@
+"use client";
 import React, { useState, useMemo, useEffect } from "react";
-import { Tooltip } from "react-tooltip";
-import { PrimaryButton } from "../Common/PrimaryButton";
-import { BaseContainer } from "../Common/BaseContainer";
-import { TabContainer } from "../Common/TabContainer";
-import { Table } from "../Common/Table";
-import { CustomCheckbox } from "../Common/CustomCheckbox";
+import { Table } from "../../Common/Table";
+import { CustomCheckbox } from "../../Common/CustomCheckbox";
+import { Badge, BadgeStatus } from "../../Common/Badge";
+import { SecondaryButton } from "../../Common/SecondaryButton";
 import { useRouter } from "next/navigation";
 import {
   useGetPaymentLinks,
@@ -13,46 +12,24 @@ import {
   useActivatePaymentLink,
   useDeactivatePaymentLink,
 } from "@/services/api/payment-link";
-import { PaymentLink, PaymentLinkStatus } from "@/types/payment-link";
+import { PaymentLink as PaymentLinkType, PaymentLinkStatus } from "@/types/payment-link";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import toast from "react-hot-toast";
-import { PaymentLinkActionsTooltip } from "./PaymentLinkActionsTooltip";
-import { SecondaryButton } from "../Common/SecondaryButton";
-import { Badge, BadgeStatus } from "../Common/Badge";
+import { PaymentLinkActionsTooltip } from "../../PaymentLink/PaymentLinkActionsTooltip";
+import { Tooltip } from "react-tooltip";
+import { FloatingFooter } from "../../Common/FloatingFooter";
 
-const tabs = [
-  { id: "all", label: "All links", title: "All payment links", description: "Share these links for payments." },
-  { id: "active", label: "Active", title: "Active links", description: "Share these links for payments." },
-  {
-    id: "deactivated",
-    label: "Deactivated",
-    title: "Deactivated links",
-    description: "This link is no longer active. Generate a new link.",
-  },
-];
+interface PaymentLinkProps {
+  checkedRows: number[];
+  setCheckedRows: React.Dispatch<React.SetStateAction<number[]>>;
+}
 
-const Card = ({ title, amount }: { title: string; amount: string }) => {
-  return (
-    <div className="relative w-full h-full rounded-xl border border-primary-divider p-5 flex flex-col overflow-hidden">
-      <span className="text-text-secondary text-sm">{title}</span>
-      <span className="text-text-primary font-semibold text-2xl">{amount}</span>
-
-      <img
-        src="/card/background.svg"
-        alt=""
-        className="absolute -top-3.5 right-5 w-[152px] h-[154px] opacity-80"
-        aria-hidden="true"
-      />
-    </div>
-  );
-};
-
-const PaymentLinkContainer = () => {
+export const PaymentLink: React.FC<PaymentLinkProps> = ({ checkedRows, setCheckedRows }) => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
+
+  // Payment Links API hooks
   const { data: paymentLinks = [], isLoading, error } = useGetPaymentLinks();
   const deletePaymentLinksMutation = useDeletePaymentLinks();
   const updateOrderMutation = useUpdatePaymentLinkOrder();
@@ -104,28 +81,22 @@ const PaymentLinkContainer = () => {
   };
 
   const handleSelectRow = (index: number) => {
-    setSelectedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
+    setCheckedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
   };
 
-  const displayedLinks = useMemo(() => {
-    if (activeTab.id === "active") return activeLinks;
-    if (activeTab.id === "deactivated") return inactiveLinks;
-    return allLinks;
-  }, [activeTab.id, activeLinks, inactiveLinks, allLinks]);
-
   const handleCheckAll = () => {
-    if (selectedRows.length === displayedLinks.length) {
-      setSelectedRows([]);
+    if (checkedRows.length === allLinks.length) {
+      setCheckedRows([]);
     } else {
-      setSelectedRows(displayedLinks.map((_, index) => index));
+      setCheckedRows(allLinks.map((_, index) => index));
     }
   };
 
-  const isAllChecked = displayedLinks.length > 0 && selectedRows.length === displayedLinks.length;
+  const isAllChecked = allLinks.length > 0 && checkedRows.length === allLinks.length;
 
   // Tooltip action handlers
   const handleEdit = (linkIndex: number) => {
-    const link = displayedLinks[linkIndex];
+    const link = allLinks[linkIndex];
     if (link) {
       router.push(`/payment-link/edit?code=${link.code}`);
       setActiveTooltipId(null);
@@ -133,7 +104,7 @@ const PaymentLinkContainer = () => {
   };
 
   const handleViewDetail = (linkIndex: number) => {
-    const link = displayedLinks[linkIndex];
+    const link = allLinks[linkIndex];
     if (link) {
       router.push(`/payment-link/detail?code=${link.code}`);
       setActiveTooltipId(null);
@@ -141,7 +112,7 @@ const PaymentLinkContainer = () => {
   };
 
   const handleToggleStatus = (linkIndex: number, isActive: boolean) => {
-    const link = displayedLinks[linkIndex];
+    const link = allLinks[linkIndex];
     if (link) {
       const mutation = isActive ? deactivatePaymentLinkMutation : activatePaymentLinkMutation;
       mutation.mutate(link.code, {
@@ -157,7 +128,7 @@ const PaymentLinkContainer = () => {
   };
 
   const handleRemove = async (linkIndex: number) => {
-    const link = displayedLinks[linkIndex];
+    const link = allLinks[linkIndex];
     if (!link) {
       toast.error("Payment link not found");
       return;
@@ -172,30 +143,30 @@ const PaymentLinkContainer = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (selectedRows.length === 0) {
+    if (checkedRows.length === 0) {
       toast.error("No payment links selected");
       return;
     }
 
-    const codesToDelete = selectedRows.map(index => displayedLinks[index].code);
+    const codesToDelete = checkedRows.map(index => allLinks[index].code);
 
     try {
       const response = await deletePaymentLinksMutation.mutateAsync(codesToDelete);
       toast.success(response.message || `${response.deletedCount} payment link(s) deleted successfully`);
-      setSelectedRows([]); // Clear selection after successful deletion
+      setCheckedRows([]); // Clear selection after successful deletion
     } catch (error: any) {
       toast.error(error?.message || "Failed to delete payment links");
     }
   };
 
-  const tableData = useMemo(() => {
-    return displayedLinks.map((link: PaymentLink) => ({
+  const paymentLinkTableData = useMemo(() => {
+    return allLinks.map((link: PaymentLinkType) => ({
       id: link.id, // Add id field for drag and drop
       "header-0": (
         <div className="flex justify-center items-center">
           <CustomCheckbox
-            checked={selectedRows.includes(displayedLinks.indexOf(link))}
-            onChange={() => handleSelectRow(displayedLinks.indexOf(link))}
+            checked={checkedRows.includes(allLinks.indexOf(link))}
+            onChange={() => handleSelectRow(allLinks.indexOf(link))}
           />
         </div>
       ),
@@ -245,14 +216,14 @@ const PaymentLinkContainer = () => {
       " ": (
         <div className="flex justify-center items-center">
           <div
-            data-tooltip-id={`payment-link-actions-${displayedLinks.indexOf(link)}`}
+            data-tooltip-id={`payment-link-actions-${allLinks.indexOf(link)}`}
             className="cursor-pointer"
             onClick={e => {
               e.stopPropagation();
               setActiveTooltipId(
-                activeTooltipId === `payment-link-actions-${displayedLinks.indexOf(link)}`
+                activeTooltipId === `payment-link-actions-${allLinks.indexOf(link)}`
                   ? null
-                  : `payment-link-actions-${displayedLinks.indexOf(link)}`,
+                  : `payment-link-actions-${allLinks.indexOf(link)}`,
               );
             }}
           >
@@ -261,9 +232,9 @@ const PaymentLinkContainer = () => {
         </div>
       ),
     }));
-  }, [displayedLinks, selectedRows, deletePaymentLinksMutation.isPending]);
+  }, [allLinks, checkedRows, deletePaymentLinksMutation.isPending]);
 
-  const tableHeaders = [
+  const paymentLinkTableHeaders = [
     <div className="flex justify-center items-center">
       <CustomCheckbox checked={isAllChecked as boolean} onChange={handleCheckAll} />
     </div>,
@@ -275,90 +246,62 @@ const PaymentLinkContainer = () => {
     "Action",
     " ",
   ];
-  return (
-    <div className="flex flex-col w-full h-full p-4 items-center justify-start gap-5">
-      {/* Header */}
-      <div className="w-full flex flex-col gap-5 px-7">
-        <div className="w-full flex flex-row items-center justify-between">
-          <div className="flex flex-row items-center gap-2">
-            <img src="/sidebar/payment-link.svg" alt="Payment Link" />
-            <h1 className="text-2xl font-bold">Payment Link</h1>
-          </div>
-          <PrimaryButton
-            text="Create payment link"
-            icon="/misc/plus-icon.svg"
-            iconPosition="left"
-            onClick={() => {
-              router.push("/payment-link/create");
-            }}
-            containerClassName="w-[190px]"
-          />
-        </div>
-        <div className="w-full flex flex-row gap-2">
-          <Card title="All payment links" amount={allLinks.length.toString()} />
-          <Card title="Active links" amount={activeLinks.length.toString()} />
-          <Card title="Deactivated links" amount={inactiveLinks.length.toString()} />
-        </div>
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <img src="/loading-square.gif" alt="loading" className="w-12 h-12" />
       </div>
+    );
+  }
 
-      <BaseContainer
-        header={
-          <div className="w-full flex items-center justify-start p-5">
-            <TabContainer
-              tabs={tabs}
-              activeTab={activeTab.id}
-              setActiveTab={(tab: string) => setActiveTab(tabs.find(t => t.id === tab) || tabs[0])}
-            />
-          </div>
-        }
-        containerClassName="w-full h-full relative"
-      >
-        <div className="flex flex-col gap-4 p-5">
-          <div className="flex flex-col gap-2">
-            <span className="text-text-primary text-2xl leading-none">{activeTab.title}</span>
-            <span className="text-text-secondary text-sm leading-none">{activeTab.description}</span>
-          </div>
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <span className="text-text-secondary">Failed to load payment links</span>
+      </div>
+    );
+  }
 
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <img src="/loading-square.gif" alt="loading" className="w-12 h-12" />
-            </div>
-          ) : error ? (
-            <div className="flex justify-center items-center h-64">
-              <span className="text-text-secondary">Failed to load payment links</span>
-            </div>
-          ) : (
-            <Table
-              headers={tableHeaders}
-              data={tableData}
-              draggable={activeTab.id === "all"}
-              onDragEnd={handleDragEnd}
-              actionColumn={false}
-              showFooter={false}
-              selectedRows={selectedRows}
-              columnWidths={{
-                "1": "330px",
-                "3": "180px",
-                "6": "80px",
-                "7": "50px",
-              }}
-            />
-          )}
-        </div>
+  return (
+    <>
+      <Table
+        headers={paymentLinkTableHeaders}
+        data={paymentLinkTableData}
+        draggable={true}
+        onDragEnd={handleDragEnd}
+        actionColumn={false}
+        showFooter={false}
+        selectedRows={checkedRows}
+        columnWidths={{
+          "1": "330px",
+          "3": "180px",
+          "6": "80px",
+          "7": "50px",
+        }}
+      />
 
-        {selectedRows.length > 0 && (
-          <div
-            className="flex flex-row items-center justify-between absolute bottom-5 right-5 bg-background rounded-lg p-3 border border-primary-divider gap-2 cursor-pointer hover:bg-red-50 transition-colors"
-            onClick={handleBulkDelete}
-          >
-            <img src="/misc/trashcan-icon.svg" alt="trash" className="w-5 h-5" />
-            <span className="text-[#E93544]">Remove {selectedRows.length} links</span>
-          </div>
-        )}
-      </BaseContainer>
+      {checkedRows.length > 0 && (
+        <FloatingFooter
+          selectedCount={checkedRows.length}
+          actionButtons={
+            <>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleBulkDelete}
+                  className="bg-background rounded-full px-5 py-2 flex items-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"
+                >
+                  <img src="/misc/trashcan-icon.svg" alt="remove" className="w-5 h-5" />
+                  <span className="text-[#E93544]">Remove {checkedRows.length} links</span>
+                </button>
+              </div>
+            </>
+          }
+        />
+      )}
 
       {/* Payment Link Actions Tooltips */}
-      {displayedLinks.map((link, index) => (
+      {allLinks.map((link, index) => (
         <Tooltip
           key={`payment-link-actions-${index}`}
           id={`payment-link-actions-${index}`}
@@ -388,8 +331,6 @@ const PaymentLinkContainer = () => {
           )}
         />
       ))}
-    </div>
+    </>
   );
 };
-
-export default PaymentLinkContainer;
