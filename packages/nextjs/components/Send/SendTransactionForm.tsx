@@ -206,7 +206,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
 
     // Find the selected token in assets to get its address
     if (token.metadata.symbol === "QASH") {
-      const qashTokenAddress = require("@/services/utils/constant").QASH_TOKEN_ADDRESS;
+      const qashTokenAddress = QASH_TOKEN_ADDRESS;
       setSelectedTokenAddress(qashTokenAddress);
     } else {
       const selectedAsset = assets.find(asset => asset.metadata.symbol === token.metadata.symbol);

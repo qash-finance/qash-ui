@@ -174,7 +174,7 @@ export function CreateCategoryModal({ isOpen, onClose, zIndex }: ModalProp<Valid
                     type="button"
                     key={color.value}
                     onClick={() => handleColorSelect(color.value)}
-                    className={`w-6 h-6 rounded-full border-2 transition-all ${
+                    className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer ${
                       selectedColor === color.value
                         ? "border-white outline-2"
                         : "border-primary-divider hover:border-white"

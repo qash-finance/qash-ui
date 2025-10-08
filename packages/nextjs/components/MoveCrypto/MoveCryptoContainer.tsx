@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { TransactionOverview } from "./TransactionOverview";
 import { useTitle } from "@/contexts/TitleProvider";
+import { Swap } from "./Swap";
 
 interface TransactionData {
   amount: string;
@@ -30,7 +31,7 @@ enum STEP {
 const tabs = [
   { id: "send", label: "Send" },
   { id: "receive", label: "Receive" },
-  { id: "swap", label: "Swap", disabled: true },
+  { id: "swap", label: "Swap" },
 ];
 
 type TabId = "send" | "receive" | "swap";
@@ -52,7 +53,7 @@ const MoveCryptoContainer = () => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("tab", "send");
       router.replace(`?${params.toString()}`, { scroll: false });
-    } else if (tabs.some(tab => tab.id === tabFromUrl && !tab.disabled)) {
+    } else if (tabs.some(tab => tab.id === tabFromUrl)) {
       // Valid and enabled tab parameter, set active tab
       setActiveTab(tabFromUrl);
     } else {
@@ -69,7 +70,7 @@ const MoveCryptoContainer = () => {
     const selectedTab = tabs.find(t => t.id === tabId);
 
     // Only allow switching to enabled tabs
-    if (selectedTab && !selectedTab.disabled) {
+    if (selectedTab) {
       setActiveTab(tabId);
 
       // Update URL with new tab parameter
@@ -101,11 +102,36 @@ const MoveCryptoContainer = () => {
     setOnBackClick(undefined);
   };
 
+  const Title = () => {
+    switch (activeTab) {
+      case "send":
+        return (
+          <>
+            <img src="/sidebar/move-crypto.svg" alt="send" className="w-6" />
+            <span className="font-semibold text-text-primary text-2xl">Transfer</span>
+          </>
+        );
+      case "receive":
+        return (
+          <>
+            <img src="/arrow/thin-arrow-down.svg" alt="send" className="w-6" style={{ filter: "brightness(0)" }} />
+            <span className="font-semibold text-text-primary text-2xl">Receive</span>
+          </>
+        );
+      case "swap":
+        return (
+          <>
+            <img src="/misc/swap-icon.svg" alt="send" className="w-6" />
+            <span className="font-semibold text-text-primary text-2xl">Swap</span>
+          </>
+        );
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full p-3 gap-20">
-      <div className="flex flex-row w-full px-4 gap-2">
-        <img src="/sidebar/move-crypto.svg" alt="send" className="w-6" />
-        <span className="font-semibold text-text-primary text-2xl">Transfer</span>
+      <div className="flex flex-row w-full px-4 gap-3">
+        <Title />
       </div>
       <div className="flex justify-center items-start h-full">
         {step === STEP.PREPARE && (
@@ -119,6 +145,7 @@ const MoveCryptoContainer = () => {
           >
             {activeTab === "send" && <SendTransactionForm onTransactionData={handleTransactionData} />}
             {activeTab === "receive" && <Receive />}
+            {activeTab === "swap" && <Swap />}
           </BaseContainer>
         )}
 
