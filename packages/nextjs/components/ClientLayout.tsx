@@ -61,8 +61,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
 
-  // Check if current page is not-found or mobile
+  // Check if current page is not-found, mobile, or payment link detail page
   const isNotFoundPage = pathname === "/not-found" || pathname === "/404" || pathname === "/mobile";
+  const isPaymentLinkDetailPage = pathname.startsWith("/payment/");
 
   const wallets = useMemo(
     () => [
@@ -156,8 +157,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             {/* <ConnectWalletButton /> */}
                             <ModalManager />
                             <ModalTrigger ref={modalRef} />
-                            {isNotFoundPage ? (
-                              // Full-page layout for not-found page
+                            {isNotFoundPage || isPaymentLinkDetailPage ? (
+                              // Full-page layout for not-found page and payment link detail pages
                               <div className="h-screen w-screen">{children}</div>
                             ) : (
                               // Regular layout for other pages
@@ -193,8 +194,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                 </div>
                               </div>
                             )}
-                            {!isNotFoundPage && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                            {!isNotFoundPage && <Background />}
+                            {!isNotFoundPage && !isPaymentLinkDetailPage && (
+                              <FloatingActionButton imgSrc="/token/qash.svg" />
+                            )}
+                            {!isNotFoundPage && !isPaymentLinkDetailPage && <Background />}
                           </TitleProvider>
                         </AccountProvider>
                       </AuthProvider>

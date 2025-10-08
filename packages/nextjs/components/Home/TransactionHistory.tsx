@@ -178,7 +178,7 @@ export const TransactionHistory = ({
 
     return (
       <span>
-        Filter by{" "}
+        {" "}
         <span className="text-primary-blue font-semibold">
           {formatDate(dateRange.from)} - {formatDate(dateRange.to)}
         </span>
@@ -302,7 +302,7 @@ export const TransactionHistory = ({
               {/* Filter Button */}
               <div className="flex items-center gap-2">
                 <SecondaryButton
-                  text={formatDateRange(selectedDateRange)}
+                  text="Filter"
                   icon="/wallet-analytics/setting-icon.gif"
                   onClick={() =>
                     openModal<DateFilterModalProps>(MODAL_IDS.DATE_FILTER, {
@@ -312,7 +312,7 @@ export const TransactionHistory = ({
                   }
                   iconPosition="left"
                   variant="light"
-                  buttonClassName="px-2"
+                  buttonClassName={`px-2 ${selectedDateRange?.from && selectedDateRange?.to ? "outline-2 outline-primary-blue" : ""}`}
                   closeIcon={selectedDateRange?.from && selectedDateRange?.to ? true : false}
                   onCloseIconClick={clearDateFilter}
                 />

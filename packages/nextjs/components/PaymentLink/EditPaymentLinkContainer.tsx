@@ -12,9 +12,10 @@ import { formatAddress } from "@/services/utils/miden/address";
 import toast from "react-hot-toast";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
-import { useCreatePaymentLink } from "@/services/api/payment-link";
-import { CreatePaymentLink, TokenMetadata } from "@/types/payment-link";
-import { useRouter } from "next/navigation";
+import { useGetPaymentLinkByCodeForOwner, useUpdatePaymentLink } from "@/services/api/payment-link";
+import { UpdatePaymentLink, TokenMetadata } from "@/types/payment-link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 interface CreatePaymentLinkFormData {
   title: string;
@@ -114,14 +115,19 @@ const NetworkBadge = ({ networkId }: { networkId: string }) => {
   );
 };
 
-const CreatePaymentLinkContainer = () => {
+const EditPaymentLinkContainer = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const paymentLinkCode = searchParams.get("code");
   const { walletAddress } = useWalletState(state => state);
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
   const { openModal } = useModal();
-  const { mutateAsync, isPending } = useCreatePaymentLink();
+
+  // Fetch the existing payment link data
+  const { data: paymentLink, isLoading, error } = useGetPaymentLinkByCodeForOwner(paymentLinkCode || "");
+  const { mutateAsync: updatePaymentLink, isPending } = useUpdatePaymentLink();
 
   const {
     register,
@@ -139,9 +145,34 @@ const CreatePaymentLinkContainer = () => {
     },
   });
 
-  const handleCreatePaymentLink = async (data: CreatePaymentLinkFormData) => {
-    if (!walletAddress) {
-      toast.error("Please connect your wallet");
+  // Populate form when payment link data is loaded
+  useEffect(() => {
+    if (paymentLink) {
+      setValue("title", paymentLink.title);
+      setValue("description", paymentLink.description);
+      setValue("amount", paymentLink.amount);
+
+      // Set selected token if available
+      if (paymentLink.acceptedTokens && paymentLink.acceptedTokens.length > 0) {
+        const token = paymentLink.acceptedTokens[0];
+        // Create a mock AssetWithMetadata object for the selected token
+        const mockAsset: AssetWithMetadata = {
+          faucetId: token.faucetId,
+          amount: "0", // Default amount for display purposes
+          metadata: {
+            symbol: token.symbol,
+            decimals: token.decimals,
+            maxSupply: 0, // Default value since we don't have this in TokenMetadata
+          },
+        };
+        setSelectedToken(mockAsset);
+      }
+    }
+  }, [paymentLink, setValue]);
+
+  const handleUpdatePaymentLink = async (data: CreatePaymentLinkFormData) => {
+    if (!paymentLink) {
+      toast.error("Payment link not found");
       return;
     }
 
@@ -159,30 +190,53 @@ const CreatePaymentLinkContainer = () => {
         },
       ];
 
-      const paymentLinkData: CreatePaymentLink = {
+      const updateData: UpdatePaymentLink = {
         title: data.title,
         description: data.description,
         amount: data.amount,
-        payee: walletAddress,
         acceptedTokens,
       };
 
-      const result = await mutateAsync(paymentLinkData);
-      toast.success("Payment link created successfully!");
-      reset();
-      setSelectedToken(null);
+      await updatePaymentLink({ code: paymentLink.code, data: updateData });
+      toast.success("Payment link updated successfully!");
       router.push("/payment-link");
     } catch (error: any) {
-      toast.error(error?.message || "Failed to create payment link");
+      toast.error(error?.message || "Failed to update payment link");
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col w-full h-full p-4 items-center justify-center gap-4">
+        <img src="/loading-square.gif" alt="Loading" className="w-8 h-8" />
+        <p className="text-text-secondary">Loading payment link...</p>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !paymentLink || !paymentLinkCode) {
+    return (
+      <div className="flex flex-col w-full h-full p-4 items-center justify-center gap-4">
+        <img src="/misc/red-circle-warning.svg" alt="Error" className="w-8 h-8" />
+        <p className="text-text-secondary">Failed to load payment link</p>
+        <button
+          onClick={() => router.push("/payment-link")}
+          className="px-4 py-2 bg-primary-blue text-white rounded-lg hover:opacity-80"
+        >
+          Back to Payment Links
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full h-full p-4 items-center justify-start gap-10">
       {/* Header */}
       <div className="w-full flex flex-row gap-2 px-7">
         <img src="/misc/star-icon.svg" alt="Payment Link" />
-        <h1 className="text-2xl font-bold">Create Payment Link</h1>
+        <h1 className="text-2xl font-bold">Edit Payment Link</h1>
       </div>
 
       <div className="w-full h-full flex flex-row justify-between items-start gap-5 p-1 bg-[#E7E7E7] rounded-4xl">
@@ -288,8 +342,8 @@ const CreatePaymentLinkContainer = () => {
           </div>
 
           <PrimaryButton
-            text="Create Payment Link"
-            onClick={handleSubmit(handleCreatePaymentLink)}
+            text="Update Payment Link"
+            onClick={handleSubmit(handleUpdatePaymentLink)}
             disabled={!isValid || !selectedToken}
             loading={isPending}
           />
@@ -620,4 +674,4 @@ const CreatePaymentLinkContainer = () => {
   );
 };
 
-export default CreatePaymentLinkContainer;
+export default EditPaymentLinkContainer;

@@ -30,8 +30,9 @@ import RecurringTransferDetail from "@/components/Modal/SchedulePayment/Recurrin
 import CancelPayment from "@/components/Modal/SchedulePayment/CancelPayment";
 import CancelSchedule from "@/components/Modal/SchedulePayment/CancelSchedule";
 import SchedulePaymentSidebar from "@/components/SchedulePayment/SchedulePaymentSidebar";
-import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
-import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
+// import DateFilterModal from "@/components/Modal/Date/DateFilterModal";
+// import TransactionFilterModal from "@/components/Modal/TransactionFilterModal";
+import DateFilterSidebar from "@/components/Home/DateFilterSidebar";
 import RemoveSchedulePayment from "@/components/Modal/SchedulePayment/RemoveSchedulePayment";
 import InteractAccountTransactionModal from "@/components/Modal/InteractAccountTransactionModal";
 import MigratingModal from "@/components/Modal/MigratingModal";
@@ -444,8 +445,7 @@ export const modalRegistry = {
   [MODAL_IDS.CANCEL_PAYMENT]: CancelPayment,
   [MODAL_IDS.CANCEL_SCHEDULE]: CancelSchedule,
   [MODAL_IDS.SCHEDULE_PAYMENT_SIDEBAR]: SchedulePaymentSidebar,
-  [MODAL_IDS.DATE_FILTER]: DateFilterModal,
-  [MODAL_IDS.TRANSACTION_FILTER]: TransactionFilterModal,
+  [MODAL_IDS.DATE_FILTER]: DateFilterSidebar,
   [MODAL_IDS.REMOVE_SCHEDULE_PAYMENT]: RemoveSchedulePayment,
   [MODAL_IDS.INTERACT_ACCOUNT_TRANSACTION]: InteractAccountTransactionModal,
   [MODAL_IDS.MIGRATING]: MigratingModal,

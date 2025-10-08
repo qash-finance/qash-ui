@@ -336,14 +336,14 @@ export function Table({
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setItems(items => {
-        const oldIndex = items.findIndex((_, index) => `row-${index}` === active.id);
-        const newIndex = items.findIndex((_, index) => `row-${index}` === over?.id);
+      const oldIndex = items.findIndex((_, index) => `row-${index}` === active.id);
+      const newIndex = items.findIndex((_, index) => `row-${index}` === over?.id);
 
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        onDragEnd?.(newItems);
-        return newItems;
-      });
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      console.log("🚀 ~ handleDragEnd ~ newItems:", newItems);
+
+      setItems(newItems);
+      onDragEnd?.(newItems);
     }
   };
 
