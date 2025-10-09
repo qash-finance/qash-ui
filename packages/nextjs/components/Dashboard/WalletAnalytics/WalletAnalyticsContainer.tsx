@@ -26,40 +26,6 @@ export const WalletAnalyticsContainer: React.FC = () => {
 
   /************** Effects **************/
 
-  useEffect(() => {
-    if (!accountId || !client) return;
-
-    (async () => {
-      const { NetworkId, AccountInterface, TransactionFilter, NoteFilter, NoteFilterTypes, WebClient } = await import(
-        "@demox-labs/miden-sdk"
-      );
-      console.log("Fetching transactions for account:", accountId);
-      setLoading(true);
-      try {
-        if (client instanceof WebClient) {
-          console.log("ACCOUNT ID", accountId);
-          const transactionRecords = (await client.getTransactions(TransactionFilter.all())).filter(
-            tx => tx.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet) === accountId,
-          );
-          const inputNotes = await client.getInputNotes(new NoteFilter(NoteFilterTypes.All));
-          const zippedInputeNotesAndTr = transactionRecords.map(tr => {
-            if (tr.outputNotes().notes().length > 0) {
-              return { tr, inputNote: undefined };
-            } else {
-              const inputNotesForTr = inputNotes.filter(note => note.consumerTransactionId() === tr.id().toHex());
-              return { tr, inputNote: inputNotesForTr };
-            }
-          });
-          await loadTransactions(zippedInputeNotesAndTr);
-        }
-      } catch (error) {
-        console.error("Error loading transactions:", error);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [client, accountId]);
-
   /************** Handlers **************/
 
   const handleTransactionClick = (transaction: UITransaction) => {

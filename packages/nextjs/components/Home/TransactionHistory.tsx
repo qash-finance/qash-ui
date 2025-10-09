@@ -245,10 +245,9 @@ export const TransactionHistory = ({
         </span>
         {transaction.recipient !== accountId && (
           <img
-            src="/copy-icon.svg"
+            src="/misc/copy-icon.svg"
             alt="copy"
             className="w-4 h-4 cursor-pointer"
-            style={{ filter: "invert(1) brightness(50%)" }}
             onClick={e => {
               e.stopPropagation();
               navigator.clipboard.writeText(transaction.recipient);
@@ -270,7 +269,7 @@ export const TransactionHistory = ({
           </div>
         }
       >
-        <div className="pb-5">
+        <div className="pb-5 h-[570px] overflow-y-auto">
           {/* Search and Filter Controls */}
           <div className="flex flex-row gap-4 items-center w-full justify-between p-3 bg-background rounded-t-3xl">
             {/* Search Bar */}

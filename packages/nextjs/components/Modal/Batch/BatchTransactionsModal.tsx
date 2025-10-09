@@ -6,7 +6,6 @@ import { TransactionItem } from "../../Batch/TransactionItem";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useBatchTransactions } from "@/services/store/batchTransactions";
 // import BaseModal from "./BatchTransactionOverview/BaseModal";
-import { EmptyBatch } from "../../Batch/BatchTransactionContainer";
 import BaseModal from "../BaseModal";
 
 export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTransactionsModalProps>) {
@@ -48,14 +47,11 @@ export function BatchTransactionsModal({ isOpen, onClose }: ModalProp<BatchTrans
       onClose={onClose}
       title="Back to batch transaction overview"
       icon="/arrow/chevron-left.svg"
-      onClickIcon={onClose}
     >
       <div className="bg-[#1E1E1E] py-2 flex flex-col gap-1 items-center self-stretch h-full w-[600px]">
         <div className="flex-1 w-full overflow-hidden rounded-xl">
           {transactions.length === 0 ? (
-            <div className="h-[400px]">
-              <EmptyBatch />
-            </div>
+            <div className="h-[400px]">{/* <EmptyBatch /> */}</div>
           ) : (
             <section className="h-[400px] flex flex-col gap-1.5 items-start self-stretch px-1.5 overflow-y-auto bg-[#292929] pt-2">
               {transactions.map(transaction => (

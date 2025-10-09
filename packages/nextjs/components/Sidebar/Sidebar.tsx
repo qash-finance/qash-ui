@@ -4,6 +4,7 @@ import { NavSections } from "./NavSection";
 import { Connect } from "./Connect";
 import { useRouter, usePathname } from "next/navigation";
 import MoveCryptoSidebar from "./MoveCryptoSidebar";
+import { Suspense } from "react";
 
 export const MOVE_CRYPTO_SIDEBAR_OFFSET = 230;
 
@@ -21,6 +22,7 @@ export enum SidebarLink {
   Dashboard = "dashboard",
   Send = "send",
   ContactBook = "contact-book",
+  Payroll = "payroll",
   Gift = "gift",
   AIAssistant = "ai-assistant",
   GroupPayment = "group-payment",
@@ -68,8 +70,8 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-payroll.svg",
     label: "Payroll",
     isActive: false,
-    // link: SidebarLink.Batch,
-    disabled: true,
+    link: SidebarLink.Payroll,
+    disabled: false,
   },
   {
     icon: "/sidebar/contact-book.svg",
@@ -230,7 +232,9 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           </div>
         </div>
       </nav>
-      <MoveCryptoSidebar isOpen={showMoveCryptoSidebar} onClose={() => setShowMoveCryptoSidebar(false)} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <MoveCryptoSidebar isOpen={showMoveCryptoSidebar} onClose={() => setShowMoveCryptoSidebar(false)} />
+      </Suspense>
     </>
   );
 };

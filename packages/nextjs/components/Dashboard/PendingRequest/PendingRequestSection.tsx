@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { CellContent, Table } from "@/components/Common/Table";
 import { ActionButton } from "@/components/Common/ActionButton";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS, SendModalProps } from "@/types/modal";
+import { MODAL_IDS } from "@/types/modal";
 import { RequestPayment, RequestPaymentStatus } from "@/types/request-payment";
 import { formatDate } from "@/services/utils/formatDate";
 import { useDenyRequest } from "@/services/api/request-payment";
@@ -42,19 +42,19 @@ const PendingRequestActions: React.FC<{
   const token = Array.isArray(request.tokens) ? request.tokens[0] : request.tokens;
 
   const handleAccept = () => {
-    openModal<SendModalProps>(MODAL_IDS.SEND, {
-      pendingRequestId: request.id,
-      recipient: request.payee,
-      recipientName,
-      amount: request.amount,
-      message: request.message,
-      tokenAddress: token?.faucetId,
-      isGroupPayment: request.isGroupPayment,
-      isRequestPayment: true,
-      onTransactionConfirmed: async () => {
-        setIsConfirming(true);
-      },
-    });
+    // openModal<SendModalProps>(MODAL_IDS.SEND, {
+    //   pendingRequestId: request.id,
+    //   recipient: request.payee,
+    //   recipientName,
+    //   amount: request.amount,
+    //   message: request.message,
+    //   tokenAddress: token?.faucetId,
+    //   isGroupPayment: request.isGroupPayment,
+    //   isRequestPayment: true,
+    //   onTransactionConfirmed: async () => {
+    //     setIsConfirming(true);
+    //   },
+    // });
   };
 
   return (

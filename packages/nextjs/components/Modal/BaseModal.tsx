@@ -4,7 +4,10 @@ import { ModalHeader } from "../Common/ModalHeader";
 type BaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  title?: string;
+  icon?: string;
   zIndex?: number;
+  onClickIcon?: () => void;
   children: React.ReactNode;
 };
 
