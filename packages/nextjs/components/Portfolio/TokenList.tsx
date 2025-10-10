@@ -12,17 +12,19 @@ import { Select } from "../Common/Select";
 import { FilterButton } from "../Common/FilterButton";
 
 const tokenSortOptions = [
-  { value: "bitcoin", label: "Bitcoin", icon: "/token/btc.svg" },
-  { value: "ethereum", label: "Ethereum", icon: "/token/eth.svg" },
-  { value: "usdt", label: "USDT", icon: "/token/usdt.svg" },
-  { value: "strk", label: "STRK", icon: "/token/strk.svg" },
+  // { value: "bitcoin", label: "Bitcoin", icon: "/token/btc.svg" },
+  // { value: "ethereum", label: "Ethereum", icon: "/token/eth.svg" },
+  // { value: "usdt", label: "USDT", icon: "/token/usdt.svg" },
+  // { value: "strk", label: "STRK", icon: "/token/strk.svg" },
+  { value: "qash", label: "QASH", icon: "/token/qash.svg" },
 ];
 
 const networkSortOptions = [
-  { value: "base", label: "BASE", icon: "/chain/base.svg" },
-  { value: "ethereum", label: "Ethereum", icon: "/chain/ethereum.svg" },
-  { value: "solana", label: "Solana", icon: "/chain/solana.svg" },
-  { value: "bnb", label: "BNB", icon: "/chain/bnb.svg" },
+  // { value: "base", label: "BASE", icon: "/chain/base.svg" },
+  // { value: "ethereum", label: "Ethereum", icon: "/chain/ethereum.svg" },
+  // { value: "solana", label: "Solana", icon: "/chain/solana.svg" },
+  // { value: "bnb", label: "BNB", icon: "/chain/bnb.svg" },
+  { value: "miden", label: "Miden", icon: "/chain/miden.svg" },
 ];
 
 const filterOptions = [

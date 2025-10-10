@@ -68,10 +68,7 @@ const Header = () => {
 
       <div className="flex items-center justify-center gap-3">
         {walletAddress && (
-          <div
-            className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
-            onClick={() => router.push("/")}
-          >
+          <div className="flex items-center justify-center gap-2 bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider">
             <img src="/chain/miden.svg" alt="Qash Logo" />
             <span className="text-text-primary text-lg">{formatAddress(walletAddress)}</span>
           </div>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface ToggleSwitchProps {
   enabled: boolean;
@@ -9,13 +9,19 @@ interface ToggleSwitchProps {
 
 export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, disabled }) => {
   const [value, setValue] = useState(enabled);
+
+  // Sync internal state with prop changes
+  useEffect(() => {
+    setValue(enabled);
+  }, [enabled]);
+
   return (
     <button
       type="button"
       className="w-10 h-6 cursor-pointer relative"
       onClick={() => {
         setValue(!value);
-        onChange(value);
+        onChange(!value);
       }}
       disabled={disabled}
     >

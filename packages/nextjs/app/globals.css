@@ -105,6 +105,10 @@
   --color-table-row-border: var(--table-row-border);
   --color-table-row-selected-background: var(--table-row-selected-background);
 
+  /* Payroll */
+  --color-payroll-main-background: var(--payroll-main-background);
+  --color-payroll-sub-background: var(--payroll-sub-background);
+
   /* --color-primary: var(--primary);
   --color-secondary: var(--secondary);
 

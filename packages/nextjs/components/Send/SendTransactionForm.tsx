@@ -130,7 +130,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
       amount: amountParam ? parseFloat(amountParam) : undefined,
       recipientAddress: recipientParam,
       recallableTime: 1 * 60 * 60, // 1 hour in seconds
-      isPrivateTransaction: false,
+      isPrivateTransaction: true,
       message: messageParam || "",
     },
   });

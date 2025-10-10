@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { DayButton, DayPicker } from "react-day-picker";
+import { DayButton, DayPicker, Chevron, MonthCaption } from "react-day-picker";
 import "react-day-picker/style.css";
 
 interface DatePickerProps {
@@ -12,10 +12,10 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
   return (
     <DayPicker
       classNames={{
-        month: "text-white",
+        month: "text-text-secondary",
         today: `text-[#1E8FFF]`,
-        chevron: `fill-[#1E8FFF]`,
-        caption_label: `text-white flex items-center justify-center [&>svg]:rotate-270`,
+        chevron: `fill-black`,
+        caption_label: `text-text-primary font-medium flex items-center justify-center`,
       }}
       disabled={{ before: new Date(new Date().setDate(new Date().getDate() + 1)) }}
       animate
@@ -24,22 +24,18 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
           alignItems: "center",
           justifyContent: "center",
           display: "flex",
-          backgroundColor: "#292929",
           borderRadius: "10px",
           fontSize: "18px",
+          padding: "10px",
         },
         day: {
           justifyItems: "center",
-          backgroundColor: "none",
         },
-        weekday: {
-          width: "65px",
-          justifyItems: "center",
-        },
-        month_caption: {
-          marginLeft: "20px",
+        month_grid: {
+          width: "350px",
         },
       }}
+      navLayout="around"
       mode="single"
       selected={selected}
       onSelect={date => {
@@ -54,7 +50,6 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
           onSelect?.(undefined);
         }
       }}
-      captionLayout="dropdown-years"
       components={{
         DayButton: props => {
           const { day, modifiers, ...buttonProps } = props;
@@ -62,14 +57,30 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
           const isSelected = !!selected && selected.toDateString() === dayDate.toDateString();
           const selectedStyle = isSelected
             ? {
-                backgroundColor: "#283543",
-                color: "#1E8FFF",
+                backgroundColor: "var(--primary-blue)",
+                color: "white",
                 borderRadius: "50%",
                 border: "none",
                 fontSize: "20px",
               }
             : {};
           return <DayButton {...buttonProps} day={day} modifiers={modifiers} style={selectedStyle} />;
+        },
+        Chevron: props => {
+          const { className, ...buttonProps } = props;
+          return (
+            <div className="flex items-center justify-center p-1 rounded-lg bg-background border-b-2 border-primary-divider">
+              <Chevron className={className} {...buttonProps} size={20} />
+            </div>
+          );
+        },
+        MonthCaption: props => {
+          const { className, ...buttonProps } = props;
+          return (
+            <div className="flex items-center justify-center w-full bg-app-background rounded-lg">
+              <MonthCaption className={className} {...buttonProps} />
+            </div>
+          );
         },
       }}
     />

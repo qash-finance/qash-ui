@@ -89,6 +89,10 @@
   --table-row-border: #e7e8ec;
   --table-row-selected-background: #f1f3ff;
 
+  /* Payroll */
+  --payroll-main-background: #e7e7e7;
+  --payroll-sub-background: #f6f6f6;
+
   --secondary: #e0e0e0;
   --tertiary: #0844c5;
 

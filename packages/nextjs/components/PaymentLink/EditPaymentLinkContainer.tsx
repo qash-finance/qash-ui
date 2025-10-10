@@ -284,10 +284,10 @@ const EditPaymentLinkContainer = () => {
             <div className={`${inputContainerClass} flex flex-col gap-5`}>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-text-primary">Accept payment on</p>
-                <div className="flex flex-row gap-2 items-center">
+                {/* <div className="flex flex-row gap-2 items-center">
                   <img alt="" className="w-4 h-4" src="/misc/blue-setting-icon.svg" />
                   <p className="text-primary-blue text-sm">Manage payment method</p>
-                </div>
+                </div> */}
               </div>
               <div className="flex flex-row gap-0.5 flex-1">
                 <ChainItem text="Miden" icon="/chain/miden.svg" isSelected={false} onClick={() => {}} />

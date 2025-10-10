@@ -16,15 +16,17 @@ const SubIcon = ({
   onClick,
   tooltipId,
   tooltipContent,
+  className,
 }: {
   icon: string;
   onClick: () => void;
   tooltipId?: string;
   tooltipContent?: string;
+  className?: string;
 }) => {
   return (
     <div
-      className="flex justify-center items-center w-[28px] h-[28px] rounded-lg bg-app-background border-t-2 border-primary-divider cursor-pointer"
+      className={`flex justify-center items-center w-[28px] h-[28px] rounded-lg bg-app-background border-t-2 border-primary-divider cursor-pointer ${className}`}
       onClick={() => {
         onClick();
       }}
@@ -103,7 +105,7 @@ export const PaymentLinkPreview = ({
             <div className="border border-primary-divider rounded-xl overflow-hidden p-3">
               {/* Collapsible Header */}
               <div
-                className="flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors"
+                className="flex items-center justify-between cursor-not-allowed hover:bg-white/5 transition-colors"
                 // INFO: Uncomment this to enable the collapsible section
                 // onClick={() => {
                 //   setIsQRCodeCollapsed(!isQRCodeCollapsed);
@@ -111,7 +113,7 @@ export const PaymentLinkPreview = ({
                 // }}
               >
                 <div className="flex items-center gap-3">
-                  <SubIcon icon="/misc/qr-icon.svg" onClick={() => {}} />
+                  <SubIcon icon="/misc/qr-icon.svg" onClick={() => {}} className="!cursor-not-allowed" />
                   <span className="text-text-primary text-xl font-semibold">Scan QR Code</span>
                   <Badge status={BadgeStatus.SUCCESS} text="Coming soon" />
                 </div>
@@ -368,13 +370,13 @@ export const PaymentLinkPreview = ({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 w-full items-center justify-center border-t border-primary-divider pt-2 mt-2">
+            {/* <div className="flex flex-col gap-2 w-full items-center justify-center border-t border-primary-divider pt-2 mt-2">
               <span className="text-text-primary text-sm leading-none">Have you already paid?</span>
               <span className="text-text-primary text-sm leading-none">
                 <span className="text-primary-blue text-sm leading-none">Click here</span> to submit your transaction
                 hash.
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </BaseContainer>

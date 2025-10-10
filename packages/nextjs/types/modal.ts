@@ -46,6 +46,8 @@ import CreateCategoryModal from "@/components/Modal/Contact/CreateCategoryModal"
 import CreateContactModal from "@/components/Modal/Contact/CreateContactModal";
 import EditContactModal from "@/components/Modal/Contact/EditContactModal";
 import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveContactConfirmationModal";
+import BonusAmountModal from "@/components/Modal/Payroll/BonusAmountModal";
+import PayrollPreviewModal from "@/components/Modal/Payroll/PayrollPreviewModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -101,6 +103,8 @@ export const MODAL_IDS = {
   CREATE_CONTACT: "CREATE_CONTACT",
   EDIT_CONTACT: "EDIT_CONTACT",
   REMOVE_CONTACT_CONFIRMATION: "REMOVE_CONTACT_CONFIRMATION",
+  BONUS_AMOUNT: "BONUS_AMOUNT",
+  PAYROLL_PREVIEW: "PAYROLL_PREVIEW",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -360,6 +364,15 @@ export interface RemoveContactConfirmationModalProps extends BaseModalProps {
   contactAddress?: string;
 }
 
+export interface BonusAmountModalProps extends BaseModalProps {
+  monthlyBonusAmounts: { [key: string]: string };
+  onUpdateAmounts: (amounts: { [key: string]: string }) => void;
+  numberOfMonths: number;
+  selectedTokenSymbol: string;
+}
+
+export interface PayrollPreviewModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -407,6 +420,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.CREATE_CONTACT]: CreateContactModalProps;
   [MODAL_IDS.EDIT_CONTACT]: EditContactModalProps;
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModalProps;
+  [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModalProps;
+  [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -458,4 +473,6 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_CONTACT]: CreateContactModal,
   [MODAL_IDS.EDIT_CONTACT]: EditContactModal,
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModal,
+  [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModal,
+  [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModal,
 } as const;

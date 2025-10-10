@@ -61,14 +61,14 @@ const moveCryptoItems = [
     isActive: false,
     disabled: false,
   },
-  {
-    icon: "/sidebar/crypto-ramp.svg",
-    filledIcon: "/sidebar/filled-crypto-ramp.svg",
-    label: "Crypto on/off-ramps",
-    link: "/crypto-ramp",
-    isActive: false,
-    disabled: false,
-  },
+  // {
+  //   icon: "/sidebar/crypto-ramp.svg",
+  //   filledIcon: "/sidebar/filled-crypto-ramp.svg",
+  //   label: "Crypto on/off-ramps",
+  //   link: "/crypto-ramp",
+  //   isActive: false,
+  //   disabled: false,
+  // },
 ];
 
 const NavItem: React.FC<NavItemProps> = ({

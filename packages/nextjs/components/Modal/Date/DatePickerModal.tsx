@@ -9,8 +9,8 @@ export function DatePickerModal({ isOpen, onClose, defaultSelected, onSelect }: 
   if (!isOpen) return null;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Choose date" icon="/modal/coin-icon.gif">
-      <div className="flex flex-col gap-1 p-1.5 bg-[#1E1E1E] rounded-b-2xl ">
+    <BaseModal isOpen={isOpen} onClose={onClose}>
+      <div className="flex flex-col gap-2 p-1.5 bg-background border border-primary-divider rounded-2xl ">
         <DatePicker
           defaultSelected={defaultSelected}
           onSelect={date => {

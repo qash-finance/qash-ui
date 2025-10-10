@@ -40,31 +40,6 @@ interface ChainItemProps {
   onClick: () => void;
 }
 
-const SubIcon = ({
-  icon,
-  onClick,
-  tooltipId,
-  tooltipContent,
-}: {
-  icon: string;
-  onClick: () => void;
-  tooltipId?: string;
-  tooltipContent?: string;
-}) => {
-  return (
-    <div
-      className="flex justify-center items-center w-[28px] h-[28px] rounded-lg bg-app-background border-t-2 border-primary-divider cursor-pointer"
-      onClick={() => {
-        onClick();
-      }}
-      data-tooltip-id={tooltipId}
-      data-tooltip-content={tooltipContent}
-    >
-      <img src={icon} className="w-4" alt={icon} />
-    </div>
-  );
-};
-
 const ChainItem = ({ text, icon, isSelected, onClick }: ChainItemProps) => {
   return (
     <div
@@ -230,10 +205,10 @@ const CreatePaymentLinkContainer = () => {
             <div className={`${inputContainerClass} flex flex-col gap-5`}>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-text-primary">Accept payment on</p>
-                <div className="flex flex-row gap-2 items-center">
+                {/* <div className="flex flex-row gap-2 items-center">
                   <img alt="" className="w-4 h-4" src="/misc/blue-setting-icon.svg" />
                   <p className="text-primary-blue text-sm">Manage payment method</p>
-                </div>
+                </div> */}
               </div>
               <div className="flex flex-row gap-0.5 flex-1">
                 <ChainItem text="Miden" icon="/chain/miden.svg" isSelected={false} onClick={() => {}} />
