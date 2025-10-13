@@ -97,11 +97,13 @@ export const Account: React.FC<AccountProps> = () => {
     onClick,
     tooltipId,
     tooltipContent,
+    iconClassName,
   }: {
     icon: string;
     onClick: () => void;
     tooltipId?: string;
     tooltipContent?: string;
+    iconClassName?: string;
   }) => {
     return (
       <div
@@ -112,7 +114,7 @@ export const Account: React.FC<AccountProps> = () => {
         data-tooltip-id={tooltipId}
         data-tooltip-content={tooltipContent}
       >
-        <img src={icon} className="w-4" alt={icon} />
+        <img src={icon} className={`w-4 ${iconClassName}`} alt={icon} />
       </div>
     );
   };
@@ -251,6 +253,7 @@ export const Account: React.FC<AccountProps> = () => {
             }}
             tooltipId="explorer-tooltip"
             tooltipContent="View on Explorer"
+            iconClassName="brightness-0"
           />
           <SubIcon
             icon="/misc/power-button-icon.svg"

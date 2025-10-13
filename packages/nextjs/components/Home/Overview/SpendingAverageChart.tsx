@@ -72,8 +72,6 @@ const SpendingAverageChart = () => {
   const transactions = useTransactionStore(state => state.transactions);
   const blockNumber = useMidenSdkStore(state => state.blockNum);
 
-  console.log("SPENDING AVERAGE CHART", transactions);
-
   // Calculate transaction statistics based on time range and block numbers
   const transactionStats = useMemo(() => {
     if (!blockNumber) {

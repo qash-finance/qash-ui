@@ -11,7 +11,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import { PartialConsumableNote } from "@/types/faucet";
 
-const getTabs = (receiveNotesCount: number) => [
+const getTabs = () => [
   {
     id: "payment-link",
     label: "Payment Links",
@@ -20,24 +20,7 @@ const getTabs = (receiveNotesCount: number) => [
   },
   {
     id: "receive",
-    label: (
-      <div className="flex items-center gap-2 justify-center">
-        <span>Receive</span>
-        {receiveNotesCount > 0 && (
-          <div
-            className="flex items-center justify-center min-w-[20px] px-1.5 text-xs font-medium text-black"
-            style={{
-              borderRadius: "var(--radius-Round, 999px)",
-              border: "2px solid rgba(0, 180, 118, 0.50)",
-              background: "linear-gradient(180deg, #BCFFE8 0%, #08E89A 100%)",
-              boxShadow: "1.818px 2.727px 3.636px 0 rgba(255, 255, 255, 0.56) inset",
-            }}
-          >
-            {receiveNotesCount}
-          </div>
-        )}
-      </div>
-    ),
+    label: "Receive",
     description: "Receive tokens by claiming them here.",
     displayLabel: "Receive",
   },
@@ -53,7 +36,7 @@ export const PaymentInteraction = () => {
   const [receivePaymentCheckedRows, setReceivePaymentCheckedRows] = useState<number[]>([]);
   const [paymentLinkCheckedRows, setPaymentLinkCheckedRows] = useState<number[]>([]);
   const [receiveNotesCount, setReceiveNotesCount] = useState(0);
-  const [activeTab, setActiveTab] = useState(() => getTabs(0)[0]);
+  const [activeTab, setActiveTab] = useState(() => getTabs()[0]);
   const claimSelectedRef = useRef<(() => void) | null>(null);
 
   // **************** Custom Hooks *******************
@@ -90,7 +73,10 @@ export const PaymentInteraction = () => {
     })();
   }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
 
-  const tabs = getTabs(receiveNotesCount);
+  // Update receiveNotesCount whenever consumableNotes changes (e.g., when notes are claimed)
+  useEffect(() => {
+    setReceiveNotesCount(consumableNotes.length);
+  }, [consumableNotes]);
 
   // Main content renderer based on active tab
   const renderTabContent = () => {
@@ -116,12 +102,12 @@ export const PaymentInteraction = () => {
     <div className="w-full">
       <BaseContainer
         header={
-          <div className="flex w-full justify-start items-center px-5 py-2">
+          <div className="flex w-full justify-start items-center px-5 py-2 relative">
             <TabContainer
-              tabs={tabs}
+              tabs={getTabs()}
               activeTab={activeTab.id}
               setActiveTab={tabId => {
-                const tab = tabs.find(t => t.id === tabId);
+                const tab = getTabs().find(t => t.id === tabId);
                 if (tab) {
                   setActiveTab(tab);
                   setReceivePaymentCheckedRows([]);
@@ -130,6 +116,21 @@ export const PaymentInteraction = () => {
               }}
               textSize="sm"
             />
+            {receiveNotesCount > 0 && (
+              <div className="absolute left-75 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div
+                  className="flex items-center justify-center min-w-[20px] px-1.5 text-xs font-medium text-black"
+                  style={{
+                    borderRadius: "var(--radius-Round, 999px)",
+                    border: "2px solid rgba(0, 180, 118, 0.50)",
+                    background: "linear-gradient(180deg, #BCFFE8 0%, #08E89A 100%)",
+                    boxShadow: "1.818px 2.727px 3.636px 0 rgba(255, 255, 255, 0.56) inset",
+                  }}
+                >
+                  {receiveNotesCount}
+                </div>
+              </div>
+            )}
           </div>
         }
         containerClassName="relative"

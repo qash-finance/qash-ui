@@ -134,27 +134,10 @@ const useCreateAddressBook = () => {
       return apiServerWithAuth.postData<AddressBook>("/address-book", data);
     },
     onSuccess: (newAddressBook: AddressBook, variables: CreateAddressBookDto): AddressBook => {
-      queryClient.setQueryData(["address-book"], (oldData: Category[] | undefined) => {
-        if (!oldData) return [{ id: 1, name: variables.category, addressBooks: [newAddressBook] }];
-
-        // Find if category already exists
-        const existingCategoryIndex = oldData.findIndex(cat => cat.name === variables.category);
-
-        if (existingCategoryIndex !== -1) {
-          // Add to existing category
-          const updatedData = [...oldData];
-          updatedData[existingCategoryIndex] = {
-            ...updatedData[existingCategoryIndex],
-            addressBooks: [...(updatedData[existingCategoryIndex].addressBooks || []), newAddressBook],
-          };
-          return updatedData;
-        } else {
-          // Create new category
-          return [...oldData, { id: oldData.length + 1, name: variables.category, addressBooks: [newAddressBook] }];
-        }
-      });
-
-      // Also invalidate categories query to ensure consistency
+      // Invalidate queries to refetch with updated data
+      // This ensures the data is fresh and matches the server state
+      queryClient.invalidateQueries({ queryKey: ["address-book"] });
+      queryClient.invalidateQueries({ queryKey: ["address-book", "all"] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
 
       return newAddressBook;

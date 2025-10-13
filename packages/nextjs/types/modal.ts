@@ -48,6 +48,7 @@ import EditContactModal from "@/components/Modal/Contact/EditContactModal";
 import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveContactConfirmationModal";
 import BonusAmountModal from "@/components/Modal/Payroll/BonusAmountModal";
 import PayrollPreviewModal from "@/components/Modal/Payroll/PayrollPreviewModal";
+import RetryModal from "@/components/Modal/RetryModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -105,6 +106,7 @@ export const MODAL_IDS = {
   REMOVE_CONTACT_CONFIRMATION: "REMOVE_CONTACT_CONFIRMATION",
   BONUS_AMOUNT: "BONUS_AMOUNT",
   PAYROLL_PREVIEW: "PAYROLL_PREVIEW",
+  RETRY: "RETRY",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -373,6 +375,10 @@ export interface BonusAmountModalProps extends BaseModalProps {
 
 export interface PayrollPreviewModalProps extends BaseModalProps {}
 
+export interface RetryModalProps extends BaseModalProps {
+  onRetry?: () => Promise<void>;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -422,6 +428,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModalProps;
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModalProps;
   [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModalProps;
+  [MODAL_IDS.RETRY]: RetryModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -475,4 +482,5 @@ export const modalRegistry = {
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModal,
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModal,
   [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModal,
+  [MODAL_IDS.RETRY]: RetryModal,
 } as const;
