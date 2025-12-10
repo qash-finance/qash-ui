@@ -10,7 +10,7 @@ export const Overview = () => {
   return (
     <div className="w-full">
       <BaseContainer
-        header={<span className="text-text-primary text-xl leading-none text-left w-full px-5">Overview</span>}
+        header={<span className="text-text-primary text-xl leading-none text-left w-full p-5">Overview</span>}
         childrenClassName="px-3 py-5"
       >
         <div className="flex flex-row h-full items-start w-full border border-primary-divider rounded-3xl">

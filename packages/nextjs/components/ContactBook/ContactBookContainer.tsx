@@ -64,6 +64,8 @@ const ContactBookContainer = () => {
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
   const [showMultipleActions, setShowMultipleActions] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Close tooltip when clicking outside
   useEffect(() => {
@@ -336,10 +338,10 @@ const ContactBookContainer = () => {
       <CustomCheckbox checked={isAllChecked as boolean} onChange={handleCheckAll} />
     </div>,
     "Name",
-    "Wallet Address",
     "Email",
+    "Group",
+    "Wallet Address",
     "Token",
-    "Category",
     " ",
   ];
 
@@ -352,40 +354,8 @@ const ContactBookContainer = () => {
           </div>
         ),
         Name: contact.name,
-        "Wallet Address": (
-          <div className="flex justify-center items-center gap-2">
-            {formatAddress(contact.address)}{" "}
-            <img
-              src="/misc/copy-icon.svg"
-              alt="copy"
-              className="w-4 h-4 cursor-pointer"
-              onClick={() => {
-                navigator.clipboard.writeText(contact.address);
-                toast.success("Copied to clipboard");
-              }}
-            />
-          </div>
-        ),
         Email: contact.email || "-",
-        Token: (
-          <div className="flex justify-center items-center">
-            <div className="flex justify-center items-center bg-app-background rounded-full px-3 py-2 w-fit gap-2 border-b-2 border-primary-divider">
-              <img
-                src={
-                  contact.token?.faucetId === QASH_TOKEN_ADDRESS
-                    ? "/q3x-icon.png"
-                    : blo(turnBechToHex(contact.token?.faucetId || ""))
-                }
-                alt="token"
-                className="w-4 h-4"
-              />
-              <span className="text-text-primary text-sm leading-none">
-                {contact.token?.metadata?.symbol || "Unknown"}
-              </span>
-            </div>
-          </div>
-        ),
-        Category: (
+        Group: (
           <div className="flex justify-center items-center">
             <CategoryBadge
               shape={
@@ -410,6 +380,38 @@ const ContactBookContainer = () => {
                     : "-"
               }
             />
+          </div>
+        ),
+        "Wallet Address": (
+          <div className="flex justify-center items-center gap-2">
+            {formatAddress(contact.address)}{" "}
+            <img
+              src="/misc/copy-icon.svg"
+              alt="copy"
+              className="w-4 h-4 cursor-pointer"
+              onClick={() => {
+                navigator.clipboard.writeText(contact.address);
+                toast.success("Copied to clipboard");
+              }}
+            />
+          </div>
+        ),
+        Token: (
+          <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-app-background rounded-full px-3 py-2 w-fit gap-2 border-b-2 border-primary-divider">
+              <img
+                src={
+                  contact.token?.faucetId === QASH_TOKEN_ADDRESS
+                    ? "/q3x-icon.png"
+                    : blo(turnBechToHex(contact.token?.faucetId || ""))
+                }
+                alt="token"
+                className="w-4 h-4"
+              />
+              <span className="text-text-primary text-sm leading-none">
+                {contact.token?.metadata?.symbol || "Unknown"}
+              </span>
+            </div>
           </div>
         ),
         " ": (
@@ -448,7 +450,7 @@ const ContactBookContainer = () => {
                 tabs={[
                   {
                     id: "all",
-                    label: <CategoryTab label="All Categories" />,
+                    label: <CategoryTab label="All groups" />,
                   },
                   ...tabs,
                 ]}
@@ -480,6 +482,11 @@ const ContactBookContainer = () => {
             onDragEnd={handleReorder}
             selectedRows={checkedRows}
             showFooter={false}
+            showPagination={tableData.length !== 0}
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            onPageChange={setCurrentPage}
+            onRowsPerPageChange={setRowsPerPage}
           />
         </div>
       </BaseContainer>

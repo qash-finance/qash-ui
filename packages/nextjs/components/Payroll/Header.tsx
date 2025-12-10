@@ -19,7 +19,8 @@ export const Header = () => {
         onClick={() => {
           router.push("/payroll/create");
         }}
-        containerClassName="w-[190px]"
+        containerClassName="w-[125px]"
+        buttonClassName="py-2.5"
       />
     </div>
   );

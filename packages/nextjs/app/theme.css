@@ -73,6 +73,10 @@
   --badge-neutral-background: #f6f6f6;
   --badge-neutral-text: #848484;
   --badge-neutral-border: #d1d4d9;
+  --badge-awaiting-background: #FEF6E2;
+  --badge-awaiting-text: #E6A819;
+  --badge-awaiting-border: #E6A819;
+  
 
   /* Loading Bar */
   --loading-bar-background: #f6f6f6;

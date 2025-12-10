@@ -7,6 +7,7 @@ export enum BadgeStatus {
   PRIVATE = "private",
   PUBLIC = "public",
   NEUTRAL = "neutral",
+  AWAITING = "awaiting",
 }
 
 interface BadgeProps {
@@ -20,6 +21,8 @@ export const Badge: React.FC<BadgeProps> = ({ status, text = status, className }
     switch (status) {
       case BadgeStatus.SUCCESS:
         return "bg-badge-success-background text-badge-success-text border-badge-success-border";
+      case BadgeStatus.AWAITING:
+        return "bg-badge-awaiting-background text-badge-awaiting-text border-badge-awaiting-border";
       case BadgeStatus.FAIL:
         return "bg-badge-fail-background text-badge-fail-text border-badge-fail-border";
       case BadgeStatus.PRIVATE:

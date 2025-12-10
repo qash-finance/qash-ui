@@ -89,6 +89,9 @@
   --color-badge-neutral-background: var(--badge-neutral-background);
   --color-badge-neutral-text: var(--badge-neutral-text);
   --color-badge-neutral-border: var(--badge-neutral-border);
+  --color-badge-awaiting-background: var(--badge-awaiting-background);
+  --color-badge-awaiting-text: var(--badge-awaiting-text);
+  --color-badge-awaiting-border: var(--badge-awaiting-border);
 
   /* Loading Bar */
   --color-loading-bar-background: var(--loading-bar-background);

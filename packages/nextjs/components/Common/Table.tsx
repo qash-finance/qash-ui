@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { TableFooter } from "./TableFooter";
 
 export type CellContent = string | React.ReactNode;
 
@@ -33,6 +34,11 @@ interface TableProps {
   selectedRows?: number[];
   showFooter?: boolean;
   footerRenderer?: () => React.ReactNode;
+  showPagination?: boolean;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  rowsPerPage?: number;
+  onRowsPerPageChange?: (rowsPerPage: number) => void;
 }
 
 const createTableRow = (
@@ -68,8 +74,11 @@ const createTableRow = (
   return row;
 };
 
-const getRowClasses = (isSelected: boolean) => {
-  return `border-b last:border-b-0 transition-colors ${
+const getRowClasses = (isSelected: boolean, customRowClass?: string) => {
+  const hasPaddingClass = customRowClass && /\bpy-/.test(customRowClass);
+  const defaultPadding = hasPaddingClass ? "" : "py-2";
+
+  return `border-b last:border-b-0 transition-colors ${defaultPadding} ${
     isSelected
       ? "bg-[var(--color-table-row-selected-background)]"
       : "bg-[var(--color-table-row-background)] hover:bg-[var(--color-table-row-background-hover)]"
@@ -81,15 +90,21 @@ const getRowStyle = () => ({
   borderColor: "var(--color-table-row-border)",
 });
 
-const tableBodyStyle = "overflow-y-auto";
-const getTableClass = (headerClassName: string = "", className: string = "") => {
-  const baseClass = "overflow-x-auto table-scrollbar border";
-  const roundedClass = headerClassName.includes("!rounded-none") ? "" : "rounded-2xl";
+const tableBodyStyle = "overflow-y-auto flex-1";
+const getTableClass = (headerClassName: string = "", className: string = "", showPagination: boolean = false) => {
+  const baseClass = "overflow-x-auto table-scrollbar border flex flex-col";
+  const roundedClass = headerClassName.includes("!rounded-none")
+    ? ""
+    : showPagination
+      ? "rounded-t-2xl"
+      : "rounded-2xl";
   return `${baseClass} ${roundedClass} ${className}`;
 };
 const tableStyle = {
   borderColor: "var(--color-table-row-border)",
-  maxHeight: "480px",
+  height: "100%",
+  display: "flex",
+  flexDirection: "column" as const,
 };
 
 const SortableTableRow = ({
@@ -124,19 +139,21 @@ const SortableTableRow = ({
     opacity: isSortableDragging ? 0.5 : 1,
   };
 
-  const defaultRowClass = getRowClasses(isSelected);
-  const className = typeof rowClassName === "function" ? "" : rowClassName;
+  const customClass = typeof rowClassName === "string" ? rowClassName : "";
+  const defaultRowClass = getRowClasses(isSelected, customClass);
   const rowStyle = getRowStyle();
+  const hasPaddingClass = customClass && /\b(py-|p-)/.test(customClass);
+  const tdPadding = hasPaddingClass ? `px-3 ${customClass}` : "px-3 py-2";
 
   return (
     <tr
       ref={setNodeRef}
       style={{ ...style, ...rowStyle }}
-      className={`${defaultRowClass} ${className} ${isSortableDragging ? "z-50" : ""}`}
+      className={`${defaultRowClass} ${isSortableDragging ? "z-50" : ""}`}
       {...attributes}
     >
       <td
-        className="px-3 py-2 cursor-grab active:cursor-grabbing"
+        className={`${tdPadding} cursor-grab active:cursor-grabbing`}
         style={{
           width: "40px",
           borderColor: "var(--color-table-row-border)",
@@ -150,7 +167,7 @@ const SortableTableRow = ({
       {cells.map((cell, index) => (
         <td
           key={index}
-          className={`px-3 py-2 text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
+          className={`${tdPadding} text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
           style={{
             width: columnWidths[index.toString()],
             borderColor: "var(--color-table-row-border)",
@@ -255,16 +272,18 @@ const TableRow = ({
   columnWidths?: Record<string, string>;
   isSelected?: boolean;
 }) => {
-  const defaultRowClass = getRowClasses(isSelected);
-  const className = typeof rowClassName === "function" ? "" : rowClassName;
+  const customClass = typeof rowClassName === "string" ? rowClassName : "";
+  const defaultRowClass = getRowClasses(isSelected, customClass);
   const rowStyle = getRowStyle();
+  const hasPaddingClass = customClass && /\b(py-|p-)/.test(customClass);
+  const tdPadding = hasPaddingClass ? `px-3 ${customClass}` : "px-3 py-2";
 
   return (
-    <tr className={`${defaultRowClass} ${className}`} style={rowStyle}>
+    <tr className={defaultRowClass} style={rowStyle}>
       {cells.map((cell, index) => (
         <td
           key={index}
-          className={`px-3 py-2 text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
+          className={`${tdPadding} text-table-row-text ${index === 0 ? "text-left" : "text-center"}`}
           style={{
             width: columnWidths[index.toString()],
             borderColor: "var(--color-table-row-border)",
@@ -317,6 +336,11 @@ export function Table({
   selectedRows = [],
   showFooter = true,
   footerRenderer,
+  showPagination = false,
+  currentPage = 1,
+  onPageChange,
+  rowsPerPage = 10,
+  onRowsPerPageChange,
 }: TableProps) {
   const [items, setItems] = useState(data);
 
@@ -324,6 +348,9 @@ export function Table({
   useEffect(() => {
     setItems(data);
   }, [data]);
+
+  // Calculate paginated data
+  const paginatedData = showPagination ? data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage) : data;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -349,108 +376,133 @@ export function Table({
 
   if (draggable) {
     return (
-      <div className={getTableClass(headerClassName, className)} style={tableStyle}>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <table className="w-full table-auto">
-            <TableHeader
-              columns={headers}
-              headerClassName={headerClassName}
-              actionColumn={actionColumn}
-              columnWidths={columnWidths}
-              draggable={draggable}
-            />
-            <tbody className={tableBodyStyle}>
-              {items.length === 0 ? (
-                <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
-              ) : (
-                <SortableContext items={items.map((_, index) => `row-${index}`)} strategy={verticalListSortingStrategy}>
-                  {items.map((rowData, index) => {
-                    const row = createTableRow(rowData, headers, actionRenderer, index);
-                    const rowClass = typeof rowClassName === "function" ? rowClassName(rowData, index) : rowClassName;
-                    return (
-                      <SortableTableRow
-                        key={`row-${index}`}
-                        id={`row-${index}`}
-                        cells={row}
-                        headers={headers}
-                        rowClassName={rowClass}
-                        columnWidths={columnWidths}
-                        isSelected={selectedRows.includes(index)}
-                      />
-                    );
-                  })}
-                </SortableContext>
-              )}
-            </tbody>
-
-            {selectedRows.length > 0 && showFooter && (
-              <tfoot>
-                <tr>
-                  <td
-                    colSpan={headers.length + (actionColumn ? 1 : 0) + (draggable ? 1 : 0)}
-                    className="px-5 py-2 bg-app-background/80 backdrop-blur-md border-t border-primary-divider/50 rounded-b-2xl"
+      <div className="flex flex-col h-full">
+        <div className={getTableClass(headerClassName, className, showPagination)} style={tableStyle}>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <table className="w-full table-auto">
+              <TableHeader
+                columns={headers}
+                headerClassName={headerClassName}
+                actionColumn={actionColumn}
+                columnWidths={columnWidths}
+                draggable={draggable}
+              />
+              <tbody className={tableBodyStyle}>
+                {items.length === 0 ? (
+                  <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
+                ) : (
+                  <SortableContext
+                    items={items.map((_, index) => `row-${index}`)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="text-text-secondary text-sm">Select all ({selectedRows.length})</span>
-                      {footerRenderer && footerRenderer()}
-                    </div>
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </DndContext>
+                    {items.map((rowData, index) => {
+                      const row = createTableRow(rowData, headers, actionRenderer, index);
+                      const rowClass = typeof rowClassName === "function" ? rowClassName(rowData, index) : rowClassName;
+                      return (
+                        <SortableTableRow
+                          key={`row-${index}`}
+                          id={`row-${index}`}
+                          cells={row}
+                          headers={headers}
+                          rowClassName={rowClass}
+                          columnWidths={columnWidths}
+                          isSelected={selectedRows.includes(index)}
+                        />
+                      );
+                    })}
+                  </SortableContext>
+                )}
+              </tbody>
+
+              {selectedRows.length > 0 && showFooter && (
+                <tfoot>
+                  <tr>
+                    <td
+                      colSpan={headers.length + (actionColumn ? 1 : 0) + (draggable ? 1 : 0)}
+                      className="px-5 py-2 bg-app-background/80 backdrop-blur-md border-t border-primary-divider/50 rounded-b-2xl"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-text-secondary text-sm">Select all ({selectedRows.length})</span>
+                        {footerRenderer && footerRenderer()}
+                      </div>
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </DndContext>
+        </div>
+        {showPagination && (
+          <TableFooter
+            totalRows={data.length}
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
+          />
+        )}
       </div>
     );
   }
 
   return (
-    <div className={getTableClass(headerClassName, className)} style={tableStyle}>
-      <table className="w-full table-auto relative">
-        <TableHeader
-          columns={headers}
-          headerClassName={headerClassName}
-          actionColumn={actionColumn}
-          columnWidths={columnWidths}
-          draggable={draggable}
-        />
-        <tbody className={tableBodyStyle}>
-          {data.length === 0 ? (
-            <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
-          ) : (
-            data.map((rowData, index) => {
-              const row = createTableRow(rowData, headers, actionRenderer, index);
-              const rowClass = typeof rowClassName === "function" ? rowClassName(rowData, index) : rowClassName;
-              return (
-                <TableRow
-                  key={index}
-                  cells={row}
-                  headers={headers}
-                  rowClassName={rowClass}
-                  columnWidths={columnWidths}
-                  isSelected={selectedRows.includes(index)}
-                />
-              );
-            })
-          )}
-        </tbody>
+    <div className="flex flex-col h-full">
+      <div className={getTableClass(headerClassName, className, showPagination)} style={tableStyle}>
+        <table className="w-full table-auto relative">
+          <TableHeader
+            columns={headers}
+            headerClassName={headerClassName}
+            actionColumn={actionColumn}
+            columnWidths={columnWidths}
+            draggable={draggable}
+          />
+          <tbody className={tableBodyStyle}>
+            {paginatedData.length === 0 ? (
+              <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
+            ) : (
+              paginatedData.map((rowData, index) => {
+                const row = createTableRow(rowData, headers, actionRenderer, index);
+                const rowClass = typeof rowClassName === "function" ? rowClassName(rowData, index) : rowClassName;
+                return (
+                  <TableRow
+                    key={index}
+                    cells={row}
+                    headers={headers}
+                    rowClassName={rowClass}
+                    columnWidths={columnWidths}
+                    isSelected={selectedRows.includes(index)}
+                  />
+                );
+              })
+            )}
+          </tbody>
 
-        {selectedRows.length > 0 && showFooter && (
-          <tfoot>
-            <tr>
-              <td
-                colSpan={headers.length + (actionColumn ? 1 : 0)}
-                className="px-5 py-2 bg-app-background/80 backdrop-blur-md border-t border-primary-divider/50 rounded-b-2xl"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary text-sm">Select all ({selectedRows.length})</span>
-                  {footerRenderer && footerRenderer()}
-                </div>
-              </td>
-            </tr>
-          </tfoot>
-        )}
-      </table>
+          {selectedRows.length > 0 && showFooter && (
+            <tfoot>
+              <tr>
+                <td
+                  colSpan={headers.length + (actionColumn ? 1 : 0)}
+                  className="px-5 py-2 bg-app-background/80 backdrop-blur-md border-t border-primary-divider/50 rounded-b-2xl"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary text-sm">Select all ({selectedRows.length})</span>
+                    {footerRenderer && footerRenderer()}
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+      {showPagination && (
+        <TableFooter
+          totalRows={data.length}
+          currentPage={currentPage}
+          rowsPerPage={rowsPerPage}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+        />
+      )}
     </div>
   );
 }

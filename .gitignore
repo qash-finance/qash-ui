@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 .cursor
+
+# github instructions
+.github/copilot-instructions.md

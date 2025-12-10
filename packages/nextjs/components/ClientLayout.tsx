@@ -55,15 +55,21 @@ const queryClient = new QueryClient({
   },
 });
 
+const fullscreenPages = new Set([
+  "/not-found",
+  "/404",
+  "/mobile",
+  "/login",
+  "/onboarding",
+  "/payment/",
+  "/invoice-review",
+]);
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
-
-  // Check if current page is not-found, mobile, or payment link detail page
-  const isNotFoundPage = pathname === "/not-found" || pathname === "/404" || pathname === "/mobile";
-  const isPaymentLinkDetailPage = pathname.startsWith("/payment/");
 
   const wallets = useMemo(
     () => [
@@ -157,8 +163,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             {/* <ConnectWalletButton /> */}
                             <ModalManager />
                             <ModalTrigger ref={modalRef} />
-                            {isNotFoundPage || isPaymentLinkDetailPage ? (
-                              // Full-page layout for not-found page and payment link detail pages
+                            {fullscreenPages.has(pathname) ? (
                               <div className="h-screen w-screen">{children}</div>
                             ) : (
                               // Regular layout for other pages
@@ -194,10 +199,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                 </div>
                               </div>
                             )}
-                            {!isNotFoundPage && !isPaymentLinkDetailPage && (
-                              <FloatingActionButton imgSrc="/token/qash.svg" />
-                            )}
-                            {!isNotFoundPage && !isPaymentLinkDetailPage && <Background />}
+                            {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                            {!fullscreenPages.has(pathname) && <Background />}
                           </TitleProvider>
                         </AccountProvider>
                       </AuthProvider>

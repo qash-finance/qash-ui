@@ -264,7 +264,7 @@ export const TransactionHistory = ({
     <div className="w-full">
       <BaseContainer
         header={
-          <div className="flex w-full justify-between items-center px-5 py-2">
+          <div className="flex w-full justify-between items-center p-5">
             <span className="text-text-primary text-xl leading-none">Transaction History</span>
           </div>
         }

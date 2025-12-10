@@ -8,13 +8,14 @@ import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
 import { SecondaryButton } from "../../Common/SecondaryButton";
-import { CategoryDropdown } from "../../Common/CategoryDropdown";
+import { CategoryDropdown } from "../../Common/Dropdown/CategoryDropdown";
 import { useCreateAddressBook, useGetAddressBooksByCategory, useGetCategories } from "@/services/api/address-book";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { AssetWithMetadata } from "@/types/faucet";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
+import { on } from "events";
 
 interface CreateContactFormData {
   name: string;
@@ -63,6 +64,8 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
 
 export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateContactModalProps>) {
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(null);
+
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { openModal } = useModal();
 
@@ -211,6 +214,15 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
           />
 
           <FormInput
+            label="Email"
+            placeholder="Enter email"
+            type="email"
+            register={emailRegister}
+            error={errors.email?.message}
+            disabled={createAddressBook.isPending}
+          />
+
+          <FormInput
             label="Wallet address"
             placeholder="Enter wallet address"
             register={addressRegister}
@@ -219,14 +231,22 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
             required
           />
 
-          <FormInput
-            label="Email"
-            placeholder="Enter email"
-            type="email"
-            register={emailRegister}
-            error={errors.email?.message}
-            disabled={createAddressBook.isPending}
-          />
+          {/* Token Selection */}
+          <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">
+            <button
+              type="button"
+              onClick={() => openModal(MODAL_IDS.SELECT_NETWORK, { onNetworkSelect: setSelectedNetwork })}
+              className="flex items-center gap-2 px-4 py-2 h-full w-full text-left cursor-pointer"
+              disabled={createAddressBook.isPending}
+            >
+              {selectedNetwork && <img src={selectedNetwork.icon} alt="network" className="w-8 h-8" />}
+              <div className="flex-1">
+                <p className="text-text-secondary text-sm leading-none">Select network</p>
+                <p className="text-text-primary text-base font-medium">{selectedNetwork?.name || "-"}</p>
+              </div>
+              <img src="/arrow/chevron-down.svg" alt="dropdown" className="w-6 h-6" />
+            </button>
+          </div>
 
           {/* Token Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">

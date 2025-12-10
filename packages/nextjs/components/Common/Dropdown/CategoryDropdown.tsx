@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Category, CategoryShape } from "@/types/address-book";
-import { createShapeElement } from "../ContactBook/ShapeSelectionTooltip";
+import { createShapeElement } from "../../ContactBook/ShapeSelectionTooltip";
 
 interface CategoryDropdownProps {
   categories: Category[];
@@ -46,8 +46,8 @@ export const CategoryDropdown = ({
         disabled={disabled}
       >
         <div className="flex flex-col">
-          <span className="text-text-secondary text-sm">Select category</span>
-          <p className="text-text-primary font-semibold">{selectedCategory || "Select a category"}</p>
+          <span className="text-text-secondary text-sm">Select group</span>
+          <p className="text-text-primary font-semibold">{selectedCategory || "Select a group"}</p>
         </div>
         <img
           src="/arrow/chevron-down.svg"
@@ -59,7 +59,7 @@ export const CategoryDropdown = ({
       {isOpen && (
         <div className="absolute bottom-full left-0 right-0 mb-5 shadow-lg bg-background border-2 border-primary-divider rounded-xl z-50 overflow-hidden p-2 h-[240px] overflow-y-auto">
           <div className="px-2 py-1">
-            <p className="text-text-secondary text-xs">Select a category</p>
+            <p className="text-text-secondary text-xs">Select a group</p>
           </div>
 
           <div className="flex flex-col">

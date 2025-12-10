@@ -8,7 +8,7 @@ import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
 import { SecondaryButton } from "../../Common/SecondaryButton";
-import { CategoryDropdown } from "../../Common/CategoryDropdown";
+import { CategoryDropdown } from "../../Common/Dropdown/CategoryDropdown";
 import { useUpdateAddressBook, useGetAddressBooksByCategory, useGetCategories } from "@/services/api/address-book";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";

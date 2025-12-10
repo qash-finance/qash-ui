@@ -1765,14 +1765,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-sdk@npm:0.11.9":
-  version: 0.11.9
-  resolution: "@demox-labs/miden-sdk@npm:0.11.9"
+"@demox-labs/miden-sdk@npm:0.12.5":
+  version: 0.12.5
+  resolution: "@demox-labs/miden-sdk@npm:0.12.5"
   dependencies:
-    chai-as-promised: ^8.0.0
+    "@rollup/plugin-typescript": ^12.3.0
     dexie: ^4.0.1
     glob: ^11.0.0
-  checksum: 66833ba7f76c06e3d2d61393a383317280a24416b99fd24ca4112d43e5b46bdcb52649c2aae279f0fd824c3a7255677ebc1b95709d6ce4c294f42063788552cd
+  checksum: db749ce00658c8ea2fe7f6720d27dc4b2bb7cfd3014dd59824423baa037f6eeabaa5490b14d16d071eb9264e7bd25dec5f71209535be4e585fb8ddc7286544aa
   languageName: node
   linkType: hard
 
@@ -1785,38 +1785,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-base@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@demox-labs/miden-wallet-adapter-base@npm:0.7.0"
+"@demox-labs/miden-wallet-adapter-base@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@demox-labs/miden-wallet-adapter-base@npm:0.10.0"
   dependencies:
     eventemitter3: ^5.0.1
-  checksum: d175c96de3d3bc41c05b20c75de60ba3476b7ff726a98ac45a839e93d51feeff7f2a9211af338a160393fca9466f3a96d21298bfb97947edaf6a64e4100b7837
+  checksum: 2bc53c38d12b359cfecd7931742230c2e422dc0622814879940ddd58166b4f6d9396206fdff6b73e85c97c737e3dad94a5f3db97fd739ca0512564f95b1b4372
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-react@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@demox-labs/miden-wallet-adapter-react@npm:0.7.0"
+"@demox-labs/miden-wallet-adapter-react@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@demox-labs/miden-wallet-adapter-react@npm:0.10.0"
   dependencies:
-    "@demox-labs/miden-wallet-adapter-base": ^0.7.0
+    "@demox-labs/miden-wallet-adapter-base": ^0.10.0
   peerDependencies:
     react: ^19.1.1
-  checksum: ff28a1eb83d05669cf0f664bc7523a4e2a43228f2e9421ba098cdf033c7054de4a2c3ac8dcef1d8c62a0ed91b51053049d9e7d49c34c125d10fcbc88d2f5cba7
+  checksum: 7dbd43f79f337d299b2edfcbb7672b3c3f961a25b6d59b97969168f5f3c7e5756702f633de6fea521f9acdaa36e7e3cd7c6f502d36db25868ec0a3e61c9c2cd6
   languageName: node
   linkType: hard
 
-"@demox-labs/miden-wallet-adapter-reactui@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@demox-labs/miden-wallet-adapter-reactui@npm:0.7.0"
+"@demox-labs/miden-wallet-adapter-reactui@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@demox-labs/miden-wallet-adapter-reactui@npm:0.10.0"
   dependencies:
-    "@demox-labs/miden-wallet-adapter-base": ^0.7.0
-    "@demox-labs/miden-wallet-adapter-react": ^0.7.0
+    "@demox-labs/miden-wallet-adapter-base": ^0.10.0
+    "@demox-labs/miden-wallet-adapter-react": ^0.10.0
   peerDependencies:
     "@types/react": ^19.0.0
     "@types/react-dom": ^19.0.0
     react: ^19.1.1
     react-dom: ^19.1.1
-  checksum: b9142a876f261954ba5d3351fee5d832ef1e8afd0257ce164a5821968cdbe4f3521b35aefb2b6b2ed59f51be293db90c398ba3e3161be8a11a6e6d78e745fa0f
+  checksum: 9ba81cad3bea8dd85d821a7382df362603b5266c61937d101c04c9f933ad25a48c1d40dcafdcb61f992e90d7c43366c420a150aa55f9362144f4864b3ac27793
   languageName: node
   linkType: hard
 
@@ -3560,10 +3560,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@q3x/nextjs@workspace:packages/nextjs"
   dependencies:
-    "@demox-labs/miden-sdk": 0.11.9
-    "@demox-labs/miden-wallet-adapter-base": ^0.7.0
-    "@demox-labs/miden-wallet-adapter-react": ^0.7.0
-    "@demox-labs/miden-wallet-adapter-reactui": ^0.7.0
+    "@demox-labs/miden-sdk": 0.12.5
+    "@demox-labs/miden-wallet-adapter-base": ^0.10.0
+    "@demox-labs/miden-wallet-adapter-react": ^0.10.0
+    "@demox-labs/miden-wallet-adapter-reactui": ^0.10.0
     "@demox-labs/miden-wallet-adapter-trident": ^0.1.5
     "@dnd-kit/core": ^6.3.1
     "@dnd-kit/sortable": ^10.0.0
@@ -3595,6 +3595,7 @@ __metadata:
     react-hot-toast: ^2.5.2
     react-is: ^19.1.1
     react-loading-skeleton: ^3.5.0
+    react-otp-input: ^3.1.1
     react-tooltip: ^5.29.1
     recharts: ^3.1.0
     tailwindcss: ^4
@@ -3796,6 +3797,41 @@ __metadata:
     valtio: 1.13.2
     viem: ">=2.29.0"
   checksum: 1f74d86988fb8ad6b449588572dfeb64c186c3ae5ca3617b2794f3d566dcc66d2154d9f105fc2d9f560557e0fca62240bff49ec6fbeb2c012b456363e8d16600
+  languageName: node
+  linkType: hard
+
+"@rollup/plugin-typescript@npm:^12.3.0":
+  version: 12.3.0
+  resolution: "@rollup/plugin-typescript@npm:12.3.0"
+  dependencies:
+    "@rollup/pluginutils": ^5.1.0
+    resolve: ^1.22.1
+  peerDependencies:
+    rollup: ^2.14.0||^3.0.0||^4.0.0
+    tslib: "*"
+    typescript: ">=3.7.0"
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+    tslib:
+      optional: true
+  checksum: 280213903ce54f76a103850329b37170dddd6e8a2d81b74dcd0bb94fc7f633ef0e287036bb763102c48734197135d2657f28b7ddd4a4c487b17b495eff655064
+  languageName: node
+  linkType: hard
+
+"@rollup/pluginutils@npm:^5.1.0":
+  version: 5.3.0
+  resolution: "@rollup/pluginutils@npm:5.3.0"
+  dependencies:
+    "@types/estree": ^1.0.0
+    estree-walker: ^2.0.2
+    picomatch: ^4.0.2
+  peerDependencies:
+    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+  checksum: 2df47496f1f380ce67426b6d31cada1354b40844bb333b365653720b0847ce45446f347ae50313ed17a56c1b4cbba27431c42733ad75ad08764df5b4312946d9
   languageName: node
   linkType: hard
 
@@ -4521,7 +4557,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/estree@npm:*, @types/estree@npm:^1.0.6, @types/estree@npm:^1.0.8":
+"@types/estree@npm:*, @types/estree@npm:^1.0.0, @types/estree@npm:^1.0.6, @types/estree@npm:^1.0.8":
   version: 1.0.8
   resolution: "@types/estree@npm:1.0.8"
   checksum: bd93e2e415b6f182ec4da1074e1f36c480f1d26add3e696d54fb30c09bc470897e41361c8fd957bf0985024f8fbf1e6e2aff977d79352ef7eb93a5c6dcff6c11
@@ -6935,17 +6971,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chai-as-promised@npm:^8.0.0":
-  version: 8.0.1
-  resolution: "chai-as-promised@npm:8.0.1"
-  dependencies:
-    check-error: ^2.0.0
-  peerDependencies:
-    chai: ">= 2.1.2 < 6"
-  checksum: 7fa517bc70fd355ec91b543c8c1a1cf545355224cf75063f93b3ed32bb562f1f23a850135737d6337fa4e098c8baffbb9c74b05b1fcb3c4d290985a8c3c4890d
-  languageName: node
-  linkType: hard
-
 "chalk@npm:5.2.0":
   version: 5.2.0
   resolution: "chalk@npm:5.2.0"
@@ -6988,13 +7013,6 @@ __metadata:
   version: 1.1.4
   resolution: "character-reference-invalid@npm:1.1.4"
   checksum: 20274574c70e05e2f81135f3b93285536bc8ff70f37f0809b0d17791a832838f1e49938382899ed4cb444e5bbd4314ca1415231344ba29f4222ce2ccf24fea0b
-  languageName: node
-  linkType: hard
-
-"check-error@npm:^2.0.0":
-  version: 2.1.1
-  resolution: "check-error@npm:2.1.1"
-  checksum: d785ed17b1d4a4796b6e75c765a9a290098cf52ff9728ce0756e8ffd4293d2e419dd30c67200aee34202463b474306913f2fcfaf1890641026d9fc6966fea27a
   languageName: node
   linkType: hard
 
@@ -9166,6 +9184,13 @@ __metadata:
   version: 5.3.0
   resolution: "estraverse@npm:5.3.0"
   checksum: 072780882dc8416ad144f8fe199628d2b3e7bbc9989d9ed43795d2c90309a2047e6bc5979d7e2322a341163d22cfad9e21f4110597fe487519697389497e4e2b
+  languageName: node
+  linkType: hard
+
+"estree-walker@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "estree-walker@npm:2.0.2"
+  checksum: 6151e6f9828abe2259e57f5fd3761335bb0d2ebd76dc1a01048ccee22fabcfef3c0859300f6d83ff0d1927849368775ec5a6d265dde2f6de5a1be1721cd94efc
   languageName: node
   linkType: hard
 
@@ -14850,6 +14875,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-otp-input@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "react-otp-input@npm:3.1.1"
+  peerDependencies:
+    react: ">=16.8.6 || ^17.0.0 || ^18.0.0"
+    react-dom: ">=16.8.6 || ^17.0.0 || ^18.0.0"
+  checksum: a442e3a0ee1ad429f698ceca322cdd5a3a6a4d8fa7da3abf3b8c193ce06edd629b148aafdb6c47d240a872e8f5827d8c9fb1b8ef3aa34ea81ba80cbef6b5ff6d
+  languageName: node
+  linkType: hard
+
 "react-redux@npm:8.x.x || 9.x.x":
   version: 9.2.0
   resolution: "react-redux@npm:9.2.0"
@@ -15385,6 +15420,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve@npm:^1.22.1":
+  version: 1.22.11
+  resolution: "resolve@npm:1.22.11"
+  dependencies:
+    is-core-module: ^2.16.1
+    path-parse: ^1.0.7
+    supports-preserve-symlinks-flag: ^1.0.0
+  bin:
+    resolve: bin/resolve
+  checksum: 6d5baa2156b95a65ac431e7642e21106584e9f4194da50871cae8bc1bbd2b53bb7cee573c92543d83bb999620b224a087f62379d800ed1ccb189da6df5d78d50
+  languageName: node
+  linkType: hard
+
 "resolve@npm:^2.0.0-next.5":
   version: 2.0.0-next.5
   resolution: "resolve@npm:2.0.0-next.5"
@@ -15408,6 +15456,19 @@ __metadata:
   bin:
     resolve: bin/resolve
   checksum: 8aac1e4e4628bd00bf4b94b23de137dd3fe44097a8d528fd66db74484be929936e20c696e1a3edf4488f37e14180b73df6f600992baea3e089e8674291f16c9d
+  languageName: node
+  linkType: hard
+
+"resolve@patch:resolve@^1.22.1#~builtin<compat/resolve>":
+  version: 1.22.11
+  resolution: "resolve@patch:resolve@npm%3A1.22.11#~builtin<compat/resolve>::version=1.22.11&hash=07638b"
+  dependencies:
+    is-core-module: ^2.16.1
+    path-parse: ^1.0.7
+    supports-preserve-symlinks-flag: ^1.0.0
+  bin:
+    resolve: bin/resolve
+  checksum: 1462da84ac3410d7c2e12e4f5f25c1423d8a174c3b4245c43eafea85e7bbe6af3eb7ec10a4850b5e518e8531608604742b8cbd761e1acd7ad1035108b7c98013
   languageName: node
   linkType: hard
 

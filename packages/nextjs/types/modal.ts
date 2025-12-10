@@ -49,6 +49,9 @@ import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveCon
 import BonusAmountModal from "@/components/Modal/Payroll/BonusAmountModal";
 import PayrollPreviewModal from "@/components/Modal/Payroll/PayrollPreviewModal";
 import RetryModal from "@/components/Modal/RetryModal";
+import SelectNetworkModal from "@/components/Modal/SelectNetworkModal";
+import InvoiceModal from "@/components/Modal/InvoiceModal";
+import ConnectMidenWallet from "@/components/Modal/Wallet/ConnectMidenWallet";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -107,6 +110,9 @@ export const MODAL_IDS = {
   BONUS_AMOUNT: "BONUS_AMOUNT",
   PAYROLL_PREVIEW: "PAYROLL_PREVIEW",
   RETRY: "RETRY",
+  SELECT_NETWORK: "SELECT_NETWORK",
+  INVOICE_MODAL: "INVOICE_MODAL",
+  CONNECT_MIDEN_WALLET: "CONNECT_MIDEN_WALLET",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -379,6 +385,18 @@ export interface RetryModalProps extends BaseModalProps {
   onRetry?: () => Promise<void>;
 }
 
+export interface SelectNetworkModalProps extends BaseModalProps {
+  onNetworkSelect?: (network: { icon: string; name: string; value: string }) => void;
+}
+
+export interface InvoiceModalProps extends BaseModalProps {
+  // Add any specific props for InvoiceModal here
+}
+
+export interface ConnectMidenWalletProps extends BaseModalProps {
+  // Add any specific props for ConnectMidenWallet here
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -429,6 +447,9 @@ export type ModalPropsMap = {
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModalProps;
   [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModalProps;
   [MODAL_IDS.RETRY]: RetryModalProps;
+  [MODAL_IDS.SELECT_NETWORK]: SelectNetworkModalProps;
+  [MODAL_IDS.INVOICE_MODAL]: InvoiceModalProps;
+  [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWalletProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -483,4 +504,7 @@ export const modalRegistry = {
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModal,
   [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModal,
   [MODAL_IDS.RETRY]: RetryModal,
+  [MODAL_IDS.SELECT_NETWORK]: SelectNetworkModal,
+  [MODAL_IDS.INVOICE_MODAL]: InvoiceModal,
+  [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWallet,
 } as const;

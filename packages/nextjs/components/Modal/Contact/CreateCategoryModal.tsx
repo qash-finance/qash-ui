@@ -106,28 +106,28 @@ export function CreateCategoryModal({ isOpen, onClose, zIndex }: ModalProp<Valid
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
-      <ModalHeader title="Create New Category" onClose={onClose} icon="/misc/category-icon.svg" />
+      <ModalHeader title="Create New Group" onClose={onClose} icon="/misc/category-icon.svg" />
       <div className="flex flex-col gap-4 p-4 border-2 border-primary-divider rounded-b-2xl bg-background w-[500px]">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           {/* Category Name Input */}
           <div className="flex flex-col gap-1.5">
             <div className="flex flex-col gap-1 p-3 rounded-xl bg-app-background border-b-2 border-primary-divider">
-              <span className="text-text-secondary text-sm">Category Name</span>
+              <span className="text-text-secondary text-sm">Group Name</span>
               <input
                 {...register("name", {
-                  required: "Category name is required",
+                  required: "Group name is required",
                   minLength: {
                     value: 2,
-                    message: "Category name must be at least 2 characters",
+                    message: "Group name must be at least 2 characters",
                   },
                   maxLength: {
                     value: 50,
-                    message: "Category name cannot exceed 50 characters",
+                    message: "Group name cannot exceed 50 characters",
                   },
                 })}
                 autoComplete="off"
                 type="text"
-                placeholder="Enter category name"
+                placeholder="Enter group name"
                 className="w-full bg-transparent border-none outline-none text-text-primary text-base placeholder:text-text-secondary"
                 autoFocus
                 disabled={isLoading}

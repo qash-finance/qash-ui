@@ -19,6 +19,7 @@ export const PrimaryButton = ({
   iconPosition,
   onClick,
   containerClassName,
+  iconClassName,
   buttonClassName,
   disabled,
   loading,
@@ -45,9 +46,9 @@ export const PrimaryButton = ({
           <img src="/loading-square.gif" alt="loading" className="w-6 h-6" />
         ) : (
           <>
-            {icon && iconPosition === "left" && <img src={icon} alt="Wallet" className="w-5 h-5" />}
+            {icon && iconPosition === "left" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
             <span className="text-[14px]">{text}</span>
-            {icon && iconPosition === "right" && <img src={icon} alt="Wallet" className="w-5 h-5" />}
+            {icon && iconPosition === "right" && <img src={icon} alt="Wallet" className={`w-5 h-5 ${iconClassName}`} />}
           </>
         )}
       </button>

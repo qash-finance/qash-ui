@@ -47,13 +47,13 @@ export const Title = () => {
         )}
       </div>
 
-      <button
+      {/* <button
         className="cursor-pointer flex flex-row gap-1 items-center justify-center px-6 py-2 bg-background rounded-lg leading-none border-t-1 border-t-primary-divider"
         onClick={() => router.push("/batch")}
       >
         <img src="/misc/dark-shopping-bag.svg" alt="coin-icon" className="w-5 h-5 " />
         Batch
-      </button>
+      </button> */}
 
       <button
         className="cursor-pointer flex flex-row gap-1 items-center justify-center px-6 py-2 bg-background rounded-lg leading-none"
