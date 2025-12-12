@@ -1,8 +1,8 @@
-import CreatePayroll from "@/components/Payroll/CreatePayroll";
+import CreateAndReviewPayroll from "@/components/Payroll/CreateAndReviewPayroll";
 import React from "react";
 
 const CreatePayrollPage = () => {
-  return <CreatePayroll />;
+  return <CreateAndReviewPayroll />;
 };
 
 export default CreatePayrollPage;

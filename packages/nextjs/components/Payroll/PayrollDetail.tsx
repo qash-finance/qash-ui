@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BaseContainer } from "../Common/BaseContainer";
 import { Table } from "../Common/Table";
 import { SecondaryButton } from "../Common/SecondaryButton";
@@ -9,65 +10,9 @@ import { RequestPaymentStatus } from "@/types/request-payment";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { useTitle } from "@/contexts/TitleProvider";
 import { useRouter } from "next/navigation";
+import { useGetPayrollDetails } from "@/services/api/payroll";
 
 const labelStyles = "py-1 text-sm font-medium text-text-secondary";
-
-const paymentHistoryData = [
-  {
-    "Creation date": "Nov 10, 2025",
-    Invoice: "#INV-001",
-    Name: "Liam Carter",
-    Team: "Engineering",
-    Amount: (
-      <div className="flex items-center gap-2 justify-center">
-        <span>1,000</span>
-        <img alt="USDT" className="w-4" src="/token/usdt.svg" />
-      </div>
-    ),
-    "Due Date": "Dec 5, 2025",
-    Status: (
-      <div className="w-full flex justify-center items-center">
-        <Badge text="Paid" status={BadgeStatus.SUCCESS} className="px-5" />
-      </div>
-    ),
-  },
-  {
-    "Creation date": "Oct 10, 2025",
-    Invoice: "#INV-002",
-    Name: "Liam Carter",
-    Team: "Engineering",
-    Amount: (
-      <div className="flex items-center gap-2 justify-center">
-        <span>1,000</span>
-        <img alt="USDT" className="w-4" src="/token/usdt.svg" />
-      </div>
-    ),
-    "Due Date": "Nov 5, 2025",
-    Status: (
-      <div className="w-full flex justify-center items-center">
-        <Badge text="Paid" status={BadgeStatus.SUCCESS} className="px-5" />
-      </div>
-    ),
-  },
-  {
-    "Creation date": "Sep 10, 2025",
-    Invoice: "#INV-003",
-    Name: "Liam Carter",
-    Team: "Engineering",
-    Amount: (
-      <div className="flex items-center gap-2 justify-center">
-        <span>1,000</span>
-        <img alt="USDT" className="w-4" src="/token/usdt.svg" />
-      </div>
-    ),
-    "Due Date": "Oct 5, 2025",
-    Status: (
-      <div className="w-full flex justify-center items-center">
-        <Badge text="Paid" status={BadgeStatus.AWAITING} className="px-5" />
-      </div>
-    ),
-  },
-];
 
 // Action renderer for payroll table
 const payrollActionRenderer = (rowData: Record<string, any>, index: number) => (
@@ -84,7 +29,11 @@ const payrollActionRenderer = (rowData: Record<string, any>, index: number) => (
 
 const PayrollDetail = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+
+  const payrollId = parseInt(searchParams.get("id") || "0", 10);
+  const { data: payrollData, isLoading, error } = useGetPayrollDetails(payrollId);
 
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,12 +44,14 @@ const PayrollDetail = () => {
       router.back();
     };
 
-    setTitle(
-      <div className="flex items-center gap-2">
-        <span className="text-text-secondary">Payroll /</span>
-        <span className="text-text-primary">John Wick's payroll</span>
-      </div>,
-    );
+    if (payrollData?.employee) {
+      setTitle(
+        <div className="flex items-center gap-2">
+          <span className="text-text-secondary">Payroll /</span>
+          <span className="text-text-primary">{payrollData.employee.name}'s payroll</span>
+        </div>,
+      );
+    }
     setShowBackArrow(true);
     setOnBackClick(() => handleBack);
 
@@ -109,11 +60,56 @@ const PayrollDetail = () => {
       setOnBackClick(undefined);
       setShowBackArrow(false);
     };
-  }, [router]);
+  }, [router, payrollData]);
+
+  if (isLoading) {
+    return (
+      <div className="p-5 flex flex-col items-center justify-center w-full h-full">
+        <p className="text-text-secondary">Loading payroll details...</p>
+      </div>
+    );
+  }
+
+  if (error || !payrollData) {
+    return (
+      <div className="p-5 flex flex-col items-center justify-center w-full h-full">
+        <p className="text-red-500">Failed to load payroll details</p>
+      </div>
+    );
+  }
+
+  const paymentHistoryData = [
+    {
+      "Creation date": new Date(payrollData.createdAt).toLocaleDateString(),
+      Invoice: `#INV-${payrollData.id}`,
+      Name: payrollData.employee.name,
+      Team: "Engineering",
+      Amount: (
+        <div className="flex items-center gap-2 justify-center">
+          <span>{payrollData.amount}</span>
+          <img
+            alt={payrollData.token.symbol}
+            className="w-4"
+            src={`/token/${payrollData.token.symbol.toLowerCase()}.svg`}
+          />
+        </div>
+      ),
+      "Due Date": new Date(payrollData.payStartDate).toLocaleDateString(),
+      Status: (
+        <div className="w-full flex justify-center items-center">
+          <Badge
+            text={payrollData.status}
+            status={payrollData.status === "ACTIVE" ? BadgeStatus.SUCCESS : BadgeStatus.AWAITING}
+            className="px-5"
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="p-5 flex flex-col items-start justify-start w-full h-full gap-2">
-      <span className="font-bold text-3xl mb-4">John Wick</span>
+      <span className="font-bold text-3xl mb-4">{payrollData.employee.name}</span>
       <div className="flex gap-3 items-start w-full">
         {/* Employee Information Card */}
         <div className="flex-1 border border-primary-divider rounded-2xl px-4 py-3 flex gap-3 items-center">
@@ -128,18 +124,26 @@ const PayrollDetail = () => {
 
           {/* Values Column */}
           <div className="flex-1 flex flex-col gap-1">
-            <div className="py-1 text-sm font-medium text-text-primary">Liam Carter</div>
-            <div className="py-1 text-sm font-medium text-primary-blue">liam@quantum3labs.com</div>
+            <div className="py-1 text-sm font-medium text-text-primary">{payrollData.employee.name}</div>
+            <div className="py-1 text-sm font-medium text-primary-blue">{payrollData.employee.email}</div>
             <div className=" py-1 flex items-center gap-2">
-              <img className="w-5" alt="Ethereum" src="/chain/ethereum.svg" />
-              <span className="text-sm font-medium text-text-primary">Ethereum</span>
+              <img
+                className="w-5"
+                alt={payrollData.network.name}
+                src={`/chain/${payrollData.network.name.toLowerCase()}.svg`}
+              />
+              <span className="text-sm font-medium text-text-primary">{payrollData.network.name}</span>
             </div>
             <div className=" py-1 flex items-center gap-2">
-              <img alt="USDT" className="w-5 h-5" src="/token/usdt.svg" />
-              <span className="text-sm font-medium text-text-primary">USDT</span>
+              <img
+                alt={payrollData.token.symbol}
+                className="w-5 h-5"
+                src={`/token/${payrollData.token.symbol.toLowerCase()}.svg`}
+              />
+              <span className="text-sm font-medium text-text-primary">{payrollData.token.symbol}</span>
             </div>
             <div className=" py-1 flex items-center gap-2 justify-start">
-              <span className="text-sm font-medium text-text-primary">0x2A098898990628505749aBe334547B3f0D0d0F75</span>
+              <span className="text-sm font-medium text-text-primary">{payrollData.employee.walletAddress}</span>
               <div className="w-5 h-5 flex-shrink-0">
                 <img alt="Copy" className="w-full h-full" src="/misc/copy-icon.svg" />
               </div>
@@ -160,13 +164,23 @@ const PayrollDetail = () => {
 
           {/* Values Column */}
           <div className="flex-1 flex flex-col gap-1">
-            <div className=" py-1 text-sm font-medium text-text-primary">Nov 10, 2025 10:31 AM</div>
-            <div className=" py-1 text-sm font-medium text-text-primary">14/11/2025 - 14/11/2026</div>
-            <div className=" py-1 flex items-center gap-1">
-              <img alt="USDT" className="w-5" src="/token/usdt.svg" />
-              <span className="text-sm font-medium text-text-primary">1000 USDT / month</span>
+            <div className=" py-1 text-sm font-medium text-text-primary">
+              {new Date(payrollData.createdAt).toLocaleString()}
             </div>
-            <div className=" py-1 text-sm font-medium text-text-primary">5th monthly</div>
+            <div className=" py-1 text-sm font-medium text-text-primary">
+              {payrollData.joiningDate} - {payrollData.payEndDate}
+            </div>
+            <div className=" py-1 flex items-center gap-1">
+              <img
+                alt={payrollData.token.symbol}
+                className="w-5"
+                src={`/token/${payrollData.token.symbol.toLowerCase()}.svg`}
+              />
+              <span className="text-sm font-medium text-text-primary">
+                {payrollData.amount} {payrollData.token.symbol} / month
+              </span>
+            </div>
+            <div className=" py-1 text-sm font-medium text-text-primary">{payrollData.payrollCycle}th monthly</div>
             <div className=" py-1 flex items-center gap-1">
               <div className="bg-blue-500/20 rounded-full px-3 py-1 flex items-center gap-1">
                 <div className="w-4 h-4 flex items-center justify-center">

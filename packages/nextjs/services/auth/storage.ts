@@ -1,187 +1,104 @@
-import { MIDEN_WALLET_AUTH_KEY, MIDEN_WALLET_KEYS_KEY } from "../utils/constant";
-import { KeyPair } from "./crypto";
-
-export interface StoredAuth {
-  walletAddress: string;
-  keyPair: KeyPair;
-  sessionToken: string;
-  expiresAt: string;
-  deviceFingerprint: string;
-}
-
-export interface StoredKey {
-  walletAddress: string;
-  keyPair: KeyPair;
-  publicKey: string;
-  expiresAt: string;
-  deviceFingerprint: string;
-  createdAt: string;
-}
+const EMAIL_STORAGE_KEY = "user_email";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 
 export class AuthStorage {
   /**
-   * Store authentication data
+   * Store user email
    */
-  static storeAuth(auth: StoredAuth): void {
+  static storeEmail(email: string): void {
     try {
       if (typeof window !== "undefined") {
-        const encrypted = this.encrypt(JSON.stringify(auth));
-        localStorage.setItem(MIDEN_WALLET_AUTH_KEY, encrypted);
+        localStorage.setItem(EMAIL_STORAGE_KEY, email);
       }
     } catch (error) {
-      console.error("Failed to store auth:", error);
+      console.error("Failed to store email:", error);
     }
   }
 
   /**
-   * Retrieve authentication data
+   * Retrieve user email
    */
-  static getAuth(): StoredAuth | null {
+  static getEmail(): string | null {
     try {
       if (typeof window !== "undefined") {
-        const encrypted = localStorage.getItem(MIDEN_WALLET_AUTH_KEY);
-        if (encrypted) {
-          const decrypted = this.decrypt(encrypted);
-          return JSON.parse(decrypted);
+        return localStorage.getItem(EMAIL_STORAGE_KEY);
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to retrieve email:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Store access token
+   */
+  static storeAccessToken(token: string): void {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(ACCESS_TOKEN_KEY, token);
+      }
+    } catch (error) {
+      console.error("Failed to store access token:", error);
+    }
+  }
+
+  /**
+   * Retrieve access token
+   */
+  static getAccessToken(): string | null {
+    try {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem(ACCESS_TOKEN_KEY);
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to retrieve access token:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Store refresh token
+   */
+  static storeRefreshToken(token: string): void {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(REFRESH_TOKEN_KEY, token);
         }
+    } catch (error) {
+      console.error("Failed to store refresh token:", error);
+    }
+  }
+
+  /**
+   * Retrieve refresh token
+   */
+  static getRefreshToken(): string | null {
+    try {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem(REFRESH_TOKEN_KEY);
       }
       return null;
     } catch (error) {
-      console.error("Failed to retrieve auth:", error);
-      this.clearAuth();
+      console.error("Failed to retrieve refresh token:", error);
       return null;
     }
   }
 
   /**
-   * Clear authentication data
+   * Clear all auth data
    */
   static clearAuth(): void {
     try {
       if (typeof window !== "undefined") {
-        localStorage.removeItem(MIDEN_WALLET_AUTH_KEY);
+        localStorage.removeItem(EMAIL_STORAGE_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
       }
     } catch (error) {
       console.error("Failed to clear auth:", error);
-    }
-  }
-
-  /**
-   * Store key pair for a wallet
-   */
-  static storeKey(walletAddress: string, keyData: StoredKey): void {
-    try {
-      if (typeof window !== "undefined") {
-        const keys = this.getKeys();
-        keys[walletAddress] = keyData;
-        const encrypted = this.encrypt(JSON.stringify(keys));
-        localStorage.setItem(MIDEN_WALLET_KEYS_KEY, encrypted);
-      }
-    } catch (error) {
-      console.error("Failed to store key:", error);
-    }
-  }
-
-  /**
-   * Retrieve key pair for a wallet
-   */
-  static getKey(walletAddress: string): StoredKey | null {
-    try {
-      const keys = this.getKeys();
-      return keys[walletAddress] || null;
-    } catch (error) {
-      console.error("Failed to retrieve key:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Get all stored keys
-   */
-  static getKeys(): Record<string, StoredKey> {
-    try {
-      if (typeof window !== "undefined") {
-        const encrypted = localStorage.getItem(MIDEN_WALLET_KEYS_KEY);
-        if (encrypted) {
-          const decrypted = this.decrypt(encrypted);
-          return JSON.parse(decrypted);
-        }
-      }
-      return {};
-    } catch (error) {
-      console.error("Failed to retrieve keys:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Remove key for a wallet
-   */
-  static removeKey(walletAddress: string): void {
-    try {
-      if (typeof window !== "undefined") {
-        const keys = this.getKeys();
-        delete keys[walletAddress];
-        const encrypted = this.encrypt(JSON.stringify(keys));
-        localStorage.setItem(MIDEN_WALLET_KEYS_KEY, encrypted);
-      }
-    } catch (error) {
-      console.error("Failed to remove key:", error);
-    }
-  }
-
-  /**
-   * Clear all stored keys
-   */
-  static clearKeys(): void {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(MIDEN_WALLET_KEYS_KEY);
-      }
-    } catch (error) {
-      console.error("Failed to clear keys:", error);
-    }
-  }
-
-  /**
-   * Check if session is expired
-   */
-  static isSessionExpired(expiresAt: string): boolean {
-    try {
-      const expiry = new Date(expiresAt);
-      const now = new Date();
-      // Add 1 minute buffer for network delays
-      const buffer = 60 * 1000;
-      return now.getTime() > expiry.getTime() - buffer;
-    } catch (error) {
-      console.error("Failed to check session expiry:", error);
-      return true;
-    }
-  }
-
-  /**
-   * Simple encryption for local storage (in production, use proper encryption)
-   */
-  private static encrypt(data: string): string {
-    try {
-      // Simple base64 encoding - in production, use proper encryption
-      return btoa(data);
-    } catch (error) {
-      console.error("Failed to encrypt data:", error);
-      return data;
-    }
-  }
-
-  /**
-   * Simple decryption for local storage
-   */
-  private static decrypt(data: string): string {
-    try {
-      // Simple base64 decoding - in production, use proper decryption
-      return atob(data);
-    } catch (error) {
-      console.error("Failed to decrypt data:", error);
-      return data;
     }
   }
 }

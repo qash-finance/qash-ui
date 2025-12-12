@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import Welcome from "../Common/Welcome";
 import { PrimaryButton } from "../Common/PrimaryButton";
@@ -10,6 +11,10 @@ import { CompanyTypeDropdown } from "../Common/Dropdown/CompanyTypeDropdown";
 import { CountryDropdown } from "../Common/Dropdown/CountryDropdown";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { FileUpload } from "./FileUpload";
+import { useCreateCompany, CompanyTypeEnum } from "@/services/api/company";
+import toast from "react-hot-toast";
+import { useAuth } from "@/services/auth/context";
+import { User } from "@/types/user";
 
 type Step = "company" | "team" | "complete";
 
@@ -19,23 +24,43 @@ interface OnboardingFormData {
   companyName: string;
   country: string;
   companyType: string;
+  city: string;
   address1: string;
   address2: string;
   postalCode: string;
   registrationNumber: string;
 }
 
+// Map display names to enum values
+const mapCompanyTypeToEnum = (displayName: string): CompanyTypeEnum => {
+  const mapping: Record<string, CompanyTypeEnum> = {
+    "Sole Proprietorship": CompanyTypeEnum.SOLE_PROPRIETORSHIP,
+    Partnership: CompanyTypeEnum.PARTNERSHIP,
+    "LLP – Limited Liability Partnership": CompanyTypeEnum.PARTNERSHIP,
+    "LLC – Limited Liability Company": CompanyTypeEnum.LLC,
+    "Private Limited Company (Ltd / Pte Ltd)": CompanyTypeEnum.CORPORATION,
+    "Corporation (Inc. / Corp.)": CompanyTypeEnum.CORPORATION,
+    "Public Limited Company (PLC)": CompanyTypeEnum.CORPORATION,
+    "Non-Profit Organization": CompanyTypeEnum.OTHER,
+  };
+  return mapping[displayName] || CompanyTypeEnum.OTHER;
+};
+
 export default function OnboardingContainer() {
+  const router = useRouter();
+  const { isAuthenticated, accessToken, user } = useAuth();
+  const createCompanyMutation = useCreateCompany();
   const [step, setStep] = useState<Step>("company");
   const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
   const [selectedCountry, setSelectedCountry] = useState<string>("");
-  const { register, handleSubmit, watch } = useForm<OnboardingFormData>({
+  const { register, handleSubmit, watch, setValue } = useForm<OnboardingFormData>({
     defaultValues: {
       firstName: "",
       lastName: "",
       companyName: "",
       country: "",
       companyType: "",
+      city: "",
       address1: "",
       address2: "",
       postalCode: "",
@@ -43,9 +68,50 @@ export default function OnboardingContainer() {
     },
   });
 
-  const onSubmit = (data: OnboardingFormData) => {
-    console.log("Form submitted:", data);
-    // Continue logic here
+  // Redirect authenticated users away from onboarding
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const hasCompany = !!(user as User)?.teamMembership?.companyId || !!(user as User)?.teamMembership?.company;
+    const destination = hasCompany ? "/" : "/onboarding";
+
+    router.push(destination);
+  }, [isAuthenticated, accessToken, user, router]);
+
+  // Redirect unauthenticated users away from onboarding
+  useEffect(() => {
+    if (isAuthenticated) return;
+    router.push("/login");
+  }, [isAuthenticated, router]);
+
+  const onSubmit = async (data: OnboardingFormData) => {
+    if (!selectedCompanyType || !selectedCountry) {
+      toast.error("Please select company type and country");
+      return;
+    }
+
+    if (step === "company") {
+      try {
+        await createCompanyMutation.mutateAsync({
+          companyOwnerFirstName: data.firstName,
+          companyOwnerLastName: data.lastName,
+          companyName: data.companyName,
+          registrationNumber: data.registrationNumber,
+          companyType: mapCompanyTypeToEnum(selectedCompanyType),
+          country: selectedCountry,
+          address1: data.address1,
+          address2: data.address2 || undefined,
+          city: data.city,
+          postalCode: data.postalCode,
+        });
+        toast.success("Company registered successfully");
+        setStep("team");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to create company");
+      }
+    } else if (step === "team") {
+      // Team step logic can be added later
+      setStep("complete");
+    }
   };
 
   const renderStep = () => {
@@ -73,16 +139,28 @@ export default function OnboardingContainer() {
 
               <CompanyTypeDropdown
                 selectedCompanyType={selectedCompanyType}
-                onCompanyTypeSelect={setSelectedCompanyType}
+                onCompanyTypeSelect={value => {
+                  setSelectedCompanyType(value);
+                  setValue("companyType", value);
+                }}
               />
 
-              <CountryDropdown selectedCountry={selectedCountry} onCountrySelect={setSelectedCountry} />
+              <CountryDropdown
+                selectedCountry={selectedCountry}
+                onCountrySelect={value => {
+                  setSelectedCountry(value);
+                  setValue("country", value);
+                }}
+              />
+
+              {/* City */}
+              <InputOutlined label="City" placeholder="Enter city" {...register("city", { required: true })} />
 
               {/* Address 1 */}
               <InputOutlined label="Address 1" placeholder="Enter address 1" {...register("address1")} />
 
               {/* Address 2 */}
-              <InputOutlined label="Address 2" placeholder="Enter address 2" {...register("address2")} />
+              <InputOutlined label="Address 2 (optional)" placeholder="Enter address 2" {...register("address2")} />
 
               {/* Postal Code and Registration Number Row */}
               <div className="flex gap-4 w-full">
@@ -108,7 +186,7 @@ export default function OnboardingContainer() {
             {/* Form Fields */}
             <div className="flex flex-col gap-4 w-full">
               {Array.from({ length: 3 }).map((_, index) => (
-                <div className="flex gap-2 w-full">
+                <div className="flex gap-2 w-full" key={index}>
                   <InputOutlined label={`Member ${index + 1}`} placeholder="Enter name" {...register("firstName")} />
                   <InputOutlined label="Email" placeholder="@mail" {...register("lastName")} />
                 </div>
@@ -143,7 +221,9 @@ export default function OnboardingContainer() {
               <PrimaryButton
                 text="Go to app"
                 containerClassName="w-[180px] mt-6"
-                onClick={() => {}}
+                onClick={() => {
+                  router.push("/");
+                }}
                 icon="/arrow/chevron-right-light.svg"
                 iconPosition="right"
               />
@@ -202,17 +282,8 @@ export default function OnboardingContainer() {
               containerClassName="w-[140px]"
               icon="/arrow/chevron-right-light.svg"
               iconPosition="right"
-              onClick={() => {
-                if (step === "company") {
-                  setStep("team");
-                  return;
-                }
-
-                if (step === "team") {
-                  setStep("complete");
-                  return;
-                }
-              }}
+              onClick={handleSubmit(onSubmit)}
+              loading={createCompanyMutation.isPending}
             />
           </div>
         )}

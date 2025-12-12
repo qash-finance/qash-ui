@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { InvoiceData } from "./InvoiceReviewContainer";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
+import { updateInvoice } from "@/services/api/invoice";
+import { useSearchParams } from "next/navigation";
 
 const metaCard = "flex-1 bg-app-background rounded-2xl p-4 flex flex-col gap-1";
 const cardBase = "border border-primary-divider rounded-2xl p-6 flex flex-col";
@@ -13,8 +15,46 @@ const tokenRow = "flex items-center gap-2";
 const editIconClass = "w-5 h-5 cursor-pointer hover:opacity-80";
 const itemRow = "flex flex-row gap-2 justify-between items-start";
 
-const InvoiceDetail = (invoiceData: InvoiceData) => {
+const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string) => void }) => {
+  const invoiceData = props;
+  const onAddressUpdate = props.onAddressUpdate;
+  const searchParams = useSearchParams();
+  const invoiceUUID = searchParams.get("id") || "";
   const { openModal } = useModal();
+
+  const [addressInput, setAddressInput] = useState(invoiceData.from.address || "");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const handleUpdateAddress = async () => {
+    if (!addressInput.trim()) {
+      setUpdateError("Address cannot be empty");
+      return;
+    }
+
+    setIsUpdating(true);
+    setUpdateError(null);
+
+    try {
+      // Build the update payload with flat structure (not nested fromDetails)
+      const updatePayload: any = {
+        address: addressInput,
+        walletAddress: invoiceData.from.walletAddress,
+      };
+
+      await updateInvoice(invoiceUUID, updatePayload);
+      // Notify parent component of the update
+      if (onAddressUpdate) {
+        onAddressUpdate(addressInput);
+      }
+      setIsUpdating(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update address";
+      setUpdateError(errorMessage);
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="flex flex-col w-1/2 px-10 py-8 gap-4">
       {/* Title */}
@@ -54,7 +94,28 @@ const InvoiceDetail = (invoiceData: InvoiceData) => {
           </div>
           <div className="flex flex-col gap-1">
             <p className={labelClass}>Address</p>
-            <p className={valueClass}>{invoiceData.from.address}</p>
+            {invoiceData.from.address ? (
+              <p className={valueClass}>{invoiceData.from.address}</p>
+            ) : (
+              <div className="flex flex-row gap-2">
+                <input
+                  type="text"
+                  value={addressInput}
+                  onChange={e => setAddressInput(e.target.value)}
+                  placeholder="Enter address"
+                  className="w-[200px] px-3 py-1 border border-primary-divider rounded-lg bg-white text-text-primary placeholder-text-secondary"
+                  disabled={isUpdating}
+                />
+                {updateError && <p className="text-sm text-red-600">{updateError}</p>}
+                <button
+                  onClick={handleUpdateAddress}
+                  disabled={isUpdating}
+                  className="px-4 bg-primary-blue text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {isUpdating ? "Updating..." : "Update"}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 mt-4">

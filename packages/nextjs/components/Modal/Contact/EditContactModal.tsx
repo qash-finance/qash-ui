@@ -3,25 +3,29 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { EditContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { UpdateAddressBookDto, Category } from "@/types/address-book";
+import { UpdateAddressBookDto, CompanyGroupResponseDto, TokenDto } from "@/types/employee";
 import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
 import { SecondaryButton } from "../../Common/SecondaryButton";
-import { CategoryDropdown } from "../../Common/Dropdown/CategoryDropdown";
-import { useUpdateAddressBook, useGetAddressBooksByCategory, useGetCategories } from "@/services/api/address-book";
+import {
+  useUpdateEmployee,
+  useGetAllEmployeeGroups,
+  useCheckEmployeeNameDuplicate,
+  useCheckEmployeeAddressDuplicate,
+} from "@/services/api/employee";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { AssetWithMetadata } from "@/types/faucet";
-import { useAccountContext } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
+import { EmployeeGroupDropdown } from "@/components/Common/Dropdown/EmployeeGroupDropdown";
+import { useAuth } from "@/services/auth/context";
 
 interface EditContactFormData {
   name: string;
-  address: string;
+  walletAddress: string;
   email?: string;
-  token?: string;
-  category: string;
+  groupId?: number;
 }
 
 interface FormInputProps {
@@ -62,15 +66,13 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
 );
 
 export function EditContactModal({ isOpen, onClose, zIndex, contactData }: ModalProp<EditContactModalProps>) {
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(contactData?.token || null);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [selectedToken, setSelectedToken] = useState<TokenDto | null>(contactData?.token || null);
+  const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
 
-  const updateAddressBook = useUpdateAddressBook();
-  const { data: categories = [] } = useGetCategories();
-  const { data: categoryAddressBooks = [] } = useGetAddressBooksByCategory(
-    selectedCategory ? selectedCategory.id : null,
-  );
+  const updateEmployee = useUpdateEmployee(Number(contactData?.id));
+  const { data: employeeGroups = [] } = useGetAllEmployeeGroups({ enabled: isAuthenticated });
 
   const {
     register,
@@ -78,32 +80,39 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     formState: { errors, isValid },
     reset,
     setValue,
-    getValues,
-    setError,
-    clearErrors,
     watch,
   } = useForm<EditContactFormData>({
     defaultValues: {
       name: contactData?.name || "",
-      address: contactData?.address || "",
+      walletAddress: contactData?.address || "",
       email: contactData?.email || "",
-      category: contactData?.category || "",
+      groupId: undefined,
     },
   });
 
-  // Update form when contactData changes
+  const watchedName = watch("name");
+  const watchedAddress = watch("walletAddress");
+
+  const { data: nameDuplicate } = useCheckEmployeeNameDuplicate(watchedName, selectedGroup?.id ?? 0);
+  const { data: addressDuplicate } = useCheckEmployeeAddressDuplicate(watchedAddress, selectedGroup?.id ?? 0);
+
+  // Update form when contactData or groups change
   useEffect(() => {
     if (contactData) {
       setValue("name", contactData.name);
-      setValue("address", contactData.address);
+      setValue("walletAddress", contactData.address);
       setValue("email", contactData.email || "");
-      setValue("category", contactData.category);
       setSelectedToken(contactData.token || null);
-      // Find the category object from the categories list
-      const categoryObj = categories.find(cat => cat.name === contactData.category);
-      setSelectedCategory(categoryObj || null);
+
+      const matchedGroup = employeeGroups.find(group => group.name === contactData.category);
+      setSelectedGroup(matchedGroup);
+      setValue("groupId", matchedGroup?.id ?? undefined, { shouldValidate: true, shouldTouch: true });
     }
-  }, [contactData, setValue, categories]);
+  }, [contactData, setValue, employeeGroups]);
+
+  const groupIdRegister = register("groupId", {
+    required: "Group is required",
+  });
 
   const nameRegister = register("name", {
     required: "Name is required",
@@ -120,16 +129,14 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       message: "Name can only contain letters, numbers, spaces, hyphens, and underscores",
     },
     validate: value => {
-      if (!selectedCategory || categoryAddressBooks.length === 0) return true;
-      // Exclude current contact from duplicate check
-      const isDuplicate = categoryAddressBooks.some(
-        contact => contact.id !== Number(contactData?.id) && contact.name.toLowerCase() === value.toLowerCase(),
-      );
-      return !isDuplicate || "This name already exists in the selected category";
+      if (!selectedGroup) return true;
+      if (contactData?.name && contactData.name.trim().toLowerCase() === value.trim().toLowerCase()) return true;
+      if (nameDuplicate?.isDuplicate) return "This name already exists in the selected group";
+      return true;
     },
   });
 
-  const addressRegister = register("address", {
+  const addressRegister = register("walletAddress", {
     required: "Wallet address is required",
     minLength: {
       value: 3,
@@ -140,12 +147,10 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       message: "Address must start with 'mt' and contain only letters and numbers",
     },
     validate: value => {
-      if (!selectedCategory || categoryAddressBooks.length === 0) return true;
-      // Exclude current contact from duplicate check
-      const isDuplicate = categoryAddressBooks.some(
-        contact => contact.id !== Number(contactData?.id) && contact.address.toLowerCase() === value.toLowerCase(),
-      );
-      return !isDuplicate || "This address already exists in the selected category";
+      if (!selectedGroup) return true;
+      if (contactData?.address && contactData.address.trim().toLowerCase() === value.trim().toLowerCase()) return true;
+      if (addressDuplicate?.isDuplicate) return "This address already exists in the selected group";
+      return true;
     },
   });
 
@@ -160,15 +165,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     },
     validate: value => {
       if (!value || value.trim() === "") return true; // Email is optional
-      if (!selectedCategory || categoryAddressBooks.length === 0) return true;
-      // Exclude current contact from duplicate check
-      const isDuplicate = categoryAddressBooks.some(
-        contact =>
-          contact.id !== Number(contactData?.id) &&
-          contact.email &&
-          contact.email.toLowerCase() === value.toLowerCase(),
-      );
-      return !isDuplicate || "This email already exists in the selected category";
+      return true;
     },
   });
 
@@ -178,8 +175,8 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       return;
     }
 
-    if (!selectedCategory) {
-      toast.error("Please select a category");
+    if (!selectedGroup) {
+      toast.error("Please select a group");
       return;
     }
 
@@ -190,23 +187,20 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
 
     try {
       const addressBookData: UpdateAddressBookDto = {
-        name: data.name,
-        address: data.address,
-        categoryId: selectedCategory.id,
-        email: data.email || undefined,
-        token: selectedToken,
+        name: data.name.trim(),
+        walletAddress: data.walletAddress.trim(),
+        groupId: selectedGroup.id,
+        email: data.email?.trim() || undefined,
+        token: selectedToken ? { address: selectedToken.address, symbol: selectedToken.symbol } : undefined,
       };
 
-      await updateAddressBook.mutateAsync({
-        id: contactData.id,
-        data: addressBookData,
-      });
+      await updateEmployee.mutateAsync(addressBookData);
 
       toast.success("Contact updated successfully");
 
       reset();
       setSelectedToken(null);
-      setSelectedCategory(null);
+      setSelectedGroup(undefined);
       onClose();
     } catch (error) {
       console.error("Failed to update contact:", error);
@@ -214,20 +208,21 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     }
   };
 
-  const handleTokenSelect = (token: AssetWithMetadata | null) => {
+  const handleTokenSelect = (token: TokenDto | null) => {
     setSelectedToken(token);
   };
 
-  const handleCategorySelect = (category: Category) => {
-    setSelectedCategory(category);
-    setValue("category", category.name);
+  const handleCategorySelect = (category: CompanyGroupResponseDto) => {
+    setSelectedGroup(category);
+    setValue("groupId", category.id, { shouldValidate: true, shouldTouch: true });
   };
 
   const handleCancel = () => {
     reset();
     setSelectedToken(contactData?.token || null);
-    const categoryObj = categories.find(cat => cat.name === contactData?.category);
-    setSelectedCategory(categoryObj || null);
+    const matchedGroup = employeeGroups.find(group => group.name === contactData?.category);
+    setSelectedGroup(matchedGroup);
+    setValue("groupId", matchedGroup?.id ?? undefined, { shouldValidate: true, shouldTouch: true });
     onClose();
   };
 
@@ -243,7 +238,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
             placeholder="Enter contact name"
             register={nameRegister}
             error={errors.name?.message}
-            disabled={updateAddressBook.isPending}
+            disabled={updateEmployee.isPending}
             required
           />
 
@@ -251,10 +246,12 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
             label="Wallet address"
             placeholder="Enter wallet address"
             register={addressRegister}
-            error={errors.address?.message}
-            disabled={updateAddressBook.isPending}
+            error={errors.walletAddress?.message}
+            disabled={updateEmployee.isPending}
             required
           />
+
+          <input type="hidden" {...groupIdRegister} value={selectedGroup?.id ?? ""} />
 
           <FormInput
             label="Email"
@@ -262,7 +259,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
             type="email"
             register={emailRegister}
             error={errors.email?.message}
-            disabled={updateAddressBook.isPending}
+            disabled={updateEmployee.isPending}
           />
 
           {/* Token Selection */}
@@ -271,15 +268,15 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
               type="button"
               onClick={() => openModal(MODAL_IDS.SELECT_TOKEN, { onTokenSelect: handleTokenSelect })}
               className="flex items-center gap-2 px-4 py-2 h-full w-full text-left cursor-pointer"
-              disabled={updateAddressBook.isPending}
+              disabled={updateEmployee.isPending}
             >
               {selectedToken && (
                 <img
                   src={
-                    selectedToken?.faucetId === "0x07394cbe418daa16e42b87ba67372d4ab4a5df0b05c6e554d158458ce245bc10"
+                    selectedToken?.address === "0x07394cbe418daa16e42b87ba67372d4ab4a5df0b05c6e554d158458ce245bc10"
                       ? "/token/qash.svg"
-                      : selectedToken?.metadata.symbol
-                        ? `/token/${selectedToken.metadata.symbol.toLowerCase()}.svg`
+                      : selectedToken?.symbol
+                        ? `/token/${selectedToken.symbol.toLowerCase()}.svg`
                         : "/token/qash.svg"
                   }
                   alt="token"
@@ -288,7 +285,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
               )}
               <div className="flex-1">
                 <p className="text-text-secondary text-sm leading-none">Select token</p>
-                <p className="text-text-primary text-base font-medium">{selectedToken?.metadata.symbol || "-"}</p>
+                <p className="text-text-primary text-base font-medium">{selectedToken?.symbol || "-"}</p>
               </div>
               <img src="/arrow/chevron-down.svg" alt="dropdown" className="w-6 h-6" />
             </button>
@@ -296,11 +293,11 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
 
           {/* Category Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider py-2">
-            <CategoryDropdown
-              categories={categories}
-              selectedCategory={selectedCategory?.name}
-              onCategorySelect={handleCategorySelect}
-              disabled={updateAddressBook.isPending}
+            <EmployeeGroupDropdown
+              groups={employeeGroups}
+              selectedGroup={selectedGroup}
+              onGroupSelect={handleCategorySelect}
+              disabled={updateEmployee.isPending}
             />
           </div>
 
@@ -310,15 +307,15 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
               text="Cancel"
               onClick={handleCancel}
               buttonClassName="flex-1"
-              disabled={updateAddressBook.isPending}
+              disabled={updateEmployee.isPending}
               variant="light"
             />
             <PrimaryButton
               text="Update"
               onClick={handleSubmit(onSubmit)}
               containerClassName="flex-1"
-              disabled={!selectedCategory || !isValid}
-              loading={updateAddressBook.isPending}
+              disabled={!selectedGroup || !isValid}
+              loading={updateEmployee.isPending}
             />
           </div>
         </form>

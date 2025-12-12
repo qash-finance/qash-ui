@@ -5,6 +5,10 @@ import { Connect } from "./Connect";
 import { useRouter, usePathname } from "next/navigation";
 import MoveCryptoSidebar from "./MoveCryptoSidebar";
 import { Suspense } from "react";
+import { useAuth } from "@/services/auth/context";
+import { Tooltip } from "react-tooltip";
+import { AccountTooltip } from "./AccountTooltip";
+import { AuthMeResponse } from "@/services/auth/api";
 
 export const MOVE_CRYPTO_SIDEBAR_OFFSET = 230;
 
@@ -121,6 +125,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showMoveCryptoSidebar, setShowMoveCryptoSidebar] = useState(false);
+  const { isAuthenticated, email, user, isLoading, logout } = useAuth();
   // **************** Effect ****************
   useEffect(() => {
     // Check if any submenu is currently open
@@ -236,9 +241,47 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           </div>
 
           {/* Connect/Account section */}
-          <div className="flex flex-col justify-end gap-3 px-2">
-            <Connect />
+          <div className="flex flex-col justify-center p-5 border-t border-primary-divider">
+            {/* <Connect /> */}
+            {isAuthenticated && (
+              <div className="flex items-center justify-between gap-5">
+                <div className="flex flex-col gap-1">
+                  <span className="leading-none">
+                    {(user as AuthMeResponse["user"])?.teamMembership?.firstName}{" "}
+                    {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
+                  </span>
+                  <span className="text-text-secondary leading-none">{email}</span>
+                </div>
+                <img
+                  src="/misc/three-dot-icon.svg"
+                  alt="three dots icon"
+                  className="w-5 cursor-pointer"
+                  data-tooltip-id="account-tooltip"
+                  data-tooltip-content="Account"
+                />
+              </div>
+            )}
           </div>
+
+          {/* Account Tooltip */}
+          <Tooltip
+            id="account-tooltip"
+            clickable
+            style={{
+              zIndex: 20,
+              borderRadius: "16px",
+              padding: "0",
+            }}
+            place="top"
+            openOnClick
+            noArrow
+            border="none"
+            opacity={1}
+            render={({ content }) => {
+              if (!content) return null;
+              return <AccountTooltip onLogout={() => logout()} />;
+            }}
+          />
         </div>
       </nav>
       <Suspense fallback={<div>Loading...</div>}>

@@ -9,23 +9,23 @@ import { CategorySelectionTooltip } from "./CategorySelectionTooltip";
 import { MoreActionsTooltip } from "./MoreActionsTooltip";
 import { MultipleContactActionsTooltip } from "./MultipleContactActionsTooltip";
 import {
-  useGetCategories,
-  useUpdateCategoryOrder,
-  useGetAddressBooksByCategory,
-  useGetAllAddressBooks,
-  useDeleteAddressBook,
-  useUpdateAddressBookOrder,
-} from "@/services/api/address-book";
+  useGetAllEmployeeGroups,
+  useGetEmployeesByGroup,
+  useGetAllEmployees,
+  useBulkDeleteEmployees,
+  useUpdateEmployeesOrder,
+} from "@/services/api/employee";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { CustomCheckbox } from "../Common/CustomCheckbox";
 import { formatAddress } from "@/services/utils/miden/address";
-import { CategoryShape } from "@/types/address-book";
+import { CategoryShapeEnum } from "@/types/employee";
 import { createShapeElement } from "./ShapeSelectionTooltip";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/services/auth/context";
 
 const CategoryTab = ({ label }: { label: React.ReactNode }) => {
   return (
@@ -36,7 +36,7 @@ const CategoryTab = ({ label }: { label: React.ReactNode }) => {
   );
 };
 
-const CategoryBadge = ({ shape, color, name }: { shape: CategoryShape; color: string; name: string }) => {
+export const CategoryBadge = ({ shape, color, name }: { shape: CategoryShapeEnum; color: string; name: string }) => {
   return (
     <div
       className={`flex flex-row items-center justify-center gap-3 px-5 py-1 rounded-full border w-fit`}
@@ -52,15 +52,18 @@ const CategoryBadge = ({ shape, color, name }: { shape: CategoryShape; color: st
 
 const ContactBookContainer = () => {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const { openModal } = useModal();
   const [tabs, setTabs] = useState<{ id: string; label: React.ReactNode }[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const { data: categories } = useGetCategories();
-  const { mutate: updateCategoryOrder } = useUpdateCategoryOrder();
-  const { mutate: deleteAddressBook, isPending: isDeleting } = useDeleteAddressBook();
-  const { mutate: updateAddressBookOrder, isPending: isReordering } = useUpdateAddressBookOrder();
-  const { data: allAddressBooks, isLoading: isLoadingAllAddressBooks } = useGetAllAddressBooks();
+  const { data: categories } = useGetAllEmployeeGroups();
+  // const { mutate: updateCategoryOrder } = useUpdateCategoryOrder();
+  const { mutate: deleteEmployees, isPending: isDeleting } = useBulkDeleteEmployees();
+  const { mutate: updateEmployeesOrder, isPending: isReordering } = useUpdateEmployeesOrder();
+  const { data: allAddressBooksData, isLoading: isLoadingAllAddressBooks } = useGetAllEmployees(1, 1000, {
+    enabled: isAuthenticated,
+  });
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
   const [showMultipleActions, setShowMultipleActions] = useState<boolean>(false);
@@ -93,11 +96,14 @@ const ContactBookContainer = () => {
     return Number(activeTab);
   };
 
-  const { data: categoryAddressBooks, isLoading: isLoadingCategoryAddressBooks } =
-    useGetAddressBooksByCategory(getCategoryId());
+  const { data: categoryAddressBooksData, isLoading: isLoadingCategoryAddressBooks } = useGetEmployeesByGroup(
+    getCategoryId() || 0,
+    1,
+    1000,
+  );
 
   // Use appropriate data source based on active tab
-  const addressBooks = activeTab === "all" ? allAddressBooks : categoryAddressBooks;
+  const addressBooks = activeTab === "all" ? allAddressBooksData?.data : categoryAddressBooksData?.data;
   const isLoadingAddressBooks = activeTab === "all" ? isLoadingAllAddressBooks : isLoadingCategoryAddressBooks;
 
   useEffect(() => {
@@ -161,14 +167,14 @@ const ContactBookContainer = () => {
     const categoryIds = allCategories.map(cat => Number(cat.id));
 
     // Call the API to update the category order
-    updateCategoryOrder(categoryIds, {
-      onSuccess: () => {
-        console.log("Category order updated successfully");
-      },
-      onError: error => {
-        console.error("Failed to update category order:", error);
-      },
-    });
+    // updateCategoryOrder(categoryIds, {
+    //   onSuccess: () => {
+    //     console.log("Category order updated successfully");
+    //   },
+    //   onError: error => {
+    //     console.error("Failed to update category order:", error);
+    //   },
+    // });
   };
 
   const handleCheckRow = (idx: number) => {
@@ -183,7 +189,7 @@ const ContactBookContainer = () => {
     }
   };
 
-  const isAllChecked = addressBooks && addressBooks?.length > 0 && checkedRows.length === addressBooks?.length;
+  const isAllChecked = !!(addressBooks && addressBooks.length > 0 && checkedRows.length === addressBooks.length);
 
   // Tooltip action handlers
   const handlePay = (contactIndex: number) => {
@@ -192,12 +198,12 @@ const ContactBookContainer = () => {
       // Navigate to move-crypto page with recipient data
       const params = new URLSearchParams();
       params.set("tab", "send");
-      params.set("recipient", contact.address);
+      params.set("recipient", contact.walletAddress);
       params.set("name", contact.name);
 
       // If contact has a token, include it in the URL
-      if (contact.token?.faucetId) {
-        params.set("tokenAddress", contact.token.faucetId);
+      if (contact.token?.address) {
+        params.set("tokenAddress", contact.token.address);
       }
 
       router.push(`/move-crypto?${params.toString()}`);
@@ -209,13 +215,13 @@ const ContactBookContainer = () => {
     const contact = addressBooks?.[contactIndex];
     if (contact) {
       // Find the category for this contact
-      const category = categories?.find(cat => cat.id.toString() === selectedCategoryId);
+      const category = categories?.find(cat => cat.id === contact.groupId);
 
       openModal(MODAL_IDS.EDIT_CONTACT, {
         contactData: {
           id: contact.id?.toString() || "",
           name: contact.name,
-          address: contact.address,
+          address: contact.walletAddress,
           email: contact.email || "",
           category: category?.name || "",
           token: contact.token,
@@ -239,22 +245,19 @@ const ContactBookContainer = () => {
     if (contact) {
       openModal(MODAL_IDS.REMOVE_CONTACT_CONFIRMATION, {
         contactName: contact.name,
-        contactAddress: contact.address,
+        contactAddress: contact.walletAddress,
         onRemove: () => {
           if (contact.id) {
-            deleteAddressBook(
-              { ids: [contact.id] },
-              {
-                onSuccess: () => {
-                  toast.success("Contact deleted successfully");
-                  setActiveTooltipId(null);
-                },
-                onError: error => {
-                  console.error("Failed to delete contact:", error);
-                  toast.error("Failed to delete contact");
-                },
+            deleteEmployees([contact.id], {
+              onSuccess: () => {
+                toast.success("Contact deleted successfully");
+                setActiveTooltipId(null);
               },
-            );
+              onError: error => {
+                console.error("Failed to delete contact:", error);
+                toast.error("Failed to delete contact");
+              },
+            });
           }
         },
       });
@@ -278,20 +281,17 @@ const ContactBookContainer = () => {
         contactName: `${selectedContacts.length} contacts`,
         contactAddress: "",
         onRemove: () => {
-          deleteAddressBook(
-            { ids: contactIds },
-            {
-              onSuccess: () => {
-                toast.success(`${selectedContacts.length} contacts deleted successfully`);
-                setCheckedRows([]);
-                setShowMultipleActions(false);
-              },
-              onError: error => {
-                console.error("Failed to delete contacts:", error);
-                toast.error("Failed to delete contacts");
-              },
+          deleteEmployees(contactIds, {
+            onSuccess: () => {
+              toast.success(`${selectedContacts.length} contacts deleted successfully`);
+              setCheckedRows([]);
+              setShowMultipleActions(false);
             },
-          );
+            onError: error => {
+              console.error("Failed to delete contacts:", error);
+              toast.error("Failed to delete contacts");
+            },
+          });
         },
       });
     }
@@ -317,18 +317,20 @@ const ContactBookContainer = () => {
       .filter((id): id is number => id !== undefined);
 
     if (entryIds.length > 0) {
-      updateAddressBookOrder(
-        { categoryId: currentCategoryId, entryIds },
-        {
-          onSuccess: () => {
-            toast.success("Contact order updated successfully");
-          },
-          onError: error => {
-            console.error("Failed to update contact order:", error);
-            toast.error("Failed to update contact order");
-          },
+      // Assuming AddressBookOrderDto is { id: number, order: number }
+      const orderDtos = entryIds.map((id, idx) => ({
+        id,
+        order: idx,
+      }));
+      updateEmployeesOrder(orderDtos, {
+        onSuccess: () => {
+          toast.success("Contact order updated successfully");
         },
-      );
+        onError: error => {
+          console.error("Failed to update contact order:", error);
+          toast.error("Failed to update contact order");
+        },
+      });
     }
   };
 
@@ -358,39 +360,21 @@ const ContactBookContainer = () => {
         Group: (
           <div className="flex justify-center items-center">
             <CategoryBadge
-              shape={
-                activeTab === "all" && contact.categories
-                  ? (contact.categories.shape as CategoryShape) || CategoryShape.CIRCLE
-                  : selectedCategoryId && selectedCategoryId !== "all"
-                    ? categories?.find(cat => cat.id.toString() === selectedCategoryId)?.shape || CategoryShape.CIRCLE
-                    : CategoryShape.CIRCLE
-              }
-              color={
-                activeTab === "all" && contact.categories
-                  ? contact.categories.color || "#35ADE9"
-                  : selectedCategoryId && selectedCategoryId !== "all"
-                    ? categories?.find(cat => cat.id.toString() === selectedCategoryId)?.color || "#35ADE9"
-                    : "#35ADE9"
-              }
-              name={
-                activeTab === "all" && contact.categories
-                  ? contact.categories.name
-                  : selectedCategoryId && selectedCategoryId !== "all"
-                    ? categories?.find(cat => cat.id.toString() === selectedCategoryId)?.name || "-"
-                    : "-"
-              }
+              shape={categories?.find(cat => cat.id === contact.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+              color={categories?.find(cat => cat.id === contact.groupId)?.color || "#35ADE9"}
+              name={categories?.find(cat => cat.id === contact.groupId)?.name || "-"}
             />
           </div>
         ),
         "Wallet Address": (
           <div className="flex justify-center items-center gap-2">
-            {formatAddress(contact.address)}{" "}
+            {formatAddress(contact.walletAddress)}{" "}
             <img
               src="/misc/copy-icon.svg"
               alt="copy"
               className="w-4 h-4 cursor-pointer"
               onClick={() => {
-                navigator.clipboard.writeText(contact.address);
+                navigator.clipboard.writeText(contact.walletAddress);
                 toast.success("Copied to clipboard");
               }}
             />
@@ -401,16 +385,14 @@ const ContactBookContainer = () => {
             <div className="flex justify-center items-center bg-app-background rounded-full px-3 py-2 w-fit gap-2 border-b-2 border-primary-divider">
               <img
                 src={
-                  contact.token?.faucetId === QASH_TOKEN_ADDRESS
+                  contact.token?.address === QASH_TOKEN_ADDRESS
                     ? "/q3x-icon.png"
-                    : blo(turnBechToHex(contact.token?.faucetId || ""))
+                    : blo(turnBechToHex(contact.token?.address || ""))
                 }
                 alt="token"
                 className="w-4 h-4"
               />
-              <span className="text-text-primary text-sm leading-none">
-                {contact.token?.metadata?.symbol || "Unknown"}
-              </span>
+              <span className="text-text-primary text-sm leading-none">{contact.token?.symbol || "Unknown"}</span>
             </div>
           </div>
         ),
@@ -463,7 +445,7 @@ const ContactBookContainer = () => {
               />
               <div
                 className="flex flex-row items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-1.5"
-                onClick={() => openModal(MODAL_IDS.CREATE_CATEGORY)}
+                onClick={() => openModal(MODAL_IDS.CREATE_GROUP)}
               >
                 <img src="/misc/plus-icon.svg" alt="plus-icon" className="w-full" style={{ filter: "invert(1)" }} />
               </div>
@@ -473,7 +455,7 @@ const ContactBookContainer = () => {
         }
         containerClassName="w-full h-full"
       >
-        <div className="w-full p-2 h-full">
+        <div className="w-full p-5 h-full">
           <Table
             data={tableData}
             headers={tableHeaders}

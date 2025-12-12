@@ -1,28 +1,33 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CreateContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { CreateAddressBookDto, Category } from "@/types/address-book";
+import { Category, CategoryShape } from "@/types/address-book";
 import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
 import { SecondaryButton } from "../../Common/SecondaryButton";
 import { CategoryDropdown } from "../../Common/Dropdown/CategoryDropdown";
-import { useCreateAddressBook, useGetAddressBooksByCategory, useGetCategories } from "@/services/api/address-book";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { AssetWithMetadata } from "@/types/faucet";
-import { useAccountContext } from "@/contexts/AccountProvider";
 import toast from "react-hot-toast";
-import { on } from "events";
+import { CompanyGroupResponseDto, CreateContactDto, NetworkDto, TokenDto, CategoryShapeEnum } from "@/types/employee";
+import {
+  useCheckEmployeeAddressDuplicate,
+  useCheckEmployeeNameDuplicate,
+  useCreateEmployee,
+  useGetAllEmployeeGroups,
+} from "@/services/api/employee";
+import { EmployeeGroupDropdown } from "@/components/Common/Dropdown/EmployeeGroupDropdown";
+import { useAuth } from "@/services/auth/context";
 
 interface CreateContactFormData {
   name: string;
-  address: string;
+  walletAddress: string;
   email?: string;
-  token?: string;
-  category: string;
+  groupId?: number;
 }
 
 interface FormInputProps {
@@ -63,17 +68,25 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
 );
 
 export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateContactModalProps>) {
+  const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(null);
-
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
 
-  const createAddressBook = useCreateAddressBook();
-  const { data: categories = [] } = useGetCategories();
-  const { data: categoryAddressBooks = [] } = useGetAddressBooksByCategory(
-    selectedCategory ? selectedCategory.id : null,
+  const networkChainIds: Record<string, number> = useMemo(
+    () => ({
+      eth: 1,
+      miden: 0,
+      sol: 0,
+      base: 8453,
+      bnb: 56,
+    }),
+    [],
   );
+
+  const { data: employeeGroups = [] } = useGetAllEmployeeGroups({ enabled: isAuthenticated });
+  const createEmployee = useCreateEmployee();
 
   const {
     register,
@@ -81,13 +94,24 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
     formState: { errors, isValid },
     reset,
     setValue,
+    watch,
   } = useForm<CreateContactFormData>({
     defaultValues: {
       name: "",
-      address: "",
+      walletAddress: "",
       email: "",
-      category: "",
+      groupId: undefined,
     },
+  });
+
+  const watchedName = watch("name");
+  const watchedAddress = watch("walletAddress");
+
+  const { data: nameDuplicate } = useCheckEmployeeNameDuplicate(watchedName, selectedGroup?.id ?? 0);
+  const { data: addressDuplicate } = useCheckEmployeeAddressDuplicate(watchedAddress, selectedGroup?.id ?? 0);
+
+  const groupIdRegister = register("groupId", {
+    required: "Group is required",
   });
 
   const nameRegister = register("name", {
@@ -104,14 +128,14 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
       value: /^[a-zA-Z0-9\s\-_]+$/,
       message: "Name can only contain letters, numbers, spaces, hyphens, and underscores",
     },
-    validate: value => {
-      if (!selectedCategory || categoryAddressBooks.length === 0) return true;
-      const isDuplicate = categoryAddressBooks.some(contact => contact.name.toLowerCase() === value.toLowerCase());
-      return !isDuplicate || "This name already exists in the selected category";
+    validate: () => {
+      if (!selectedGroup) return true;
+      if (nameDuplicate?.isDuplicate) return "This name already exists in the selected group";
+      return true;
     },
   });
 
-  const addressRegister = register("address", {
+  const addressRegister = register("walletAddress", {
     required: "Wallet address is required",
     minLength: {
       value: 3,
@@ -121,10 +145,10 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
       value: /^mt[a-zA-Z0-9]+$/,
       message: "Address must start with 'mt' and contain only letters and numbers",
     },
-    validate: value => {
-      if (!selectedCategory || categoryAddressBooks.length === 0) return true;
-      const isDuplicate = categoryAddressBooks.some(contact => contact.address.toLowerCase() === value.toLowerCase());
-      return !isDuplicate || "This address already exists in the selected category";
+    validate: () => {
+      if (!selectedGroup) return true;
+      if (addressDuplicate?.isDuplicate) return "This address already exists in the selected group";
+      return true;
     },
   });
 
@@ -137,14 +161,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
       value: 255,
       message: "Email cannot be longer than 255 characters",
     },
-    validate: value => {
-      if (!value || value.trim() === "") return true; // Email is optional
-      if (!selectedCategory || categoryAddressBooks.length === 0) return true;
-      const isDuplicate = categoryAddressBooks.some(
-        contact => contact.email && contact.email.toLowerCase() === value.toLowerCase(),
-      );
-      return !isDuplicate || "This email already exists in the selected category";
-    },
+    validate: () => true,
   });
 
   const onSubmit = async (data: CreateContactFormData) => {
@@ -153,27 +170,42 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
       return;
     }
 
-    if (!selectedCategory) {
-      toast.error("Please select a category");
+    if (!selectedGroup) {
+      toast.error("Please select a group");
+      return;
+    }
+
+    if (!selectedNetwork) {
+      toast.error("Please select a network");
       return;
     }
 
     try {
-      const addressBookData: CreateAddressBookDto = {
-        name: data.name,
-        address: data.address,
-        category: data.category,
-        email: data.email || undefined,
-        token: selectedToken,
+      const tokenPayload: TokenDto | undefined = selectedToken
+        ? { address: selectedToken.faucetId, symbol: selectedToken.metadata.symbol }
+        : undefined;
+
+      const networkPayload: NetworkDto = {
+        name: selectedNetwork.name,
+        chainId: networkChainIds[selectedNetwork.value] ?? 0,
       };
 
-      await createAddressBook.mutateAsync(addressBookData);
+      const employeePayload: CreateContactDto = {
+        groupId: selectedGroup.id,
+        name: data.name.trim(),
+        walletAddress: data.walletAddress.trim(),
+        email: data.email?.trim() || undefined,
+        token: tokenPayload,
+        network: networkPayload,
+      };
+
+      await createEmployee.mutateAsync(employeePayload);
 
       toast.success("Contact created successfully");
 
       reset();
       setSelectedToken(null);
-      setSelectedCategory(null);
+      setSelectedGroup(undefined);
       onClose();
     } catch (error) {
       console.error("Failed to create contact:", error);
@@ -185,15 +217,16 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
     setSelectedToken(token);
   };
 
-  const handleCategorySelect = (category: Category) => {
-    setSelectedCategory(category);
-    setValue("category", category.name);
+  const handleGroupSelect = (group: CompanyGroupResponseDto) => {
+    setSelectedGroup(group);
+    setValue("groupId", group.id, { shouldValidate: true, shouldTouch: true });
   };
 
   const handleCancel = () => {
     reset();
     setSelectedToken(null);
-    setSelectedCategory(null);
+    setSelectedGroup(undefined);
+    setSelectedNetwork(null);
     onClose();
   };
 
@@ -209,7 +242,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
             placeholder="Enter contact name"
             register={nameRegister}
             error={errors.name?.message}
-            disabled={createAddressBook.isPending}
+            disabled={createEmployee.isPending}
             required
           />
 
@@ -219,17 +252,19 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
             type="email"
             register={emailRegister}
             error={errors.email?.message}
-            disabled={createAddressBook.isPending}
+            disabled={createEmployee.isPending}
           />
 
           <FormInput
             label="Wallet address"
             placeholder="Enter wallet address"
             register={addressRegister}
-            error={errors.address?.message}
-            disabled={createAddressBook.isPending}
+            error={errors.walletAddress?.message}
+            disabled={createEmployee.isPending}
             required
           />
+
+          <input type="hidden" {...groupIdRegister} value={selectedGroup?.id ?? ""} />
 
           {/* Token Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">
@@ -237,7 +272,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
               type="button"
               onClick={() => openModal(MODAL_IDS.SELECT_NETWORK, { onNetworkSelect: setSelectedNetwork })}
               className="flex items-center gap-2 px-4 py-2 h-full w-full text-left cursor-pointer"
-              disabled={createAddressBook.isPending}
+              disabled={createEmployee.isPending}
             >
               {selectedNetwork && <img src={selectedNetwork.icon} alt="network" className="w-8 h-8" />}
               <div className="flex-1">
@@ -254,7 +289,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
               type="button"
               onClick={() => openModal(MODAL_IDS.SELECT_TOKEN, { onTokenSelect: handleTokenSelect })}
               className="flex items-center gap-2 px-4 py-2 h-full w-full text-left cursor-pointer"
-              disabled={createAddressBook.isPending}
+              disabled={createEmployee.isPending}
             >
               {selectedToken && (
                 <img
@@ -279,11 +314,10 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
 
           {/* Category Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider py-2">
-            <CategoryDropdown
-              categories={categories}
-              selectedCategory={selectedCategory?.name}
-              onCategorySelect={handleCategorySelect}
-              disabled={createAddressBook.isPending}
+            <EmployeeGroupDropdown
+              groups={employeeGroups}
+              selectedGroup={selectedGroup}
+              onGroupSelect={handleGroupSelect}
             />
           </div>
 
@@ -293,15 +327,15 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
               text="Cancel"
               onClick={handleCancel}
               buttonClassName="flex-1"
-              disabled={createAddressBook.isPending}
+              disabled={createEmployee.isPending}
               variant="light"
             />
             <PrimaryButton
               text="Confirm"
               onClick={handleSubmit(onSubmit)}
               containerClassName="flex-1"
-              disabled={!selectedCategory || !isValid}
-              loading={createAddressBook.isPending}
+              disabled={!selectedGroup || !isValid}
+              loading={createEmployee.isPending}
             />
           </div>
         </form>

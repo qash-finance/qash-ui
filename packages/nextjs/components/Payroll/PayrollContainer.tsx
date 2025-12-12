@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useGetPayrolls, useDeletePayroll } from "@/services/api/payroll";
 import { Header } from "./Header";
 import { BaseContainer } from "../Common/BaseContainer";
 import { TabContainer } from "../Common/TabContainer";
@@ -7,6 +8,12 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import { Table } from "../Common/Table";
 import PayrollActionTooltip from "./PayrollActionTooltip";
 import { Tooltip } from "react-tooltip";
+import { CategoryBadge } from "../ContactBook/ContactBookContainer";
+import { useAuth } from "@/services/auth/context";
+import { useGetAllEmployeeGroups, useGetAllEmployees } from "@/services/api/employee";
+import { CategoryShapeEnum } from "@/types/employee";
+import { useRouter } from "next/navigation";
+import { ro } from "react-day-picker/locale";
 
 const getTabs = () => [
   {
@@ -30,60 +37,41 @@ const getTabs = () => [
 ];
 
 const PayrollContainer = () => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState(() => getTabs()[0]);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+  const { data: groups } = useGetAllEmployeeGroups();
 
   const tabs = getTabs();
 
-  // Sample payroll data without action column
-  const payrollDataBase = [
-    {
-      "Employee name": "John Doe",
-      Group: "Group A",
-      Amount: (
-        <div className="flex flex-row justify-center items-center gap-2">
-          <img src="/token/qash.svg" alt="dollar" className="w-5" />
-          <span className="font-bold">$3,500.00</span>
-        </div>
-      ),
-      Date: "05th/month",
-      "Contract Term": <span className="font-bold text-primary-blue">1 year</span>,
-    },
-    {
-      "Employee name": "Bob Johnson",
-      Group: "Group A",
-      Amount: (
-        <div className="flex flex-row justify-center items-center gap-2">
-          <img src="/token/qash.svg" alt="dollar" className="w-5" />
-          <span className="font-bold">$3,500.00</span>
-        </div>
-      ),
-      Date: "05th/month",
-      "Contract Term": <span className="font-bold text-primary-blue">1 year</span>,
-    },
-    {
-      "Employee name": "Bob Johnson",
-      Group: "Group A",
-      Amount: (
-        <div className="flex flex-row justify-center items-center gap-2">
-          <img src="/token/qash.svg" alt="dollar" className="w-5" />
-          <span className="font-bold">$3,500.00</span>
-        </div>
-      ),
-      Date: "05th/month",
-      "Contract Term": <span className="font-bold text-primary-blue">3 years</span>,
-    },
-  ];
+  // Fetch payrolls from API
+  const { data, isLoading, isError, refetch } = useGetPayrolls({
+    page: currentPage,
+    limit: rowsPerPage,
+    search: search || undefined,
+  });
+  console.log("🚀 ~ PayrollContainer ~ data:", data);
+
+  // Delete payroll mutation
+  const deletePayroll = useDeletePayroll();
 
   // Action handlers
-  const handleEditPayroll = (index: number) => {
-    console.log("Edit payroll:", index);
+  const handleEditPayroll = (id: number) => {
+    router.push(`/payroll/detail?id=${id}`);
   };
 
-  const handleRemovePayroll = (index: number) => {
-    console.log("Remove payroll:", index);
+  const handleRemovePayroll = (id: number) => {
+    if (window.confirm("Are you sure you want to remove this payroll?")) {
+      deletePayroll.mutate(id, {
+        onSuccess: () => {
+          refetch();
+        },
+      });
+    }
   };
 
   // Action renderer for payroll table
@@ -94,14 +82,32 @@ const PayrollContainer = () => {
         alt="three dot icon"
         className="w-6 h-6 cursor-pointer"
         data-tooltip-id="payroll-action-tooltip"
-        data-tooltip-content={index.toString()}
+        data-tooltip-content={rowData.__id?.toString()}
       />
     </div>
   );
 
-  // Transform data to include action column
-  const payrollData = payrollDataBase.map(item => ({
-    ...item,
+  // Transform API data to table format
+  const payrollData = (data?.payrolls || []).map(payroll => ({
+    __id: payroll.id,
+    "Employee name": payroll.employee.name,
+    Group: (
+      <div className="flex justify-center items-center">
+        <CategoryBadge
+          shape={groups?.find(grp => grp.id === payroll.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+          color={groups?.find(grp => grp.id === payroll.employee.groupId)?.color || "#35ADE9"}
+          name={groups?.find(grp => grp.id === payroll.employee.groupId)?.name || "-"}
+        />
+      </div>
+    ),
+    Amount: (
+      <div className="flex flex-row justify-center items-center gap-2">
+        <img src="/token/qash.svg" alt="token" className="w-5" />
+        <span className="font-bold">{payroll.amount}</span>
+      </div>
+    ),
+    Date: payroll.payStartDate ? new Date(payroll.payStartDate).toLocaleDateString() : "-",
+    "Contract Term": <span className="font-bold text-primary-blue">{payroll.contractTerm}</span>,
     " ": null, // Placeholder for action column
   }));
 
@@ -134,12 +140,24 @@ const PayrollContainer = () => {
             </div>
             <div className="flex flex-row gap-5">
               {/* Search Bar */}
-              <div className="bg-app-background border border-primary-divider flex flex-row gap-2 items-center pr-1 pl-3 py-2 rounded-lg w-[300px]">
+              <form
+                className="bg-app-background border border-primary-divider flex flex-row gap-2 items-center pr-1 pl-3 py-2 rounded-lg w-[300px]"
+                onSubmit={e => {
+                  e.preventDefault();
+                  setCurrentPage(1);
+                  refetch();
+                }}
+              >
                 <div className="flex flex-row gap-2 flex-1">
                   <input
                     type="text"
                     placeholder="Search by name"
                     className="font-medium text-sm text-text-secondary bg-transparent border-none outline-none w-full"
+                    value={search}
+                    onChange={e => {
+                      setSearch(e.target.value);
+                      setCurrentPage(1);
+                    }}
                   />
                 </div>
                 <button
@@ -148,7 +166,7 @@ const PayrollContainer = () => {
                 >
                   <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
                 </button>
-              </div>
+              </form>
 
               {/* Filter Button */}
               <div className="flex items-center gap-2">
@@ -175,24 +193,30 @@ const PayrollContainer = () => {
         childrenClassName="p-5"
         containerClassName="w-full h-full bg-[#F6F6F6]"
       >
-        <Table
-          headers={["Employee name", "Group", "Amount", "Date", "Contract Term"]}
-          data={payrollData}
-          actionColumn={true}
-          actionRenderer={payrollActionRenderer}
-          selectedRows={selectedRows}
-          className="w-full"
-          columnWidths={{
-            0: "200px",
-          }}
-          rowClassName="py-5"
-          headerClassName="py-3"
-          showPagination={true}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={setRowsPerPage}
-        />
+        {isLoading ? (
+          <div className="w-full flex justify-center items-center py-10">Loading payrolls...</div>
+        ) : isError ? (
+          <div className="w-full flex justify-center items-center py-10 text-red-500">Failed to load payrolls.</div>
+        ) : (
+          <Table
+            headers={["Employee name", "Group", "Amount", "Date", "Contract Term"]}
+            data={payrollData}
+            actionColumn={true}
+            actionRenderer={payrollActionRenderer}
+            selectedRows={selectedRows}
+            className="w-full"
+            columnWidths={{
+              0: "200px",
+            }}
+            rowClassName="py-5"
+            headerClassName="py-3"
+            showPagination={true}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={setRowsPerPage}
+          />
+        )}
       </BaseContainer>
 
       {/* Payroll Action Tooltip */}
@@ -211,10 +235,8 @@ const PayrollContainer = () => {
         opacity={1}
         render={({ content }) => {
           if (!content) return null;
-          const index = parseInt(content, 10);
-          return (
-            <PayrollActionTooltip onEdit={() => handleEditPayroll(index)} onRemove={() => handleRemovePayroll(index)} />
-          );
+          const id = parseInt(content, 10);
+          return <PayrollActionTooltip onEdit={() => handleEditPayroll(id)} onRemove={() => handleRemovePayroll(id)} />;
         }}
       />
     </div>

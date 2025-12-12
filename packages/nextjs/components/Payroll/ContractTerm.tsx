@@ -103,6 +103,26 @@ export const ContractTerm = ({
         </div>
 
         <div className="flex flex-col gap-2">
+           <div className="bg-background rounded-xl border-b-2 border-primary-divider">
+              <div className="flex flex-col gap-1 px-4 py-2">
+                <label className="text-text-secondary text-sm font-medium">Item description</label>
+                <input
+                  {...register("description")}
+                  type="text"
+                  placeholder="Add a description"
+                  className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-secondary"
+                  autoFocus={true}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            {errors.note && (
+              <div className="flex items-center gap-1 pl-2">
+                <img src="/misc/red-circle-warning.svg" alt="warning" className="w-4 h-4" />
+                <span className="text-[#E93544] text-sm">{errors.note?.message}</span>
+              </div>
+          )}
+
           <div className="bg-background rounded-xl border-b-2 border-primary-divider">
             <div className="flex flex-col gap-1 px-4 py-2">
               <label className="text-text-secondary text-sm font-medium">Note (Optional)</label>

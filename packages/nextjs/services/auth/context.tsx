@@ -1,24 +1,27 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { WalletAuthApi, ApiError } from "./api";
-import { WalletCrypto, KeyPair } from "./crypto";
-import { AuthStorage, StoredAuth, StoredKey } from "./storage";
-import { AUTH_EXPIRATION_HOURS, AUTH_REFRESH_INTERVAL } from "../utils/constant";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { ApiError, AuthMeResponse, EmailAuthApi, VerifyOtpResponse } from "./api";
+import { AuthStorage } from "./storage";
+import { AUTH_REFRESH_INTERVAL } from "../utils/constant";
+
+type UserData = AuthMeResponse["user"] | VerifyOtpResponse["user"] | null;
 
 export interface AuthState {
   isAuthenticated: boolean;
-  walletAddress: string | null;
-  sessionToken: string | null;
-  publicKey: string | null;
+  email: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  user: UserData;
   isLoading: boolean;
   error: string | null;
 }
 
 export interface AuthContextValue extends AuthState {
-  login: (walletAddress: string) => Promise<void>;
+  sendOtp: (email: string) => Promise<void>;
+  verifyOtp: (email: string, otp: string) => Promise<AuthMeResponse["user"] | null>;
   logout: () => Promise<void>;
-  refreshToken: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   clearError: () => void;
   isSessionValid: () => boolean;
 }
@@ -27,7 +30,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export interface AuthProviderProps {
   children: ReactNode;
-  apiBaseUrl: string;
+  apiBaseUrl?: string;
   autoRefresh?: boolean;
   refreshInterval?: number;
 }
@@ -40,39 +43,57 @@ export function AuthProvider({
 }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
-    walletAddress: null,
-    sessionToken: null,
-    publicKey: null,
+    email: null,
+    accessToken: null,
+    refreshToken: null,
+    user: null,
     isLoading: true,
     error: null,
   });
 
-  const [api] = useState(() => new WalletAuthApi(apiBaseUrl));
+  const [api] = useState(() => new EmailAuthApi());
 
-  // Initialize auth state from storage
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedAuth = AuthStorage.getAuth();
-        if (storedAuth && !AuthStorage.isSessionExpired(storedAuth.expiresAt)) {
-          // Validate session with server
-          const validation = await api.validateSession(storedAuth.sessionToken);
-          if (validation.valid) {
-            setState(prev => ({
-              ...prev,
-              isAuthenticated: true,
-              walletAddress: storedAuth.walletAddress,
-              sessionToken: storedAuth.sessionToken,
-              publicKey: storedAuth.keyPair.publicKey,
-              isLoading: false,
-            }));
-          } else {
-            AuthStorage.clearAuth();
-            setState(prev => ({ ...prev, isLoading: false }));
-          }
-        } else {
+        const storedAccessToken = AuthStorage.getAccessToken();
+        const storedRefreshToken = AuthStorage.getRefreshToken();
+        const storedEmail = AuthStorage.getEmail();
+
+        if (!storedRefreshToken) {
           setState(prev => ({ ...prev, isLoading: false }));
+          return;
         }
+
+        let accessToken = storedAccessToken;
+        let refreshToken = storedRefreshToken;
+
+        if (!accessToken) {
+          const refreshed = await api.refreshToken(storedRefreshToken);
+          accessToken = refreshed.accessToken;
+          refreshToken = refreshed.refreshToken;
+          AuthStorage.storeAccessToken(accessToken);
+          AuthStorage.storeRefreshToken(refreshToken);
+        }
+
+        const me = await api.getMe(accessToken);
+
+        if (!me.authenticated) {
+          AuthStorage.clearAuth();
+          setState(prev => ({ ...prev, isLoading: false }));
+          return;
+        }
+
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          email: storedEmail,
+          accessToken,
+          refreshToken,
+          user: me.user ?? null,
+          isLoading: false,
+          error: null,
+        }));
       } catch (error) {
         console.error("Failed to initialize auth:", error);
         AuthStorage.clearAuth();
@@ -83,21 +104,6 @@ export function AuthProvider({
     initializeAuth();
   }, [api]);
 
-  // Auto-refresh token
-  useEffect(() => {
-    if (!autoRefresh || !state.isAuthenticated) return;
-
-    const interval = setInterval(async () => {
-      try {
-        await refreshToken();
-      } catch (error) {
-        console.error("Auto-refresh failed:", error);
-      }
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, state.isAuthenticated]);
-
   const setError = (error: string | null) => {
     setState(prev => ({ ...prev, error }));
   };
@@ -107,120 +113,75 @@ export function AuthProvider({
   };
 
   const isSessionValid = (): boolean => {
-    const storedAuth = AuthStorage.getAuth();
-    return !!(storedAuth && !AuthStorage.isSessionExpired(storedAuth.expiresAt));
+    const refreshToken = AuthStorage.getRefreshToken();
+    return !!refreshToken;
   };
 
-  const login = async (walletAddress: string): Promise<void> => {
+  const sendOtp = async (email: string): Promise<void> => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-
     try {
-      const deviceFingerprint = await WalletCrypto.generateDeviceFingerprint();
-      const deviceType = WalletCrypto.getDeviceType();
-
-      // Check if we have existing key for this wallet
-      let keyPair: KeyPair;
-      let publicKey: string;
-      console.log("deviceFingerprint", deviceFingerprint);
-
-      const existingKey = AuthStorage.getKey(walletAddress);
-      if (existingKey && !AuthStorage.isSessionExpired(existingKey.expiresAt)) {
-        keyPair = existingKey.keyPair;
-        publicKey = existingKey.publicKey;
-      } else {
-        // Generate new key pair and register it
-        keyPair = await WalletCrypto.generateKeyPair();
-        publicKey = keyPair.publicKey;
-
-        console.log("KEYPAIR", keyPair);
-
-        // Step 1: Initiate authentication
-        const initiateResponse = await api.initiateAuth({
-          walletAddress,
-          deviceFingerprint,
-          deviceType,
-          metadata: {
-            timestamp: new Date().toISOString(),
-          },
-        });
-
-        // Step 2: Generate challenge response
-        const challengeResponse = await WalletCrypto.generateChallengeResponse(
-          initiateResponse.challengeCode,
-          walletAddress,
-        );
-
-        // Step 3: Register key
-        await api.registerKey({
-          walletAddress,
-          publicKey,
-          challengeCode: initiateResponse.challengeCode,
-          challengeResponse,
-          deviceFingerprint,
-          deviceType,
-          expirationHours: AUTH_EXPIRATION_HOURS, // 30 days
-        });
-
-        // Store key for future use
-        const keyData: StoredKey = {
-          walletAddress,
-          keyPair,
-          publicKey,
-          expiresAt: new Date(Date.now() + (AUTH_EXPIRATION_HOURS - 24) * 60 * 60 * 1000).toISOString(),
-          deviceFingerprint,
-          createdAt: new Date().toISOString(),
-        };
-        AuthStorage.storeKey(walletAddress, keyData);
-      }
-
-      // Step 4: Authenticate
-      const timestamp = new Date().toISOString();
-      const signature = await WalletCrypto.createAuthSignature(walletAddress, timestamp, publicKey);
-
-      const authResponse = await api.authenticate({
-        walletAddress,
-        publicKey,
-        signature,
-        timestamp,
-        deviceFingerprint,
-      });
-
-      // Store auth data
-      const authData: StoredAuth = {
-        walletAddress,
-        keyPair,
-        sessionToken: authResponse.sessionToken,
-        expiresAt: authResponse.expiresAt,
-        deviceFingerprint,
-      };
-      AuthStorage.storeAuth(authData);
-
-      setState(prev => ({
-        ...prev,
-        isAuthenticated: true,
-        walletAddress,
-        sessionToken: authResponse.sessionToken,
-        publicKey: authResponse.publicKey,
-        isLoading: false,
-        error: null,
-      }));
+      await api.sendOtp(email);
+      AuthStorage.storeEmail(email);
+      setState(prev => ({ ...prev, email, isLoading: false }));
     } catch (error) {
-      console.error("Login failed:", error);
-      const errorMessage = (error as ApiError).message || "Login failed";
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
+      console.error("Send OTP failed:", error);
+      const errorMessage = (error as ApiError).message || "Failed to send OTP";
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       throw error;
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const verifyOtp = async (email: string, otp: string): Promise<AuthMeResponse["user"] | null> => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      const storedAuth = AuthStorage.getAuth();
-      if (storedAuth?.sessionToken) {
-        await api.revokeSession(storedAuth.sessionToken);
+      const response = await api.verifyOtp(email, otp);
+      const accessToken = (response as any).accessToken ?? (response as any).access_token;
+      const refreshToken = (response as any).refreshToken ?? (response as any).refresh_token;
+
+      // Store tokens and email first (synchronously) to ensure they persist
+      AuthStorage.storeEmail(email);
+      if (accessToken) AuthStorage.storeAccessToken(accessToken);
+      if (refreshToken) AuthStorage.storeRefreshToken(refreshToken);
+
+      let meUser: AuthMeResponse["user"] | null = null;
+      if (accessToken) {
+        try {
+          const me = await api.getMe(accessToken);
+          meUser = me.user ?? null;
+        } catch (err) {
+          console.error("verifyOtp getMe failed:", err);
+        }
+      }
+
+      const userData: UserData = meUser ?? (response.user as UserData) ?? null;
+
+      // Update state with complete user data
+      setState(prev => ({
+        ...prev,
+        isAuthenticated: true,
+        email,
+        accessToken: accessToken ?? null,
+        refreshToken: refreshToken ?? null,
+        user: userData,
+        isLoading: false,
+        error: null,
+      }));
+
+      // Return user data to component
+      return (userData as AuthMeResponse["user"]) ?? null;
+    } catch (error) {
+      console.error("Verify OTP failed:", error);
+      const errorMessage = (error as ApiError).message || "Failed to verify OTP";
+      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
+      throw error;
+    }
+  };
+
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      const refreshToken = state.refreshToken || AuthStorage.getRefreshToken();
+      if (refreshToken) {
+        await api.logout(refreshToken);
       }
     } catch (error) {
       console.error("Logout API call failed:", error);
@@ -228,35 +189,32 @@ export function AuthProvider({
       AuthStorage.clearAuth();
       setState({
         isAuthenticated: false,
-        walletAddress: null,
-        sessionToken: null,
-        publicKey: null,
+        email: null,
+        accessToken: null,
+        refreshToken: null,
+        user: null,
         isLoading: false,
         error: null,
       });
     }
-  };
+  }, [api, state.refreshToken]);
 
-  const refreshToken = async (): Promise<void> => {
-    const storedAuth = AuthStorage.getAuth();
-    if (!storedAuth) return;
+  const refreshSession = useCallback(async (): Promise<void> => {
+    const storedRefreshToken = AuthStorage.getRefreshToken();
+    if (!storedRefreshToken) return;
 
     try {
-      const response = await api.refreshToken({
-        sessionToken: storedAuth.sessionToken,
-        walletAddress: storedAuth.walletAddress,
-      });
+      const response = await api.refreshToken(storedRefreshToken);
+      const accessToken = (response as any).accessToken ?? (response as any).access_token;
+      const newRefreshToken = (response as any).refreshToken ?? (response as any).refresh_token;
 
-      const updatedAuth: StoredAuth = {
-        ...storedAuth,
-        sessionToken: response.sessionToken,
-        expiresAt: response.expiresAt,
-      };
-      AuthStorage.storeAuth(updatedAuth);
+      if (accessToken) AuthStorage.storeAccessToken(accessToken);
+      if (newRefreshToken) AuthStorage.storeRefreshToken(newRefreshToken);
 
       setState(prev => ({
         ...prev,
-        sessionToken: response.sessionToken,
+        accessToken: accessToken ?? prev.accessToken,
+        refreshToken: newRefreshToken ?? prev.refreshToken,
         error: null,
       }));
     } catch (error) {
@@ -264,13 +222,24 @@ export function AuthProvider({
       await logout();
       throw error;
     }
-  };
+  }, [api, logout]);
+
+  useEffect(() => {
+    if (!autoRefresh || !state.isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      refreshSession().catch(error => console.error("Auto-refresh failed:", error));
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, state.isAuthenticated, refreshSession]);
 
   const value: AuthContextValue = {
     ...state,
-    login,
+    sendOtp,
+    verifyOtp,
     logout,
-    refreshToken,
+    refreshSession,
     clearError,
     isSessionValid,
   };

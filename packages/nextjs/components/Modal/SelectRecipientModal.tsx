@@ -4,17 +4,16 @@ import { SelectRecipientModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { ModalHeader } from "../Common/ModalHeader";
 import BaseModal from "./BaseModal";
-import { useGetCategories, useGetAllAddressBooks, useGetAddressBooksByCategory } from "@/services/api/address-book";
-import { AddressBook, Category } from "@/types/address-book";
-import { Empty } from "../Common/Empty";
+import { useGetAllEmployeeGroups, useGetEmployeesByGroup, useGetAllEmployees } from "@/services/api/employee";
 import { useForm } from "react-hook-form";
 import { formatAddress } from "@/services/utils/miden/address";
-import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useQueryClient } from "@tanstack/react-query";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
 import { createShapeElement } from "../ContactBook/ShapeSelectionTooltip";
+import { CompanyContactResponseDto, CompanyGroupResponseDto } from "@/types/employee";
+import { useAuth } from "@/services/auth/context";
 
 interface AddressItemProps {
   name: string;
@@ -40,9 +39,10 @@ function AddressItem({ name, address, isSelected = false, onSelect }: AddressIte
 
 export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<SelectRecipientModalProps>) {
   // **************** Custom Hooks *******************
+  const { isAuthenticated } = useAuth();
   const { register, watch, reset } = useForm();
-  const { data: categories } = useGetCategories();
-  const { data: allAddressBooks, refetch: refetchAllAddressBooks } = useGetAllAddressBooks();
+  const { data: employeeGroups } = useGetAllEmployeeGroups({ enabled: isAuthenticated });
+  const { data: allEmployees } = useGetAllEmployees(1, 1000, { enabled: isAuthenticated });
   const { isConnected } = useWalletConnect();
   const queryClient = useQueryClient();
 
@@ -58,22 +58,26 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
     return Number(activeTab);
   };
 
-  const { data: categoryAddressBooks } = useGetAddressBooksByCategory(getCategoryId());
+  const { data: categoryEmployees } = useGetEmployeesByGroup(getCategoryId() || 0, 1, 1000);
 
   // Use appropriate data source based on active tab
-  const addressBooks = activeTab === "all" ? allAddressBooks : categoryAddressBooks;
+  const addressBooks =
+    activeTab === "all" ? allEmployees?.data ?? [] : categoryEmployees?.data ?? [];
 
   // Filter address books by search term
   const filteredAddressBooks = useMemo(() => {
     if (!search || !addressBooks) return addressBooks || [];
-    return addressBooks.filter((ab: AddressBook) => ab.name.toLowerCase().includes(search.toLowerCase()));
+    const term = search.toLowerCase();
+    return addressBooks.filter((ab: CompanyContactResponseDto) => {
+      return ab.name.toLowerCase().includes(term) || ab.walletAddress.toLowerCase().includes(term);
+    });
   }, [addressBooks, search]);
 
   // Get category names for tabs
-  const categoryNames = useMemo(() => {
-    if (!categories) return [];
-    return categories.map(cat => cat.name);
-  }, [categories]);
+  const groupNames = useMemo(() => {
+    if (!employeeGroups) return [];
+    return employeeGroups.map(groups => groups.name);
+  }, [employeeGroups]);
 
   //*******************************************************
   //******************* Effects ***************************
@@ -81,37 +85,37 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
 
   // Set default active tab
   useEffect(() => {
-    if (categoryNames.length > 0 && activeTab === "all") {
+    if (groupNames.length > 0 && activeTab === "all") {
       setActiveTab("all");
     }
-  }, [categoryNames, activeTab]);
+  }, [groupNames, activeTab]);
 
   useEffect(() => {
     if (isConnected) {
-      // Refetch address books when connected
-      refetchAllAddressBooks();
-    } else {
-      // Clear data and reset all state when disconnected
-      queryClient.removeQueries({ queryKey: ["address-book"] });
-      queryClient.removeQueries({ queryKey: ["categories"] });
-      setActiveTab("all");
-      setSelectedAddress("");
-      setSelectedName("");
-      reset(); // Clear search form
+      // When connected, rely on react-query freshness; no manual refetch needed
+      return;
     }
-  }, [isConnected, refetchAllAddressBooks, queryClient, reset]);
+
+    // Clear data and reset all state when disconnected
+    queryClient.removeQueries({ queryKey: ["employees"] });
+    queryClient.removeQueries({ queryKey: ["employees", "groups"] });
+    setActiveTab("all");
+    setSelectedAddress("");
+    setSelectedName("");
+    reset(); // Clear search form
+  }, [isConnected, queryClient, reset]);
 
   //*******************************************************
   //******************* Handlers ***************************
   //*******************************************************
 
   // Handle address selection (auto-return on click)
-  const handleSelectAddress = (address: string, name: string) => {
-    setSelectedAddress(address);
-    setSelectedName(name);
+  const handleSelectAddress = (employee: CompanyContactResponseDto) => {
+    setSelectedAddress(employee.walletAddress);
+    setSelectedName(employee.name);
     // Automatically save and close when a recipient is selected
     if (onSave) {
-      onSave(address, name);
+      onSave(employee);
       onClose && onClose();
     }
   };
@@ -127,14 +131,14 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
-      <ModalHeader title="Select from contact book" onClose={onClose} />
+      <ModalHeader title="Select employee from contact" onClose={onClose} />
       <div className="flex flex-col items-start rounded-b-2xl border-2 bg-background border-primary-divider h-[580px] w-[650px] p-3">
         {/* Search Input */}
         <section className="flex flex-row items-center justify-between p-3 rounded-xl bg-app-background w-full">
           <input
             type="text"
-            placeholder="Search name or address"
-            className="text-text-primary outline-none placeholder-text-secondary"
+            placeholder="Search name, email or wallet address"
+            className="text-text-primary outline-none placeholder-text-secondary w-full"
             {...register("search")}
           />
           <img src="/misc/blue-search-icon.svg" alt="search" className="w-5 h-5" />
@@ -155,26 +159,26 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
                   : "text-text-primary border border-primary-divider bg-transparent"
               }`}
             >
-              <span className={`${activeTab === "all" ? "text-white" : "text-text-primary"}`}>All Categories</span>
+              <span className={`${activeTab === "all" ? "text-white" : "text-text-primary"}`}>All groups</span>
             </button>
-            {categoryNames.map((cat, idx) => {
-              const category = categories?.find(c => c.name === cat);
+            {employeeGroups?.map((groups: CompanyGroupResponseDto, idx: number) => {
+              const group = employeeGroups?.find(c => c.id === groups.id);
               return (
                 <button
                   type="button"
-                  key={cat}
-                  onClick={() => handleTabChange(category?.id.toString() || "")}
+                  key={groups.id}
+                  onClick={() => handleTabChange(groups.id.toString())}
                   className={`flex gap-2.5 items-center px-5 py-2 rounded-3xl cursor-pointer font-semibold ${
-                    activeTab === category?.id.toString()
+                    activeTab === groups.id.toString()
                       ? "bg-black text-white"
                       : "text-text-primary border border-primary-divider bg-transparent"
                   }`}
                 >
                   <div className="flex items-center justify-center w-5 h-5">
-                    {category && createShapeElement(category.shape, category.color)}
+                    {groups && createShapeElement(groups.shape, groups.color)}
                   </div>
-                  <span className={`${activeTab === category?.id.toString() ? "text-white" : "text-text-primary"}`}>
-                    {cat}
+                  <span className={`${activeTab === groups.id.toString() ? "text-white" : "text-text-primary"}`}>
+                    {groups.name}
                   </span>
                 </button>
               );
@@ -183,13 +187,13 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
 
           {filteredAddressBooks && filteredAddressBooks.length > 0 ? (
             <div className="flex flex-col items-start h-full w-full">
-              {filteredAddressBooks.map((ab: AddressBook, idx: number) => (
+              {filteredAddressBooks.map((employee: CompanyContactResponseDto, idx: number) => (
                 <AddressItem
-                  key={ab.address + ab.name}
-                  name={ab.name}
-                  address={ab.address}
-                  isSelected={selectedAddress === ab.address}
-                  onSelect={() => handleSelectAddress(ab.address, ab.name)}
+                  key={`${employee.walletAddress}-${employee.name}`}
+                  name={employee.name}
+                  address={employee.walletAddress}
+                  isSelected={selectedAddress === employee.walletAddress}
+                  onSelect={() => handleSelectAddress(employee)}
                 />
               ))}
             </div>

@@ -1,0 +1,129 @@
+// Types and DTOs for Invoice API (frontend, matches backend)
+// These are stubs; fill in as needed for type safety and intellisense
+
+export enum InvoiceStatusEnum {
+	DRAFT = "DRAFT",
+	SENT = "SENT",
+	REVIEWED = "REVIEWED",
+	CONFIRMED = "CONFIRMED",
+	CANCELLED = "CANCELLED",
+}
+
+export enum Currency {
+	USD = "USD",
+	EUR = "EUR",
+	GBP = "GBP",
+	// Add more as needed
+}
+
+export interface InvoiceItemDto {
+	description: string;
+	quantity: string;
+	unitPrice: string;
+	unit?: string;
+	taxRate?: string;
+	discount?: string;
+	total?: string;
+	order?: number;
+	metadata?: Record<string, any>;
+}
+
+export interface FromDetailsDto {
+	name: string;
+	email: string;
+	companyName?: string;
+	address1?: string;
+	address2?: string;
+	city?: string;
+	country?: string;
+	postalCode?: string;
+	walletAddress: string;
+	network: Record<string, any>;
+	token: Record<string, any>;
+}
+
+export interface BillToDetailsDto {
+	companyName: string;
+	contactName: string;
+	email: string;
+	address1: string;
+	address2?: string;
+	city: string;
+	country: string;
+	postalCode: string;
+}
+
+export interface CreateInvoiceDto {
+	currency: Currency;
+	payrollId: number;
+	dueDate: string;
+	fromDetails: FromDetailsDto;
+	billToDetails: BillToDetailsDto;
+	items: InvoiceItemDto[];
+	subtotal: string;
+	taxRate: string;
+	taxAmount: string;
+	total: string;
+	metadata?: Record<string, any>;
+}
+
+export interface UpdateInvoiceDto {
+	fromDetails?: FromDetailsDto;
+	items?: InvoiceItemDto[];
+	subtotal?: string;
+	taxRate?: string;
+	taxAmount?: string;
+	total?: string;
+	metadata?: Record<string, any>;
+}
+
+export interface InvoiceQueryDto {
+	page?: number;
+	limit?: number;
+	status?: InvoiceStatusEnum;
+	payrollId?: number;
+	search?: string;
+}
+
+export interface InvoiceStatsDto {
+	totalDraft: number;
+	totalSent: number;
+	totalReviewed: number;
+	totalConfirmed: number;
+	totalAmount: string;
+	dueThisMonth: number;
+}
+
+export interface CreateInvoiceScheduleDto {
+	frequency: string;
+	dayOfMonth?: number;
+	dayOfWeek?: number;
+	generateDaysBefore: number;
+	invoiceTemplate?: Record<string, any>;
+	metadata?: Record<string, any>;
+}
+
+export interface UpdateInvoiceScheduleDto {
+	frequency?: string;
+	dayOfMonth?: number;
+	dayOfWeek?: number;
+	generateDaysBefore?: number;
+	isActive?: boolean;
+	invoiceTemplate?: Record<string, any>;
+	metadata?: Record<string, any>;
+}
+
+export interface InvoiceScheduleResponseDto {
+	id: number;
+	uuid: string;
+	payrollId: number;
+	frequency: string;
+	dayOfMonth?: number;
+	dayOfWeek?: number;
+	generateDaysBefore: number;
+	isActive: boolean;
+	nextGenerateDate?: string;
+	lastGeneratedAt?: string;
+	createdAt: string;
+	updatedAt: string;
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { InvoiceData } from "./InvoiceReviewContainer";
+import { InvoiceData } from "../../InvoiceReview/InvoiceReviewContainer";
 
 const PreviewCard = ({
   name,
@@ -34,7 +34,7 @@ const PreviewCard = ({
 const InvoicePreview = (invoiceData: InvoiceData) => {
   return (
     <div
-      className=" w-1/2 p-15 m-4 relative h-[1000px] flex justify-between items-center flex-col"
+      className=" w-full p-15 m-4 relative h-[1000px] flex justify-between items-center flex-col"
       style={{
         backgroundColor: "#194BFA",
         borderRadius: "20px",
@@ -89,8 +89,8 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
             <div className="grid grid-cols-[1fr_80px_80px_120px] border-b border-primary-divider pb-2 mb-2">
               <p className="text-xs font-medium text-text-secondary">Item</p>
               <p className="text-xs font-medium text-text-secondary">Price</p>
-              <p className="text-xs font-medium text-text-secondary">Qty</p>
-              <p className="text-xs font-medium text-text-secondary">Amount</p>
+              <p className="text-xs font-medium text-text-secondary text-center">Qty</p>
+              <p className="text-xs font-medium text-text-secondary text-right">Amount</p>
             </div>
 
             {/* Table Rows */}
@@ -129,7 +129,7 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
           <div className="border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 w-75">
             <p className="text-xs font-semibold text-text-secondary">Payment method</p>
             <div className="flex flex-row gap-2 items-center">
-              <img src="/token/usdt.svg" alt="USDT" className="w-8 h-8 rounded-full" />
+              <img src="/token/qash.svg" alt="USDT" className="w-8 h-8 rounded-full" />
               <div className="flex flex-col">
                 <p className="text-sm font-semibold text-text-primary">{invoiceData.from.token}</p>
                 <p className="text-xs font-medium text-text-secondary">{invoiceData.from.network}</p>

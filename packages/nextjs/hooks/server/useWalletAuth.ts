@@ -1,33 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useAuth } from "@/services/auth/context";
 import { AuthenticatedApiClient } from "@/services/api";
 
-export interface WalletAuthHook {
+export interface EmailAuthHook {
   // Auth state
   isAuthenticated: boolean;
-  walletAddress: string | null;
+  email: string | null;
+  user: any | null;
   isLoading: boolean;
   error: string | null;
 
   // Auth actions
-  connectWallet: (walletAddress: string) => Promise<void>;
-  disconnectWallet: () => Promise<void>;
+  sendOtp: (email: string) => Promise<void>;
+  verifyOtp: (email: string, otp: string) => Promise<any>;
+  logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   clearError: () => void;
 
   // Utilities
-  isSessionValid: () => boolean;
-  getSessionToken: () => string | null;
+  isSessionValid: () => Promise<boolean>;
 
   // Authenticated API client
   api: AuthenticatedApiClient;
 }
 
-export function useWalletAuth(): WalletAuthHook {
+export function useEmailAuth(): EmailAuthHook {
   const auth = useAuth();
-  // const session = useSessionManager();
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Combine auth error with local error
@@ -36,9 +36,13 @@ export function useWalletAuth(): WalletAuthHook {
   // Create authenticated API client
   const api = new AuthenticatedApiClient(
     process.env.NEXT_PUBLIC_SERVER_URL || "",
-    () => auth.sessionToken,
-    () => auth.refreshToken(),
-    () => auth.logout(),
+    () => auth.accessToken || null,
+    async () => {
+      await auth.refreshToken();
+    },
+    () => {
+      auth.logout();
+    },
   );
 
   const clearError = useCallback(() => {
@@ -46,15 +50,13 @@ export function useWalletAuth(): WalletAuthHook {
     setLocalError(null);
   }, [auth]);
 
-  const connectWallet = useCallback(
-    async (walletAddress: string) => {
+  const sendOtp = useCallback(
+    async (email: string) => {
       try {
         setLocalError(null);
-        await auth.login(walletAddress);
-        // await session.loginUser(walletAddress);
+        await auth.sendOtp(email);
       } catch (error) {
-        // await session.logoutUser();
-        const errorMessage = error instanceof Error ? error.message : "Connection failed";
+        const errorMessage = error instanceof Error ? error.message : "Failed to send OTP";
         setLocalError(errorMessage);
         throw error;
       }
@@ -62,13 +64,26 @@ export function useWalletAuth(): WalletAuthHook {
     [auth],
   );
 
-  const disconnectWallet = useCallback(async () => {
+  const verifyOtp = useCallback(
+    async (email: string, otp: string) => {
+      try {
+        setLocalError(null);
+        return await auth.verifyOtp(email, otp);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to verify OTP";
+        setLocalError(errorMessage);
+        throw error;
+      }
+    },
+    [auth],
+  );
+
+  const logout = useCallback(async () => {
     try {
       setLocalError(null);
       await auth.logout();
-      // await session.logoutUser();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Disconnection failed";
+      const errorMessage = error instanceof Error ? error.message : "Logout failed";
       setLocalError(errorMessage);
       throw error;
     }
@@ -85,41 +100,34 @@ export function useWalletAuth(): WalletAuthHook {
     }
   }, [auth]);
 
-  const getSessionToken = useCallback(() => {
-    return auth.sessionToken;
-  }, [auth.sessionToken]);
-
   return {
     isAuthenticated: auth.isAuthenticated,
-    walletAddress: auth.walletAddress,
+    email: auth.email,
+    user: auth.user,
     isLoading: auth.isLoading,
     error,
-    connectWallet,
-    disconnectWallet,
+    sendOtp,
+    verifyOtp,
+    logout,
     refreshAuth,
     clearError,
     isSessionValid: auth.isSessionValid,
-    getSessionToken,
     api,
   };
 }
 
-// Additional hook for checking auth requirements
-export function useAuthGuard(redirectTo?: string) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && redirectTo) {
-      // In a real app, you'd use your router here
-      // For example: router.push(redirectTo);
-      console.log(`Redirecting to ${redirectTo} - user not authenticated`);
-    }
-  }, [isAuthenticated, isLoading, redirectTo]);
-
+// Keep useWalletAuth for backward compatibility (deprecated)
+export function useWalletAuth() {
+  const emailAuth = useEmailAuth();
   return {
-    isAuthenticated,
-    isLoading,
-    canAccess: isAuthenticated,
+    ...emailAuth,
+    walletAddress: emailAuth.email, // Map email to walletAddress for compatibility
+    connectWallet: async (walletAddress: string) => {
+      // This is deprecated - use sendOtp/verifyOtp instead
+      console.warn("connectWallet is deprecated. Use sendOtp/verifyOtp instead.");
+    },
+    disconnectWallet: emailAuth.logout,
+    getSessionToken: () => null, // Tokens are in cookies
   };
 }
 

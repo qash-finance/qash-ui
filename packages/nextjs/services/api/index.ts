@@ -22,7 +22,7 @@ export class AuthenticatedApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor - Add auth header
+    // Request interceptor - Add Authorization header
     this.axiosInstance.interceptors.request.use(
       config => {
         const token = this.getToken();
@@ -34,7 +34,7 @@ export class AuthenticatedApiClient {
       error => Promise.reject(error),
     );
 
-    // Response interceptor - Handle token refresh
+    // Response interceptor - Handle token refresh and 401 errors
     this.axiosInstance.interceptors.response.use(
       response => response,
       async error => {
@@ -116,15 +116,38 @@ const apiServer = axios.create({
 // Create a single shared API client instance
 const apiServerWithAuth = new AuthenticatedApiClient(
   process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => {
-    const auth = AuthStorage.getAuth();
-    return auth?.sessionToken || null;
-  },
+  () => AuthStorage.getAccessToken(),
   async () => {
-    // TODO: Implement token refresh logic
-    // For now, just clear auth and redirect to login
+    // Refresh token via API route
+    const refreshToken = AuthStorage.getRefreshToken();
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    const response = await fetch("/api/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to refresh token");
+    }
+
+    const data = await response.json();
+    AuthStorage.storeAccessToken(data.accessToken);
+    AuthStorage.storeRefreshToken(data.refreshToken);
   },
-  () => {},
+  () => {
+    if (typeof window === "undefined") return;
+    const currentPath = window.location.pathname || "";
+    const isPublic = currentPath.startsWith("/login") || currentPath.startsWith("/onboarding") || currentPath.startsWith("/payment");
+    if (!isPublic) {
+      window.location.href = "/login";
+    }
+  },
 );
 
 export { apiServer, apiServerWithAuth };

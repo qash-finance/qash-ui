@@ -194,20 +194,20 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px transparent inset !important;
-  -webkit-text-fill-color: white !important;
-  color: white !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  color: var(--text-primary) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
 /* For Firefox */
 input:-moz-autofill {
   background-color: transparent !important;
-  color: white !important;
+  color: var(--text-primary) !important;
 }
 
 input:-webkit-autofill-background-color {
   background-color: transparent !important;
-  color: white !important;
+  color: var(--text-primary) !important;
 }
 
 /* Additional autofill overrides for better consistency */
@@ -219,9 +219,9 @@ input:-moz-autofill,
 input:-moz-autofill:hover,
 input:-moz-autofill:focus,
 input:-moz-autofill:active {
-  color: white !important;
-  -webkit-text-fill-color: white !important;
-  -webkit-text-stroke: 0px white !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  -webkit-text-stroke: 0px var(--text-primary) !important;
 }
 
 .border-gradient {

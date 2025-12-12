@@ -42,7 +42,7 @@ import ProcessingTransactionModal from "@/components/Modal/ProcessingTransaction
 import CreateWalletModal from "@/components/Modal/Wallet/CreateWalletModal";
 import ImportWalletModal from "@/components/Modal/Wallet/ImportWalletModal";
 import RemoveTransactionConfirmationModal from "@/components/Modal/Batch/RemoveTransactionConfirmationModal";
-import CreateCategoryModal from "@/components/Modal/Contact/CreateCategoryModal";
+import CreateGroupModal from "@/components/Modal/Contact/CreateGroupModal";
 import CreateContactModal from "@/components/Modal/Contact/CreateContactModal";
 import EditContactModal from "@/components/Modal/Contact/EditContactModal";
 import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveContactConfirmationModal";
@@ -58,6 +58,7 @@ import { AssetWithMetadata } from "./faucet";
 import { DateRange } from "react-day-picker";
 import { SchedulePaymentFrequency } from "./schedule-payment";
 import { TransactionStatus } from "./transaction";
+import { CompanyContactResponseDto, NetworkDto, TokenDto } from "./employee";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -103,7 +104,7 @@ export const MODAL_IDS = {
   PROCESSING_TRANSACTION: "PROCESSING_TRANSACTION",
   CREATE_WALLET: "CREATE_WALLET",
   REMOVE_TRANSACTION_CONFIRMATION: "REMOVE_TRANSACTION_CONFIRMATION",
-  CREATE_CATEGORY: "CREATE_CATEGORY",
+  CREATE_GROUP: "CREATE_GROUP",
   CREATE_CONTACT: "CREATE_CONTACT",
   EDIT_CONTACT: "EDIT_CONTACT",
   REMOVE_CONTACT_CONFIRMATION: "REMOVE_CONTACT_CONFIRMATION",
@@ -147,7 +148,7 @@ export interface EditTransactionModalProps extends BaseModalProps {
 }
 
 export interface SelectRecipientModalProps extends BaseModalProps {
-  onSave?: (address: string, name: string) => void;
+  onSave?: (employee: CompanyContactResponseDto) => void;
 }
 
 export interface ModulesSetupProps extends BaseModalProps {
@@ -351,7 +352,7 @@ export interface RemoveTransactionConfirmationModalProps extends BaseModalProps 
   onRemove?: () => Promise<void>;
 }
 
-export interface CreateCategoryModalProps extends BaseModalProps {}
+export interface CreateGroupModalProps extends BaseModalProps {}
 
 export interface CreateContactModalProps extends BaseModalProps {}
 
@@ -362,7 +363,8 @@ export interface EditContactModalProps extends BaseModalProps {
     address: string;
     email?: string;
     category: string;
-    token?: AssetWithMetadata;
+    token?: TokenDto;
+    network?: NetworkDto;
   };
 }
 
@@ -440,7 +442,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.CREATE_IMPORT_WALLET]: CreateImportWalletModalProps;
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModalProps;
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModalProps;
-  [MODAL_IDS.CREATE_CATEGORY]: CreateCategoryModalProps;
+  [MODAL_IDS.CREATE_GROUP]: CreateGroupModalProps;
   [MODAL_IDS.CREATE_CONTACT]: CreateContactModalProps;
   [MODAL_IDS.EDIT_CONTACT]: EditContactModalProps;
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModalProps;
@@ -497,7 +499,7 @@ export const modalRegistry = {
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModal,
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModal,
   [MODAL_IDS.REMOVE_TRANSACTION_CONFIRMATION]: RemoveTransactionConfirmationModal,
-  [MODAL_IDS.CREATE_CATEGORY]: CreateCategoryModal,
+  [MODAL_IDS.CREATE_GROUP]: CreateGroupModal,
   [MODAL_IDS.CREATE_CONTACT]: CreateContactModal,
   [MODAL_IDS.EDIT_CONTACT]: EditContactModal,
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModal,

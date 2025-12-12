@@ -32,6 +32,7 @@ import { ActionButton } from "./Common/ActionButton";
 import { MODAL_IDS } from "@/types/modal";
 import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
 import { PrimaryButton } from "./Common/PrimaryButton";
+import { useAuthGuard } from "@/hooks/server/useAuthGuard";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -65,6 +66,12 @@ const fullscreenPages = new Set([
   "/invoice-review",
 ]);
 
+// Inner component that uses auth guard (must be inside AuthProvider)
+function ProtectedContent({ children }: { children: ReactNode }) {
+  useAuthGuard();
+  return <>{children}</>;
+}
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
@@ -91,12 +98,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         break;
     }
   };
-
-  useEffect(() => {
-    if (shouldShowMigrationModal()) {
-      modalRef.current?.openModal(MODAL_IDS.MIGRATING);
-    }
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -158,51 +159,33 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                         autoRefresh={true}
                         refreshInterval={AUTH_REFRESH_INTERVAL}
                       >
-                        <AccountProvider>
-                          <TitleProvider>
-                            {/* <ConnectWalletButton /> */}
-                            <ModalManager />
-                            <ModalTrigger ref={modalRef} />
-                            {fullscreenPages.has(pathname) ? (
-                              <div className="h-screen w-screen">{children}</div>
-                            ) : (
-                              // Regular layout for other pages
-                              <div className="flex flex-row gap-2">
-                                <div className="top-0 w-[240px]">
-                                  <Sidebar />
-                                </div>
-                                {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
-                                <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
-                                  <Title />
-                                  <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
-                                    {children}
-                                    {!isConnected && (
-                                      <div className="absolute inset-0 backdrop-blur-xs flex items-center justify-center flex-col gap-2 z-10">
-                                        <img
-                                          src="/modal/wallet-icon.gif"
-                                          alt="connect-wallet-icon"
-                                          className="w-16 h-16"
-                                        />
-                                        <span className="text-text-primary text-lg font-medium">
-                                          Please connect your wallet to display information.
-                                        </span>
-                                        <PrimaryButton
-                                          text="Connect Wallet"
-                                          onClick={() => modalRef.current?.openModal(MODAL_IDS.SELECT_WALLET)}
-                                          containerClassName="w-[190px]"
-                                          icon="/misc/wallet-icon.svg"
-                                          iconPosition="left"
-                                        />
-                                      </div>
-                                    )}
+                        <ProtectedContent>
+                          <AccountProvider>
+                            <TitleProvider>
+                              {/* <ConnectWalletButton /> */}
+                              <ModalManager />
+                              {fullscreenPages.has(pathname) ? (
+                                <div className="h-screen w-screen">{children}</div>
+                              ) : (
+                                // Regular layout for other pages
+                                <div className="flex flex-row gap-2">
+                                  <div className="top-0 w-[240px]">
+                                    <Sidebar />
+                                  </div>
+                                  {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
+                                  <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
+                                    <Title />
+                                    <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
+                                      {children}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
-                            {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                            {!fullscreenPages.has(pathname) && <Background />}
-                          </TitleProvider>
-                        </AccountProvider>
+                              )}
+                              {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                              {!fullscreenPages.has(pathname) && <Background />}
+                            </TitleProvider>
+                          </AccountProvider>
+                        </ProtectedContent>
                       </AuthProvider>
                     </AnalyticsProvider>
                   </ModalProvider>
