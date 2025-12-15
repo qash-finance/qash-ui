@@ -116,7 +116,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           />
 
           {/* Transaction Hash Row */}
-          <DetailRow
+          {/* <DetailRow
             label="Transaction Hash"
             value={
               <div className="flex gap-2 items-center">
@@ -126,7 +126,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
                 </span>
               </div>
             }
-          />
+          /> */}
 
           {/* Schedule Payment Row */}
           {isSchedulePayment && (
@@ -137,18 +137,18 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           <DetailRow label="Type" value={transactionType} />
 
           {/* Cancellable in Row */}
-          <DetailRow label="Cancellable in" value={cancellableTime} />
+          {/* <DetailRow label="Cancellable in" value={cancellableTime} /> */}
 
           {/* Message Row */}
-          <DetailRow
+          {/* <DetailRow
             label="Message"
             value={message}
             className="items-start"
             valueClassName="text-right max-w-[300px] truncate"
-          />
+          /> */}
         </div>
         <div className="mt-3 flex gap-2 w-full">
-          <SecondaryButton
+          {/* <SecondaryButton
             text="View on Explorer"
             variant="light"
             onClick={() => {
@@ -157,7 +157,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
             buttonClassName="flex-1"
             icon="/misc/globe.svg"
             iconPosition="left"
-          />
+          /> */}
           <SecondaryButton
             text="Done"
             onClick={() => {

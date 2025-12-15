@@ -1,11 +1,18 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import InvoiceDetail from "./InvoiceDetail";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
 import { useInvoice } from "@/hooks/server/useInvoice";
 import { useSearchParams } from "next/navigation";
+import OtpInput from "react-otp-input";
+import toast from "react-hot-toast";
+import Welcome from "../Common/Welcome";
+import LoginButton from "../Login/LoginButton";
+import { useAuth } from "@/services/auth/context";
+
+type Step = "verify" | "review" | "success";
 
 export interface InvoiceItem {
   description: string;
@@ -52,39 +59,125 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 };
 
 export const InvoiceReviewContainer = () => {
+  const { isAuthenticated, email, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
+  const employeeEmail = searchParams.get("email") || "";
 
+  const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
-  const {
-    isLoading,
-    error,
-    clearError,
-    fetchInvoiceByUUID,
-    sendInvoiceEmail,
-    reviewInvoiceData,
-    confirmInvoiceData,
-    downloadPdf,
-  } = useInvoice();
+  const otpSentKeyRef = useRef<string | null>(null);
+  const autoReviewKeyRef = useRef<string | null>(null);
 
-  // Fetch invoice data on mount or when UUID changes
+  const { isLoading, fetchInvoiceByUUID, confirmInvoiceData, downloadPdf } = useInvoice();
+
+  const normalizedEmployeeEmail = useMemo(() => employeeEmail.trim().toLowerCase(), [employeeEmail]);
+  const normalizedUserEmail = useMemo(() => (email || "").trim().toLowerCase(), [email]);
+
+  const isEmployeeEmailMatch = useMemo(() => {
+    if (!isAuthenticated) return false;
+    if (!normalizedEmployeeEmail || !normalizedUserEmail) return false;
+    return normalizedEmployeeEmail === normalizedUserEmail;
+  }, [isAuthenticated, normalizedEmployeeEmail, normalizedUserEmail]);
+
   useEffect(() => {
-    if (invoiceUUID) {
-      loadInvoice();
+    if (!invoiceUUID || !employeeEmail) return;
+    // Don't run OTP/auto-review logic until auth has finished initializing.
+    // Otherwise we may send OTP while a session exists and overwrite stored email.
+    if (authIsLoading) return;
+
+    const key = `${invoiceUUID}:${normalizedEmployeeEmail}`;
+
+    // 2) If user is authenticated: don't send OTP
+    //    a) If email === employeeEmail: auto move to review
+    //    b) If email !== employeeEmail: stay on verify but hide OTP input
+    if (isAuthenticated) {
+      if (isEmployeeEmailMatch) {
+        if (autoReviewKeyRef.current === key) return;
+        autoReviewKeyRef.current = key;
+
+        (async () => {
+          try {
+            const data = await fetchInvoiceByUUID(invoiceUUID);
+            setInvoiceData(mapApiResponseToInvoiceData(data));
+            setStep("review");
+          } catch (err) {
+            console.error("Failed to load invoice:", err);
+          }
+        })();
+      }
+      return;
     }
-  }, [invoiceUUID, fetchInvoiceByUUID]);
+
+    // 1) If user is not authenticated: auto send OTP (once per invoice+email)
+    if (otpSentKeyRef.current === key) return;
+    otpSentKeyRef.current = key;
+
+    sendOtp(employeeEmail)
+      .then(() => {
+        toast.success(`OTP sent to ${employeeEmail}`);
+      })
+      .catch(err => {
+        toast.error(err instanceof Error ? err.message : "Failed to send OTP");
+      });
+  }, [
+    authIsLoading,
+    employeeEmail,
+    fetchInvoiceByUUID,
+    invoiceUUID,
+    isAuthenticated,
+    isEmployeeEmailMatch,
+    normalizedEmployeeEmail,
+    sendOtp,
+  ]);
 
   const loadInvoice = async () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
       console.log("🚀 ~ loadInvoice ~ data:", data);
-      // Map API response to InvoiceData type
       setInvoiceData(mapApiResponseToInvoiceData(data));
     } catch (err) {
       console.error("Failed to load invoice:", err);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      setOtpError(true);
+      return;
+    }
+
+    setOtpError(false);
+    setVerifyingOtp(true);
+
+    try {
+      await verifyOtp(employeeEmail, otp);
+      toast.success("OTP verified successfully");
+      // Load invoice data and move to review step
+      await loadInvoice();
+      setStep("review");
+    } catch (err) {
+      setOtpError(true);
+      toast.error(err instanceof Error ? err.message : "Failed to verify OTP");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      await sendOtp(employeeEmail);
+      toast.success("OTP sent to your email");
+      setOtp("");
+      setOtpError(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resend OTP");
     }
   };
 
@@ -101,15 +194,7 @@ export const InvoiceReviewContainer = () => {
         name: fromDetails.name || apiData.employee?.name || "",
         email: fromDetails.email || apiData.emailTo || "",
         company: apiData.payroll?.company?.companyName || "",
-        address: [
-          fromDetails.address1,
-          fromDetails.address2,
-          fromDetails.city,
-          fromDetails.country,
-          fromDetails.postalCode,
-        ]
-          .filter(Boolean)
-          .join(", "),
+        address: fromDetails.address || "",
         network: fromDetails.network?.name || apiData.payroll?.network?.name || "Ethereum",
         token: fromDetails.token?.symbol || apiData.payroll?.token?.symbol || "USD",
         walletAddress: fromDetails.walletAddress || apiData.employee?.walletAddress || "",
@@ -152,28 +237,6 @@ export const InvoiceReviewContainer = () => {
     }
   };
 
-  const handleSendInvoice = async () => {
-    try {
-      await sendInvoiceEmail(invoiceUUID);
-      setSuccessMessage(`Invoice has been sent to ${invoiceData?.billTo.email}`);
-      setShowSuccess(true);
-    } catch (err) {
-      console.error("Failed to send invoice:", err);
-    }
-  };
-
-  const handleReviewInvoice = async () => {
-    try {
-      await reviewInvoiceData(invoiceUUID);
-      setSuccessMessage("Invoice marked as reviewed");
-      setShowSuccess(true);
-      // Reload invoice data
-      loadInvoice();
-    } catch (err) {
-      console.error("Failed to review invoice:", err);
-    }
-  };
-
   const handleConfirmInvoice = async () => {
     try {
       await confirmInvoiceData(invoiceUUID);
@@ -201,28 +264,72 @@ export const InvoiceReviewContainer = () => {
 
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">
-      {/* Error Display */}
-      {error && (
-        <div className="flex flex-row w-full justify-between items-center px-4 py-3 bg-red-50 border-b border-red-200">
-          <p className="text-sm text-red-600">{error}</p>
-          <button onClick={clearError} className="text-red-600 hover:text-red-800">
-            ✕
-          </button>
-        </div>
-      )}
+      {/* Verify OTP Step */}
+      {step === "verify" && (
+        <div className="flex flex-row w-full h-full p-5 bg-background">
+          <Welcome />
 
-      {/* Loading State */}
-      {isLoading && !invoiceData && (
-        <div className="flex flex-col w-full h-full justify-center items-center">
-          <div className="animate-spin">
-            <img src="/misc/loading.svg" alt="Loading" className="w-8 h-8" />
+          <div className="flex flex-col justify-center items-center w-1/2 h-full px-50 relative">
+            <div className="flex flex-col w-full items-center justify-center mb-8">
+              <img src="/login/mail-icon.svg" alt="logo" className="w-15" />
+              <p className="font-barlow font-medium text-[32px] text-text-primary text-center w-full">
+                Verify your identity
+              </p>
+              {!isAuthenticated && (
+                <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
+                  We’ve sent a OTP to <span className="text-primary-blue">{employeeEmail}</span> Please enter it to
+                  continue.
+                </p>
+              )}
+
+              {isAuthenticated && isEmployeeEmailMatch && (
+                <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
+                  Loading invoice…
+                </p>
+              )}
+
+              {isAuthenticated && !isEmployeeEmailMatch && (
+                <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
+                  We’ve sent a OTP to <span className="text-primary-blue">{employeeEmail}</span>.
+                </p>
+              )}
+            </div>
+
+            {!isAuthenticated && (
+              <>
+                <OtpInput
+                  value={otp}
+                  onChange={value => {
+                    setOtp(value);
+                    if (otpError) setOtpError(false);
+                  }}
+                  numInputs={6}
+                  containerStyle={{ gap: "8px" }}
+                  inputStyle={{
+                    width: "50px",
+                    height: "55px",
+                    borderRadius: "12px",
+                    fontSize: "24px",
+                    textAlign: "center",
+                    backgroundColor: "#F6F6F6",
+                    border: otpError ? "2px solid #E93544" : undefined,
+                  }}
+                  placeholder=""
+                  renderInput={props => <input {...props} />}
+                />
+                {otpError && <span className="text-[16px] text-[#E93544] my-3">Incorrect code. Please try again.</span>}
+                <LoginButton onClick={handleVerifyOtp} loading={verifyingOtp || isLoading} />
+                <span className="text-[18px] text-primary-blue mt-4 cursor-pointer" onClick={handleResendOtp}>
+                  Resend OTP
+                </span>
+              </>
+            )}
           </div>
-          <p className="text-text-secondary mt-4">Loading invoice...</p>
         </div>
       )}
 
-      {/* Header */}
-      {invoiceData && !showSuccess && (
+      {/* Review Step */}
+      {step === "review" && invoiceData && !showSuccess && (
         <>
           <div className="flex flex-row w-full justify-between items-center px-4 py-3 border-b border-primary-divider">
             <div className="flex flex-row items-center gap-2">

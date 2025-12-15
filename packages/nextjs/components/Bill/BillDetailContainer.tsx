@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import BillDetailActionTooltip from "./BillDetailActionTooltip";
+import BillDetailActionTooltip from "../Common/ToolTip/BillDetailActionTooltip";
 import { Tooltip } from "react-tooltip";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { SecondaryButton } from "../Common/SecondaryButton";

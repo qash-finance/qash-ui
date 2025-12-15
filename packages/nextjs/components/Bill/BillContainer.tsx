@@ -8,16 +8,27 @@ import { Table } from "../Common/Table";
 import { CustomCheckbox } from "../Common/CustomCheckbox";
 import { FloatingFooter } from "../Common/FloatingFooter";
 import { FloatingAction } from "./FloatingAction";
+import { BillStatusEnum } from "@/types/bill";
+import { useGetBills, usePayBills } from "@/services/api/bill";
+import { CategoryShapeEnum } from "@/types/employee";
+import { CategoryBadge } from "../ContactBook/ContactBookContainer";
+import { useGetAllEmployeeGroups } from "@/services/api/employee";
+import { Tooltip } from "react-tooltip";
+import BillActionTooltip from "../Common/ToolTip/BillActionTooltip";
+import { useDeleteBill } from "@/services/api/bill";
+import { useInvoice } from "@/hooks/server/useInvoice";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 type Tab = "all" | "pending" | "paid";
 
-const payrollActionRenderer = (rowData: Record<string, any>, index: number) => (
+const billActionRenderer = (rowData: Record<string, any>, index: number) => (
   <div className="flex items-center justify-center w-full">
     <img
       src="/misc/three-dot-icon.svg"
       alt="three dot icon"
       className="w-6 h-6 cursor-pointer"
-      data-tooltip-id="payroll-action-tooltip"
+      data-tooltip-id="bill-action-tooltip"
       data-tooltip-content={index.toString()}
     />
   </div>
@@ -79,90 +90,90 @@ const BillContainer = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
+  const { data: groups } = useGetAllEmployeeGroups();
 
   const handleCheckRow = (idx: number) => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   };
 
   const handleCheckAll = () => {
-    if (checkedRows.length === (paymentHistoryData?.length || 0)) {
+    if (checkedRows.length === (billDatas?.length || 0)) {
       setCheckedRows([]);
     } else {
-      setCheckedRows(paymentHistoryData?.map((_, idx) => idx) || []);
+      setCheckedRows(billDatas?.map((_, idx) => idx) || []);
     }
   };
 
-  const paymentHistoryData = [
-    {
+  // Fetch bills from API
+  const { data: billsResponse, isLoading } = useGetBills({
+    page: currentPage,
+    limit: rowsPerPage,
+    status: activeTab === "all" ? undefined : activeTab === "pending" ? BillStatusEnum.PENDING : BillStatusEnum.PAID,
+  });
+
+  // Show all bills when "all" tab is active, otherwise show filtered bills from API
+  const bills = React.useMemo(() => {
+    return billsResponse?.bills ?? [];
+  }, [billsResponse?.bills]);
+
+  const payBillsMutation = usePayBills();
+  const deleteBill = useDeleteBill();
+  const { downloadPdf } = useInvoice();
+  const router = useRouter();
+
+  const billDatas = bills.map((b, idx) => {
+    const createdDate = b.createdAt
+      ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "";
+    const dueDate = b.invoice?.dueDate
+      ? new Date(b.invoice.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "";
+
+    const badgeStatus = (() => {
+      switch (b.status) {
+        case "PAID":
+          return BadgeStatus.SUCCESS;
+        case "PENDING":
+          return BadgeStatus.AWAITING;
+        case "OVERDUE":
+          return BadgeStatus.FAIL;
+        default:
+          return BadgeStatus.NEUTRAL;
+      }
+    })();
+
+    return {
       "header-0": (
         <div className="flex justify-center items-center">
-          <CustomCheckbox checked={checkedRows.includes(1)} onChange={() => handleCheckRow(1)} />
+          <CustomCheckbox checked={checkedRows.includes(idx)} onChange={() => handleCheckRow(idx)} />
         </div>
       ),
-      "Creation date": "Nov 10, 2025",
-      Invoice: "#INV-001",
-      Name: "Liam Carter",
-      Team: "Engineering",
-      Amount: (
-        <div className="flex items-center gap-2 justify-center">
-          <span>1,000</span>
-          <img alt="USDT" className="w-4" src="/token/usdt.svg" />
-        </div>
-      ),
-      "Due Date": "Dec 5, 2025",
-      Status: (
-        <div className="w-full flex justify-center items-center">
-          <Badge text="Paid" status={BadgeStatus.SUCCESS} className="px-5" />
-        </div>
-      ),
-    },
-    {
-      "header-0": (
+      "Creation date": createdDate,
+      Invoice: b.invoice?.invoiceNumber || b.uuid,
+      Name: b.invoice?.fromDetails?.name,
+      Group: (
         <div className="flex justify-center items-center">
-          <CustomCheckbox checked={checkedRows.includes(1)} onChange={() => handleCheckRow(1)} />
+          <CategoryBadge
+            shape={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.name || "-"}
+          />
         </div>
       ),
-      "Creation date": "Oct 10, 2025",
-      Invoice: "#INV-002",
-      Name: "Liam Carter",
-      Team: "Engineering",
       Amount: (
         <div className="flex items-center gap-2 justify-center">
-          <span>1,000</span>
-          <img alt="USDT" className="w-4" src="/token/usdt.svg" />
+          <span>{b.invoice?.total || "0"}</span>
+          <img alt={b.invoice?.currency || "USDT"} className="w-4" src={`/token/usdt.svg`} />
         </div>
       ),
-      "Due Date": "Nov 5, 2025",
+      "Due Date": dueDate,
       Status: (
         <div className="w-full flex justify-center items-center">
-          <Badge text="Paid" status={BadgeStatus.SUCCESS} className="px-5" />
+          <Badge text={b.status} status={badgeStatus} className="px-5" />
         </div>
       ),
-    },
-    {
-      "header-0": (
-        <div className="flex justify-center items-center">
-          <CustomCheckbox checked={checkedRows.includes(1)} onChange={() => handleCheckRow(1)} />
-        </div>
-      ),
-      "Creation date": "Sep 10, 2025",
-      Invoice: "#INV-003",
-      Name: "Liam Carter",
-      Team: "Engineering",
-      Amount: (
-        <div className="flex items-center gap-2 justify-center">
-          <span>1,000</span>
-          <img alt="USDT" className="w-4" src="/token/usdt.svg" />
-        </div>
-      ),
-      "Due Date": "Oct 5, 2025",
-      Status: (
-        <div className="w-full flex justify-center items-center">
-          <Badge text="Paid" status={BadgeStatus.AWAITING} className="px-5" />
-        </div>
-      ),
-    },
-  ];
+    };
+  });
 
   const renderFooterContent = () => {
     return (
@@ -185,7 +196,7 @@ const BillContainer = () => {
     );
   };
 
-  const isAllChecked = checkedRows.length === paymentHistoryData?.length;
+  const isAllChecked = checkedRows.length === billDatas?.length;
 
   return (
     <div className="flex flex-col w-full h-full justify-start items-start p-5 gap-5">
@@ -256,18 +267,18 @@ const BillContainer = () => {
             "Creation date",
             "Invoice",
             "Name",
-            "Team",
+            "Group",
             "Amount",
             "Due Date",
             "Status",
           ]}
-          data={paymentHistoryData}
+          data={billDatas}
           className="w-full"
           rowClassName="py-5"
           headerClassName="py-3"
           showPagination={true}
           actionColumn={true}
-          actionRenderer={payrollActionRenderer}
+          actionRenderer={billActionRenderer}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           rowsPerPage={rowsPerPage}
@@ -275,10 +286,102 @@ const BillContainer = () => {
         />
       </BaseContainer>
 
+      <Tooltip
+        id="bill-action-tooltip"
+        clickable
+        style={{
+          zIndex: 20,
+          borderRadius: "16px",
+          padding: "0",
+        }}
+        place="left"
+        openOnClick
+        noArrow
+        border="none"
+        opacity={1}
+        render={({ content }) => {
+          if (!content) return null;
+          const id = parseInt(content, 10);
+          const bill = bills?.[id];
+          if (!bill) return null;
+
+          const handlePay = async () => {
+            // Collect uuids: include the clicked bill and any selected rows
+            const selectedUUIDs = checkedRows.map(i => bills[i]?.invoice?.uuid).filter(Boolean) as string[];
+            const uuids = Array.from(new Set([bill.invoice?.uuid, ...selectedUUIDs]));
+
+            if (uuids.length === 0) return;
+
+            const params = new URLSearchParams();
+
+            //@ts-ignore
+            uuids.forEach(u => params.append("invoiceUUID", u));
+            router.push(`/bill/review?${params.toString()}`);
+          };
+
+          const handleDelete = () => {
+            if (!window.confirm("Are you sure you want to delete this invoice?")) return;
+            deleteBill.mutate(bill.uuid, {
+              onError: err => console.error("Delete invoice failed", err),
+            });
+          };
+
+          const handleDownload = async () => {
+            try {
+              const blob = await downloadPdf(bill.uuid);
+              const url = window.URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = `invoice-${bill.invoice?.invoiceNumber || bill.uuid}.pdf`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              console.error("Failed to download PDF:", err);
+            }
+          };
+
+          const handleCopyInvoiceLink = async () => {
+            try {
+              const link = `${window.location.origin}/invoice-review?invoiceUUID=${bill.uuid}`;
+              await navigator.clipboard.writeText(link);
+              // Lightweight confirmation
+              toast.success("Invoice link copied to clipboard");
+            } catch (err) {
+              console.error("Failed to copy invoice link", err);
+            }
+          };
+
+          return (
+            <BillActionTooltip
+              onCopyInvoiceLink={handleCopyInvoiceLink}
+              onDeleteInvoice={handleDelete}
+              onDownloadPDF={handleDownload}
+              onPay={handlePay}
+            />
+          );
+        }}
+      />
+
       {checkedRows.length > 0 && (
         <FloatingAction
           selectedCount={checkedRows.length}
-          actionButtons={<SecondaryButton text="Pay all" buttonClassName="w-40 rounded-full" />}
+          actionButtons={
+            <SecondaryButton
+              text="Pay all"
+              buttonClassName="w-40 rounded-full"
+              onClick={async () => {
+                const uuids = checkedRows.map(i => bills[i]?.invoice?.uuid).filter(Boolean) as string[];
+                if (uuids.length === 0) return;
+                // Navigate to review page with multiple invoiceUUID query params
+                const params = new URLSearchParams();
+                uuids.forEach(u => params.append("invoiceUUID", u));
+                router.push(`/bill/review?${params.toString()}`);
+                setCheckedRows([]);
+              }}
+            />
+          }
         />
       )}
     </div>

@@ -1,8 +1,7 @@
 "use client";
 
 import { ReactNode, useMemo, useState, useEffect, useRef } from "react";
-import { WalletProvider } from "@demox-labs/miden-wallet-adapter-react";
-import { WalletModalProvider } from "@demox-labs/miden-wallet-adapter-reactui";
+import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
@@ -78,14 +77,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
 
-  const wallets = useMemo(
-    () => [
-      new TridentWalletAdapter({
-        appName: "Qash",
-      }),
-    ],
-    [],
-  );
+  const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
 
   const handleError = (error: WalletError) => {
     console.error(error);

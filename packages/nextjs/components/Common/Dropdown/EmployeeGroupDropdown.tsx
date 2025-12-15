@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { createShapeElement } from "../../ContactBook/ShapeSelectionTooltip";
+import { createShapeElement } from "../ToolTip/ShapeSelectionTooltip";
 import { CompanyGroupResponseDto } from "@/types/employee";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
@@ -66,21 +66,23 @@ export const EmployeeGroupDropdown = ({
           </div>
 
           <div className="flex flex-col">
-            {groups && groups.length > 0 ? groups.map((group, index) => (
-              <button
-                key={group.id}
-                type="button"
-                onClick={() => handleGroupClick(group)}
-                className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-app-background transition-colors cursor-pointer ${
-                  selectedGroup?.id === group.id ? "bg-app-background" : ""
-                }`}
-              >
-                <div className="w-5 h-5 flex items-center justify-center">
-                  {createShapeElement(group.shape, group.color)}
-                </div>
-                <span className="text-text-primary font-semibold">{group.name}</span>
-              </button>
-            )) : (
+            {groups && groups.length > 0 ? (
+              groups.map((group, index) => (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => handleGroupClick(group)}
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-app-background transition-colors cursor-pointer ${
+                    selectedGroup?.id === group.id ? "bg-app-background" : ""
+                  }`}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    {createShapeElement(group.shape, group.color)}
+                  </div>
+                  <span className="text-text-primary font-semibold">{group.name}</span>
+                </button>
+              ))
+            ) : (
               <button
                 type="button"
                 onClick={() => openModal(MODAL_IDS.CREATE_GROUP)}

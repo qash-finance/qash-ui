@@ -6,8 +6,8 @@ import { BaseContainer } from "../Common/BaseContainer";
 import { TabContainer } from "../Common/TabContainer";
 import { Table, CellContent } from "../Common/Table";
 import { CategorySelectionTooltip } from "./CategorySelectionTooltip";
-import { MoreActionsTooltip } from "./MoreActionsTooltip";
-import { MultipleContactActionsTooltip } from "./MultipleContactActionsTooltip";
+import { MoreActionsTooltip } from "../Common/ToolTip/MoreActionsTooltip";
+import { MultipleContactActionsTooltip } from "../Common/ToolTip/MultipleContactActionsTooltip";
 import {
   useGetAllEmployeeGroups,
   useGetEmployeesByGroup,
@@ -20,7 +20,7 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { CustomCheckbox } from "../Common/CustomCheckbox";
 import { formatAddress } from "@/services/utils/miden/address";
 import { CategoryShapeEnum } from "@/types/employee";
-import { createShapeElement } from "./ShapeSelectionTooltip";
+import { createShapeElement } from "../Common/ToolTip/ShapeSelectionTooltip";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
@@ -57,7 +57,7 @@ const ContactBookContainer = () => {
   const [tabs, setTabs] = useState<{ id: string; label: React.ReactNode }[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const { data: categories } = useGetAllEmployeeGroups();
+  const { data: groups } = useGetAllEmployeeGroups();
   // const { mutate: updateCategoryOrder } = useUpdateCategoryOrder();
   const { mutate: deleteEmployees, isPending: isDeleting } = useBulkDeleteEmployees();
   const { mutate: updateEmployeesOrder, isPending: isReordering } = useUpdateEmployeesOrder();
@@ -107,11 +107,11 @@ const ContactBookContainer = () => {
   const isLoadingAddressBooks = activeTab === "all" ? isLoadingAllAddressBooks : isLoadingCategoryAddressBooks;
 
   useEffect(() => {
-    if (categories) {
-      const visibleCategories = categories.slice(0, 3);
-      const remainingCount = categories.length - 3;
+    if (groups) {
+      const visiblegroups = groups.slice(0, 3);
+      const remainingCount = groups.length - 3;
 
-      const categoryTabs = visibleCategories.map(category => ({
+      const categoryTabs = visiblegroups.map(category => ({
         id: category.id.toString(),
         label: <CategoryTab label={category.name} />,
       }));
@@ -133,15 +133,15 @@ const ContactBookContainer = () => {
 
       setTabs(categoryTabs);
     }
-  }, [categories]);
+  }, [groups]);
 
   const handleCategorySelect = (category: { id: string | number; name: string; icon?: string }) => {
     const categoryId = category.id.toString();
     setSelectedCategoryId(categoryId);
 
-    // Check if the selected category is in the "more" section (categories 4+)
-    if (categories) {
-      const visibleCategoryIds = categories.slice(0, 3).map(cat => cat.id.toString());
+    // Check if the selected category is in the "more" section (groups 4+)
+    if (groups) {
+      const visibleCategoryIds = groups.slice(0, 3).map(cat => cat.id.toString());
 
       // If the category is not in the first 3 visible tabs, set active tab to "more"
       if (!visibleCategoryIds.includes(categoryId)) {
@@ -154,17 +154,17 @@ const ContactBookContainer = () => {
     }
   };
 
-  const handleCategoryReorder = (reorderedCategories: { id: string | number; name: string; icon?: string }[]) => {
-    if (!categories) return;
+  const handleCategoryReorder = (reorderedgroups: { id: string | number; name: string; icon?: string }[]) => {
+    if (!groups) return;
 
     // Store the original order before any modifications
-    const originalCategories = [...categories];
+    const originalgroups = [...groups];
 
-    const firstThreeCategories = originalCategories.slice(0, 3);
-    const allCategories = [...firstThreeCategories, ...reorderedCategories];
+    const firstThreegroups = originalgroups.slice(0, 3);
+    const allgroups = [...firstThreegroups, ...reorderedgroups];
 
     // Extract category IDs in the new order
-    const categoryIds = allCategories.map(cat => Number(cat.id));
+    const categoryIds = allgroups.map(cat => Number(cat.id));
 
     // Call the API to update the category order
     // updateCategoryOrder(categoryIds, {
@@ -215,7 +215,7 @@ const ContactBookContainer = () => {
     const contact = addressBooks?.[contactIndex];
     if (contact) {
       // Find the category for this contact
-      const category = categories?.find(cat => cat.id === contact.groupId);
+      const category = groups?.find(cat => cat.id === contact.groupId);
 
       openModal(MODAL_IDS.EDIT_CONTACT, {
         contactData: {
@@ -303,7 +303,7 @@ const ContactBookContainer = () => {
     // Get the current category ID
     const currentCategoryId = getCategoryId();
     if (currentCategoryId === null) {
-      toast.error("Cannot reorder contacts in 'All Categories' view");
+      toast.error("Cannot reorder contacts in 'All groups' view");
       return;
     }
 
@@ -360,9 +360,9 @@ const ContactBookContainer = () => {
         Group: (
           <div className="flex justify-center items-center">
             <CategoryBadge
-              shape={categories?.find(cat => cat.id === contact.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-              color={categories?.find(cat => cat.id === contact.groupId)?.color || "#35ADE9"}
-              name={categories?.find(cat => cat.id === contact.groupId)?.name || "-"}
+              shape={groups?.find(cat => cat.id === contact.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+              color={groups?.find(cat => cat.id === contact.groupId)?.color || "#35ADE9"}
+              name={groups?.find(cat => cat.id === contact.groupId)?.name || "-"}
             />
           </div>
         ),
@@ -487,12 +487,13 @@ const ContactBookContainer = () => {
         border="none"
         opacity={1}
         render={() => (
-          <CategorySelectionTooltip
-            categories={categories?.slice(3).map(cat => ({ ...cat, id: cat.id.toString() })) || []}
-            onCategorySelect={handleCategorySelect}
-            onReorder={handleCategoryReorder}
-            selectedCategoryId={selectedCategoryId}
-          />
+          // <CategorySelectionTooltip
+          //   groups={groups?.slice(3).map(group => ({ ...group, id: group.id.toString() })) || []}
+          //   onCategorySelect={handleCategorySelect}
+          //   onReorder={handleCategoryReorder}
+          //   selectedCategoryId={selectedCategoryId}
+          // />
+          <></>
         )}
       />
 

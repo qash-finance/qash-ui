@@ -6,7 +6,7 @@ import { BaseContainer } from "../Common/BaseContainer";
 import { TabContainer } from "../Common/TabContainer";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { Table } from "../Common/Table";
-import PayrollActionTooltip from "./PayrollActionTooltip";
+import PayrollActionTooltip from "../Common/ToolTip/PayrollActionTooltip";
 import { Tooltip } from "react-tooltip";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useAuth } from "@/services/auth/context";
@@ -54,7 +54,6 @@ const PayrollContainer = () => {
     limit: rowsPerPage,
     search: search || undefined,
   });
-  console.log("🚀 ~ PayrollContainer ~ data:", data);
 
   // Delete payroll mutation
   const deletePayroll = useDeletePayroll();

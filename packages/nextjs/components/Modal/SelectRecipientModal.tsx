@@ -11,7 +11,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useQueryClient } from "@tanstack/react-query";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
-import { createShapeElement } from "../ContactBook/ShapeSelectionTooltip";
+import { createShapeElement } from "../Common/ToolTip/ShapeSelectionTooltip";
 import { CompanyContactResponseDto, CompanyGroupResponseDto } from "@/types/employee";
 import { useAuth } from "@/services/auth/context";
 
@@ -61,8 +61,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
   const { data: categoryEmployees } = useGetEmployeesByGroup(getCategoryId() || 0, 1, 1000);
 
   // Use appropriate data source based on active tab
-  const addressBooks =
-    activeTab === "all" ? allEmployees?.data ?? [] : categoryEmployees?.data ?? [];
+  const addressBooks = activeTab === "all" ? (allEmployees?.data ?? []) : (categoryEmployees?.data ?? []);
 
   // Filter address books by search term
   const filteredAddressBooks = useMemo(() => {

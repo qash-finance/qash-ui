@@ -1,10 +1,45 @@
 "use client";
 import { useTitle } from "@/contexts/TitleProvider";
-import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { SecondaryButton } from "../Common/SecondaryButton";
+import { useInvoice } from "@/hooks/server/useInvoice";
+import { CategoryBadge } from "../ContactBook/ContactBookContainer";
+import { useGetAllEmployeeGroups } from "@/services/api/employee";
+import { CategoryShapeEnum } from "@/types/employee";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { InvoiceModalProps, TransactionOverviewModalProps } from "@/types/modal";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { PrimaryButton } from "../Common/PrimaryButton";
+import {
+  SendTransaction,
+  WalletNotConnectedError,
+  CustomTransaction,
+  TransactionType,
+} from "@demox-labs/miden-wallet-adapter-base";
+import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
+import toast from "react-hot-toast";
+import { OutputNotesArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
+import { createBatchNote } from "@/services/utils/miden/note";
+import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_SYMBOL } from "@/services/utils/constant";
+import { usePayBills } from "@/services/api/bill";
 
-const InvoiceItem = ({ invoiceId = "INV00001", name = "Ken", amount = "1,000 USDT", amountUsd = "$1,000" }) => {
+const InvoiceItem = ({
+  invoiceId,
+  name,
+  amount,
+  amountUsd,
+  group,
+  onViewClick,
+}: {
+  invoiceId: string;
+  name?: string;
+  amount?: string;
+  amountUsd?: string;
+  group: { shape?: CategoryShapeEnum; color?: string; groupName?: string };
+  onViewClick?: () => void;
+}) => {
+  const { shape, color, groupName } = group || {};
   return (
     <div className="grid grid-cols-[120px_120px_120px_1fr_120px] gap-10 items-center w-full border-b border-primary-divider px-4 py-3 bg-background rounded-xl">
       {/* Invoice ID Column */}
@@ -14,35 +49,41 @@ const InvoiceItem = ({ invoiceId = "INV00001", name = "Ken", amount = "1,000 USD
       <span className="text-sm font-medium text-text-primary">{name}</span>
 
       {/* Employee Badge Column */}
-      <div className="inline-flex items-center justify-center px-3 py-1.5 bg-blue-100 rounded-full">
-        <span className="text-sm font-medium text-primary-blue">Employee</span>
+      <div className="flex justify-center items-center">
+        <CategoryBadge
+          shape={(shape as CategoryShapeEnum) || CategoryShapeEnum.CIRCLE}
+          color={color || "#35ADE9"}
+          name={groupName || "-"}
+        />
       </div>
-
       {/* Amount Column */}
       <div className="flex items-end flex-col gap-2">
         <div className="flex flex-row gap-1 items-center">
           <img src="/token/usdt.svg" alt="USDT" className="w-5" />
           <span className=" font-medium text-text-primary leading-none">{amount}</span>
         </div>
-        <span className="text-sm text-text-secondary leading-none">{amountUsd}</span>
+        {/* <span className="text-sm text-text-secondary leading-none">{amountUsd}</span> */}
       </div>
 
       {/* View Button Column */}
-      <button className="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm font-semibold text-text-primary hover:bg-gray-200 transition-colors">
+      <button
+        onClick={onViewClick}
+        className="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm font-semibold text-text-primary hover:bg-gray-200 transition-colors"
+      >
         View
       </button>
     </div>
   );
 };
 
-const TokenItem = () => {
+const TokenItem = ({ token, amount, amountUsd }: { token: string; amount: string; amountUsd?: string }) => {
   return (
     <div className="flex justify-start items-center gap-2">
       <img src="/token/usdt.svg" alt="USDT" className="w-10" />
 
       <div className="flex items-start flex-col gap-0.5">
-        <div className="text-[18px] leading-none">2,500 USDT</div>
-        <div className="text-[16px] text-text-secondary leading-none">$2500</div>
+        <div className="text-[18px] leading-none">{amount}</div>
+        {amountUsd && <div className="text-[16px] text-text-secondary leading-none">{amountUsd}</div>}
       </div>
     </div>
   );
@@ -50,7 +91,11 @@ const TokenItem = () => {
 
 const BillReviewContainer = () => {
   const router = useRouter();
+  const { address, wallet, requestConsumableNotes } = useWallet();
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+  const { data: groups } = useGetAllEmployeeGroups();
+  const { openModal, closeModal } = useModal();
+  const payBillsMutate = usePayBills();
 
   useEffect(() => {
     const handleBack = () => {
@@ -73,6 +118,95 @@ const BillReviewContainer = () => {
     };
   }, [router]);
 
+  const searchParams = useSearchParams();
+  const { fetchInvoiceByUUID } = useInvoice();
+  const [selectedInvoices, setSelectedInvoices] = useState<any[]>([]);
+  console.log("🚀 ~ BillReviewContainer ~ selectedInvoices:", selectedInvoices);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+
+  const tokenTotals = React.useMemo(() => {
+    const map = new Map<string, { total: number; totalUsd: number }>();
+    selectedInvoices.forEach(inv => {
+      const currency = (inv.currency || inv.invoice?.currency || "USDT").toUpperCase();
+      const total = Number(inv.total) || 0;
+      const totalUsd = Number(inv.totalUsd) || 0;
+      const prev = map.get(currency) || { total: 0, totalUsd: 0 };
+      prev.total += total;
+      prev.totalUsd += totalUsd;
+      map.set(currency, prev);
+    });
+    return Array.from(map.entries()).map(([currency, v]) => ({ currency, total: v.total, totalUsd: v.totalUsd }));
+  }, [selectedInvoices]);
+
+  const totalUsdSum = React.useMemo(() => tokenTotals.reduce((s, t) => s + (t.totalUsd || 0), 0), [tokenTotals]);
+
+  useEffect(() => {
+    const uuids = searchParams?.getAll ? searchParams.getAll("invoiceUUID") : [];
+    if (!uuids || uuids.length === 0) return;
+
+    let mounted = true;
+    setLoadingInvoices(true);
+    Promise.all(uuids.map(u => fetchInvoiceByUUID(u).catch(err => null)))
+      .then(results => {
+        if (!mounted) return;
+        setSelectedInvoices(results.filter(Boolean) as any[]);
+      })
+      .catch(err => console.error("Failed to fetch invoices", err))
+      .finally(() => setLoadingInvoices(false));
+
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams, fetchInvoiceByUUID]);
+
+  const handleSubmit = async () => {
+    if (!address) throw new WalletNotConnectedError();
+
+    const amount = 1; // Example amount
+
+    try {
+      openModal("PROCESSING_TRANSACTION");
+
+      const midenTransaction = new SendTransaction(
+        address,
+        "mtst1ar22f8fc95u8vyppkztvmcas8vmckq7f_qruqqypuyph",
+        QASH_TOKEN_ADDRESS,
+        "public",
+        amount! * 10 ** QASH_TOKEN_DECIMALS,
+      );
+
+      const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
+      toast.success(`Transaction ${txId} submitted`);
+
+      payBillsMutate.mutate({
+        billUUIDs: selectedInvoices.map(inv => inv.bill?.uuid),
+        transactionHash: txId,
+      });
+
+      closeModal("PROCESSING_TRANSACTION");
+
+      openModal<TransactionOverviewModalProps>("TRANSACTION_OVERVIEW", {
+        amount: amount.toString(),
+        tokenSymbol: QASH_TOKEN_SYMBOL,
+        tokenAddress: QASH_TOKEN_ADDRESS,
+        accountAddress: address,
+        accountName: "You",
+        recipientAddress: "mtst1ar22f8fc95u8vyppkztvmcas8vmckq7f_qruqqypuyph",
+        recipientName: "Reciever",
+        transactionType: "Send",
+        transactionHash: txId,
+        onConfirm: () => {
+          closeModal("TRANSACTION_OVERVIEW");
+          router.push("/bill");
+        },
+      });
+    } catch (error: any) {
+      console.log("🚀 ~ handleSubmit ~ error:", error);
+    } finally {
+      closeModal("PROCESSING_TRANSACTION");
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full justify-start items-start p-7 gap-5">
       <div className="flex flex-row gap-3">
@@ -87,7 +221,7 @@ const BillReviewContainer = () => {
             <span className="font-semibold text-lg">Invoice list</span>
             <span className="text-lg text-text-secondary">
               Number of invoices
-              <span className="text-primary-blue"> 50</span>
+              <span className="text-primary-blue"> {selectedInvoices.length || 0}</span>
             </span>
             <div className="bg-[#E7E7E7] border border-primary-divider flex flex-row gap-2 items-center pr-1 pl-3 py-1 rounded-lg w-[300px]">
               <div className="flex flex-row gap-2 flex-1">
@@ -105,7 +239,60 @@ const BillReviewContainer = () => {
               </button>
             </div>
           </div>
-          <InvoiceItem />
+          {loadingInvoices ? (
+            <div className="w-full flex justify-center items-center py-10">Loading selected invoices...</div>
+          ) : (
+            selectedInvoices.length > 0 &&
+            selectedInvoices.map(inv => {
+              console.log("🚀 ~ BillReviewContainer ~ inv:", inv);
+              const groupData = groups?.find(grp => grp.id === inv.employee?.groupId);
+              return (
+                <InvoiceItem
+                  key={inv.uuid || inv.invoiceNumber}
+                  invoiceId={inv.invoiceNumber || inv.uuid}
+                  name={inv.fromDetails?.name || "-"}
+                  amount={`${inv.total || 0} ${inv.currency || "USDT"}`}
+                  amountUsd={inv.totalUsd ? `$${inv.totalUsd}` : ""}
+                  group={{
+                    shape: groupData?.shape || CategoryShapeEnum.CIRCLE,
+                    color: groupData?.color || "#35ADE9",
+                    groupName: groupData?.name || "-",
+                  }}
+                  onViewClick={() => {
+                    openModal<InvoiceModalProps>("INVOICE_MODAL", {
+                      invoice: {
+                        amountDue: inv.total,
+                        billTo: {
+                          address: [inv.toCompany?.address1, inv.toCompany?.city, inv.toCompany?.country]
+                            .filter(Boolean)
+                            .join(", "),
+                          email: inv.toCompany?.email,
+                          name: inv.toCompany?.companyName,
+                          company: inv.toCompany?.companyName + inv.toCompany?.companyType,
+                        },
+                        currency: inv.currency,
+                        date: inv.issueDate,
+                        dueDate: inv.dueDate,
+                        from: {
+                          name: inv.employee?.name,
+                          address: inv.employee?.address,
+                          email: inv.employee?.email,
+                          company: inv.toCompany?.companyName + inv.toCompany?.companyType,
+                        },
+                        invoiceNumber: inv.invoiceNumber,
+                        items: inv.items,
+                        subtotal: inv.subtotal,
+                        tax: 0,
+                        total: inv.total,
+                        walletAddress: inv.paymentWalletAddress,
+                        network: "Miden",
+                      },
+                    });
+                  }}
+                />
+              );
+            })
+          )}
           {/* Bill details content goes here */}
         </div>
 
@@ -122,17 +309,46 @@ const BillReviewContainer = () => {
 
             <div className="flex flex-col gap-3">
               <span className="font-semibold text-lg">Total by token</span>
-              <TokenItem />
-              <TokenItem />
+              {tokenTotals.length === 0 ? (
+                <div className="text-sm text-text-secondary">No invoices selected</div>
+              ) : (
+                tokenTotals.map(t => (
+                  <TokenItem
+                    key={t.currency}
+                    token={t.currency}
+                    amount={`${t.total} ${t.currency}`}
+                    amountUsd={t.totalUsd ? `$${t.totalUsd}` : ""}
+                  />
+                ))
+              )}
             </div>
           </div>
 
           <div className="flex w-full px-7 py-4 border-t-1 border-[#DBDCDE] justify-between">
             <div className="flex flex-col gap-2">
               <span className="text-text-secondary leading-none">Total amount</span>
-              <span className="font-bold text-3xl leading-none">$1500</span>
+              <span className="font-bold text-3xl leading-none">
+                {totalUsdSum > 0
+                  ? `$${totalUsdSum}`
+                  : tokenTotals.length === 1
+                    ? `${tokenTotals[0].total} ${tokenTotals[0].currency}`
+                    : `${selectedInvoices.length} invoices`}
+              </span>
             </div>
-            <SecondaryButton text="Connect Wallet" buttonClassName="w-40 !rounded-xl" />
+            {address ? (
+              <PrimaryButton
+                text="Pay Invoice"
+                containerClassName="w-40 !rounded-xl"
+                buttonClassName="h-full"
+                onClick={() => handleSubmit()}
+              />
+            ) : (
+              <SecondaryButton
+                text="Connect Wallet"
+                buttonClassName="w-40 !rounded-xl"
+                onClick={() => openModal("CONNECT_MIDEN_WALLET")}
+              />
+            )}
           </div>
         </div>
       </div>

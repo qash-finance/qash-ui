@@ -138,10 +138,9 @@ export async function consumeAllUnauthenticatedNotes(
 
     const accountId = Address.fromBech32(account);
 
-    const txResult = await client.newTransaction(accountId.accountId(), transactionRequest);
-    await client.submitTransaction(txResult);
+    const txResult = await client.submitNewTransaction(accountId.accountId(), transactionRequest);
 
-    return txResult.executedTransaction().id().toHex();
+    return txResult.toHex();
   } catch (err) {
     throw new Error("Failed to consume notes");
   }
@@ -177,10 +176,9 @@ export async function consumeUnauthenticatedNote(account: string, partialNote: P
 
     const accountId = Address.fromBech32(account);
 
-    const txResult = await client.newTransaction(accountId.accountId(), transactionRequest);
-    await client.submitTransaction(txResult);
 
-    return txResult.executedTransaction().id().toHex();
+    const txResult = await client.submitNewTransaction(accountId.accountId(), transactionRequest);
+    return txResult.toHex();
   } catch (err) {
     throw new Error("Failed to consume notes");
   }
@@ -206,10 +204,8 @@ export async function consumeUnauthenticatedGiftNote(
 
     const accountId = Address.fromBech32(account).accountId();
 
-    const txResult = await client.newTransaction(accountId, transactionRequest);
-    await client.submitTransaction(txResult);
-
-    return txResult.executedTransaction().id().toHex();
+    const txResult = await client.submitNewTransaction(accountId, transactionRequest);
+    return txResult.toHex();
   } catch (err) {
     console.log(err);
     throw new Error("Failed to consume notes");
@@ -244,10 +240,8 @@ export async function consumeUnauthenticatedGiftNotes(
 
     const accountId = Address.fromBech32(account).accountId();
 
-    const txResult = await client.newTransaction(accountId, transactionRequest);
-    await client.submitTransaction(txResult);
-
-    return txResult.executedTransaction().id().toHex();
+    const txResult = await client.submitNewTransaction(accountId, transactionRequest);
+    return txResult.toHex();
   } catch (error) {
     console.log(error);
     throw new Error("Failed to consume notes");
@@ -263,10 +257,8 @@ export async function consumeNoteByID(account: string, noteId: string) {
 
     const accountId = Address.fromBech32(account).accountId();
 
-    const txResult = await client.newTransaction(accountId, consumeTxRequest);
-    await client.submitTransaction(txResult);
-
-    return txResult.executedTransaction().id().toHex();
+    const txResult = await client.submitNewTransaction(accountId, consumeTxRequest);
+    return txResult.toHex();
   } catch (err) {
     throw new Error("Failed to consume notes");
   }
@@ -279,10 +271,9 @@ export async function consumeNoteByIDs(account: string, noteIds: string[]) {
     const client = await WebClient.createClient(NODE_ENDPOINT);
     const consumeTxRequest = client.newConsumeTransactionRequest(noteIds);
     const accountId = Address.fromBech32(account).accountId();
-    const txResult = await client.newTransaction(accountId, consumeTxRequest);
-    await client.submitTransaction(txResult);
 
-    return txResult.executedTransaction().id().toHex();
+    const txResult = await client.submitNewTransaction(accountId, consumeTxRequest);
+    return txResult.toHex();
   } catch (err) {
     throw new Error("Failed to consume notes");
   }
@@ -314,11 +305,11 @@ export async function createGiftNote(
     FungibleAsset,
   } = await import("@demox-labs/miden-sdk");
 
-  const client = await WebClient.createClient(NODE_ENDPOINT);
+  const { ScriptBuilder } = (await import("@demox-labs/miden-sdk")) as any;
 
   const giftNote = GIFT_NOTE_SCRIPT;
 
-  const noteScript = client.compileNoteScript(giftNote);
+  const noteScript = ScriptBuilder.compileNoteScript(giftNote);
   const noteType = NoteType.Private;
   const giftTag = NoteTag.fromAccountId(Address.fromBech32(creator).accountId());
 
@@ -363,18 +354,17 @@ export async function createBatchNote(
       const amount = parseFloat(transaction.amount);
       const recallHeight = transaction.recallableHeight;
       // Create note for transaction
-      const [note, noteSerialNumbers, calculatedRecallHeight] = await createP2IDENote(
+      const note = await createP2IDNote(
         caller,
         transaction.recipient,
         transaction.tokenAddress,
         Math.round(amount * Math.pow(10, transaction.tokenMetadata.decimals)),
         transaction.isPrivate ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
-        recallHeight,
       );
       batch.push(note);
       noteIds.push(note.id().toString());
-      serialNumbers.push(noteSerialNumbers);
-      recallableHeights.push(calculatedRecallHeight);
+      // serialNumbers.push(noteSerialNumbers);
+      // recallableHeights.push(calculatedRecallHeight);
     }
 
     return { batch, noteIds, serialNumbers, recallableHeights };

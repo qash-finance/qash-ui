@@ -7,7 +7,7 @@ import MoveCryptoSidebar from "./MoveCryptoSidebar";
 import { Suspense } from "react";
 import { useAuth } from "@/services/auth/context";
 import { Tooltip } from "react-tooltip";
-import { AccountTooltip } from "./AccountTooltip";
+import { AccountTooltip } from "../Common/ToolTip/AccountTooltip";
 import { AuthMeResponse } from "@/services/auth/api";
 
 export const MOVE_CRYPTO_SIDEBAR_OFFSET = 230;

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Category, CategoryShape } from "@/types/address-book";
-import { createShapeElement } from "../../ContactBook/ShapeSelectionTooltip";
+import { createShapeElement } from "../ToolTip/ShapeSelectionTooltip";
 
 interface CategoryDropdownProps {
   categories: Category[];

@@ -9,7 +9,7 @@ import { ModalHeader } from "../../Common/ModalHeader";
 import { ActionButton } from "../../Common/ActionButton";
 import { SecondaryButton } from "../../Common/SecondaryButton";
 import { PrimaryButton } from "../../Common/PrimaryButton";
-import ShapeSelectionTooltip, { createShapeElement } from "../../ContactBook/ShapeSelectionTooltip";
+import ShapeSelectionTooltip, { createShapeElement } from "../../Common/ToolTip/ShapeSelectionTooltip";
 import { useCreateCategory, useGetCategories } from "@/services/api/address-book";
 import toast from "react-hot-toast";
 import { useCreateEmployeeGroup, useGetAllEmployeeGroups } from "@/services/api/employee";

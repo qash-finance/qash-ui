@@ -8,7 +8,7 @@ export async function deployAccount(isPublic: boolean) {
   const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
 
   const client = await WebClient.createClient(NODE_ENDPOINT);
-  const account = await client.newWallet(isPublic ? AccountStorageMode.public() : AccountStorageMode.private(), true);
+  const account = await client.newWallet(isPublic ? AccountStorageMode.public() : AccountStorageMode.private(), true, 1);
   return account;
 }
 
@@ -54,9 +54,9 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
         // get token metadata
         const faucet = asset.faucetId();
 
-        const metadata = await getFaucetMetadata(faucet.toBech32(NetworkId.Testnet, AccountInterface.Unspecified));
+        const metadata = await getFaucetMetadata(faucet.toBech32(NetworkId.Testnet, AccountInterface.BasicWallet));
         assetsWithMetadata.push({
-          faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+          faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet),
           amount: asset.amount().toString(),
           metadata,
         });

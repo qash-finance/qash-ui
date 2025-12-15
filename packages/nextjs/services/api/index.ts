@@ -143,7 +143,11 @@ const apiServerWithAuth = new AuthenticatedApiClient(
   () => {
     if (typeof window === "undefined") return;
     const currentPath = window.location.pathname || "";
-    const isPublic = currentPath.startsWith("/login") || currentPath.startsWith("/onboarding") || currentPath.startsWith("/payment");
+    const isPublic =
+      currentPath.startsWith("/login") ||
+      currentPath.startsWith("/onboarding") ||
+      currentPath.startsWith("/payment") ||
+      currentPath.startsWith("/invoice-review");
     if (!isPublic) {
       window.location.href = "/login";
     }

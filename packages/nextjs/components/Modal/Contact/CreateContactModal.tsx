@@ -138,12 +138,12 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
   const addressRegister = register("walletAddress", {
     required: "Wallet address is required",
     minLength: {
-      value: 3,
+      value: 10,
       message: "Address is too short",
     },
     pattern: {
-      value: /^mt[a-zA-Z0-9]+$/,
-      message: "Address must start with 'mt' and contain only letters and numbers",
+      value: /^mtst1[a-z0-9_]+$/i,
+      message: "Address must start with 'mtst1' and contain only letters, numbers, and underscores",
     },
     validate: () => {
       if (!selectedGroup) return true;
@@ -253,6 +253,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
             register={emailRegister}
             error={errors.email?.message}
             disabled={createEmployee.isPending}
+            required
           />
 
           <FormInput

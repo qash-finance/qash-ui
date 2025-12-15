@@ -9,7 +9,7 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
   try {
     const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
     const client = await WebClient.createClient(NODE_ENDPOINT);
-    const faucet = await client.newFaucet(AccountStorageMode.public(), false, symbol, decimals, BigInt(maxSupply));
+    const faucet = await client.newFaucet(AccountStorageMode.public(), false, symbol, decimals, BigInt(maxSupply), 1);
     return faucet;
   } catch (err) {
     throw new Error("Failed to deploy faucet");
@@ -34,8 +34,7 @@ export async function mintToken(account: string, faucet: string, amount: bigint)
       NoteType.Public,
       amount,
     );
-    const txResult = await client.newTransaction(faucetId.accountId(), mintTxRequest);
-    await client.submitTransaction(txResult);
+    const txResult = await client.submitNewTransaction(faucetId.accountId(), mintTxRequest);
     return txResult;
   } catch (err) {
     console.log(err);

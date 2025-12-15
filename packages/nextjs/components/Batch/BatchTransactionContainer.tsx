@@ -28,7 +28,7 @@ import { Badge, BadgeStatus } from "../Common/Badge";
 import { TransactionOverview } from "./TransactionOverview";
 import { useTitle } from "@/contexts/TitleProvider";
 import { Tooltip } from "react-tooltip";
-import BatchActionTooltip from "./BatchActionTooltip";
+import BatchActionTooltip from "../Common/ToolTip/BatchActionTooltip";
 
 enum STEP {
   PREPARE = "prepare",

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/services/auth/context";
 
-const PUBLIC_ROUTES = ["/login", "/onboarding", "/payment"];
+const PUBLIC_ROUTES = ["/login", "/onboarding", "/payment", "/invoice-review"];
 
 export function useAuthGuard(redirectTo: string = "/login") {
   const { isAuthenticated, isLoading } = useAuth();
@@ -17,6 +17,11 @@ export function useAuthGuard(redirectTo: string = "/login") {
 
     // Check if current route is public
     const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route));
+
+    // Allow /invoice-review for any authenticated user (even if missing company/team)
+    if (isAuthenticated && pathname?.startsWith("/invoice-review")) {
+      return;
+    }
 
     // Redirect to login if not authenticated and not on a public route
     if (!isAuthenticated && !isPublicRoute) {
