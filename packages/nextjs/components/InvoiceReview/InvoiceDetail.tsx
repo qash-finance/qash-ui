@@ -26,8 +26,6 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  console.log(invoiceData);
-
   const handleUpdateAddress = async () => {
     if (!addressInput.trim()) {
       setUpdateError("Address cannot be empty");

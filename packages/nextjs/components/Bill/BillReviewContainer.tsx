@@ -31,6 +31,7 @@ const InvoiceItem = ({
   amountUsd,
   group,
   onViewClick,
+  token,
 }: {
   invoiceId: string;
   name?: string;
@@ -38,6 +39,7 @@ const InvoiceItem = ({
   amountUsd?: string;
   group: { shape?: CategoryShapeEnum; color?: string; groupName?: string };
   onViewClick?: () => void;
+  token: string;
 }) => {
   const { shape, color, groupName } = group || {};
   return (
@@ -59,7 +61,7 @@ const InvoiceItem = ({
       {/* Amount Column */}
       <div className="flex items-end flex-col gap-2">
         <div className="flex flex-row gap-1 items-center">
-          <img src="/token/usdt.svg" alt="USDT" className="w-5" />
+          <img src={`/token/${token.toLowerCase()}.svg`} alt={token} className="w-5" />
           <span className=" font-medium text-text-primary leading-none">{amount}</span>
         </div>
         {/* <span className="text-sm text-text-secondary leading-none">{amountUsd}</span> */}
@@ -79,7 +81,7 @@ const InvoiceItem = ({
 const TokenItem = ({ token, amount, amountUsd }: { token: string; amount: string; amountUsd?: string }) => {
   return (
     <div className="flex justify-start items-center gap-2">
-      <img src="/token/usdt.svg" alt="USDT" className="w-10" />
+      <img src={`/token/${token.toLowerCase()}.svg`} alt={token} className="w-10" />
 
       <div className="flex items-start flex-col gap-0.5">
         <div className="text-[18px] leading-none">{amount}</div>
@@ -127,7 +129,11 @@ const BillReviewContainer = () => {
   const tokenTotals = React.useMemo(() => {
     const map = new Map<string, { total: number; totalUsd: number }>();
     selectedInvoices.forEach(inv => {
-      const currency = (inv.currency || inv.invoice?.currency || "USDT").toUpperCase();
+      const currency = (
+        inv.paymentToken.name.toUpperCase() ||
+        inv.invoice?.paymentToken?.name?.toUpperCase() ||
+        "USDT"
+      ).toUpperCase();
       const total = Number(inv.total) || 0;
       const totalUsd = Number(inv.totalUsd) || 0;
       const prev = map.get(currency) || { total: 0, totalUsd: 0 };
@@ -251,7 +257,8 @@ const BillReviewContainer = () => {
                   key={inv.uuid || inv.invoiceNumber}
                   invoiceId={inv.invoiceNumber || inv.uuid}
                   name={inv.fromDetails?.name || "-"}
-                  amount={`${inv.total || 0} ${inv.currency || "USDT"}`}
+                  amount={`${inv.total || 0} ${inv.paymentToken.symbol.toUpperCase() || "USDT"}`}
+                  token={inv.paymentToken.name.toLowerCase()}
                   amountUsd={inv.totalUsd ? `$${inv.totalUsd}` : ""}
                   group={{
                     shape: groupData?.shape || CategoryShapeEnum.CIRCLE,

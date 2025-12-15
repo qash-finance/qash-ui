@@ -122,6 +122,7 @@ const BillContainer = () => {
   const router = useRouter();
 
   const billDatas = bills.map((b, idx) => {
+    console.log(b);
     const createdDate = b.createdAt
       ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       : "";
@@ -163,7 +164,11 @@ const BillContainer = () => {
       Amount: (
         <div className="flex items-center gap-2 justify-center">
           <span>{b.invoice?.total || "0"}</span>
-          <img alt={b.invoice?.currency || "USDT"} className="w-4" src={`/token/usdt.svg`} />
+          <img
+            alt={`${b.invoice?.paymentNetwork?.name?.toLowerCase()}`}
+            className="w-4"
+            src={`/token/${b.invoice?.paymentToken?.name?.toLowerCase()}.svg` || "USDT"}
+          />
         </div>
       ),
       "Due Date": dueDate,
