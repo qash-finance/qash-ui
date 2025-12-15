@@ -20,7 +20,7 @@ import {
 import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import toast from "react-hot-toast";
 import { OutputNotesArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
-import { createBatchNote } from "@/services/utils/miden/note";
+import { createBatchNote, createP2IDNote } from "@/services/utils/miden/note";
 import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_SYMBOL } from "@/services/utils/constant";
 import { usePayBills } from "@/services/api/bill";
 
@@ -172,6 +172,51 @@ const BillReviewContainer = () => {
 
     try {
       openModal("PROCESSING_TRANSACTION");
+
+      // prepare an array of p2id note
+      // const {
+      //   Note,
+      //   Address,
+      //   NoteAssets,
+      //   FungibleAsset,
+      //   NoteType,
+      //   Felt,
+      //   TransactionRequestBuilder,
+      //   OutputNote,
+      //   OutputNoteArray,
+      // } = await import("@demox-labs/miden-sdk");
+
+      // // prepare an array of p2id note
+      // const p2idNotes = await Promise.all(
+      //   selectedInvoices.map(async inv => {
+      //     return OutputNote.full(
+      //       Note.createP2IDENote(
+      //         Address.fromBech32(address).accountId(),
+      //         Address.fromBech32(inv?.emploee?.walletAddress).accountId(),
+      //         new NoteAssets([
+      //           new FungibleAsset(
+      //             Address.fromBech32(QASH_TOKEN_ADDRESS).accountId(),
+      //             BigInt(amount! * 10 ** QASH_TOKEN_DECIMALS),
+      //           ),
+      //         ]),
+      //         null,
+      //         null,
+      //         NoteType.Private,
+      //         new Felt(BigInt(0)),
+      //       ),
+      //     );
+      //   }),
+      // );
+      // const transactionRequest = new TransactionRequestBuilder()
+      //   .withOwnOutputNotes(new OutputNoteArray(p2idNotes))
+      //   .build();
+      // const midenTransaction = new CustomTransaction(
+      //   address,
+      //   "mtst1ar22f8fc95u8vyppkztvmcas8vmckq7f_qruqqypuyph",
+      //   transactionRequest,
+      // );
+
+      // const txId = (await (wallet?.adapter as MidenWalletAdapter).requestTransaction(midenTransaction as any)) || "";
 
       const midenTransaction = new SendTransaction(
         address,

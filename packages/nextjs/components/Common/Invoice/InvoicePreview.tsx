@@ -24,8 +24,8 @@ const PreviewCard = ({
         </div>
       </div>
       <div className="mt-auto flex flex-col gap-1">
-        {isFrom && <p className="text-sm font-medium text-primary-blue">{company}</p>}
-        <p className="text-xs font-medium text-text-secondary">{address}</p>
+        {/* {!isFrom && <p className="text-sm font-medium text-primary-blue">{company}</p>} */}
+        {!isFrom && <p className="text-xs font-medium text-text-secondary">{address}</p>}
       </div>
     </div>
   );
