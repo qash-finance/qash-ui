@@ -8,7 +8,7 @@ import { ModalHeader } from "../Common/ModalHeader";
 
 const NETWORKS: { icon: string; name: string; value: string }[] = [
   { icon: "/chain/ethereum.svg", name: "Ethereum", value: "eth" },
-  { icon: "/chain/miden.svg", name: "Miden", value: "miden" },
+  { icon: "/chain/miden.svg", name: "Miden Testnet", value: "miden" },
   { icon: "/chain/solana.svg", name: "Solana", value: "sol" },
   { icon: "/chain/base.svg", name: "Base", value: "base" },
   { icon: "/chain/bnb.svg", name: "BNB Smart Chain (BEP20)", value: "bnb" },

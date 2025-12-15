@@ -366,11 +366,11 @@ function createInvoiceDataFromPayroll(
   const today = new Date();
   const dueDate = new Date(today);
   dueDate.setDate(today.getDate() + 30);
-  const billToName = owner?.teamMembership?.firstName + " " + owner?.teamMembership?.lastName;
+  const billToName = company?.companyName;
   const billToEmail = ownerEmail;
 
   return {
-    invoiceNumber: `INVXXXX`,
+    invoiceNumber: `INV0001`,
     date: today.toISOString().split("T")[0],
     dueDate: payroll.payStartDate.split("T")[0],
     from: {

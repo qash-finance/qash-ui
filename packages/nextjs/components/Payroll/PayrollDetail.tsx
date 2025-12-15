@@ -130,9 +130,13 @@ const PayrollDetail = () => {
               <img
                 className="w-5"
                 alt={payrollData.network.name}
-                src={`/chain/${payrollData.network.name.toLowerCase()}.svg`}
+                src={`/chain/${
+                  payrollData.network.name.charAt(0).toUpperCase() + payrollData.network.name.slice(1).toLowerCase()
+                }.svg`}
               />
-              <span className="text-sm font-medium text-text-primary">{payrollData.network.name}</span>
+              <span className="text-sm font-medium text-text-primary">
+                {payrollData.network.name.charAt(0).toUpperCase() + payrollData.network.name.slice(1)}
+              </span>
             </div>
             <div className=" py-1 flex items-center gap-2">
               <img
@@ -168,7 +172,7 @@ const PayrollDetail = () => {
               {new Date(payrollData.createdAt).toLocaleString()}
             </div>
             <div className=" py-1 text-sm font-medium text-text-primary">
-              {payrollData.joiningDate} - {payrollData.payEndDate}
+              {`${new Date(payrollData.joiningDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} - ${new Date(payrollData.payEndDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}`}
             </div>
             <div className=" py-1 flex items-center gap-1">
               <img

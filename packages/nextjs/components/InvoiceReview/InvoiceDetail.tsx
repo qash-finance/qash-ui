@@ -26,6 +26,8 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
+  console.log(invoiceData);
+
   const handleUpdateAddress = async () => {
     if (!addressInput.trim()) {
       setUpdateError("Address cannot be empty");
@@ -122,7 +124,11 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
             <div className="flex flex-col gap-2">
               <p className={labelClass}>Network</p>
               <div className={tokenRow}>
-                <img src="/chain/ethereum.svg" alt="Ethereum" className="w-6 h-6 rounded-full" />
+                <img
+                  src={`/chain/${invoiceData.from.network.toLowerCase()}.svg`}
+                  alt={invoiceData.from.network}
+                  className="w-6 h-6 rounded-full"
+                />
                 <p className="text-sm font-semibold text-text-primary">{invoiceData.from.network}</p>
                 <img
                   src="/misc/edit-icon.svg"
@@ -136,7 +142,11 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
             <div className="flex flex-col gap-2">
               <p className={labelClass}>Token</p>
               <div className={tokenRow}>
-                <img src="/token/usdt.svg" alt="USDT" className="w-6 h-6 rounded-full" />
+                <img
+                  src={`/token/${invoiceData.from.token.toLowerCase()}.svg`}
+                  alt={invoiceData.from.token}
+                  className="w-6 h-6 rounded-full"
+                />
                 <p className="text-sm font-semibold text-text-primary">{invoiceData.from.token}</p>
                 <img
                   src="/misc/edit-icon.svg"
