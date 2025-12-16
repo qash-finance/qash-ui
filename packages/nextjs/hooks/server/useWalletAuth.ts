@@ -38,7 +38,7 @@ export function useEmailAuth(): EmailAuthHook {
     process.env.NEXT_PUBLIC_SERVER_URL || "",
     () => auth.accessToken || null,
     async () => {
-      await auth.refreshToken();
+      // await auth.refreshToken();
     },
     () => {
       auth.logout();
@@ -92,7 +92,7 @@ export function useEmailAuth(): EmailAuthHook {
   const refreshAuth = useCallback(async () => {
     try {
       setLocalError(null);
-      await auth.refreshToken();
+      // await auth.refreshToken();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Refresh failed";
       setLocalError(errorMessage);
@@ -111,7 +111,7 @@ export function useEmailAuth(): EmailAuthHook {
     logout,
     refreshAuth,
     clearError,
-    isSessionValid: auth.isSessionValid,
+    isSessionValid: () => Promise.resolve(true),
     api,
   };
 }

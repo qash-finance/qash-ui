@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/services/auth/context";
 
-const PUBLIC_ROUTES = ["/login", "/onboarding", "/payment", "/invoice-review"];
+const PUBLIC_ROUTES = ["/login", "/onboarding", "/payment", "/invoice-review", "/mobile"];
 
 export function useAuthGuard(redirectTo: string = "/login") {
   const { isAuthenticated, isLoading } = useAuth();
@@ -20,6 +20,10 @@ export function useAuthGuard(redirectTo: string = "/login") {
 
     // Allow /invoice-review for any authenticated user (even if missing company/team)
     if (isAuthenticated && pathname?.startsWith("/invoice-review")) {
+      return;
+    }
+
+    if (isAuthenticated && pathname?.startsWith("/mobile")) {
       return;
     }
 

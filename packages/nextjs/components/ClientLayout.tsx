@@ -33,6 +33,8 @@ import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
 import { PrimaryButton } from "./Common/PrimaryButton";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
 
+const SIDEBAR_WIDTH = 280;
+
 interface ClientLayoutProps {
   children: ReactNode;
 }
@@ -64,6 +66,15 @@ const fullscreenPages = new Set([
   "/payment/",
   "/invoice-review",
 ]);
+
+const TestnetBanner = () => (
+  <div className="w-full bg-[#FFD268] text-black text-center p-2 h-[32px] flex items-center justify-center gap-2 text-sm relative">
+    <img src="/misc/testnet-background-left.svg" alt="coin-icon" className="w-35 absolute left-0 top-0" />
+    <img src="/misc/testnet-background-right.svg" alt="coin-icon" className="w-35 absolute right-0 top-0" />
+    <img src="/misc/two-star-icon.svg" alt="coin-icon" className="w-5 h-5 " />
+    <span>Testnet Notice: All assets and transactions may be reset and have no real value.</span>
+  </div>
+);
 
 // Inner component that uses auth guard (must be inside AuthProvider)
 function ProtectedContent({ children }: { children: ReactNode }) {
@@ -159,16 +170,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                               {fullscreenPages.has(pathname) ? (
                                 <div className="h-screen w-screen">{children}</div>
                               ) : (
-                                // Regular layout for other pages
-                                <div className="flex flex-row gap-2">
-                                  <div className="top-0 w-[240px]">
-                                    <Sidebar />
-                                  </div>
-                                  {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
-                                  <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
-                                    <Title />
-                                    <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
-                                      {children}
+                                <div className="flex flex-col h-screen overflow-hidden">
+                                  <TestnetBanner />
+                                  <div className="flex flex-row gap-2">
+                                    <div className="top-0" style={{ width: SIDEBAR_WIDTH }}>
+                                      <Sidebar />
+                                    </div>
+                                    {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
+                                    <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
+                                      <Title />
+                                      <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
+                                        {children}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>

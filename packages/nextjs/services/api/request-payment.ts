@@ -1,24 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AuthenticatedApiClient } from "./index";
+import { apiServerWithAuth } from "./index";
 import { AuthStorage } from "../auth/storage";
 import { CreateRequestPaymentDto, RequestPayment } from "@/types/request-payment";
-
-// *************************************************
-// **************** API CLIENT SETUP ***************
-// *************************************************
-
-const apiClient = new AuthenticatedApiClient(
-  process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => {
-    const auth = AuthStorage.getAuth();
-    return auth?.sessionToken || null;
-  },
-  async () => {
-    // TODO: Implement token refresh logic
-    // For now, just clear auth and redirect to login
-  },
-  () => {},
-);
 
 // *************************************************
 // **************** GET METHODS *******************
@@ -33,7 +16,7 @@ const useGetRequests = () => {
   return useQuery({
     queryKey: ["request-payment"],
     queryFn: async () => {
-      return apiClient.getData<RequestPaymentResponse>(`/request-payment`);
+      return apiServerWithAuth.getData<RequestPaymentResponse>(`/request-payment`);
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,
@@ -51,7 +34,7 @@ const useCreatePendingRequest = () => {
 
   return useMutation({
     mutationFn: async (data: CreateRequestPaymentDto) => {
-      return apiClient.postData<RequestPayment>("/request-payment", data);
+      return apiServerWithAuth.postData<RequestPayment>("/request-payment", data);
     },
     onSuccess: (newRequest: RequestPayment) => {},
   });
@@ -66,7 +49,7 @@ const useAcceptRequest = () => {
 
   return useMutation({
     mutationFn: async ({ id, txid }: { id: number; txid: string }) => {
-      return apiClient.putData<RequestPayment>(`/request-payment/${id}/accept`, { txid });
+      return apiServerWithAuth.putData<RequestPayment>(`/request-payment/${id}/accept`, { txid });
     },
     onSuccess: (updatedRequest: RequestPayment) => {
       queryClient.setQueryData(["request-payment"], (oldData: RequestPaymentResponse | undefined) => {
@@ -85,7 +68,7 @@ const useDenyRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiClient.putData<RequestPayment>(`/request-payment/${id}/deny`);
+      return apiServerWithAuth.putData<RequestPayment>(`/request-payment/${id}/deny`);
     },
     onSuccess: (updatedRequest: RequestPayment) => {
       // refetch requests
@@ -99,7 +82,7 @@ const useConfirmGroupPaymentRequest = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiClient.putData<RequestPayment>(`/request-payment/${id}/confirm-group-payment`);
+      return apiServerWithAuth.putData<RequestPayment>(`/request-payment/${id}/confirm-group-payment`);
     },
     onSuccess: (updatedRequest: RequestPayment) => {
       queryClient.setQueryData(["request-payment"], (oldData: RequestPaymentResponse | undefined) => {

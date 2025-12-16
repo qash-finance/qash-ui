@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import ComingSoonBadge from "../Common/ComingSoonBadge";
 
 interface NavItemData {
   icon: string;
@@ -41,7 +42,7 @@ const NavItem: React.FC<NavItemProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const baseClasses =
-    "flex gap-1.5 items-center h-11 p-2.5 w-full whitespace-nowrap rounded-xl transition-all duration-200 ease-in-out";
+    "flex gap-1.5 items-center h-11 p-2.5 w-full whitespace-nowrap rounded-xl transition-all duration-200 ease-in-out justify-between";
   const cursorClasses = disabled ? "cursor-not-allowed" : "cursor-pointer";
 
   const handleClick = () => {
@@ -71,7 +72,7 @@ const NavItem: React.FC<NavItemProps> = ({
         }}
       />
       <button
-        className={`${baseClasses} ${cursorClasses} gap-3 focus:outline-none focus:ring-0 focus:border-0 active:outline-none active:ring-0 active:border-0`}
+        className={`${baseClasses} ${cursorClasses} gap-3 focus:outline-none focus:ring-0 focus:border-0 active:outline-none active:ring-0 active:border-0 justify-between flex`}
         style={{
           borderRadius: showActiveState ? "8px" : "12px",
           borderBottom: showActiveState ? "1px solid var(--primary-divider)" : "1px solid transparent",
@@ -84,25 +85,29 @@ const NavItem: React.FC<NavItemProps> = ({
         onMouseLeave={() => setIsHovered(false)}
         type="button"
       >
-        <img
-          src={shouldShowFilledIcon ? filledIcon : icon}
-          alt=""
-          className={`object-contain shrink-0 transition-all duration-200 ease-in-out ${!showActiveState ? "w-5 h-5" : "w-6 h-6"}`}
-        />
-        <span
-          className={`flex-1 shrink self-stretch my-auto basis-0 text-left transition-colors duration-200 ease-in-out ${
-            showActiveState ? "text-text-primary" : "text-text-secondary"
-          }`}
-        >
-          {label}
-        </span>
-        {hasSubmenu && (
+        <>
+          <img
+            src={shouldShowFilledIcon ? filledIcon : icon}
+            alt=""
+            className={`object-contain shrink-0 transition-all duration-200 ease-in-out ${!showActiveState ? "w-5 h-5" : "w-6 h-6"}`}
+          />
+          <span
+            className={`flex-1 shrink self-stretch my-auto basis-0 text-left transition-colors duration-200 ease-in-out ${
+              showActiveState ? "text-text-primary" : "text-text-secondary"
+            }`}
+          >
+            {label}
+          </span>
+        </>
+
+        {/* {hasSubmenu && (
           <img
             src="/arrow/chevron-right.svg"
             className="w-4 aspect-square transition-all duration-200 ease-in-out"
             alt="filled arrow right icon"
           />
-        )}
+        )} */}
+        {disabled && <ComingSoonBadge size="small" />}
       </button>
     </div>
   );

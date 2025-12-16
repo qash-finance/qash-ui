@@ -16,100 +16,101 @@ export function useConsumableNotes() {
   const { data, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["consumable-notes", walletAddress],
     queryFn: async (): Promise<PartialConsumableNote[]> => {
-      // sender can get
-      // 1. p2id note
-      // 2. p2ide note as receiver
-      // 3. p2ide note as sender
+      // // sender can get
+      // // 1. p2id note
+      // // 2. p2ide note as receiver
+      // // 3. p2ide note as sender
 
-      // Basically I dont want to put recallable transactions in consumable note to prevent sender recall transactions
+      // // Basically I dont want to put recallable transactions in consumable note to prevent sender recall transactions
 
-      // So in this hook, we will only get
-      // 1. p2id note as receiver
-      // 2. p2ide note as receiver
+      // // So in this hook, we will only get
+      // // 1. p2id note as receiver
+      // // 2. p2ide note as receiver
 
-      // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
-      const { NetworkId, AccountInterface } = await import("@demox-labs/miden-sdk");
+      // // Problem here is getConsumableNotes will give p2ide note as sender as well, so we need to filter it out
+      // const { NetworkId, AccountInterface } = await import("@demox-labs/miden-sdk");
 
-      const latestBlockHeight = blockNum || 0;
+      // const latestBlockHeight = blockNum || 0;
 
-      let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
-        consumableTxs: [],
-        recallableTxs: [],
-      };
+      // let consumableNotesFromServer: { consumableTxs: ConsumableNote[]; recallableTxs: ConsumableNote[] } = {
+      //   consumableTxs: [],
+      //   recallableTxs: [],
+      // };
 
-      try {
-        consumableNotesFromServer = await getConsumableNotesFromServer(latestBlockHeight);
-      } catch (error) {
-        console.log("ERROR GETTING PRIVATE NOTES", error);
-      }
+      // try {
+      //   consumableNotesFromServer = await getConsumableNotesFromServer(latestBlockHeight);
+      // } catch (error) {
+      //   console.log("ERROR GETTING PRIVATE NOTES", error);
+      // }
 
-      const consumablePrivateNotes: PartialConsumableNote[] = consumableNotesFromServer.consumableTxs.map(note => ({
-        id: note.noteId,
-        sender: note.sender,
-        recipient: note.recipient,
-        private: note.private,
-        recallableHeight: note.recallableHeight,
-        recallableTime: note.recallableTime,
-        serialNumber: note.serialNumber,
-        requestPaymentId: note.requestPaymentId,
-        assets: note.assets.map(asset => ({
-          amount: (Number(asset.amount) * 10 ** asset.metadata.decimals).toString(),
-          faucetId: asset.faucetId,
-          metadata: asset.metadata,
-        })),
-      }));
+      // const consumablePrivateNotes: PartialConsumableNote[] = consumableNotesFromServer.consumableTxs.map(note => ({
+      //   id: note.noteId,
+      //   sender: note.sender,
+      //   recipient: note.recipient,
+      //   private: note.private,
+      //   recallableHeight: note.recallableHeight,
+      //   recallableTime: note.recallableTime,
+      //   serialNumber: note.serialNumber,
+      //   requestPaymentId: note.requestPaymentId,
+      //   assets: note.assets.map(asset => ({
+      //     amount: (Number(asset.amount) * 10 ** asset.metadata.decimals).toString(),
+      //     faucetId: asset.faucetId,
+      //     metadata: asset.metadata,
+      //   })),
+      // }));
 
-      const notes: any[] = await getConsumableNotes(walletAddress!);
+      // const notes: any[] = await getConsumableNotes(walletAddress!);
 
-      const consumableNotes: PartialConsumableNote[] = await Promise.all(
-        notes.map(async note => {
-          // if note is in recallableTxs, dont include it
+      // const consumableNotes: PartialConsumableNote[] = await Promise.all(
+      //   notes.map(async note => {
+      //     // if note is in recallableTxs, dont include it
 
-          const id = note.inputNoteRecord().id().toString();
-          const inputNoteRecord = note.inputNoteRecord();
-          const noteMetadata = inputNoteRecord.metadata();
-          const noteDetails = inputNoteRecord.details();
-          const assetPromises = noteDetails
-            .assets()
-            .fungibleAssets()
-            .map(async (asset: any) => {
-              const metadata = await getFaucetMetadata(
-                asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
-              );
-              return {
-                faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
-                amount: asset.amount().toString(),
-                metadata: metadata,
-              } as AssetWithMetadata;
-            });
-          const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
-          const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
+      //     const id = note.inputNoteRecord().id().toString();
+      //     const inputNoteRecord = note.inputNoteRecord();
+      //     const noteMetadata = inputNoteRecord.metadata();
+      //     const noteDetails = inputNoteRecord.details();
+      //     const assetPromises = noteDetails
+      //       .assets()
+      //       .fungibleAssets()
+      //       .map(async (asset: any) => {
+      //         const metadata = await getFaucetMetadata(
+      //           asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+      //         );
+      //         return {
+      //           faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+      //           amount: asset.amount().toString(),
+      //           metadata: metadata,
+      //         } as AssetWithMetadata;
+      //       });
+      //     const assets: AssetWithMetadata[] = await Promise.all(assetPromises);
+      //     const sender = noteMetadata?.sender().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet);
 
-          return {
-            id: id,
-            private: false,
-            sender: sender!,
-            recipient: walletAddress!,
-            assets: assets,
-            recallableHeight: -1,
-            recallableTime: "",
-            serialNumber: [],
-            requestPaymentId: note.requestPaymentId,
-          };
-        }),
-      );
+      //     return {
+      //       id: id,
+      //       private: false,
+      //       sender: sender!,
+      //       recipient: walletAddress!,
+      //       assets: assets,
+      //       recallableHeight: -1,
+      //       recallableTime: "",
+      //       serialNumber: [],
+      //       requestPaymentId: note.requestPaymentId,
+      //     };
+      //   }),
+      // );
 
-      // filterout the sender and recipient are the same
-      const filteredConsumableNotes = consumableNotes.filter(note => note.sender !== note.recipient);
+      // // filterout the sender and recipient are the same
+      // const filteredConsumableNotes = consumableNotes.filter(note => note.sender !== note.recipient);
 
-      // Prefer server-enriched notes (which include recallable metadata) when IDs collide
-      const returnNotes = [...consumablePrivateNotes, ...filteredConsumableNotes];
+      // // Prefer server-enriched notes (which include recallable metadata) when IDs collide
+      // const returnNotes = [...consumablePrivateNotes, ...filteredConsumableNotes];
 
-      // remove the same note.id
-      const filteredNotes = returnNotes.filter(
-        (note, index, self) => index === self.findIndex(t => t.id.toLowerCase() === note.id.toLowerCase()),
-      );
-      return filteredNotes;
+      // // remove the same note.id
+      // const filteredNotes = returnNotes.filter(
+      //   (note, index, self) => index === self.findIndex(t => t.id.toLowerCase() === note.id.toLowerCase()),
+      // );
+      // return filteredNotes;
+      return [];
     },
     enabled: !!walletAddress && !!blockNum,
     staleTime: 1000, // Consider data stale after 1 second

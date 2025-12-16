@@ -31,51 +31,12 @@ interface AccountData {
 
 // Function to fetch assets and notes
 const fetchAccountData = async (walletAddress: string | null): Promise<AccountData> => {
-  if (!walletAddress || walletAddress.trim() === "") {
-    return {
+  return {
       assets: [defaultQashToken],
-      isAccountDeployed: true,
+      isAccountDeployed: false,
       accountBalance: "0",
+      error: "",
     };
-  }
-
-  try {
-    // Fetch assets and notes in parallel
-    const [accountAssets] = await Promise.all([getAccountAssets(walletAddress)]);
-
-    // merge QASH token with account assets, replacing if exists
-    const mergedAssets = [defaultQashToken, ...accountAssets.filter(asset => asset.faucetId !== QASH_TOKEN_ADDRESS)];
-
-    // if QASH exists in accountAssets, update its amount
-    const qashFromAccount = accountAssets.find(asset => asset.faucetId === QASH_TOKEN_ADDRESS);
-    if (qashFromAccount) {
-      mergedAssets[0] = {
-        ...defaultQashToken,
-        amount: qashFromAccount.amount,
-      };
-    }
-
-    // Calculate total balance
-    const totalBalance = mergedAssets.reduce((acc, asset) => {
-      return acc + Number(formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals));
-    }, 0);
-
-    return {
-      assets: mergedAssets,
-      isAccountDeployed: true,
-      accountBalance: totalBalance.toString(),
-    };
-  } catch (err) {
-    const error = String(err);
-    const isNotFound = error.includes("status: NotFound");
-
-    return {
-      assets: [defaultQashToken],
-      isAccountDeployed: !isNotFound,
-      accountBalance: "0",
-      error: err,
-    };
-  }
 };
 
 export function useAccount() {

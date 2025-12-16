@@ -37,7 +37,7 @@ export function TokenItem({ token }: TokenItemProps) {
               className="w-5 rounded-[5px] absolute bottom-0 right-0"
             />
           </div>
-          <div className="flex flex-col items-start w-[60px]">
+          <div className="flex flex-col items-start w-[100px]">
             <h3 className="text-base font-medium leading-6 text-text-primary">{token.metadata.symbol}</h3>
             <p className="text-sm leading-4 text-text-secondary">{token.chain || "Miden"}</p>
           </div>

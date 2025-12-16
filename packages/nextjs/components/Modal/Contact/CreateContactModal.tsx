@@ -22,6 +22,12 @@ import {
 } from "@/services/api/employee";
 import { EmployeeGroupDropdown } from "@/components/Common/Dropdown/EmployeeGroupDropdown";
 import { useAuth } from "@/services/auth/context";
+import {
+  QASH_TOKEN_ADDRESS,
+  QASH_TOKEN_DECIMALS,
+  QASH_TOKEN_MAX_SUPPLY,
+  QASH_TOKEN_SYMBOL,
+} from "@/services/utils/constant";
 
 interface CreateContactFormData {
   name: string;
@@ -69,8 +75,20 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
 
 export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateContactModalProps>) {
   const { isAuthenticated } = useAuth();
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
-  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(null);
+  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>({
+    amount: "0",
+    faucetId: QASH_TOKEN_ADDRESS,
+    metadata: {
+      symbol: QASH_TOKEN_SYMBOL,
+      decimals: QASH_TOKEN_DECIMALS,
+      maxSupply: QASH_TOKEN_MAX_SUPPLY,
+    },
+  });
+  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>({
+    icon: "/chain/miden.svg",
+    name: "Miden Testnet",
+    value: "miden",
+  });
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
 

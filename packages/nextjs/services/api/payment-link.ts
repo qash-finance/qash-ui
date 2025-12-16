@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AuthenticatedApiClient } from "./index";
+import { apiServerWithAuth } from "./index";
 import { AuthStorage } from "../auth/storage";
 import {
   CreatePaymentLink,
@@ -14,19 +14,6 @@ import {
 // **************** API CLIENT SETUP ***************
 // *************************************************
 
-const apiClient = new AuthenticatedApiClient(
-  process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => {
-    const auth = AuthStorage.getAuth();
-    return auth?.sessionToken || null;
-  },
-  async () => {
-    // TODO: Implement token refresh logic
-    // For now, just clear auth and redirect to login
-  },
-  () => {},
-);
-
 // *************************************************
 // **************** GET METHODS *******************
 // *************************************************
@@ -38,7 +25,7 @@ const useGetPaymentLinks = () => {
   return useQuery({
     queryKey: ["payment-links"],
     queryFn: async () => {
-      return apiClient.getData<PaymentLink[]>("/payment-link");
+      return apiServerWithAuth.getData<PaymentLink[]>("/payment-link");
     },
     staleTime: 0,
     refetchOnMount: true,
@@ -54,7 +41,7 @@ const useGetPaymentLinkByCode = (code: string) => {
   return useQuery({
     queryKey: ["payment-link", code],
     queryFn: async () => {
-      return apiClient.getData<PaymentLink>(`/payment-link/${code}`);
+      return apiServerWithAuth.getData<PaymentLink>(`/payment-link/${code}`);
     },
     enabled: !!code,
     staleTime: 0,
@@ -71,7 +58,7 @@ const useGetPaymentLinkByCodeForOwner = (code: string) => {
   return useQuery({
     queryKey: ["payment-link-owner", code],
     queryFn: async () => {
-      return apiClient.getData<PaymentLink>(`/payment-link/${code}/owner`);
+      return apiServerWithAuth.getData<PaymentLink>(`/payment-link/${code}/owner`);
     },
     enabled: !!code,
     staleTime: 0,
@@ -93,7 +80,7 @@ const useCreatePaymentLink = () => {
 
   return useMutation({
     mutationFn: async (data: CreatePaymentLink) => {
-      return apiClient.postData<PaymentLink>("/payment-link", data);
+      return apiServerWithAuth.postData<PaymentLink>("/payment-link", data);
     },
     onSuccess: (newPaymentLink: PaymentLink) => {
       // Invalidate and refetch payment links list
@@ -110,7 +97,7 @@ const useRecordPayment = () => {
 
   return useMutation({
     mutationFn: async ({ code, data }: { code: string; data: PaymentRecordDTO }) => {
-      return apiClient.postData<PaymentLink>(`/payment-link/${code}/pay`, data);
+      return apiServerWithAuth.postData<PaymentLink>(`/payment-link/${code}/pay`, data);
     },
     onSuccess: (updatedPaymentLink: PaymentLink) => {
       // Update the specific payment link in cache
@@ -133,7 +120,7 @@ const useUpdatePaymentLink = () => {
 
   return useMutation({
     mutationFn: async ({ code, data }: { code: string; data: UpdatePaymentLink }) => {
-      return apiClient.putData<PaymentLink>(`/payment-link/${code}`, data);
+      return apiServerWithAuth.putData<PaymentLink>(`/payment-link/${code}`, data);
     },
     onSuccess: (updatedPaymentLink: PaymentLink) => {
       // Update the specific payment link in cache
@@ -152,7 +139,7 @@ const useDeactivatePaymentLink = () => {
 
   return useMutation({
     mutationFn: async (code: string) => {
-      return apiClient.putData<PaymentLink>(`/payment-link/${code}/deactivate`);
+      return apiServerWithAuth.putData<PaymentLink>(`/payment-link/${code}/deactivate`);
     },
     onSuccess: (updatedPaymentLink: PaymentLink) => {
       // Update the specific payment link in cache
@@ -171,7 +158,7 @@ const useActivatePaymentLink = () => {
 
   return useMutation({
     mutationFn: async (code: string) => {
-      return apiClient.putData<PaymentLink>(`/payment-link/${code}/activate`);
+      return apiServerWithAuth.putData<PaymentLink>(`/payment-link/${code}/activate`);
     },
     onSuccess: (updatedPaymentLink: PaymentLink) => {
       // Update the specific payment link in cache
@@ -190,7 +177,7 @@ const useUpdatePaymentTxid = () => {
 
   return useMutation({
     mutationFn: async ({ paymentId, txid }: { paymentId: number; txid: string }) => {
-      return apiClient.putData<PaymentLink>(`/payment-link/payment/${paymentId}/txid`, { txid });
+      return apiServerWithAuth.putData<PaymentLink>(`/payment-link/payment/${paymentId}/txid`, { txid });
     },
     onSuccess: () => {
       // Invalidate and refetch payment links list
@@ -211,7 +198,7 @@ const useUpdatePaymentLinkOrder = () => {
 
   return useMutation({
     mutationFn: async (data: PaymentLinkOrder) => {
-      return apiClient.patchData<PaymentLink[]>(`/payment-link/update-order`, data);
+      return apiServerWithAuth.patchData<PaymentLink[]>(`/payment-link/update-order`, data);
     },
     onSuccess: () => {
       // Invalidate and refetch payment links list to get updated order
@@ -232,7 +219,7 @@ const useDeletePaymentLinks = () => {
 
   return useMutation({
     mutationFn: async (codes: string[]) => {
-      return apiClient.deleteData<{
+      return apiServerWithAuth.deleteData<{
         message: string;
         deletedCount: number;
         deletedCodes: string[];

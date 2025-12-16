@@ -52,6 +52,7 @@ import RetryModal from "@/components/Modal/RetryModal";
 import SelectNetworkModal from "@/components/Modal/SelectNetworkModal";
 import InvoiceModal from "@/components/Modal/InvoiceModal";
 import ConnectMidenWallet from "@/components/Modal/Wallet/ConnectMidenWallet";
+import RemovePayrollModal from "@/components/Modal/Payroll/RemovePayrollModal";
 import { Group } from "./group-payment";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
@@ -114,6 +115,7 @@ export const MODAL_IDS = {
   SELECT_NETWORK: "SELECT_NETWORK",
   INVOICE_MODAL: "INVOICE_MODAL",
   CONNECT_MIDEN_WALLET: "CONNECT_MIDEN_WALLET",
+  REMOVE_PAYROLL: "REMOVE_PAYROLL",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -429,6 +431,11 @@ export interface ConnectMidenWalletProps extends BaseModalProps {
   // Add any specific props for ConnectMidenWallet here
 }
 
+export interface RemovePayrollModalProps extends BaseModalProps {
+  onRemove: () => Promise<void>;
+  payrollOwnerName?: string;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -482,6 +489,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.SELECT_NETWORK]: SelectNetworkModalProps;
   [MODAL_IDS.INVOICE_MODAL]: InvoiceModalProps;
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWalletProps;
+  [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -539,4 +547,5 @@ export const modalRegistry = {
   [MODAL_IDS.SELECT_NETWORK]: SelectNetworkModal,
   [MODAL_IDS.INVOICE_MODAL]: InvoiceModal,
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWallet,
+  [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModal,
 } as const;

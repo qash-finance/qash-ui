@@ -73,7 +73,7 @@ export const CategoryDropdown = ({
                 }`}
               >
                 <div className="w-5 h-5 flex items-center justify-center">
-                  {createShapeElement(category.shape, category.color)}
+                  {/* {createShapeElement(category.shape, category.color)} */}
                 </div>
                 <span className="text-text-primary font-semibold">{category.name}</span>
               </button>

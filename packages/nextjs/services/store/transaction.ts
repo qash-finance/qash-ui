@@ -48,7 +48,7 @@ async function transactionRecordToUITransaction({
       const fungibleAssets: FungibleAsset[] = note.assets().fungibleAssets();
       fungibleAssets.forEach((asset: FungibleAsset) => {
         assets.push({
-          assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+          assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet),
           amount: asset.amount(),
         });
       });
@@ -82,7 +82,7 @@ async function transactionRecordToUITransaction({
       const fungibleAssets = note.details().assets().fungibleAssets();
       fungibleAssets.forEach((asset: FungibleAsset) => {
         assets.push({
-          assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.Unspecified),
+          assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet),
           amount: asset.amount(),
         });
       });
@@ -101,7 +101,7 @@ async function transactionRecordToUITransaction({
       transactionType = "Incoming";
       sender = AccountId.fromHex(inputNote[0].metadata().sender().toString()).toBech32(
         NetworkId.Testnet,
-        AccountInterface.Unspecified,
+        AccountInterface.BasicWallet,
       );
     }
 

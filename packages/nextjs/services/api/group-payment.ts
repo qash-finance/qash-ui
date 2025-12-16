@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AuthenticatedApiClient } from "./index";
+import { apiServerWithAuth } from "./index";
 import { AuthStorage } from "../auth/storage";
 import {
   CreateGroupDto,
@@ -16,19 +16,6 @@ import {
 // **************** API CLIENT SETUP ***************
 // *************************************************
 
-const apiClient = new AuthenticatedApiClient(
-  process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => {
-    const auth = AuthStorage.getAuth();
-    return auth?.sessionToken || null;
-  },
-  async () => {
-    // TODO: Implement token refresh logic
-    // For now, just clear auth and redirect to login
-  },
-  () => {},
-);
-
 // *************************************************
 // **************** GET METHODS *******************
 // *************************************************
@@ -37,7 +24,7 @@ const useGetAllGroups = () => {
   return useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      return apiClient.getData<Group[]>("/group-payment/groups");
+      return apiServerWithAuth.getData<Group[]>("/group-payment/groups");
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,
@@ -50,7 +37,7 @@ const useGetGroupPayments = (groupId?: number) => {
   return useQuery({
     queryKey: ["group-payments", groupId],
     queryFn: async () => {
-      const data = await apiClient.getData<GroupPaymentsResponse>(`/group-payment/group/${groupId}/payments`);
+      const data = await apiServerWithAuth.getData<GroupPaymentsResponse>(`/group-payment/group/${groupId}/payments`);
 
       // Transform the data to group by minute instead of date
       const transformedData: GroupPaymentsResponse = {};
@@ -82,7 +69,7 @@ const useGetPaymentByLink = (linkCode: string) => {
   return useQuery({
     queryKey: ["payment-by-link", linkCode],
     queryFn: async () => {
-      return apiClient.getData<PaymentByLinkResponse>(`/group-payment/link/${linkCode}`);
+      return apiServerWithAuth.getData<PaymentByLinkResponse>(`/group-payment/link/${linkCode}`);
     },
     enabled: !!linkCode,
     staleTime: 0, // Always consider data stale
@@ -101,7 +88,7 @@ const useCreateGroup = () => {
 
   return useMutation({
     mutationFn: async (data: CreateGroupDto) => {
-      return apiClient.postData<Group>("/group-payment/group", data);
+      return apiServerWithAuth.postData<Group>("/group-payment/group", data);
     },
     onSuccess: (newGroup: Group) => {
       // Update the groups list cache
@@ -118,7 +105,7 @@ const useCreateDefaultGroup = () => {
 
   return useMutation({
     mutationFn: async (data: CreateDefaultGroupDto) => {
-      return apiClient.postData<Group>("/group-payment/default-group", data);
+      return apiServerWithAuth.postData<Group>("/group-payment/default-group", data);
     },
     onSuccess: (newGroup: Group) => {
       // Update the groups list cache
@@ -135,7 +122,7 @@ const useCreateGroupPayment = () => {
 
   return useMutation({
     mutationFn: async (data: CreateGroupPaymentDto) => {
-      return apiClient.postData<GroupPayment>("/group-payment/create-payment", data);
+      return apiServerWithAuth.postData<GroupPayment>("/group-payment/create-payment", data);
     },
     onSuccess: (newPayment: GroupPayment) => {
       const groupId = newPayment.groupId || newPayment.group?.id;
@@ -163,7 +150,7 @@ const useCreateQuickSharePayment = () => {
 
   return useMutation({
     mutationFn: async (data: CreateQuickSharePaymentDto) => {
-      return apiClient.postData<{ code: string }>("/group-payment/quick-share/create-payment", data);
+      return apiServerWithAuth.postData<{ code: string }>("/group-payment/quick-share/create-payment", data);
     },
     onSuccess: (response: { code: string }) => {
       // Find the "Quick Share" group and update its payments cache
@@ -188,7 +175,7 @@ const useUpdateGroup = () => {
 
   return useMutation({
     mutationFn: async ({ groupId, data }: { groupId: number; data: CreateGroupDto }) => {
-      return apiClient.patchData<Group>(`/group-payment/group/${groupId}`, data);
+      return apiServerWithAuth.patchData<Group>(`/group-payment/group/${groupId}`, data);
     },
     onSuccess: (updatedGroup: Group) => {
       // Update groups cache
@@ -211,7 +198,7 @@ const useDeleteGroup = () => {
 
   return useMutation({
     mutationFn: async (groupId: number) => {
-      return apiClient.deleteData(`/group-payment/group/${groupId}`);
+      return apiServerWithAuth.deleteData(`/group-payment/group/${groupId}`);
     },
     onSuccess: (_resp, groupId) => {
       // Remove from groups cache
@@ -230,7 +217,7 @@ const useAddMemberToQuickShare = () => {
 
   return useMutation({
     mutationFn: async ({ code, userAddress }: { code: string; userAddress: string }) => {
-      return apiClient.patchData(`/group-payment/quick-share/${code}/add-member`, { userAddress });
+      return apiServerWithAuth.patchData(`/group-payment/quick-share/${code}/add-member`, { userAddress });
     },
     onSuccess: () => {
       // Invalidate relevant queries when a member is added

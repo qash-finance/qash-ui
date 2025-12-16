@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AuthenticatedApiClient } from "./index";
+import { apiServerWithAuth } from "./index";
 import { AuthStorage } from "../auth/storage";
 import {
   CreateSchedulePayment,
@@ -8,22 +8,6 @@ import {
   SchedulePayment,
 } from "@/types/schedule-payment";
 
-// *************************************************
-// **************** API CLIENT SETUP ***************
-// *************************************************
-
-const apiClient = new AuthenticatedApiClient(
-  process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => {
-    const auth = AuthStorage.getAuth();
-    return auth?.sessionToken || null;
-  },
-  async () => {
-    // TODO: Implement token refresh logic
-    // For now, just clear auth and redirect to login
-  },
-  () => {},
-);
 
 // *************************************************
 // **************** GET METHODS *******************
@@ -41,7 +25,7 @@ const useGetSchedulePayments = (query?: SchedulePaymentQuery) => {
       }
 
       const url = queryParams ? `/schedule-payment?${queryParams.toString()}` : "/schedule-payment";
-      return apiClient.getData<SchedulePayment[]>(url);
+      return apiServerWithAuth.getData<SchedulePayment[]>(url);
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,
@@ -54,7 +38,7 @@ const useGetSchedulePaymentById = (id: number) => {
   return useQuery({
     queryKey: ["schedule-payment", id],
     queryFn: async () => {
-      return apiClient.getData<SchedulePayment>(`/schedule-payment/${id}`);
+      return apiServerWithAuth.getData<SchedulePayment>(`/schedule-payment/${id}`);
     },
     enabled: !!id,
     staleTime: 0,
@@ -73,7 +57,7 @@ const useCreateSchedulePayment = () => {
 
   return useMutation({
     mutationFn: async (data: CreateSchedulePayment) => {
-      return apiClient.postData<SchedulePayment>("/schedule-payment", data);
+      return apiServerWithAuth.postData<SchedulePayment>("/schedule-payment", data);
     },
     onSuccess: (newSchedulePayment: SchedulePayment) => {
       // Invalidate and refetch schedule payments list
@@ -91,7 +75,7 @@ const useUpdateSchedulePayment = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateSchedulePayment }) => {
-      return apiClient.putData<SchedulePayment>(`/schedule-payment/${id}`, data);
+      return apiServerWithAuth.putData<SchedulePayment>(`/schedule-payment/${id}`, data);
     },
     onSuccess: (updatedSchedulePayment: SchedulePayment) => {
       // Update the specific schedule payment in cache
@@ -107,7 +91,7 @@ const usePauseSchedulePayment = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiClient.putData<SchedulePayment>(`/schedule-payment/${id}/pause`);
+      return apiServerWithAuth.putData<SchedulePayment>(`/schedule-payment/${id}/pause`);
     },
     onSuccess: (updatedSchedulePayment: SchedulePayment) => {
       // Update the specific schedule payment in cache
@@ -123,7 +107,7 @@ const useResumeSchedulePayment = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiClient.putData<SchedulePayment>(`/schedule-payment/${id}/resume`);
+      return apiServerWithAuth.putData<SchedulePayment>(`/schedule-payment/${id}/resume`);
     },
     onSuccess: (updatedSchedulePayment: SchedulePayment) => {
       // Update the specific schedule payment in cache
@@ -139,7 +123,7 @@ const useCancelSchedulePayment = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiClient.putData<SchedulePayment>(`/schedule-payment/${id}/cancel`);
+      return apiServerWithAuth.putData<SchedulePayment>(`/schedule-payment/${id}/cancel`);
     },
     onSuccess: (updatedSchedulePayment: SchedulePayment) => {
       // Update the specific schedule payment in cache
@@ -159,7 +143,7 @@ const useDeleteSchedulePayment = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiClient.deleteData(`/schedule-payment/${id}`);
+      return apiServerWithAuth.deleteData(`/schedule-payment/${id}`);
     },
     onSuccess: (_, deletedId: number) => {
       // Remove the specific schedule payment from cache

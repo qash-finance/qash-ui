@@ -1,6 +1,6 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import { useForm } from "react-hook-form";
 import { MODAL_IDS } from "@/types/modal";
@@ -8,22 +8,10 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { AssetWithMetadata } from "@/types/faucet";
 import { ContractTerm } from "./ContractTerm";
 import { useTitle } from "@/contexts/TitleProvider";
-import { set } from "lodash";
-import { CompanyContactResponseDto, CompanyGroupResponseDto } from "@/types/employee";
-import { useCreatePayroll, useCreateSandboxPayroll } from "@/services/api/payroll";
-import { Company, useGetMyCompany } from "@/services/api/company";
-import { ContractTermEnum, CreatePayrollDto } from "@/types/payroll";
+import { CompanyContactResponseDto } from "@/types/employee";
+import { useCreateSandboxPayroll, useGetPayrollDetails, useUpdatePayroll } from "@/services/api/payroll";
+import { ContractTermEnum, CreatePayrollDto, UpdatePayrollDto } from "@/types/payroll";
 import toast from "react-hot-toast";
-import { SecondaryButton } from "../Common/SecondaryButton";
-import InvoicePreview from "../Common/Invoice/InvoicePreview";
-import { useAuth } from "@/services/auth/context";
-import { AuthMeResponse } from "@/services/auth/api";
-import {
-  QASH_TOKEN_ADDRESS,
-  QASH_TOKEN_DECIMALS,
-  QASH_TOKEN_MAX_SUPPLY,
-  QASH_TOKEN_SYMBOL,
-} from "@/services/utils/constant";
 
 interface CreatePayrollFormData {
   employee: string;
@@ -38,7 +26,13 @@ interface CreatePayrollFormData {
   description?: string;
 }
 
-type Step = "create" | "review";
+interface CreatePayrollProps {
+  onReview: () => void;
+  initialFormData?: CreatePayrollFormData;
+  initialToken?: AssetWithMetadata;
+  initialNetwork?: { icon: string; name: string; value: string } | null;
+  initialPayDay?: number;
+}
 
 const inputContainerClass = "bg-background rounded-xl p-3 border-b-2 border-primary-divider";
 const labelClass = "text-text-secondary text-sm";
@@ -47,30 +41,6 @@ interface EmployeeInfo {
   name: string;
   email?: string;
   walletAddress?: string;
-}
-
-interface ReviewPayrollProps {
-  onBackAndEdit: () => void;
-  payrollDto: CreatePayrollDto;
-  employee: EmployeeInfo;
-  ownerEmail: string | null;
-  owner: AuthMeResponse["user"];
-  company: Company;
-}
-
-interface CreatePayrollProps {
-  onReview: (
-    dto: CreatePayrollDto,
-    employee: EmployeeInfo,
-    formData: CreatePayrollFormData,
-    token: AssetWithMetadata,
-    network: { icon: string; name: string; value: string } | null,
-    payDay: number,
-  ) => void;
-  initialFormData?: CreatePayrollFormData;
-  initialToken?: AssetWithMetadata;
-  initialNetwork?: { icon: string; name: string; value: string } | null;
-  initialPayDay?: number;
 }
 
 const CreatePayroll = ({
@@ -100,8 +70,9 @@ const CreatePayroll = ({
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     setValue,
+    reset,
   } = useForm<CreatePayrollFormData>({
     mode: "onChange",
     defaultValues: initialFormData || {
@@ -117,8 +88,30 @@ const CreatePayroll = ({
     },
   });
 
+  // Reset form when initialFormData changes
+  useEffect(() => {
+    if (initialFormData) {
+      reset(initialFormData);
+      setSelectedToken(
+        initialToken || {
+          amount: "0",
+          faucetId: "",
+          metadata: {
+            symbol: "",
+            decimals: 0,
+            maxSupply: 0,
+          },
+        },
+      );
+      setSelectedNetwork(initialNetwork || null);
+      setSelectedPayDay(initialPayDay);
+    }
+  }, [initialFormData, initialToken, initialNetwork, initialPayDay, reset]);
+
   // Only build the DTO and pass to onCreate, do not call API here
-  const handleBuildPayrollDto = (formData: CreatePayrollFormData) => {
+  const { mutateAsync: updatePayroll } = useUpdatePayroll();
+
+  const handleBuildPayrollDto = async (formData: CreatePayrollFormData) => {
     const {
       employeeId,
       employeeEmail,
@@ -151,8 +144,7 @@ const CreatePayroll = ({
       payEnd.setMonth(payEnd.getMonth() + durationValue);
     }
 
-    const createPayrollDto: CreatePayrollDto = {
-      employeeId: employeeId,
+    const updatePayrollDto: UpdatePayrollDto = {
       network: {
         name: selectedNetwork.name,
         chainId: parseInt(selectedNetwork.value),
@@ -169,9 +161,6 @@ const CreatePayroll = ({
       payrollCycle: durationValue,
       amount: monthlyAmount,
       payStartDate: payStart.toISOString(),
-      joiningDate: payStart.toISOString(),
-      payEndDate: payEnd.toISOString(),
-      description: description,
       note: note,
       metadata: {
         payDay: selectedPayDay,
@@ -179,18 +168,16 @@ const CreatePayroll = ({
       },
     };
 
-    onReview(
-      createPayrollDto,
-      {
-        name: employee,
-        email: employeeEmail,
-        walletAddress: walletAddress,
-      },
-      formData,
-      selectedToken,
-      selectedNetwork,
-      selectedPayDay,
-    );
+    setIsSubmitting(true);
+    try {
+      await updatePayroll({ id: employeeId, data: updatePayrollDto });
+
+      toast.success("Payroll updated successfully");
+      onReview();
+    } catch (err: any) {
+      toast.error(err?.message || "Error updating payroll");
+      setIsSubmitting(false);
+    }
   };
 
   const handleChooseRecipient = () => {
@@ -218,7 +205,7 @@ const CreatePayroll = ({
       {/* Header */}
       <div className="flex flex-row items-center justify-start gap-3 w-full">
         <img src="/sidebar/payroll.svg" alt="Qash" className="w-6 h-6" />
-        <span className="text-2xl font-bold">Create new payroll</span>
+        <span className="text-2xl font-bold">Edit payroll</span>
       </div>
 
       {/* Content */}
@@ -344,9 +331,9 @@ const CreatePayroll = ({
 
           {/* Create Button */}
           <PrimaryButton
-            text="Create now"
+            text="Save changes"
             onClick={handleSubmit(handleBuildPayrollDto)}
-            disabled={isSubmitting || !selectedNetwork || !selectedToken?.metadata?.symbol || !isValid}
+            disabled={isSubmitting || !selectedNetwork || !selectedToken.metadata.symbol}
           />
         </div>
       </div>
@@ -354,189 +341,31 @@ const CreatePayroll = ({
   );
 };
 
-// Helper: Convert CreatePayrollDto to InvoiceData
-
-function createInvoiceDataFromPayroll(
-  payroll: CreatePayrollDto,
-  ownerEmail: string | null,
-  company?: any,
-  employee?: EmployeeInfo,
-  owner?: AuthMeResponse["user"],
-): any {
-  if (!payroll || !company || !employee || !owner) {
-    console.warn("Missing data to create invoice");
-    return null;
-  }
-
-  const employeeName = employee?.name;
-  const today = new Date();
-  const dueDate = new Date(today);
-  dueDate.setDate(today.getDate() + 30);
-  const billToName = company?.companyName;
-  const billToEmail = ownerEmail;
-
-  return {
-    invoiceNumber: `INV0001`,
-    date: today.toISOString().split("T")[0],
-    dueDate: payroll.payStartDate.split("T")[0],
-    from: {
-      name: employeeName,
-      email: employee?.email,
-      // company: company?.companyName,
-      // address: [company?.address1, company?.address2, company?.city, company?.country, company?.postalCode]
-      //   .filter(Boolean)
-      //   .join(", "),
-      token: payroll?.token?.symbol || "QASH",
-      network: payroll?.network?.name || "Miden",
-      walletAddress: employee.walletAddress,
-    },
-    billTo: {
-      name: billToName,
-      email: billToEmail,
-      company: company?.companyName,
-      address: [company?.address1, company?.address2, company?.city, company?.country, company?.postalCode]
-        .filter(Boolean)
-        .join(", "),
-    },
-    items: [
-      {
-        description: payroll?.description || "Payroll Payment",
-        price: Number(payroll?.amount),
-        qty: 1,
-        amount: Number(payroll?.amount),
-      },
-    ],
-    subtotal: Number(payroll?.amount),
-    total: Number(payroll?.amount),
-    currency: payroll?.token?.symbol || "QASH",
-  };
-}
-
-const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, ownerEmail, owner, company }: ReviewPayrollProps) => {
-  const [invoiceData, setInvoiceData] = useState<any>(null);
+const EditPayroll = () => {
   const router = useRouter();
-
-  const { mutateAsync: createPayroll } = useCreateSandboxPayroll();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleConfirmAndCreate = async () => {
-    setIsSubmitting(true);
-    try {
-      await createPayroll({
-        ...payrollDto,
-        amount: Number(payrollDto.amount),
-      }).catch(err => {
-        throw err;
-      });
-
-      toast.success("Payroll created successfully");
-
-      setTimeout(() => {
-        router.push("/payroll");
-      }, 1000);
-    } catch (err: any) {
-      toast.error(err?.message || "Error creating payroll");
-      setIsSubmitting(false);
-    }
-  };
-
-  useEffect(() => {
-    const data = createInvoiceDataFromPayroll(payrollDto, ownerEmail, company, employee, owner);
-    setInvoiceData(data);
-  }, [payrollDto, employee]);
-
-  if (!invoiceData) {
-    return <div>Loading invoice preview...</div>;
-  }
-
-  return (
-    <>
-      {/* Header */}
-      <div className="flex flex-row items-center justify-start gap-3 w-full">
-        <img src="/sidebar/payroll.svg" alt="Qash" className="w-6 h-6" />
-        <span className="text-2xl font-bold">Review payroll</span>
-      </div>
-
-      <div className="w-full h-full flex-row flex">
-        <div className="flex flex-col items-center justify-center w-full h-full gap-8">
-          <div className="flex flex-col items-center gap-2 w-full">
-            <div className="flex flex-col items-center gap-2 w-full">
-              <img src="/misc/blue-review-invoice-icon.svg" alt="password-check" className="w-12 h-12" />
-
-              <p className="font-barlow font-medium text-[32px] leading-[1] tracking-[-0.01em] text-text-primary text-center w-[318px]">
-                Review & Confirm Monthly Invoice from {invoiceData.from.name}
-              </p>
-            </div>
-            <div className="font-barlow font-medium text-base leading-6 text-text-secondary text-center w-[440px]">
-              <p>Preview the invoice that will be generated for your employee. </p>
-              <p>Make sure all payment details are accurate before confirming.</p>
-            </div>
-          </div>
-          {/* Action Buttons */}
-          <div className="flex gap-4 items-start" data-node-id="2626:120802">
-            {/* Edit Payroll Button */}
-            <SecondaryButton
-              text="Edit payroll"
-              onClick={() => {
-                onBackAndEdit();
-              }}
-              buttonClassName="w-40"
-              icon="/misc/edit-icon.svg"
-              iconPosition="left"
-              variant="light"
-              disabled={isSubmitting}
-            />
-            {/* Confirm and Create Button */}
-            <PrimaryButton
-              text={isSubmitting ? "Creating..." : "Confirm and create"}
-              onClick={handleConfirmAndCreate}
-              containerClassName="w-50"
-              icon="/misc/document-forward-icon.svg"
-              iconPosition="left"
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
-        <InvoicePreview {...invoiceData} />
-      </div>
-    </>
-  );
-};
-
-const CreateAndReviewPayroll = () => {
-  const { email, user } = useAuth();
-  const { data: company } = useGetMyCompany();
-  const router = useRouter();
-  const [step, setStep] = useState<Step>("create");
-  const [payrollDto, setPayrollDto] = useState<CreatePayrollDto | null>(null);
-  const [employee, setEmployee] = useState<EmployeeInfo | null>(null);
-  const [formData, setFormData] = useState<CreatePayrollFormData | undefined>(undefined);
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | undefined>({
-    amount: "0",
-    faucetId: QASH_TOKEN_ADDRESS,
-    metadata: {
-      symbol: QASH_TOKEN_SYMBOL,
-      decimals: QASH_TOKEN_DECIMALS,
-      maxSupply: QASH_TOKEN_MAX_SUPPLY,
-    },
-  });
-  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>({
-    icon: "/chain/miden.svg",
-    name: "Miden Testnet",
-    value: "miden",
-  });
-  const [selectedPayDay, setSelectedPayDay] = useState<number | undefined>(undefined);
+  const searchParams = useSearchParams();
+  const payrollId = searchParams.get("id");
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+  const [initialData, setInitialData] = useState<CreatePayrollFormData | undefined>(undefined);
+  const [initialToken, setInitialToken] = useState<AssetWithMetadata | undefined>(undefined);
+  const [initialNetwork, setInitialNetwork] = useState<
+    { icon: string; name: string; value: string } | null | undefined
+  >(undefined);
+  const [initialPayDay, setInitialPayDay] = useState<number>(1);
+
+  // Fetch payroll data if ID exists
+  const { data: payrollData, isLoading } = useGetPayrollDetails(payrollId ? parseInt(payrollId) : 0);
 
   useEffect(() => {
     const handleBack = () => {
       router.back();
     };
 
+    const isEditMode = !!payrollId;
     setTitle(
       <div className="flex items-center gap-2">
         <span className="text-text-secondary">Payroll /</span>
-        <span className="text-text-primary">Create new payroll</span>
+        <span className="text-text-primary">{isEditMode ? "Edit payroll" : "Create new payroll"}</span>
       </div>,
     );
     setShowBackArrow(true);
@@ -546,62 +375,75 @@ const CreateAndReviewPayroll = () => {
       setOnBackClick(undefined);
       setShowBackArrow(false);
     };
-  }, [router]);
+  }, [router, payrollId]);
 
-  const onReview = (
-    dto: CreatePayrollDto,
-    emp: EmployeeInfo,
-    formDataToSave: CreatePayrollFormData,
-    tokenToSave: AssetWithMetadata,
-    networkToSave: { icon: string; name: string; value: string } | null,
-    payDayToSave: number,
-  ) => {
-    setTitle(
-      <div className="flex items-center gap-2">
-        <span className="text-text-secondary">Create new payroll /</span>
-        <span className="text-text-primary">Review payroll</span>
-      </div>,
-    );
-    setFormData(formDataToSave);
-    setSelectedToken(tokenToSave);
-    setSelectedNetwork(networkToSave);
-    setSelectedPayDay(payDayToSave);
-    setPayrollDto(dto);
-    setEmployee(emp);
-    setStep("review");
-  };
+  // Populate form data when payroll data is fetched
+  useEffect(() => {
+    if (payrollData) {
+      const startDate = new Date(payrollData.payStartDate);
+      const payDay = startDate.getDate();
 
-  const renderContent = () => {
-    switch (step) {
-      case "create":
-        return (
-          <CreatePayroll
-            onReview={(dto, emp, formDataToSave, tokenToSave, networkToSave, payDayToSave) =>
-              onReview(dto, emp, formDataToSave, tokenToSave, networkToSave, payDayToSave)
-            }
-            initialFormData={formData}
-            initialToken={selectedToken}
-            initialNetwork={selectedNetwork}
-            initialPayDay={selectedPayDay}
-          />
-        );
-      case "review":
-        return payrollDto && employee && user && company ? (
-          <ReviewPayroll
-            onBackAndEdit={() => setStep("create")}
-            payrollDto={payrollDto}
-            employee={employee}
-            ownerEmail={email}
-            owner={user as AuthMeResponse["user"]}
-            company={company}
-          />
-        ) : null;
-      default:
-        return null;
+      setInitialData({
+        employee: payrollData.employee.name,
+        employeeId: payrollData.employee.id,
+        employeeEmail: payrollData.employee.email,
+        monthlyAmount: payrollData.amount.toString(),
+        time: "10:00",
+        walletAddress: payrollData.employee.walletAddress || "",
+        duration: payrollData.payrollCycle?.toString() || "",
+        durationUnit: payrollData.metadata?.durationUnit || "month",
+        note: payrollData.note || "",
+        description: payrollData.description || "",
+      });
+
+      setInitialPayDay(payDay);
+
+      // Set token
+      const mockToken: AssetWithMetadata = {
+        amount: payrollData.amount.toString(),
+        faucetId: "",
+        metadata: {
+          symbol: payrollData.token.symbol,
+          decimals: payrollData.token.decimals,
+          maxSupply: 0,
+        },
+      };
+      setInitialToken(mockToken);
+
+      // Set network
+      const mockNetwork = {
+        icon: "/chain/miden.svg", // Default icon, adjust as needed
+        name: payrollData.network.name,
+        value: payrollData.network.chainId.toString(),
+      };
+      setInitialNetwork(mockNetwork);
     }
+  }, [payrollData]);
+
+  const handleReview = () => {
+    // Navigate to payroll list after creation
+    router.push("/payroll");
   };
 
-  return <div className={`w-full h-full p-5 flex flex-col items-center gap-4 justify-start`}>{renderContent()}</div>;
+  if (payrollId && isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <span className="text-text-secondary">Loading payroll details...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`w-full h-full p-5 flex flex-col items-center gap-4 justify-start`}>
+      <CreatePayroll
+        onReview={handleReview}
+        initialFormData={initialData}
+        initialToken={initialToken}
+        initialNetwork={initialNetwork}
+        initialPayDay={initialPayDay}
+      />
+    </div>
+  );
 };
 
-export default CreateAndReviewPayroll;
+export default EditPayroll;

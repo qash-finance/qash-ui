@@ -53,7 +53,13 @@ export default function OnboardingContainer() {
   const [step, setStep] = useState<Step>("company");
   const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
   const [selectedCountry, setSelectedCountry] = useState<string>("");
-  const { register, handleSubmit, watch, setValue } = useForm<OnboardingFormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { isValid },
+  } = useForm<OnboardingFormData>({
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -104,9 +110,9 @@ export default function OnboardingContainer() {
           postalCode: data.postalCode,
         });
         toast.success("Company registered successfully");
-        setStep("team");
+        setStep("complete");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to create company");
+        toast.error("Failed to create company");
       }
     } else if (step === "team") {
       // Team step logic can be added later
@@ -127,15 +133,27 @@ export default function OnboardingContainer() {
               {/* First and Last Name Row */}
               <div className="flex gap-4 w-full">
                 <div className="flex-1">
-                  <InputOutlined label="First name" placeholder="Enter your first name" {...register("firstName")} />
+                  <InputOutlined
+                    label="First name"
+                    placeholder="Enter your first name"
+                    {...register("firstName", { required: true })}
+                  />
                 </div>
                 <div className="flex-1">
-                  <InputOutlined label="Last name" placeholder="Enter your last name" {...register("lastName")} />
+                  <InputOutlined
+                    label="Last name"
+                    placeholder="Enter your last name"
+                    {...register("lastName", { required: true })}
+                  />
                 </div>
               </div>
 
               {/* Company Name */}
-              <InputOutlined label="Company name" placeholder="Enter your company name" {...register("companyName")} />
+              <InputOutlined
+                label="Company name"
+                placeholder="Enter your company name"
+                {...register("companyName", { required: true })}
+              />
 
               <CompanyTypeDropdown
                 selectedCompanyType={selectedCompanyType}
@@ -157,7 +175,11 @@ export default function OnboardingContainer() {
               <InputOutlined label="City" placeholder="Enter city" {...register("city", { required: true })} />
 
               {/* Address 1 */}
-              <InputOutlined label="Address 1" placeholder="Enter address 1" {...register("address1")} />
+              <InputOutlined
+                label="Address 1"
+                placeholder="Enter address 1"
+                {...register("address1", { required: true })}
+              />
 
               {/* Address 2 */}
               <InputOutlined label="Address 2 (optional)" placeholder="Enter address 2" {...register("address2")} />
@@ -165,13 +187,17 @@ export default function OnboardingContainer() {
               {/* Postal Code and Registration Number Row */}
               <div className="flex gap-4 w-full">
                 <div className="w-40">
-                  <InputOutlined label="Postal code" placeholder="e.g. 70000" {...register("postalCode")} />
+                  <InputOutlined
+                    label="Postal code"
+                    placeholder="e.g. 70000"
+                    {...register("postalCode", { required: true })}
+                  />
                 </div>
                 <div className="flex-1">
                   <InputOutlined
                     label="Company registration number"
                     placeholder="e.g. 8683949"
-                    {...register("registrationNumber")}
+                    {...register("registrationNumber", { required: true })}
                   />
                 </div>
               </div>
@@ -264,7 +290,7 @@ export default function OnboardingContainer() {
 
         {step !== "complete" && (
           <div
-            className="w-full flex  items-center "
+            className="w-full flex items-center mt-5"
             style={{
               justifyContent: step === "company" ? "flex-end" : "space-between",
             }}
@@ -284,6 +310,7 @@ export default function OnboardingContainer() {
               iconPosition="right"
               onClick={handleSubmit(onSubmit)}
               loading={createCompanyMutation.isPending}
+              disabled={!isValid || createCompanyMutation.isPending}
             />
           </div>
         )}

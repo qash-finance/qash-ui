@@ -44,14 +44,14 @@ export enum SubmenuType {
 }
 
 export const actionItems = [
-  {
-    icon: "/sidebar/home.svg",
-    filledIcon: "/sidebar/filled-home.svg",
-    label: "Dashboard",
-    isActive: true,
-    link: SidebarLink.Home,
-    disabled: false,
-  },
+  // {
+  //   icon: "/sidebar/home.svg",
+  //   filledIcon: "/sidebar/filled-home.svg",
+  //   label: "Dashboard",
+  //   isActive: true,
+  //   link: SidebarLink.Home,
+  //   disabled: false,
+  // },
   {
     icon: "/sidebar/payroll.svg",
     filledIcon: "/sidebar/filled-payroll.svg",
@@ -65,7 +65,6 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-invoice.svg",
     label: "Invoice",
     isActive: false,
-    // link: SidebarLink.Payroll,
     disabled: true,
   },
   {
@@ -89,7 +88,6 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-payroll.svg",
     label: "Earn",
     isActive: false,
-    // link: SidebarLink.Payroll,
     disabled: true,
   },
   {
@@ -110,14 +108,14 @@ export const actionItems = [
     hasSubmenu: true,
     submenuType: SubmenuType.MoveCrypto,
   },
-  {
-    icon: "/sidebar/setting.svg",
-    filledIcon: "/sidebar/filled-setting.svg",
-    label: "Setting",
-    isActive: false,
-    link: SidebarLink.Transactions,
-    disabled: true,
-  },
+  // {
+  //   icon: "/sidebar/setting.svg",
+  //   filledIcon: "/sidebar/filled-setting.svg",
+  //   label: "Setting",
+  //   isActive: false,
+  //   link: SidebarLink.Transactions,
+  //   disabled: true,
+  // },
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
@@ -241,7 +239,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
           </div>
 
           {/* Connect/Account section */}
-          <div className="flex flex-col justify-center p-5 border-t border-primary-divider">
+          <div className="flex flex-col justify-center p-5 border-t border-primary-divider mb-5">
             {/* <Connect /> */}
             {isAuthenticated && (
               <div className="flex items-center justify-between gap-5">

@@ -5,25 +5,37 @@ import { SelectNetworkModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
 import { ModalHeader } from "../Common/ModalHeader";
+import ComingSoonBadge from "../Common/ComingSoonBadge";
 
-const NETWORKS: { icon: string; name: string; value: string }[] = [
-  { icon: "/chain/ethereum.svg", name: "Ethereum", value: "eth" },
-  { icon: "/chain/miden.svg", name: "Miden Testnet", value: "miden" },
-  { icon: "/chain/solana.svg", name: "Solana", value: "sol" },
-  { icon: "/chain/base.svg", name: "Base", value: "base" },
-  { icon: "/chain/bnb.svg", name: "BNB Smart Chain (BEP20)", value: "bnb" },
+const NETWORKS: { icon: string; name: string; value: string; isComingSoon: boolean }[] = [
+  { icon: "/chain/miden.svg", name: "Miden Testnet", value: "miden", isComingSoon: false },
+  { icon: "/chain/ethereum.svg", name: "Ethereum", value: "eth", isComingSoon: true },
+  { icon: "/chain/solana.svg", name: "Solana", value: "sol", isComingSoon: true },
+  { icon: "/chain/base.svg", name: "Base", value: "base", isComingSoon: true },
+  { icon: "/chain/bnb.svg", name: "BNB Smart Chain (BEP20)", value: "bnb", isComingSoon: true },
 ];
 
-const NetworkItem = ({ icon, onClick, name }: { icon: string; onClick: () => void; name: string }) => {
+const NetworkItem = ({
+  icon,
+  onClick,
+  name,
+  isComingSoon,
+}: {
+  icon: string;
+  onClick: () => void;
+  name: string;
+  isComingSoon: boolean;
+}) => {
   return (
     <div
-      className="flex gap-2 items-center px-2.5 py-4 w-full rounded-xl bg-background border border-primary-divider transition-colors cursor-pointer"
+      className="flex gap-2 items-center justify-between px-2.5 py-4 w-full rounded-xl bg-background border border-primary-divider transition-colors cursor-pointer"
       onClick={onClick}
     >
-      <img src={icon} alt={name} className="w-10 h-10 rounded-full" />
-      <div className="flex flex-col gap-1.5 justify-center items-start flex-[1_0_0]">
+      <div className="flex flex-row gap-1.5 justify-start items-center">
+        <img src={icon} alt={name} className="w-10 h-10 rounded-full" />
         <h3 className="font-bold leading-none text-text-primary">{name}</h3>
       </div>
+      {isComingSoon && <ComingSoonBadge />}
     </div>
   );
 };
@@ -52,6 +64,7 @@ export function SelectNetworkModal({
             icon={network.icon}
             name={network.name}
             onClick={() => handleNetworkSelect(network)}
+            isComingSoon={network.isComingSoon}
           />
         ))}
       </main>

@@ -102,7 +102,6 @@ export const GiftCreationForm: React.FC = () => {
   const { assets, accountId: walletAddress, forceFetch: forceRefetchAssets } = useAccountContext();
   const { openModal } = useModal();
   const { isConnected } = useWalletConnect();
-  console.log("🚀 ~ GiftCreationForm ~ isConnected:", isConnected);
   const { mutate: sendGift } = useSendGift();
   const { forceFetch: forceRefetchGiftDashboard } = useGiftDashboard();
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();

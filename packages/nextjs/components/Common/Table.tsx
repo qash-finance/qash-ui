@@ -39,6 +39,7 @@ interface TableProps {
   onPageChange?: (page: number) => void;
   rowsPerPage?: number;
   onRowsPerPageChange?: (rowsPerPage: number) => void;
+  onRowClick?: (rowData: Record<string, CellContent>, index: number) => void;
 }
 
 const createTableRow = (
@@ -265,12 +266,14 @@ const TableRow = ({
   rowClassName = "",
   columnWidths = {},
   isSelected = false,
+  onClick,
 }: {
   cells: React.ReactNode[];
   headers: (string | React.ReactNode)[];
   rowClassName?: string | ((rowData: Record<string, CellContent>, index: number) => string);
   columnWidths?: Record<string, string>;
   isSelected?: boolean;
+  onClick?: () => void;
 }) => {
   const customClass = typeof rowClassName === "string" ? rowClassName : "";
   const defaultRowClass = getRowClasses(isSelected, customClass);
@@ -279,7 +282,7 @@ const TableRow = ({
   const tdPadding = hasPaddingClass ? `px-3 ${customClass}` : "px-3 py-2";
 
   return (
-    <tr className={defaultRowClass} style={rowStyle}>
+    <tr className={`${defaultRowClass} ${onClick ? "cursor-pointer" : ""}`} style={rowStyle} onClick={onClick}>
       {cells.map((cell, index) => (
         <td
           key={index}
@@ -341,6 +344,7 @@ export function Table({
   onPageChange,
   rowsPerPage = 10,
   onRowsPerPageChange,
+  onRowClick,
 }: TableProps) {
   const [items, setItems] = useState(data);
 
@@ -471,6 +475,7 @@ export function Table({
                     rowClassName={rowClass}
                     columnWidths={columnWidths}
                     isSelected={selectedRows.includes(index)}
+                    onClick={() => onRowClick?.(rowData, index)}
                   />
                 );
               })

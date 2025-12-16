@@ -63,8 +63,8 @@ export function CreateCategoryModal({ isOpen, onClose, zIndex }: ModalProp<Valid
   useEffect(() => {
     if (selectedShape) {
       // Create updated shape element with new color using shared utility
-      const updatedElement = createShapeElement(selectedShape, selectedColor);
-      setSelectedShapeElement(updatedElement);
+      // const updatedElement = createShapeElement(selectedShape, selectedColor);
+      // setSelectedShapeElement(updatedElement);
     }
   }, [selectedColor, selectedShape]);
 
@@ -223,7 +223,7 @@ export function CreateCategoryModal({ isOpen, onClose, zIndex }: ModalProp<Valid
         noArrow
         border="none"
         opacity={1}
-        render={() => <ShapeSelectionTooltip color={selectedColor} onShapeSelect={handleShapeSelect} />}
+        // render={() => <ShapeSelectionTooltip color={selectedColor} onShapeSelect={handleShapeSelect} />}
       />
     </BaseModal>
   );

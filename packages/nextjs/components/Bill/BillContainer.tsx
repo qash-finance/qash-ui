@@ -9,7 +9,7 @@ import { CustomCheckbox } from "../Common/CustomCheckbox";
 import { FloatingFooter } from "../Common/FloatingFooter";
 import { FloatingAction } from "./FloatingAction";
 import { BillStatusEnum } from "@/types/bill";
-import { useGetBills, usePayBills } from "@/services/api/bill";
+import { useGetBills, usePayBills, useGetBillStats } from "@/services/api/bill";
 import { CategoryShapeEnum } from "@/types/employee";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useGetAllEmployeeGroups } from "@/services/api/employee";
@@ -91,6 +91,7 @@ const BillContainer = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const { data: groups } = useGetAllEmployeeGroups();
+  const { data: billStats } = useGetBillStats();
 
   const handleCheckRow = (idx: number) => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
@@ -180,27 +181,6 @@ const BillContainer = () => {
     };
   });
 
-  const renderFooterContent = () => {
-    return (
-      <div className="flex items-center justify-center gap-2 w-[350px]">
-        <button
-          type="button"
-          className="bg-background justify-center border-t-1 border-primary-divider rounded-lg flex items-center gap-2 px-4 py-2 flex-1 cursor-pointer"
-          onClick={() => {}}
-        >
-          <img alt="" className="w-5" src="/misc/light-shopping-bag.svg" />
-          <span className="text-text-primary text-sm">Add to Batch</span>
-        </button>
-        <SecondaryButton
-          text="Claim transactions"
-          // onClick={() => handleClaimSelected()}
-          // disabled={claiming}
-          buttonClassName="flex-1"
-        />
-      </div>
-    );
-  };
-
   const isAllChecked = checkedRows.length === billDatas?.length;
 
   return (
@@ -213,11 +193,28 @@ const BillContainer = () => {
         <div className="flex flex-row w-full gap-2">
           <Card
             title="All bills"
-            text={<span className="text-text-primary text-2xl font-bold leading-none">20</span>}
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalBills ?? 0}</span>
+            }
           />
-          <Card title="Pending" text={<span className="text-text-primary text-2xl font-bold leading-none">5</span>} />
-          <Card title="Paid" text={<span className="text-text-primary text-2xl font-bold leading-none">10</span>} />
-          <Card title="Overdue" text={<span className="text-text-primary text-2xl font-bold leading-none">5</span>} />
+          <Card
+            title="Pending"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalPending ?? 0}</span>
+            }
+          />
+          <Card
+            title="Paid"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalPaid ?? 0}</span>
+            }
+          />
+          <Card
+            title="Overdue"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalOverdue ?? 0}</span>
+            }
+          />
         </div>
       </div>
 

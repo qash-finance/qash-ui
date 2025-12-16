@@ -11,9 +11,9 @@ export function useRecallableNotes() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recallable-notes", walletAddress],
-    queryFn: async (): Promise<RecallableDashboard> => {
-      const recallableNotes: RecallableDashboard = await getRecallable();
-      return recallableNotes;
+    queryFn: async (): Promise<any> => {
+      // const recallableNotes: RecallableDashboard = await getRecallable();
+      // return recallableNotes;
     },
     enabled: !!walletAddress,
     staleTime: STALE_TIME,

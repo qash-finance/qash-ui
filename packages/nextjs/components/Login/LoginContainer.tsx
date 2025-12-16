@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { debounce, DebouncedFunc } from "lodash";
 import LoginButton from "./LoginButton";
 import Welcome from "../Common/Welcome";
 import OtpInput from "react-otp-input";
@@ -24,6 +25,29 @@ export default function LoginContainer() {
   const [otpError, setOtpError] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const debouncedValidateRef = useRef<DebouncedFunc<(value: string) => void> | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Create debounced email validation
+  useEffect(() => {
+    debouncedValidateRef.current = debounce((value: string) => {
+      // Perform email format validation
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(value)) {
+        setValidationError("Please enter a valid email address");
+        return;
+      }
+      if (value.includes(",")) {
+        setValidationError("Please enter a valid email address");
+        return;
+      }
+      setValidationError(null);
+    }, 1000); // 1000ms debounce delay
+
+    return () => {
+      debouncedValidateRef.current?.cancel();
+    };
+  }, []);
 
   const {
     register,
@@ -54,11 +78,16 @@ export default function LoginContainer() {
 
   const handleSendOtp = handleSubmit(onSubmitEmail);
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
+  const handleVerifyOtp = async (valueOtp?: string) => {
+    const otpToVerify = valueOtp ?? otp;
+
+    if (otpToVerify.length !== 6) {
       setOtpError(true);
       return;
     }
+
+    // Avoid duplicate submissions if already verifying or loading
+    if (verifyingOtp || isLoading) return;
 
     setOtpError(false);
     setVerifyingOtp(true);
@@ -67,11 +96,12 @@ export default function LoginContainer() {
     if (!normalizedEmail) {
       setOtpError(true);
       toast.error("Email is missing, please go back and re-enter");
+      setVerifyingOtp(false);
       return;
     }
 
     try {
-      const userData = await verifyOtp(normalizedEmail, otp);
+      const userData = await verifyOtp(normalizedEmail, otpToVerify);
       toast.success("Authentication successful");
 
       // Use the returned user data to determine destination
@@ -122,24 +152,20 @@ export default function LoginContainer() {
               <InputOutlined
                 label="Email"
                 placeholder="@mail.com"
-                error={!!errors.email}
+                error={!!errors.email || !!validationError}
                 {...register("email", {
                   required: "Please enter a valid email address",
-                  pattern: {
-                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                    message: "Please enter a valid email address",
+                  onChange: e => {
+                    debouncedValidateRef.current?.(e.target.value);
                   },
-                  validate: value => (!value.includes(",") ? true : "Please enter a valid email address"),
                 })}
               />
-              {errors.email && (
-                <span className="text-[16px] text-[#E93544] mt-2 self-start">{errors.email.message}</span>
-              )}
+              {validationError && <span className="text-[16px] text-[#E93544] mt-2 self-start">{validationError}</span>}
               {error && <span className="text-[16px] text-[#E93544] mt-2 self-start">{error}</span>}
               <LoginButton
                 onClick={handleSendOtp}
                 loading={sendingOtp || isLoading}
-                disabled={!isValid || sendingOtp || isLoading}
+                disabled={!isValid || sendingOtp || isLoading || !!validationError}
               />
             </div>
           </>
@@ -176,6 +202,11 @@ export default function LoginContainer() {
                 onChange={value => {
                   setOtp(value);
                   if (otpError) setOtpError(false);
+
+                  // Auto-submit when OTP is fully entered
+                  if (value.length === 6) {
+                    handleVerifyOtp(value);
+                  }
                 }}
                 numInputs={6}
                 containerStyle={{ gap: "8px" }}

@@ -4,6 +4,7 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { updateInvoice } from "@/services/api/invoice";
 import { useSearchParams } from "next/navigation";
+import { SecondaryButton } from "../Common/SecondaryButton";
 
 const metaCard = "flex-1 bg-app-background rounded-2xl p-4 flex flex-col gap-1";
 const cardBase = "border border-primary-divider rounded-2xl p-6 flex flex-col";
@@ -107,13 +108,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
                   disabled={isUpdating}
                 />
                 {updateError && <p className="text-sm text-red-600">{updateError}</p>}
-                <button
-                  onClick={handleUpdateAddress}
-                  disabled={isUpdating}
-                  className="px-4 bg-primary-blue text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
-                >
-                  {isUpdating ? "Updating..." : "Update"}
-                </button>
+                <SecondaryButton text="Update" onClick={handleUpdateAddress} disabled={isUpdating} />
               </div>
             )}
           </div>

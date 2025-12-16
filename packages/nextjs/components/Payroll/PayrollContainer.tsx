@@ -14,6 +14,7 @@ import { useGetAllEmployeeGroups, useGetAllEmployees } from "@/services/api/empl
 import { CategoryShapeEnum } from "@/types/employee";
 import { useRouter } from "next/navigation";
 import { ro } from "react-day-picker/locale";
+import { useModal } from "@/contexts/ModalManagerProvider";
 
 const getTabs = () => [
   {
@@ -45,6 +46,7 @@ const PayrollContainer = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
   const { data: groups } = useGetAllEmployeeGroups();
+  const { openModal } = useModal();
 
   const tabs = getTabs();
 
@@ -60,22 +62,22 @@ const PayrollContainer = () => {
 
   // Action handlers
   const handleEditPayroll = (id: number) => {
-    router.push(`/payroll/detail?id=${id}`);
+    router.push(`/payroll/edit?id=${id}`);
   };
 
   const handleRemovePayroll = (id: number) => {
-    if (window.confirm("Are you sure you want to remove this payroll?")) {
-      deletePayroll.mutate(id, {
-        onSuccess: () => {
-          refetch();
-        },
-      });
-    }
+    openModal("REMOVE_PAYROLL", {
+      payrollOwnerName: data?.payrolls.find(payroll => payroll.id === id)?.employee.name || "",
+      onRemove: async () => {
+        await deletePayroll.mutateAsync(id);
+        refetch();
+      },
+    });
   };
 
   // Action renderer for payroll table
   const payrollActionRenderer = (rowData: Record<string, any>, index: number) => (
-    <div className="flex items-center justify-center w-full">
+    <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
       <img
         src="/misc/three-dot-icon.svg"
         alt="three dot icon"
@@ -214,6 +216,10 @@ const PayrollContainer = () => {
             onPageChange={setCurrentPage}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={setRowsPerPage}
+            onRowClick={rowData => {
+              const payrollId = (rowData as any).__id;
+              router.push(`/payroll/detail?id=${payrollId}`);
+            }}
           />
         )}
       </BaseContainer>
