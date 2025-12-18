@@ -89,28 +89,30 @@ const PayrollContainer = () => {
   );
 
   // Transform API data to table format
-  const payrollData = (data?.payrolls || []).map(payroll => ({
-    __id: payroll.id,
-    "Employee name": payroll.employee.name,
-    Group: (
-      <div className="flex justify-center items-center">
-        <CategoryBadge
-          shape={groups?.find(grp => grp.id === payroll.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-          color={groups?.find(grp => grp.id === payroll.employee.groupId)?.color || "#35ADE9"}
-          name={groups?.find(grp => grp.id === payroll.employee.groupId)?.name || "-"}
-        />
-      </div>
-    ),
-    Amount: (
-      <div className="flex flex-row justify-center items-center gap-2">
-        <img src="/token/qash.svg" alt="token" className="w-5" />
-        <span className="font-bold">{payroll.amount}</span>
-      </div>
-    ),
-    Date: payroll.payStartDate ? new Date(payroll.payStartDate).toLocaleDateString() : "-",
-    "Contract Term": <span className="font-bold text-primary-blue">{payroll.contractTerm}</span>,
-    " ": null, // Placeholder for action column
-  }));
+  const payrollData = (data?.payrolls || []).map(payroll => {
+    return {
+      __id: payroll.id,
+      "Employee name": payroll.employee.name,
+      Group: (
+        <div className="flex justify-center items-center">
+          <CategoryBadge
+            shape={groups?.find(grp => grp.id === payroll.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === payroll.employee.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === payroll.employee.groupId)?.name || "-"}
+          />
+        </div>
+      ),
+      Amount: (
+        <div className="flex flex-row justify-center items-center gap-2">
+          <img src="/token/qash.svg" alt="token" className="w-5" />
+          <span className="font-bold">{payroll.amount}</span>
+        </div>
+      ),
+      Date: payroll.payStartDate ? new Date(payroll.payStartDate).toLocaleDateString() : "-",
+      "Contract Term": <span className="font-bold text-primary-blue">{payroll.contractTerm}</span>,
+      " ": null, // Placeholder for action column
+    };
+  });
 
   // Main content renderer based on active tab
   const renderTabContent = () => {

@@ -19,17 +19,18 @@ import { useDeleteBill } from "@/services/api/bill";
 import { useInvoice } from "@/hooks/server/useInvoice";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useModal } from "@/contexts/ModalManagerProvider";
 
 type Tab = "all" | "pending" | "paid";
 
 const billActionRenderer = (rowData: Record<string, any>, index: number) => (
-  <div className="flex items-center justify-center w-full">
+  <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
     <img
       src="/misc/three-dot-icon.svg"
       alt="three dot icon"
       className="w-6 h-6 cursor-pointer"
       data-tooltip-id="bill-action-tooltip"
-      data-tooltip-content={index.toString()}
+      data-tooltip-content={rowData.__id?.toString()}
     />
   </div>
 );
@@ -92,6 +93,7 @@ const BillContainer = () => {
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const { data: groups } = useGetAllEmployeeGroups();
   const { data: billStats } = useGetBillStats();
+  const { openModal } = useModal();
 
   const handleCheckRow = (idx: number) => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
@@ -123,7 +125,6 @@ const BillContainer = () => {
   const router = useRouter();
 
   const billDatas = bills.map((b, idx) => {
-    console.log(b);
     const createdDate = b.createdAt
       ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       : "";
@@ -145,8 +146,9 @@ const BillContainer = () => {
     })();
 
     return {
+      __id: b.invoice?.uuid,
       "header-0": (
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
           <CustomCheckbox checked={checkedRows.includes(idx)} onChange={() => handleCheckRow(idx)} />
         </div>
       ),
@@ -285,6 +287,10 @@ const BillContainer = () => {
           onPageChange={setCurrentPage}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={setRowsPerPage}
+          onRowClick={rowData => {
+            const invoiceUUID = (rowData as any).__id;
+            router.push(`/bill/detail?uuid=${invoiceUUID}`);
+          }}
         />
       </BaseContainer>
 
@@ -304,7 +310,7 @@ const BillContainer = () => {
         render={({ content }) => {
           if (!content) return null;
           const id = parseInt(content, 10);
-          const bill = bills?.[id];
+          const bill = bills?.find(b => b.id === id);
           if (!bill) return null;
 
           const handlePay = async () => {
@@ -322,9 +328,16 @@ const BillContainer = () => {
           };
 
           const handleDelete = () => {
-            if (!window.confirm("Are you sure you want to delete this invoice?")) return;
-            deleteBill.mutate(bill.uuid, {
-              onError: err => console.error("Delete invoice failed", err),
+            openModal("REMOVE_INVOICE", {
+              invoiceOwnerName: bill.invoice?.fromDetails?.name || "",
+              onRemove: async () => {
+                deleteBill.mutate(bill.uuid, {
+                  onError: err => {
+                    console.error("Delete invoice failed", err);
+                    toast.error("Failed to delete invoice");
+                  },
+                });
+              },
             });
           };
 
@@ -369,6 +382,8 @@ const BillContainer = () => {
       {checkedRows.length > 0 && (
         <FloatingAction
           selectedCount={checkedRows.length}
+          allSelected={isAllChecked}
+          onDeselectAll={() => setCheckedRows([])}
           actionButtons={
             <SecondaryButton
               text="Pay all"
@@ -380,7 +395,6 @@ const BillContainer = () => {
                 const params = new URLSearchParams();
                 uuids.forEach(u => params.append("invoiceUUID", u));
                 router.push(`/bill/review?${params.toString()}`);
-                setCheckedRows([]);
               }}
             />
           }

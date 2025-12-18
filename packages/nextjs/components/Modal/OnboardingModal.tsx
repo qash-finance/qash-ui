@@ -58,6 +58,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
         }
       }, 2000);
 
+      onClose();
       setSuccess(true);
     } catch (error) {
       toast.dismiss();
@@ -98,9 +99,9 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
             <PrimaryButton
               text="Ready to Claim!"
               onClick={() => {
-                if (pathname !== "/") {
-                  router.push("/");
-                }
+                // if (pathname !== "/") {
+                //   router.push("/");
+                // }
                 onClose();
                 setSuccess(false);
               }}

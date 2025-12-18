@@ -69,8 +69,12 @@ export default function LoginContainer() {
       await sendOtp(normalizedEmail);
       toast.success("OTP sent to your email");
       setStep("otp");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to send OTP");
+    } catch (error: any) {
+      if (error && error.message.includes("Rate limit")) {
+        toast.error("Too many requests. Please wait before trying again.");
+      } else {
+        toast.error("Failed to send OTP");
+      }
     } finally {
       setSendingOtp(false);
     }
@@ -127,7 +131,7 @@ export default function LoginContainer() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const hasCompany = !!(user as User)?.teamMembership?.companyId || !!(user as User)?.teamMembership?.company;
-    const destination = hasCompany ? "/" : "/onboarding";
+    const destination = hasCompany ? "/bill" : "/onboarding";
 
     router.push(destination);
   }, [isAuthenticated, accessToken, user, router]);

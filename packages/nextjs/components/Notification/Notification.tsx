@@ -280,7 +280,7 @@ const Notification = ({ isOpen, onClose }: ModalProp<NotificationModalProps>) =>
             <div className="flex flex-col gap-1 w-full overflow-y-auto h-full my-2">
               {!isConnected ? (
                 <div className="flex items-center justify-center py-8">
-                  <span className="text-text-secondary text-sm">Please connect your wallet to view notifications</span>
+                  <span className="text-text-secondary text-sm">Coming soon</span>
                 </div>
               ) : isLoading || error ? (
                 <div className="flex items-center justify-center py-8">

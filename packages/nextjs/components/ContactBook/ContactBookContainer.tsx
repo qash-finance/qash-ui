@@ -214,8 +214,8 @@ const ContactBookContainer = () => {
   const handleEdit = (contactIndex: number) => {
     const contact = addressBooks?.[contactIndex];
     if (contact) {
-      // Find the category for this contact
-      const category = groups?.find(cat => cat.id === contact.groupId);
+      // Find the group for this contact
+      const group = groups?.find(cat => cat.id === contact.groupId);
 
       openModal(MODAL_IDS.EDIT_CONTACT, {
         contactData: {
@@ -223,7 +223,7 @@ const ContactBookContainer = () => {
           name: contact.name,
           address: contact.walletAddress,
           email: contact.email || "",
-          category: category?.name || "",
+          group: group?.name || "",
           token: contact.token,
         },
       });

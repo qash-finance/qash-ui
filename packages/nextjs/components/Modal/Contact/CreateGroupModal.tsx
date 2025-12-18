@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Tooltip } from "react-tooltip";
-import { ValidatingModalProps } from "@/types/modal";
+import { CreateGroupModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
@@ -29,13 +29,13 @@ const colorOptions = [
   { value: "#1DAF61", label: "Green" },
 ];
 
-export function CreateGroupModal({ isOpen, onClose, zIndex }: ModalProp<ValidatingModalProps>) {
+export function CreateGroupModal({ isOpen, onClose, zIndex, onGroupCreated }: ModalProp<CreateGroupModalProps>) {
   const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedShape, setSelectedShape] = useState(CategoryShapeEnum.CIRCLE);
   const [selectedShapeElement, setSelectedShapeElement] = useState<React.ReactElement | null>(null);
   const [selectedColor, setSelectedColor] = useState("#35ADE9");
-  const { mutate: createGroup } = useCreateEmployeeGroup();
+  const { mutateAsync: createGroupAsync } = useCreateEmployeeGroup();
   const { data: groups } = useGetAllEmployeeGroups({ enabled: isAuthenticated });
 
   const {
@@ -86,11 +86,13 @@ export function CreateGroupModal({ isOpen, onClose, zIndex }: ModalProp<Validati
         return;
       }
 
-      createGroup({
+      const createdGroup = await createGroupAsync({
         name: data.name,
         shape: data.shape,
         color: selectedColor,
       });
+      // Notify caller (if provided) so the new group can be auto-selected
+      onGroupCreated?.(createdGroup as any);
       reset();
       setSelectedShape(CategoryShapeEnum.CIRCLE);
       setSelectedColor("#35ADE9");
@@ -222,7 +224,6 @@ export function CreateGroupModal({ isOpen, onClose, zIndex }: ModalProp<Validati
           borderRadius: "16px",
           padding: "0",
         }}
-        openOnClick
         noArrow
         border="none"
         opacity={1}

@@ -10,6 +10,10 @@ export enum CategoryShapeEnum {
 export interface TokenDto {
   address: string;
   symbol: string;
+  // optional metadata provided by some endpoints/modals
+  name?: string;
+  decimals?: number;
+  maxSupply?: number;
 }
 
 export interface NetworkDto {

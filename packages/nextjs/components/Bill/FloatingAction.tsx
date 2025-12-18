@@ -5,9 +5,13 @@ import { CustomCheckbox } from "../Common/CustomCheckbox";
 export const FloatingAction = ({
   selectedCount,
   actionButtons,
+  onDeselectAll,
+  allSelected = false,
 }: {
   selectedCount: number;
   actionButtons: React.ReactNode;
+  onDeselectAll?: () => void;
+  allSelected?: boolean;
 }) => {
   if (selectedCount === 0) return null;
 
@@ -16,13 +20,15 @@ export const FloatingAction = ({
       <div className="backdrop-blur-[15px] bg-primary-blue flex items-center justify-between px-2 py-2 rounded-full gap-30">
         {/* Deselect all button */}
         <button
+          onClick={onDeselectAll}
           className="bg-background rounded-full px-4 py-2 flex items-center gap-2 cursor-pointer"
           style={{
             backgroundColor: "var(--bg-surface-white, #ffffff)",
             borderColor: "var(--stroke-sub-700, rgba(153,160,174,0.24))",
           }}
+          aria-label="Deselect all"
         >
-          <CustomCheckbox checked={true} onChange={() => {}} />
+          <CustomCheckbox checked={allSelected} onChange={() => {}} />
           <span
             className="text-sm font-medium leading-5 tracking-[-0.56px] whitespace-nowrap"
             style={{

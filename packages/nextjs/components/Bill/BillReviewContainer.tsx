@@ -2,6 +2,7 @@
 import { useTitle } from "@/contexts/TitleProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { useInvoice } from "@/hooks/server/useInvoice";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
@@ -123,8 +124,15 @@ const BillReviewContainer = () => {
   const searchParams = useSearchParams();
   const { fetchInvoiceByUUID } = useInvoice();
   const [selectedInvoices, setSelectedInvoices] = useState<any[]>([]);
-  console.log("🚀 ~ BillReviewContainer ~ selectedInvoices:", selectedInvoices);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
+
+  const { register, watch } = useForm({
+    defaultValues: {
+      searchTerm: "",
+    },
+  });
+
+  const searchTerm = watch("searchTerm");
 
   const tokenTotals = React.useMemo(() => {
     const map = new Map<string, { total: number; totalUsd: number }>();
@@ -145,6 +153,11 @@ const BillReviewContainer = () => {
   }, [selectedInvoices]);
 
   const totalUsdSum = React.useMemo(() => tokenTotals.reduce((s, t) => s + (t.totalUsd || 0), 0), [tokenTotals]);
+
+  const filteredInvoices = React.useMemo(() => {
+    if (!searchTerm) return selectedInvoices;
+    return selectedInvoices.filter(inv => inv.fromDetails?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [selectedInvoices, searchTerm]);
 
   useEffect(() => {
     const uuids = searchParams?.getAll ? searchParams.getAll("invoiceUUID") : [];
@@ -272,7 +285,7 @@ const BillReviewContainer = () => {
             <span className="font-semibold text-lg">Invoice list</span>
             <span className="text-lg text-text-secondary">
               Number of invoices
-              <span className="text-primary-blue"> {selectedInvoices.length || 0}</span>
+              <span className="text-primary-blue"> {filteredInvoices.length || 0}</span>
             </span>
             <div className="bg-[#E7E7E7] border border-primary-divider flex flex-row gap-2 items-center pr-1 pl-3 py-1 rounded-lg w-[300px]">
               <div className="flex flex-row gap-2 flex-1">
@@ -280,10 +293,11 @@ const BillReviewContainer = () => {
                   type="text"
                   placeholder="Search by name"
                   className="font-medium text-sm text-text-secondary bg-transparent border-none outline-none w-full"
+                  {...register("searchTerm")}
                 />
               </div>
               <button
-                type="submit"
+                type="button"
                 className="flex flex-row gap-1.5 items-center rounded-lg w-6 h-6 justify-center cursor-pointer"
               >
                 <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
@@ -293,9 +307,8 @@ const BillReviewContainer = () => {
           {loadingInvoices ? (
             <div className="w-full flex justify-center items-center py-10">Loading selected invoices...</div>
           ) : (
-            selectedInvoices.length > 0 &&
-            selectedInvoices.map(inv => {
-              console.log("🚀 ~ BillReviewContainer ~ inv:", inv);
+            filteredInvoices.length > 0 &&
+            filteredInvoices.map(inv => {
               const groupData = groups?.find(grp => grp.id === inv.employee?.groupId);
               return (
                 <InvoiceItem
@@ -320,16 +333,16 @@ const BillReviewContainer = () => {
                             .join(", "),
                           email: inv.toCompany?.email,
                           name: inv.toCompany?.companyName,
-                          company: inv.toCompany?.companyName + inv.toCompany?.companyType,
+                          company: `${inv.toCompany?.companyName} ${inv.toCompany?.companyType}`,
                         },
-                        currency: inv.currency,
+                        currency: "USDT",
                         date: inv.issueDate,
                         dueDate: inv.dueDate,
                         from: {
                           name: inv.employee?.name,
                           address: inv.employee?.address,
                           email: inv.employee?.email,
-                          company: inv.toCompany?.companyName + inv.toCompany?.companyType,
+                          company: `${inv.toCompany?.companyName} ${inv.toCompany?.companyType}`,
                         },
                         invoiceNumber: inv.invoiceNumber,
                         items: inv.items,

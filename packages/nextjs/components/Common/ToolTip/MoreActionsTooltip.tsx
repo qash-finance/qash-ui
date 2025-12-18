@@ -54,10 +54,10 @@ export const MoreActionsTooltip = ({ onPay, onEdit, onExport, onRemove }: MoreAc
       </TooltipItem>
 
       {/* Export Button */}
-      <TooltipItem onClick={onExport}>
+      {/* <TooltipItem onClick={onExport}>
         <img src="/misc/export-icon.svg" alt="export" className="w-5 h-5 opacity-30" />
         <span className={`text-sm text-text-primary`}>Export</span>
-      </TooltipItem>
+      </TooltipItem> */}
 
       {/* Remove Button */}
       <div className="border-t w-full border-primary-divider">

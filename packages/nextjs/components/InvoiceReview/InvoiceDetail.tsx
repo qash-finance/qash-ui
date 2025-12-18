@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
 import { InvoiceData } from "./InvoiceReviewContainer";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { updateInvoice } from "@/services/api/invoice";
 import { useSearchParams } from "next/navigation";
 import { SecondaryButton } from "../Common/SecondaryButton";
+import toast from "react-hot-toast";
 
 const metaCard = "flex-1 bg-app-background rounded-2xl p-4 flex flex-col gap-1";
 const cardBase = "border border-primary-divider rounded-2xl p-6 flex flex-col";
@@ -16,42 +18,74 @@ const tokenRow = "flex items-center gap-2";
 const editIconClass = "w-5 h-5 cursor-pointer hover:opacity-80";
 const itemRow = "flex flex-row gap-2 justify-between items-start";
 
-const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string) => void }) => {
+const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string) => void; onWalletAddressUpdate?: (walletAddress: string) => void }) => {
   const invoiceData = props;
   const onAddressUpdate = props.onAddressUpdate;
+  const onWalletAddressUpdate = props.onWalletAddressUpdate;
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const { openModal } = useModal();
 
-  const [addressInput, setAddressInput] = useState(invoiceData.from.address || "");
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [isEditingWalletAddress, setIsEditingWalletAddress] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateError, setUpdateError] = useState<string | null>(null);
 
-  const handleUpdateAddress = async () => {
-    if (!addressInput.trim()) {
-      setUpdateError("Address cannot be empty");
-      return;
-    }
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      address: invoiceData.from.address || "",
+      walletAddress: invoiceData.from.walletAddress || "",
+    },
+  });
 
+  const onAddressSubmit = async (data: any) => {
     setIsUpdating(true);
-    setUpdateError(null);
 
     try {
-      // Build the update payload with flat structure (not nested fromDetails)
       const updatePayload: any = {
-        address: addressInput,
+        address: data.address,
         walletAddress: invoiceData.from.walletAddress,
       };
 
       await updateInvoice(invoiceUUID, updatePayload);
-      // Notify parent component of the update
       if (onAddressUpdate) {
-        onAddressUpdate(addressInput);
+        onAddressUpdate(data.address);
       }
+      setIsEditingAddress(false);
       setIsUpdating(false);
+      toast.success("Address updated successfully");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update address";
-      setUpdateError(errorMessage);
+      toast.error(errorMessage);
+      setIsUpdating(false);
+    }
+  };
+
+  const onWalletAddressSubmit = async (data: any) => {
+    setIsUpdating(true);
+
+    try {
+      const updatePayload: any = {
+        address: invoiceData.from.address,
+        walletAddress: data.walletAddress,
+      };
+
+      await updateInvoice(invoiceUUID, updatePayload);
+      if (onWalletAddressUpdate) {
+        onWalletAddressUpdate(data.walletAddress);
+      }
+      setIsEditingWalletAddress(false);
+      setIsUpdating(false);
+      toast.success("Wallet address updated successfully");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update wallet address";
+      toast.error(errorMessage);
       setIsUpdating(false);
     }
   };
@@ -80,7 +114,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
       {/* From Section */}
       <div className={`${cardBase} gap-2`}>
         <h2 className={titleBlue}>From</h2>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-1">
             <p className={labelClass}>Name</p>
             <p className={valueClass}>{invoiceData.from.name}</p>
@@ -95,20 +129,32 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
           </div>
           <div className="flex flex-col gap-1">
             <p className={labelClass}>Address</p>
-            {invoiceData.from.address ? (
-              <p className={valueClass}>{invoiceData.from.address}</p>
-            ) : (
-              <div className="flex flex-row gap-2">
+            {isEditingAddress ? (
+              <form onSubmit={handleSubmit(onAddressSubmit)} className="flex flex-row gap-2">
                 <input
+                  {...register("address", { required: "Address cannot be empty" })}
                   type="text"
-                  value={addressInput}
-                  onChange={e => setAddressInput(e.target.value)}
                   placeholder="Enter address"
-                  className="w-[200px] px-3 py-1 border border-primary-divider rounded-lg bg-white text-text-primary placeholder-text-secondary"
+                  className="flex-1 px-3 py-1 leading-none border border-primary-divider rounded-lg bg-[#F5F5F6] text-text-primary placeholder-text-secondary h-fit"
                   disabled={isUpdating}
                 />
-                {updateError && <p className="text-sm text-red-600">{updateError}</p>}
-                <SecondaryButton text="Update" onClick={handleUpdateAddress} disabled={isUpdating} />
+                {errors.address && <p className="text-sm text-red-600">{errors.address.message}</p>}
+                <SecondaryButton
+                  text="Update"
+                  onClick={handleSubmit(onAddressSubmit)}
+                  disabled={isUpdating}
+                  buttonClassName="w-20 !py-[1px]"
+                />
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className={valueClass}>{invoiceData.from.address || "No address"}</p>
+                <img
+                  src="/misc/edit-icon.svg"
+                  alt="Edit"
+                  className={editIconClass}
+                  onClick={() => setIsEditingAddress(true)}
+                />
               </div>
             )}
           </div>
@@ -122,7 +168,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
                   alt={invoiceData.from.network}
                   className="w-6 h-6 rounded-full"
                 />
-                <p className="text-sm font-semibold text-text-primary">{invoiceData.from.network}</p>
+                <p className="font-semibold text-text-primary">{invoiceData.from.network}</p>
                 <img
                   src="/misc/edit-icon.svg"
                   alt="Edit"
@@ -140,7 +186,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
                   alt={invoiceData.from.token}
                   className="w-6 h-6 rounded-full"
                 />
-                <p className="text-sm font-semibold text-text-primary">{invoiceData.from.token}</p>
+                <p className="font-semibold text-text-primary">{invoiceData.from.token}</p>
                 <img
                   src="/misc/edit-icon.svg"
                   alt="Edit"
@@ -153,10 +199,34 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
 
           <div className="flex flex-col gap-1 mt-4">
             <p className={labelClass}>Wallet address</p>
-            <div className="flex items-center gap-2">
-              <p className={smallValue + " truncate"}>{invoiceData.from.walletAddress}</p>
-              <img src="/misc/edit-icon.svg" alt="Edit" className={editIconClass + " flex-shrink-0"} />
-            </div>
+            {isEditingWalletAddress ? (
+              <form onSubmit={handleSubmit(onWalletAddressSubmit)} className="flex flex-row gap-2">
+                <input
+                  {...register("walletAddress", { required: "Wallet address cannot be empty" })}
+                  type="text"
+                  placeholder="Enter wallet address"
+                  className="flex-1 px-3 py-1 leading-none border border-primary-divider rounded-lg bg-[#F5F5F6] text-text-primary placeholder-text-secondary h-fit"
+                  disabled={isUpdating}
+                />
+                {errors.walletAddress && <p className="text-sm text-red-600">{errors.walletAddress.message}</p>}
+                <SecondaryButton
+                  text="Update"
+                  onClick={handleSubmit(onWalletAddressSubmit)}
+                  disabled={isUpdating}
+                  buttonClassName="w-20 !py-[1px]"
+                />
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="text-text-primary">{invoiceData.from.walletAddress}</p>
+                <img
+                  src="/misc/edit-icon.svg"
+                  alt="Edit"
+                  className={editIconClass + " flex-shrink-0"}
+                  onClick={() => setIsEditingWalletAddress(true)}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -164,7 +234,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
       {/* Bill To Section */}
       <div className={`${cardBase} gap-2`}>
         <h2 className={titleBlue}>Bill to</h2>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           <div className="flex flex-col">
             <p className={labelClass}>Name</p>
             <p className={valueClass}>{invoiceData.billTo.name}</p>

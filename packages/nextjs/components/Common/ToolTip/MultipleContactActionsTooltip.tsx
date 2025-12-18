@@ -45,10 +45,10 @@ export const MultipleContactActionsTooltip = ({
   return (
     <div className="bg-background border border-primary-divider rounded-2xl shadow-lg w-[185px]">
       {/* Export Button */}
-      <TooltipItem onClick={onExport} isFirst>
+      {/* <TooltipItem onClick={onExport} isFirst>
         <img src="/misc/export-icon.svg" alt="export" className="w-5 h-5 opacity-30" />
         <span className={`text-sm text-text-primary`}>Export {addressCount} addresses</span>
-      </TooltipItem>
+      </TooltipItem> */}
 
       {/* Remove Button */}
       <div className="border-t w-full border-primary-divider">

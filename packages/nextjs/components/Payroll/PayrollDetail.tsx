@@ -10,9 +10,14 @@ import { RequestPaymentStatus } from "@/types/request-payment";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { useTitle } from "@/contexts/TitleProvider";
 import { useRouter } from "next/navigation";
-import { useGetPayrollDetails } from "@/services/api/payroll";
+import { useGetPayrollDetails, useGetPayrollStats } from "@/services/api/payroll";
+import toast from "react-hot-toast";
+import { CategoryBadge } from "../ContactBook/ContactBookContainer";
+import { useGetAllEmployeeGroups } from "@/services/api/employee";
+import { CategoryShapeEnum } from "@/types/employee";
+import { InvoiceStatusEnum } from "@/types/invoice";
 
-const labelStyles = "py-1 text-sm font-medium text-text-secondary";
+const labelStyles = "py-1 text-base font-medium text-text-secondary";
 
 // Action renderer for payroll table
 const payrollActionRenderer = (rowData: Record<string, any>, index: number) => (
@@ -34,6 +39,7 @@ const PayrollDetail = () => {
 
   const payrollId = parseInt(searchParams.get("id") || "0", 10);
   const { data: payrollData, isLoading, error } = useGetPayrollDetails(payrollId);
+  const { data: groups } = useGetAllEmployeeGroups();
 
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -78,34 +84,83 @@ const PayrollDetail = () => {
     );
   }
 
-  const paymentHistoryData = [
-    {
-      "Creation date": new Date(payrollData.createdAt).toLocaleDateString(),
-      Invoice: `#INV-${payrollData.id}`,
-      Name: payrollData.employee.name,
-      Team: "Engineering",
-      Amount: (
-        <div className="flex items-center gap-2 justify-center">
-          <span>{payrollData.amount}</span>
-          <img
-            alt={payrollData.token.symbol}
-            className="w-4"
-            src={`/token/${payrollData.token.symbol.toLowerCase()}.svg`}
-          />
-        </div>
-      ),
-      "Due Date": new Date(payrollData.payStartDate).toLocaleDateString(),
-      Status: (
-        <div className="w-full flex justify-center items-center">
-          <Badge
-            text={payrollData.status}
-            status={payrollData.status === "ACTIVE" ? BadgeStatus.SUCCESS : BadgeStatus.AWAITING}
-            className="px-5"
-          />
-        </div>
-      ),
-    },
-  ];
+  // Filter invoices based on active tab
+  const getFilteredInvoices = () => {
+    if (!payrollData?.invoices) return [];
+
+    const invoices = payrollData.invoices;
+
+    switch (activeTab) {
+      case "awaiting":
+        return invoices.filter(invoice => invoice.status === "SENT");
+      case "paid":
+        return invoices.filter(invoice => invoice.status === "PAID");
+      case "all":
+      default:
+        return invoices;
+    }
+  };
+
+  // Transform invoices to table data format
+  const paymentHistoryData = getFilteredInvoices().map(invoice => ({
+    "Creation date": new Date(invoice.createdAt).toLocaleDateString(),
+    Invoice: `#${invoice.invoiceNumber}`,
+    Name: invoice.fromDetails?.name || payrollData.employee.name,
+    Amount: (
+      <div className="flex items-center gap-2 justify-center">
+        <span>{invoice.total}</span>
+        <img
+          alt={invoice.paymentToken?.symbol}
+          className="w-4"
+          src={`/token/${invoice.paymentToken?.symbol?.toLowerCase()}.svg`}
+        />
+      </div>
+    ),
+    "Due Date": new Date(invoice.dueDate ?? "").toLocaleDateString(),
+    Status: (
+      <div className="w-full flex justify-center items-center">
+        <Badge
+          text={invoice.status}
+          status={invoice?.status === InvoiceStatusEnum.PAID ? BadgeStatus.SUCCESS : BadgeStatus.AWAITING}
+          className="px-5"
+        />
+      </div>
+    ),
+  }));
+
+  const renderHeader = () => {
+    switch (activeTab) {
+      case "all":
+        return (
+          <div className="flex flex-col gap-2">
+            <span className="text-text-primary text-2xl font-medium leading-none">Overview</span>
+            <span className="text-text-secondary text-[14px] font-medium leading-none">
+              Manage all the invoices you received from vendors
+            </span>
+          </div>
+        );
+      case "awaiting":
+        return (
+          <div className="flex flex-col gap-2">
+            <span className="text-text-primary text-2xl font-medium leading-none">Pending bills</span>
+            <span className="text-text-secondary text-[14px] font-medium leading-none">
+              Waiting for vendor to review and confirm their invoices.
+            </span>
+          </div>
+        );
+      case "paid":
+        return (
+          <div className="flex flex-col gap-2">
+            <span className="text-text-primary text-2xl font-medium leading-none">Paid bills</span>
+            <span className="text-text-secondary text-[14px] font-medium leading-none">
+              All bills that have been fully paid.
+            </span>
+          </div>
+        );
+      default:
+        return "Payments";
+    }
+  };
 
   return (
     <div className="p-5 flex flex-col items-start justify-start w-full h-full gap-2">
@@ -124,8 +179,8 @@ const PayrollDetail = () => {
 
           {/* Values Column */}
           <div className="flex-1 flex flex-col gap-1">
-            <div className="py-1 text-sm font-medium text-text-primary">{payrollData.employee.name}</div>
-            <div className="py-1 text-sm font-medium text-primary-blue">{payrollData.employee.email}</div>
+            <div className="py-1 text-base font-medium text-text-primary">{payrollData.employee.name}</div>
+            <div className="py-1 text-base font-medium text-primary-blue">{payrollData.employee.email}</div>
             <div className=" py-1 flex items-center gap-2">
               <img
                 className="w-5"
@@ -134,7 +189,7 @@ const PayrollDetail = () => {
                   payrollData.network.name.charAt(0).toUpperCase() + payrollData.network.name.slice(1).toLowerCase()
                 }.svg`}
               />
-              <span className="text-sm font-medium text-text-primary">
+              <span className="text-base font-medium text-text-primary">
                 {payrollData.network.name.charAt(0).toUpperCase() + payrollData.network.name.slice(1)}
               </span>
             </div>
@@ -144,13 +199,19 @@ const PayrollDetail = () => {
                 className="w-5 h-5"
                 src={`/token/${payrollData.token.symbol.toLowerCase()}.svg`}
               />
-              <span className="text-sm font-medium text-text-primary">{payrollData.token.symbol}</span>
+              <span className="text-base font-medium text-text-primary">{payrollData.token.symbol}</span>
             </div>
             <div className=" py-1 flex items-center gap-2 justify-start">
-              <span className="text-sm font-medium text-text-primary">{payrollData.employee.walletAddress}</span>
-              <div className="w-5 h-5 flex-shrink-0">
-                <img alt="Copy" className="w-full h-full" src="/misc/copy-icon.svg" />
-              </div>
+              <span className="text-base font-medium text-text-primary">{payrollData.employee.walletAddress}</span>
+              <img
+                alt="Copy"
+                className="w-5 h-5"
+                src="/misc/copy-icon.svg"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(payrollData.employee.walletAddress);
+                  toast.success("Address copied to clipboard");
+                }}
+              />
             </div>
           </div>
         </div>
@@ -168,10 +229,10 @@ const PayrollDetail = () => {
 
           {/* Values Column */}
           <div className="flex-1 flex flex-col gap-1">
-            <div className=" py-1 text-sm font-medium text-text-primary">
+            <div className=" py-1 text-base font-medium text-text-primary">
               {new Date(payrollData.createdAt).toLocaleString()}
             </div>
-            <div className=" py-1 text-sm font-medium text-text-primary">
+            <div className=" py-1 text-base font-medium text-text-primary">
               {`${new Date(payrollData.joiningDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} - ${new Date(payrollData.payEndDate).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}`}
             </div>
             <div className=" py-1 flex items-center gap-1">
@@ -180,18 +241,17 @@ const PayrollDetail = () => {
                 className="w-5"
                 src={`/token/${payrollData.token.symbol.toLowerCase()}.svg`}
               />
-              <span className="text-sm font-medium text-text-primary">
+              <span className="text-base font-medium text-text-primary">
                 {payrollData.amount} {payrollData.token.symbol} / month
               </span>
             </div>
-            <div className=" py-1 text-sm font-medium text-text-primary">{payrollData.payrollCycle}th monthly</div>
-            <div className=" py-1 flex items-center gap-1">
-              <div className="bg-blue-500/20 rounded-full px-3 py-1 flex items-center gap-1">
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <div className="w-2 h-2 bg-blue-500 rounded-sm transform rotate-45" />
-                </div>
-                <span className="text-xs font-medium text-blue-500">Employee</span>
-              </div>
+            <div className=" py-1 text-base font-medium text-text-primary">{payrollData.payrollCycle}th monthly</div>
+            <div className="flex justify-start items-center">
+              <CategoryBadge
+                shape={groups?.find(cat => cat.id === payrollData.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+                color={groups?.find(cat => cat.id === payrollData.employee.groupId)?.color || "#35ADE9"}
+                name={groups?.find(cat => cat.id === payrollData.employee.groupId)?.name || "-"}
+              />
             </div>
           </div>
         </div>
@@ -217,12 +277,7 @@ const PayrollDetail = () => {
         containerClassName="w-full h-full bg-[#F6F6F6]"
       >
         <div className="flex w-full justify-between items-center">
-          <div className="flex flex-col gap-2">
-            <span className="text-text-primary text-2xl font-medium leading-none">Payment History</span>
-            <span className="text-text-secondary text-[14px] font-medium leading-none">
-              See monthly records, invoice status, and all past payments.
-            </span>
-          </div>
+          {renderHeader()}
 
           {/* Filter Button */}
           <div className="flex items-center gap-2">
@@ -245,7 +300,7 @@ const PayrollDetail = () => {
           </div>
         </div>
         <Table
-          headers={["Creation date", "Invoice", "Name", "Team", "Amount", "Due Date", "Status"]}
+          headers={["Creation date", "Invoice", "Name", "Amount", "Due Date", "Status"]}
           data={paymentHistoryData}
           className="w-full"
           rowClassName="py-5"

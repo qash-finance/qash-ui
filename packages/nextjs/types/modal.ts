@@ -50,10 +50,12 @@ import BonusAmountModal from "@/components/Modal/Payroll/BonusAmountModal";
 import PayrollPreviewModal from "@/components/Modal/Payroll/PayrollPreviewModal";
 import RetryModal from "@/components/Modal/RetryModal";
 import SelectNetworkModal from "@/components/Modal/SelectNetworkModal";
-import InvoiceModal from "@/components/Modal/InvoiceModal";
+import InvoiceModal from "@/components/Modal/Invoice/InvoiceModal";
+import RemoveInvoiceModal from "@/components/Modal/Invoice/RemoveInvoiceModal";
 import ConnectMidenWallet from "@/components/Modal/Wallet/ConnectMidenWallet";
 import RemovePayrollModal from "@/components/Modal/Payroll/RemovePayrollModal";
 import { Group } from "./group-payment";
+import { CompanyGroupResponseDto } from "./employee";
 import { BatchTransaction } from "@/services/store/batchTransactions";
 import { AssetWithMetadata } from "./faucet";
 import { DateRange } from "react-day-picker";
@@ -116,6 +118,7 @@ export const MODAL_IDS = {
   INVOICE_MODAL: "INVOICE_MODAL",
   CONNECT_MIDEN_WALLET: "CONNECT_MIDEN_WALLET",
   REMOVE_PAYROLL: "REMOVE_PAYROLL",
+  REMOVE_INVOICE: "REMOVE_INVOICE",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -354,7 +357,11 @@ export interface RemoveTransactionConfirmationModalProps extends BaseModalProps 
   onRemove?: () => Promise<void>;
 }
 
-export interface CreateGroupModalProps extends BaseModalProps {}
+
+// Allow passing a callback when a group is created so callers can react (e.g., auto-select)
+export interface CreateGroupModalProps extends BaseModalProps {
+  onGroupCreated?: (group: CompanyGroupResponseDto) => void;
+}
 
 export interface CreateContactModalProps extends BaseModalProps {}
 
@@ -364,7 +371,7 @@ export interface EditContactModalProps extends BaseModalProps {
     name: string;
     address: string;
     email?: string;
-    category: string;
+    group: string;
     token?: TokenDto;
     network?: NetworkDto;
   };
@@ -436,6 +443,11 @@ export interface RemovePayrollModalProps extends BaseModalProps {
   payrollOwnerName?: string;
 }
 
+export interface RemoveInvoiceModalProps extends BaseModalProps {
+  onRemove: () => Promise<void>;
+  invoiceOwnerName?: string;
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -490,6 +502,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.INVOICE_MODAL]: InvoiceModalProps;
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWalletProps;
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModalProps;
+  [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -548,4 +561,5 @@ export const modalRegistry = {
   [MODAL_IDS.INVOICE_MODAL]: InvoiceModal,
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWallet,
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModal,
+  [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModal,
 } as const;

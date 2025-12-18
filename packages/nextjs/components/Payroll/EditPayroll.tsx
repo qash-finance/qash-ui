@@ -37,34 +37,22 @@ interface CreatePayrollProps {
 const inputContainerClass = "bg-background rounded-xl p-3 border-b-2 border-primary-divider";
 const labelClass = "text-text-secondary text-sm";
 
-interface EmployeeInfo {
-  name: string;
-  email?: string;
-  walletAddress?: string;
-}
-
-const CreatePayroll = ({
-  onReview,
-  initialFormData,
-  initialToken,
-  initialNetwork,
-  initialPayDay = 1,
-}: CreatePayrollProps) => {
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>(
-    initialToken || {
-      amount: "0",
-      faucetId: "",
-      metadata: {
-        symbol: "",
-        decimals: 0,
-        maxSupply: 0,
-      },
+const EditPayroll = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const payrollId = searchParams.get("id");
+  const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>({
+    amount: "0",
+    faucetId: "",
+    metadata: {
+      symbol: "",
+      decimals: 0,
+      maxSupply: 0,
     },
-  );
-  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
-    initialNetwork || null,
-  );
-  const [selectedPayDay, setSelectedPayDay] = useState(initialPayDay);
+  });
+  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(null);
+  const [selectedPayDay, setSelectedPayDay] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { openModal } = useModal();
   const {
@@ -72,10 +60,9 @@ const CreatePayroll = ({
     handleSubmit,
     formState: { errors },
     setValue,
-    reset,
   } = useForm<CreatePayrollFormData>({
     mode: "onChange",
-    defaultValues: initialFormData || {
+    defaultValues: {
       time: "10:00",
       employee: "",
       employeeEmail: "",
@@ -88,25 +75,71 @@ const CreatePayroll = ({
     },
   });
 
-  // Reset form when initialFormData changes
+  // Fetch payroll data if ID exists
+  const { data: payrollData, isLoading } = useGetPayrollDetails(payrollId ? parseInt(payrollId) : 0);
+
   useEffect(() => {
-    if (initialFormData) {
-      reset(initialFormData);
-      setSelectedToken(
-        initialToken || {
-          amount: "0",
-          faucetId: "",
-          metadata: {
-            symbol: "",
-            decimals: 0,
-            maxSupply: 0,
-          },
+    const handleBack = () => {
+      router.back();
+    };
+
+    const isEditMode = !!payrollId;
+    setTitle(
+      <div className="flex items-center gap-2">
+        <span className="text-text-secondary">Payroll /</span>
+        <span className="text-text-primary">{isEditMode ? "Edit payroll" : "Create new payroll"}</span>
+      </div>,
+    );
+    setShowBackArrow(true);
+    setOnBackClick(() => handleBack);
+
+    return () => {
+      setOnBackClick(undefined);
+      setShowBackArrow(false);
+    };
+  }, [router, payrollId]);
+
+  // Populate form data when payroll data is fetched
+  useEffect(() => {
+    if (payrollData) {
+      const startDate = new Date(payrollData.payStartDate);
+      const payDay = startDate.getDate();
+
+      // Update form values
+      setValue("employee", payrollData.employee.name, { shouldValidate: true });
+      setValue("employeeId", payrollData.employee.id, { shouldValidate: true });
+      setValue("employeeEmail", payrollData.employee.email, { shouldValidate: true });
+      setValue("monthlyAmount", payrollData.amount.toString(), { shouldValidate: true });
+      setValue("walletAddress", payrollData.employee.walletAddress || "", { shouldValidate: true });
+      setValue("duration", payrollData.payrollCycle?.toString() || "", { shouldValidate: true });
+      setValue("durationUnit", payrollData.metadata?.durationUnit || "month", { shouldValidate: true });
+      setValue("note", payrollData.note || "", { shouldValidate: true });
+      setValue("description", payrollData.description || "", { shouldValidate: true });
+
+      // Set selected pay day
+      setSelectedPayDay(payDay);
+
+      // Set token
+      const token: AssetWithMetadata = {
+        amount: payrollData.amount.toString(),
+        faucetId: payrollData.token.address || "",
+        metadata: {
+          symbol: payrollData.token.symbol,
+          decimals: payrollData.token.decimals,
+          maxSupply: 0,
         },
-      );
-      setSelectedNetwork(initialNetwork || null);
-      setSelectedPayDay(initialPayDay);
+      };
+      setSelectedToken(token);
+
+      // Set network
+      const mockNetwork = {
+        icon: "/chain/miden.svg",
+        name: payrollData.network.name,
+        value: payrollData.network.chainId.toString(),
+      };
+      setSelectedNetwork(mockNetwork);
     }
-  }, [initialFormData, initialToken, initialNetwork, initialPayDay, reset]);
+  }, [payrollData, setValue]);
 
   // Only build the DTO and pass to onCreate, do not call API here
   const { mutateAsync: updatePayroll } = useUpdatePayroll();
@@ -148,19 +181,20 @@ const CreatePayroll = ({
       network: {
         name: selectedNetwork.name,
         chainId: parseInt(selectedNetwork.value),
+        description: selectedNetwork.name,
         metadata: {},
       },
       token: {
-        address: "", // This would come from token selection modal
+        address: selectedToken.faucetId, // Use faucetId or provide a default address
         symbol: selectedToken.metadata.symbol,
         decimals: selectedToken.metadata.decimals,
         name: selectedToken.metadata.symbol,
         metadata: {},
       },
+      payday: payStart.getDate(),
       contractTerm: ContractTermEnum.PERMANENT,
       payrollCycle: durationValue,
       amount: monthlyAmount,
-      payStartDate: payStart.toISOString(),
       note: note,
       metadata: {
         payDay: selectedPayDay,
@@ -173,9 +207,9 @@ const CreatePayroll = ({
       await updatePayroll({ id: employeeId, data: updatePayrollDto });
 
       toast.success("Payroll updated successfully");
-      onReview();
     } catch (err: any) {
       toast.error(err?.message || "Error updating payroll");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -200,8 +234,16 @@ const CreatePayroll = ({
     setSelectedNetwork(network);
   };
 
+  if (payrollId && isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <span className="text-text-secondary">Loading payroll details...</span>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className={`w-full h-full p-5 flex flex-col items-center gap-4 justify-start`}>
       {/* Header */}
       <div className="flex flex-row items-center justify-start gap-3 w-full">
         <img src="/sidebar/payroll.svg" alt="Qash" className="w-6 h-6" />
@@ -337,111 +379,6 @@ const CreatePayroll = ({
           />
         </div>
       </div>
-    </>
-  );
-};
-
-const EditPayroll = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const payrollId = searchParams.get("id");
-  const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
-  const [initialData, setInitialData] = useState<CreatePayrollFormData | undefined>(undefined);
-  const [initialToken, setInitialToken] = useState<AssetWithMetadata | undefined>(undefined);
-  const [initialNetwork, setInitialNetwork] = useState<
-    { icon: string; name: string; value: string } | null | undefined
-  >(undefined);
-  const [initialPayDay, setInitialPayDay] = useState<number>(1);
-
-  // Fetch payroll data if ID exists
-  const { data: payrollData, isLoading } = useGetPayrollDetails(payrollId ? parseInt(payrollId) : 0);
-
-  useEffect(() => {
-    const handleBack = () => {
-      router.back();
-    };
-
-    const isEditMode = !!payrollId;
-    setTitle(
-      <div className="flex items-center gap-2">
-        <span className="text-text-secondary">Payroll /</span>
-        <span className="text-text-primary">{isEditMode ? "Edit payroll" : "Create new payroll"}</span>
-      </div>,
-    );
-    setShowBackArrow(true);
-    setOnBackClick(() => handleBack);
-
-    return () => {
-      setOnBackClick(undefined);
-      setShowBackArrow(false);
-    };
-  }, [router, payrollId]);
-
-  // Populate form data when payroll data is fetched
-  useEffect(() => {
-    if (payrollData) {
-      const startDate = new Date(payrollData.payStartDate);
-      const payDay = startDate.getDate();
-
-      setInitialData({
-        employee: payrollData.employee.name,
-        employeeId: payrollData.employee.id,
-        employeeEmail: payrollData.employee.email,
-        monthlyAmount: payrollData.amount.toString(),
-        time: "10:00",
-        walletAddress: payrollData.employee.walletAddress || "",
-        duration: payrollData.payrollCycle?.toString() || "",
-        durationUnit: payrollData.metadata?.durationUnit || "month",
-        note: payrollData.note || "",
-        description: payrollData.description || "",
-      });
-
-      setInitialPayDay(payDay);
-
-      // Set token
-      const mockToken: AssetWithMetadata = {
-        amount: payrollData.amount.toString(),
-        faucetId: "",
-        metadata: {
-          symbol: payrollData.token.symbol,
-          decimals: payrollData.token.decimals,
-          maxSupply: 0,
-        },
-      };
-      setInitialToken(mockToken);
-
-      // Set network
-      const mockNetwork = {
-        icon: "/chain/miden.svg", // Default icon, adjust as needed
-        name: payrollData.network.name,
-        value: payrollData.network.chainId.toString(),
-      };
-      setInitialNetwork(mockNetwork);
-    }
-  }, [payrollData]);
-
-  const handleReview = () => {
-    // Navigate to payroll list after creation
-    router.push("/payroll");
-  };
-
-  if (payrollId && isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <span className="text-text-secondary">Loading payroll details...</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`w-full h-full p-5 flex flex-col items-center gap-4 justify-start`}>
-      <CreatePayroll
-        onReview={handleReview}
-        initialFormData={initialData}
-        initialToken={initialToken}
-        initialNetwork={initialNetwork}
-        initialPayDay={initialPayDay}
-      />
     </div>
   );
 };

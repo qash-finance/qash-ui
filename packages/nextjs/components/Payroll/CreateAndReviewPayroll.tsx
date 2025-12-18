@@ -68,7 +68,7 @@ interface CreatePayrollProps {
     payDay: number,
   ) => void;
   initialFormData?: CreatePayrollFormData;
-  initialToken?: AssetWithMetadata;
+  initialToken?: AssetWithMetadata | null;
   initialNetwork?: { icon: string; name: string; value: string } | null;
   initialPayDay?: number;
 }
@@ -80,21 +80,11 @@ const CreatePayroll = ({
   initialNetwork,
   initialPayDay = 1,
 }: CreatePayrollProps) => {
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata>(
-    initialToken || {
-      amount: "0",
-      faucetId: "",
-      metadata: {
-        symbol: "",
-        decimals: 0,
-        maxSupply: 0,
-      },
-    },
-  );
+  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(initialToken || null);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
     initialNetwork || null,
   );
-  const [selectedPayDay, setSelectedPayDay] = useState(initialPayDay);
+  const [selectedPayDay, setSelectedPayDay] = useState(initialPayDay ?? 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { openModal } = useModal();
   const {
@@ -131,7 +121,7 @@ const CreatePayroll = ({
       employee,
     } = formData;
 
-    if (!selectedNetwork || !selectedToken.metadata.symbol || !employeeId) {
+    if (!selectedNetwork || !selectedToken || !selectedToken.metadata.symbol || !employeeId) {
       toast.error("Missing required fields");
       return;
     }
@@ -159,7 +149,7 @@ const CreatePayroll = ({
         metadata: {},
       },
       token: {
-        address: "", // This would come from token selection modal
+        address: selectedToken.faucetId || "", // Use selected token faucetId when available
         symbol: selectedToken.metadata.symbol,
         decimals: selectedToken.metadata.decimals,
         name: selectedToken.metadata.symbol,
@@ -200,6 +190,28 @@ const CreatePayroll = ({
         setValue("employeeId", employee.id, { shouldValidate: true });
         setValue("walletAddress", employee.walletAddress, { shouldValidate: true });
         setValue("employeeEmail", employee.email, { shouldValidate: true });
+
+        // populate network from contact
+        if (employee.network) {
+          setSelectedNetwork({
+            icon: "/chain/miden.svg",
+            name: employee.network.name,
+            value: String(employee.network.chainId),
+          });
+        }
+
+        // populate token from contact if provided
+        if (employee.token) {
+          setSelectedToken({
+            amount: "0",
+            faucetId: employee.token.address || "",
+            metadata: {
+              symbol: employee.token.symbol,
+              decimals: employee.token.decimals || 0,
+              maxSupply: employee.token.maxSupply || 0,
+            },
+          });
+        }
       },
     });
   };
@@ -237,6 +249,7 @@ const CreatePayroll = ({
                 autoComplete="off"
                 placeholder="Enter full name"
                 className="outline-none"
+                disabled
               />
             </div>
             <button
@@ -284,7 +297,7 @@ const CreatePayroll = ({
             }
           >
             <div className="flex gap-3 items-center">
-              {selectedToken.metadata.symbol ? (
+              {selectedToken && selectedToken.metadata.symbol ? (
                 <>
                   <div className="relative w-10 h-10">
                     <img
@@ -317,6 +330,7 @@ const CreatePayroll = ({
                   className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-secondary"
                   autoFocus={true}
                   autoComplete="off"
+                  disabled
                 />
               </div>
             </div>
@@ -511,20 +525,8 @@ const CreateAndReviewPayroll = () => {
   const [payrollDto, setPayrollDto] = useState<CreatePayrollDto | null>(null);
   const [employee, setEmployee] = useState<EmployeeInfo | null>(null);
   const [formData, setFormData] = useState<CreatePayrollFormData | undefined>(undefined);
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | undefined>({
-    amount: "0",
-    faucetId: QASH_TOKEN_ADDRESS,
-    metadata: {
-      symbol: QASH_TOKEN_SYMBOL,
-      decimals: QASH_TOKEN_DECIMALS,
-      maxSupply: QASH_TOKEN_MAX_SUPPLY,
-    },
-  });
-  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>({
-    icon: "/chain/miden.svg",
-    name: "Miden Testnet",
-    value: "miden",
-  });
+  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(null);
   const [selectedPayDay, setSelectedPayDay] = useState<number | undefined>(undefined);
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
 

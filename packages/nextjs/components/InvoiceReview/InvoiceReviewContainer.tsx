@@ -46,6 +46,7 @@ export interface InvoiceData {
   total: number;
   amountDue: number;
   currency: string;
+  status: string;
 }
 
 const InvoiceSuccess = ({ message }: { message: string }) => {
@@ -123,8 +124,12 @@ export const InvoiceReviewContainer = () => {
       .then(() => {
         toast.success(`OTP sent to ${employeeEmail}`);
       })
-      .catch(err => {
-        toast.error(err instanceof Error ? err.message : "Failed to send OTP");
+      .catch((error: any) => {
+        if (error && error.message.includes("Rate limit")) {
+          toast.error("Too many requests. Please wait before trying again.");
+        } else {
+          toast.error("Failed to send OTP");
+        }
       });
   }, [
     authIsLoading,
@@ -147,8 +152,10 @@ export const InvoiceReviewContainer = () => {
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
+  const handleVerifyOtp = async (valueOtp?: string) => {
+    const otpToVerify = valueOtp ?? otp;
+
+    if (otpToVerify.length !== 6) {
       setOtpError(true);
       return;
     }
@@ -157,7 +164,7 @@ export const InvoiceReviewContainer = () => {
     setVerifyingOtp(true);
 
     try {
-      await verifyOtp(employeeEmail, otp);
+      await verifyOtp(employeeEmail, otpToVerify);
       toast.success("OTP verified successfully");
       // Load invoice data and move to review step
       await loadInvoice();
@@ -218,6 +225,7 @@ export const InvoiceReviewContainer = () => {
       total: parseFloat(apiData.total || "0"),
       amountDue: parseFloat(apiData.total || "0"),
       currency: apiData.currency || "USD",
+      status: apiData.status,
     };
   };
 
@@ -262,6 +270,21 @@ export const InvoiceReviewContainer = () => {
     }
   };
 
+  const handleWalletAddressUpdate = (updatedWalletAddress: string) => {
+    // Update the invoice data when wallet address is updated in InvoiceDetail
+    if (invoiceData) {
+      setInvoiceData({
+        ...invoiceData,
+        from: {
+          ...invoiceData.from,
+          walletAddress: updatedWalletAddress,
+        },
+      });
+    }
+  };
+
+  console.log(invoiceData);
+
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">
       {/* Verify OTP Step */}
@@ -302,6 +325,11 @@ export const InvoiceReviewContainer = () => {
                   onChange={value => {
                     setOtp(value);
                     if (otpError) setOtpError(false);
+
+                    // Auto-submit when OTP is fully entered
+                    if (value.length === 6) {
+                      handleVerifyOtp(value);
+                    }
                   }}
                   numInputs={6}
                   containerStyle={{ gap: "8px" }}
@@ -347,18 +375,24 @@ export const InvoiceReviewContainer = () => {
                 iconPosition="left"
                 disabled={isLoading}
               />
-              <PrimaryButton
-                text="Confirm"
-                onClick={handleConfirmInvoice}
-                containerClassName="w-[170px]"
-                disabled={isLoading}
-              />
+              {invoiceData.status === "REVIEWED" && (
+                <PrimaryButton
+                  text="Confirm"
+                  onClick={handleConfirmInvoice}
+                  containerClassName="w-[170px]"
+                  disabled={isLoading}
+                />
+              )}
             </div>
           </div>
 
           {/* Main Content */}
           <div className="flex flex-row w-full">
-            <InvoiceDetail {...invoiceData} onAddressUpdate={handleAddressUpdate} />
+            <InvoiceDetail
+              {...invoiceData}
+              onAddressUpdate={handleAddressUpdate}
+              onWalletAddressUpdate={handleWalletAddressUpdate}
+            />
             <div className="w-1/2">
               <InvoicePreview {...invoiceData} />
             </div>

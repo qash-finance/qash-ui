@@ -1,5 +1,7 @@
 // Payroll related DTOs and types
 
+import { InvoiceItemDto, InvoiceModel } from "./invoice";
+
 export enum ContractTermEnum {
   PERMANENT = "PERMANENT",
   CONTRACTOR = "CONTRACTOR",
@@ -9,6 +11,7 @@ export interface NetworkDto {
   name: string;
   chainId: number;
   metadata?: Record<string, any>;
+  description?: string;
 }
 
 export interface TokenDto {
@@ -35,6 +38,7 @@ export interface CreatePayrollDto {
 }
 
 export interface UpdatePayrollDto {
+  payday?: number;
   network?: NetworkDto;
   token?: TokenDto;
   contractTerm?: ContractTermEnum;
@@ -89,6 +93,7 @@ export interface PayrollModel {
     order: number;
     companyId: number;
   };
+  invoices: InvoiceModel[];
   note?: string;
   metadata?: Record<string, any>;
   status: string;

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { InvoiceModalProps, ValidatingModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
+import BaseModal from "../BaseModal";
 
 const formatDate = (dateString: string | undefined): string => {
   if (!dateString) return "01/01/2025";

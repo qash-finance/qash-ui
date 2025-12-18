@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { AssetWithMetadata } from "@/types/faucet";
 
 interface FixedAmountProps {
-  selectedToken: AssetWithMetadata;
+  selectedToken: AssetWithMetadata | null;
   selectedPayDay: number;
   setSelectedPayDay: (day: number) => void;
   register: any;
@@ -80,7 +80,7 @@ export const ContractTerm = ({
                 autoComplete="off"
               />
             </div>
-            <span className="text-text-primary pr-2">{selectedToken.metadata.symbol}</span>
+            <span className="text-text-primary pr-2">{selectedToken ? selectedToken.metadata.symbol : ""}</span>
           </div>
           {errors.monthlyAmount && (
             <div className="flex items-center gap-1 pl-2">

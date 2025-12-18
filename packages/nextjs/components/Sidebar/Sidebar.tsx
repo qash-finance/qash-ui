@@ -60,13 +60,7 @@ export const actionItems = [
     link: SidebarLink.Payroll,
     disabled: false,
   },
-  {
-    icon: "/sidebar/invoice.svg",
-    filledIcon: "/sidebar/filled-invoice.svg",
-    label: "Invoice",
-    isActive: false,
-    disabled: true,
-  },
+
   {
     icon: "/sidebar/bill.svg",
     filledIcon: "/sidebar/filled-bill.svg",
@@ -76,12 +70,20 @@ export const actionItems = [
     disabled: false,
   },
   {
+    icon: "/sidebar/contact-book.svg",
+    filledIcon: "/sidebar/filled-contact-book.svg",
+    label: "Contact",
+    isActive: false,
+    link: SidebarLink.ContactBook,
+    disabled: false,
+  },
+  {
     icon: "/sidebar/payment-link.svg",
     filledIcon: "/sidebar/filled-payment-link.svg",
     label: "Payment Link",
     isActive: false,
     link: SidebarLink.PaymentLink,
-    disabled: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/payroll.svg",
@@ -91,12 +93,11 @@ export const actionItems = [
     disabled: true,
   },
   {
-    icon: "/sidebar/contact-book.svg",
-    filledIcon: "/sidebar/filled-contact-book.svg",
-    label: "Contact",
+    icon: "/sidebar/invoice.svg",
+    filledIcon: "/sidebar/filled-invoice.svg",
+    label: "Invoice",
     isActive: false,
-    link: SidebarLink.ContactBook,
-    disabled: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/move-crypto.svg",

@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { EditContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { UpdateAddressBookDto, CompanyGroupResponseDto, TokenDto } from "@/types/employee";
+import { UpdateAddressBookDto, CompanyGroupResponseDto, TokenDto, NetworkDto } from "@/types/employee";
 import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
@@ -68,11 +68,27 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
 export function EditContactModal({ isOpen, onClose, zIndex, contactData }: ModalProp<EditContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<TokenDto | null>(contactData?.token || null);
+  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
+    contactData?.network
+      ? { icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" }
+      : { icon: "/chain/miden.svg", name: "Miden Testnet", value: "miden" },
+  );
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
 
   const updateEmployee = useUpdateEmployee(Number(contactData?.id));
   const { data: employeeGroups = [] } = useGetAllEmployeeGroups({ enabled: isAuthenticated });
+
+  const networkChainIds: Record<string, number> = useMemo(
+    () => ({
+      eth: 1,
+      miden: 0,
+      sol: 0,
+      base: 8453,
+      bnb: 56,
+    }),
+    [],
+  );
 
   const {
     register,
@@ -104,9 +120,14 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       setValue("email", contactData.email || "");
       setSelectedToken(contactData.token || null);
 
-      const matchedGroup = employeeGroups.find(group => group.name === contactData.category);
+      const matchedGroup = employeeGroups.find(group => group.name === contactData.group);
       setSelectedGroup(matchedGroup);
       setValue("groupId", matchedGroup?.id ?? undefined, { shouldValidate: true, shouldTouch: true });
+
+      // Initialize selectedNetwork from contact data if available
+      if (contactData.network) {
+        setSelectedNetwork({ icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" });
+      }
     }
   }, [contactData, setValue, employeeGroups]);
 
@@ -139,12 +160,12 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
   const addressRegister = register("walletAddress", {
     required: "Wallet address is required",
     minLength: {
-      value: 3,
+      value: 10,
       message: "Address is too short",
     },
     pattern: {
-      value: /^mt[a-zA-Z0-9]+$/,
-      message: "Address must start with 'mt' and contain only letters and numbers",
+      value: /^mtst1[a-z0-9_]+$/i,
+      message: "Address must start with 'mtst1' and contain only letters, numbers, and underscores",
     },
     validate: value => {
       if (!selectedGroup) return true;
@@ -175,6 +196,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       return;
     }
 
+    console.log("🚀 ~ onSubmit ~ selectedGroup:", selectedGroup);
     if (!selectedGroup) {
       toast.error("Please select a group");
       return;
@@ -186,12 +208,25 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     }
 
     try {
+      const networkPayload: NetworkDto | undefined = selectedNetwork
+        ? { name: selectedNetwork.name, chainId: networkChainIds[selectedNetwork.value] ?? 0 }
+        : undefined;
+
       const addressBookData: UpdateAddressBookDto = {
         name: data.name.trim(),
         walletAddress: data.walletAddress.trim(),
         groupId: selectedGroup.id,
         email: data.email?.trim() || undefined,
-        token: selectedToken ? { address: selectedToken.address, symbol: selectedToken.symbol } : undefined,
+        token: selectedToken
+          ? {
+              address: selectedToken.address,
+              symbol: selectedToken.symbol,
+              // provide metadata if missing so backend validation passes
+              decimals: (selectedToken as any).decimals ?? 0,
+              name: (selectedToken as any).name ?? selectedToken.symbol,
+            }
+          : undefined,
+        network: networkPayload,
       };
 
       await updateEmployee.mutateAsync(addressBookData);
@@ -201,6 +236,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       reset();
       setSelectedToken(null);
       setSelectedGroup(undefined);
+      setSelectedNetwork(null);
       onClose();
     } catch (error) {
       console.error("Failed to update contact:", error);
@@ -212,17 +248,26 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     setSelectedToken(token);
   };
 
-  const handleCategorySelect = (category: CompanyGroupResponseDto) => {
-    setSelectedGroup(category);
-    setValue("groupId", category.id, { shouldValidate: true, shouldTouch: true });
+  const handleNetworkSelect = (network: { icon: string; name: string; value: string } | null) => {
+    setSelectedNetwork(network);
+  };
+
+  const handleGroupSelect = (group: CompanyGroupResponseDto) => {
+    setSelectedGroup(group);
+    setValue("groupId", group.id, { shouldValidate: true, shouldTouch: true });
   };
 
   const handleCancel = () => {
     reset();
     setSelectedToken(contactData?.token || null);
-    const matchedGroup = employeeGroups.find(group => group.name === contactData?.category);
+    const matchedGroup = employeeGroups.find(group => group.name === contactData?.group);
     setSelectedGroup(matchedGroup);
     setValue("groupId", matchedGroup?.id ?? undefined, { shouldValidate: true, shouldTouch: true });
+
+    setSelectedNetwork(
+      contactData?.network ? { icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" } : null,
+    );
+
     onClose();
   };
 
@@ -243,6 +288,15 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
           />
 
           <FormInput
+            label="Email"
+            placeholder="Enter email"
+            type="email"
+            register={emailRegister}
+            error={errors.email?.message}
+            disabled={updateEmployee.isPending}
+          />
+
+          <FormInput
             label="Wallet address"
             placeholder="Enter wallet address"
             register={addressRegister}
@@ -253,14 +307,22 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
 
           <input type="hidden" {...groupIdRegister} value={selectedGroup?.id ?? ""} />
 
-          <FormInput
-            label="Email"
-            placeholder="Enter email"
-            type="email"
-            register={emailRegister}
-            error={errors.email?.message}
-            disabled={updateEmployee.isPending}
-          />
+          {/* Network Selection */}
+          <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">
+            <button
+              type="button"
+              onClick={() => openModal(MODAL_IDS.SELECT_NETWORK, { onNetworkSelect: handleNetworkSelect })}
+              className="flex items-center gap-2 px-4 py-2 h-full w-full text-left cursor-pointer"
+              disabled={updateEmployee.isPending}
+            >
+              {selectedNetwork && <img src={selectedNetwork.icon} alt="network" className="w-8 h-8" />}
+              <div className="flex-1">
+                <p className="text-text-secondary text-sm leading-none">Select network</p>
+                <p className="text-text-primary text-base font-medium">{selectedNetwork?.name || "-"}</p>
+              </div>
+              <img src="/arrow/chevron-down.svg" alt="dropdown" className="w-6 h-6" />
+            </button>
+          </div>
 
           {/* Token Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">
@@ -296,7 +358,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
             <EmployeeGroupDropdown
               groups={employeeGroups}
               selectedGroup={selectedGroup}
-              onGroupSelect={handleCategorySelect}
+              onGroupSelect={handleGroupSelect}
               disabled={updateEmployee.isPending}
             />
           </div>

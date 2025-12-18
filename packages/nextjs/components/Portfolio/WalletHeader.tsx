@@ -152,7 +152,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
           )}
         </div>
         <div className="flex gap-3 items-center">
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
           <div className="w-[1px] h-5 bg-text-secondary rotate-180" />
           <img src="/misc/close-icon.svg" alt="close" className="w-5 h-5 opacity-50 cursor-pointer" onClick={onClose} />
         </div>
@@ -196,7 +196,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
       </section>
 
       {/* Action Buttons */}
-      <div className="flex gap-1 justify-center items-center w-full">
+      {/* <div className="flex gap-1 justify-center items-center w-full">
         <PrimaryButton
           text="Receive"
           icon="/misc/receive-icon.svg"
@@ -219,7 +219,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
           buttonClassName="flex-1"
           iconClassName="invert brightness(1000%)"
         />
-      </div>
+      </div> */}
     </header>
   );
 }

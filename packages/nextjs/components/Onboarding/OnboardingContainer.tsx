@@ -78,7 +78,7 @@ export default function OnboardingContainer() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const hasCompany = !!(user as User)?.teamMembership?.companyId || !!(user as User)?.teamMembership?.company;
-    const destination = hasCompany ? "/" : "/onboarding";
+    const destination = hasCompany ? "/bill" : "/onboarding";
 
     router.push(destination);
   }, [isAuthenticated, accessToken, user, router]);
@@ -248,7 +248,7 @@ export default function OnboardingContainer() {
                 text="Go to app"
                 containerClassName="w-[180px] mt-6"
                 onClick={() => {
-                  router.push("/");
+                  router.push("/payroll");
                 }}
                 icon="/arrow/chevron-right-light.svg"
                 iconPosition="right"

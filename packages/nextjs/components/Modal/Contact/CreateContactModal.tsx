@@ -200,7 +200,12 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
 
     try {
       const tokenPayload: TokenDto | undefined = selectedToken
-        ? { address: selectedToken.faucetId, symbol: selectedToken.metadata.symbol }
+        ? {
+            address: selectedToken.faucetId,
+            symbol: selectedToken.metadata.symbol,
+            decimals: selectedToken.metadata.decimals,
+            name: selectedToken.metadata.symbol,
+          }
         : undefined;
 
       const networkPayload: NetworkDto = {

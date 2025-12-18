@@ -29,7 +29,7 @@ const NetworkItem = ({
   return (
     <div
       className="flex gap-2 items-center justify-between px-2.5 py-4 w-full rounded-xl bg-background border border-primary-divider transition-colors cursor-pointer"
-      onClick={onClick}
+      onClick={isComingSoon ? undefined : onClick}
     >
       <div className="flex flex-row gap-1.5 justify-start items-center">
         <img src={icon} alt={name} className="w-10 h-10 rounded-full" />
