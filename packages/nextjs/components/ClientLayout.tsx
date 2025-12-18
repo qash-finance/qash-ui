@@ -85,8 +85,6 @@ function ProtectedContent({ children }: { children: ReactNode }) {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
-  const { isConnected } = useWalletConnect();
-  const modalRef = useRef<ModalTriggerRef | null>(null);
 
   const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
 
@@ -101,6 +99,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         break;
     }
   };
+
+  const isFullscreen = useMemo(() => {
+    if (!pathname) return false;
+    return Array.from(fullscreenPages).some(p => (p.endsWith("/") ? pathname.startsWith(p) : pathname === p));
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -167,7 +170,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             <TitleProvider>
                               {/* <ConnectWalletButton /> */}
                               <ModalManager />
-                              {fullscreenPages.has(pathname) ? (
+                              {isFullscreen ? (
                                 <div className="h-screen w-screen">{children}</div>
                               ) : (
                                 <div className="flex flex-col h-screen overflow-hidden">
@@ -186,8 +189,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                                   </div>
                                 </div>
                               )}
-                              {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                              {!fullscreenPages.has(pathname) && <Background />}
+                              {!isFullscreen && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                              {!isFullscreen && <Background />}
                             </TitleProvider>
                           </AccountProvider>
                         </ProtectedContent>

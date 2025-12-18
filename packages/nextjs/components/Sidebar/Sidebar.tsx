@@ -83,7 +83,7 @@ export const actionItems = [
     label: "Payment Link",
     isActive: false,
     link: SidebarLink.PaymentLink,
-    disabled: true,
+    disabled: false,
   },
   {
     icon: "/sidebar/payroll.svg",

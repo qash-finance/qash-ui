@@ -10,6 +10,9 @@ import { toast } from "react-hot-toast";
 import { AssetWithMetadata } from "@/types/faucet";
 import { useWalletState } from "@/services/store";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
+import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { useAuth } from "@/services/auth/context";
+import { AuthMeResponse } from "@/services/auth/api";
 
 const SubIcon = ({
   icon,
@@ -57,14 +60,15 @@ export const PaymentLinkPreview = ({
   handleConnectWallet,
   isSending,
 }: PaymentLinkPreviewProps) => {
-  const { walletAddress } = useWalletState(state => state);
+  const { user } = useAuth();
+  const { address: walletAddress } = useWallet();
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
   return (
     <>
       <BaseContainer
         header={
-          <header className="flex items-center w-full justify-between px-5">
+          <header className="flex items-center w-full justify-between px-5 py-2">
             <div className="flex flex-1 gap-2 items-center">
               <img
                 src={blo(turnBechToHex(walletAddress || ""))}
@@ -73,7 +77,10 @@ export const PaymentLinkPreview = ({
               />
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm truncate text-text-primary leading-none">Q3x</span>
+                  <span className="text-sm truncate text-text-primary leading-none">
+                    {(user as AuthMeResponse["user"])?.teamMembership?.firstName}{" "}
+                    {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
+                  </span>
                   <img src="/logo/miden.svg" className="w-4" alt="miden logo icon" />
                 </div>
                 <div className="flex items-center gap-1">
