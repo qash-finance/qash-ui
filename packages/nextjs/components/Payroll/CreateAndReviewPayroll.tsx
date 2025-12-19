@@ -388,15 +388,16 @@ function createInvoiceDataFromPayroll(
   }
 
   const employeeName = employee?.name;
-  const today = new Date();
-  const dueDate = new Date(today);
-  dueDate.setDate(today.getDate() + 30);
+  const dueDate = new Date(payroll.payStartDate);
+  // Invoice date should be 5 days before due date
+  const invoiceDate = new Date(dueDate);
+  invoiceDate.setDate(dueDate.getDate() - 5);
   const billToName = company?.companyName;
   const billToEmail = ownerEmail;
 
   return {
     invoiceNumber: `INV0001`,
-    date: today.toISOString().split("T")[0],
+    date: invoiceDate.toISOString().split("T")[0],
     dueDate: payroll.payStartDate.split("T")[0],
     from: {
       name: employeeName,
