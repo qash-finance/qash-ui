@@ -131,6 +131,10 @@ const BillDetailContainer = () => {
             buttonClassName="w-[150px]"
             icon="/misc/coin-icon.svg"
             iconPosition="left"
+            onClick={() => {
+              // redirect to `http://localhost:3000/bill/review?invoiceUUID=${invoiceUUID}`
+              router.push(`/bill/review?invoiceUUID=${invoiceUUID}`);
+            }}
           />
           <SecondaryButton
             text="View invoice PDF"
@@ -265,7 +269,7 @@ const BillDetailContainer = () => {
                 </div>
                 <div className="flex flex-col gap-0">
                   <p className="text-sm text-gray-900 font-medium">{invoice.toDetails?.companyName} </p>
-                  <p className="text-sm text-blue-600 font-medium">{invoice.emailTo}</p>
+                  <p className="text-sm text-blue-600 font-medium">{invoice.toDetails?.email}</p>
                 </div>
               </div>
               <div className="flex flex-row gap-5">

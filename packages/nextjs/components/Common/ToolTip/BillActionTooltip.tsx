@@ -25,10 +25,10 @@ const BillActionTooltip: React.FC<BillActionTooltipProps> = ({
       </button>
 
       {/* Copy Invoice Link */}
-      <button className={`${itemStyles}`} onClick={onCopyInvoiceLink}>
+      {/* <button className={`${itemStyles}`} onClick={onCopyInvoiceLink}>
         <img src="/misc/copy-icon.svg" alt="duplicate" className="w-5 h-5" />
         <span className="font-medium text-sm text-gray-900 whitespace-nowrap">Copy Invoice Link </span>
-      </button>
+      </button> */}
 
       {/* Download PDF */}
       <button className={`${itemStyles}`} onClick={onDownloadPDF}>

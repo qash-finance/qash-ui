@@ -30,7 +30,7 @@ const billActionRenderer = (rowData: Record<string, any>, index: number) => (
       alt="three dot icon"
       className="w-6 h-6 cursor-pointer"
       data-tooltip-id="bill-action-tooltip"
-      data-tooltip-content={rowData.__id?.toString()}
+      data-tooltip-content={rowData.__billId?.toString()}
     />
   </div>
 );
@@ -156,7 +156,7 @@ const BillContainer = () => {
 
   const payBillsMutation = usePayBills();
   const deleteBill = useDeleteBill();
-  const { downloadPdf } = useInvoice();
+  const { downloadPdf, cancelInvoiceData } = useInvoice();
   const router = useRouter();
 
   const billDatas = bills.map((b, idx) => {
@@ -182,6 +182,7 @@ const BillContainer = () => {
 
     return {
       __id: b.invoice?.uuid,
+      __billId: b.id,
       "header-0": (
         <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
           <CustomCheckbox
@@ -326,8 +327,8 @@ const BillContainer = () => {
           rowClassName="py-5"
           headerClassName="py-3"
           showPagination={true}
-          actionColumn={false}
-          //  TODO: IMPLEMENT ACTION RENDERER
+          actionColumn={true}
+          actionRenderer={billActionRenderer}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           rowsPerPage={rowsPerPage}
@@ -376,12 +377,14 @@ const BillContainer = () => {
             openModal("REMOVE_INVOICE", {
               invoiceOwnerName: bill.invoice?.fromDetails?.name || "",
               onRemove: async () => {
-                deleteBill.mutate(bill.uuid, {
-                  onError: err => {
-                    console.error("Delete invoice failed", err);
-                    toast.error("Failed to delete invoice");
-                  },
-                });
+                await cancelInvoiceData(bill.invoice?.uuid || "");
+                toast.success("Invoice cancelled successfully");
+                // deleteBill.mutate(bill.uuid, {
+                //   onError: err => {
+                //     console.error("Delete invoice failed", err);
+                //     toast.error("Failed to delete invoice");
+                //   },
+                // });
               },
             });
           };

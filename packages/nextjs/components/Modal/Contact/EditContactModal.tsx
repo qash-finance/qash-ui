@@ -65,13 +65,36 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
   </div>
 );
 
+// Helper function to map network name to icon and value
+const getNetworkFromName = (networkName?: string): { icon: string; name: string; value: string } | null => {
+  if (!networkName) return null;
+
+  const networkMap: Record<string, { icon: string; value: string }> = {
+    "Miden Testnet": { icon: "/chain/miden.svg", value: "miden" },
+    Ethereum: { icon: "/chain/ethereum.svg", value: "eth" },
+    Solana: { icon: "/chain/solana.svg", value: "sol" },
+    Base: { icon: "/chain/base.svg", value: "base" },
+    "BNB Smart Chain (BEP20)": { icon: "/chain/bnb.svg", value: "bnb" },
+  };
+
+  const network = networkMap[networkName];
+  if (network) {
+    return { icon: network.icon, name: networkName, value: network.value };
+  }
+
+  // Default to Miden if not found
+  return { icon: "/chain/miden.svg", name: networkName, value: "miden" };
+};
+
 export function EditContactModal({ isOpen, onClose, zIndex, contactData }: ModalProp<EditContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<TokenDto | null>(contactData?.token || null);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
-    contactData?.network
-      ? { icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" }
-      : { icon: "/chain/miden.svg", name: "Miden Testnet", value: "miden" },
+    getNetworkFromName(contactData?.network?.name) || {
+      icon: "/chain/miden.svg",
+      name: "Miden Testnet",
+      value: "miden",
+    },
   );
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
@@ -126,7 +149,10 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
 
       // Initialize selectedNetwork from contact data if available
       if (contactData.network) {
-        setSelectedNetwork({ icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" });
+        const network = getNetworkFromName(contactData.network.name);
+        if (network) {
+          setSelectedNetwork(network);
+        }
       }
     }
   }, [contactData, setValue, employeeGroups]);
@@ -264,9 +290,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     setSelectedGroup(matchedGroup);
     setValue("groupId", matchedGroup?.id ?? undefined, { shouldValidate: true, shouldTouch: true });
 
-    setSelectedNetwork(
-      contactData?.network ? { icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" } : null,
-    );
+    setSelectedNetwork(contactData?.network ? getNetworkFromName(contactData.network.name) : null);
 
     onClose();
   };
