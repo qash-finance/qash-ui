@@ -92,6 +92,7 @@ const CreatePayroll = ({
     handleSubmit,
     formState: { errors, isValid },
     setValue,
+    watch,
   } = useForm<CreatePayrollFormData>({
     mode: "onChange",
     defaultValues: initialFormData || {
@@ -225,6 +226,8 @@ const CreatePayroll = ({
     setSelectedNetwork(network);
   };
 
+  const selectedEmployeeName = watch("employee");
+
   return (
     <>
       {/* Header */}
@@ -239,26 +242,30 @@ const CreatePayroll = ({
         <div className="w-[45%] p-4 pr-0 flex flex-col gap-3 top-1 sticky h-fit">
           <h2 className="text-text-primary text-lg leading-none">Basic Information</h2>
 
-          {/* Employee Input */}
-          <div className={`${inputContainerClass} flex items-center justify-between`}>
-            <div className="flex flex-col gap-0.5 flex-1">
-              <p className={labelClass}>Employee</p>
-              <input
-                {...register("employee", { required: true })}
-                type="text"
-                autoComplete="off"
-                placeholder="Enter full name"
-                className="outline-none"
-                disabled
-              />
+          {/* Employee Selector */}
+          <div
+            className={`${inputContainerClass} flex items-center justify-between cursor-pointer`}
+            onClick={handleChooseRecipient}
+          >
+            <div className="flex gap-3 items-center flex-1">
+              {selectedEmployeeName ? (
+                <>
+                  <div className="bg-app-background flex items-center justify-center rounded-lg w-10 h-10 border border-primary-divider">
+                    <img alt="" className="w-5 h-5" src="/misc/address-book-icon.svg" />
+                  </div>
+                  <div className="flex flex-col">
+                    <p className={labelClass}>Employee</p>
+                    <p className="text-text-primary text-sm font-bold">{selectedEmployeeName}</p>
+                  </div>
+                </>
+              ) : (
+                <span className="text-text-primary py-1">Select employee</span>
+              )}
             </div>
-            <button
-              className="bg-app-background flex items-center justify-center rounded-lg w-8 h-8 cursor-pointer border border-primary-divider"
-              onClick={handleChooseRecipient}
-            >
-              <img alt="" className="w-4 h-4" src="/misc/address-book-icon.svg" />
-            </button>
+            <img alt="" className="w-6 h-6" src="/arrow/chevron-down.svg" />
           </div>
+          {/* Hidden input for form validation */}
+          <input type="hidden" {...register("employee", { required: true })} />
 
           {/* Network Selector */}
           <div
@@ -328,9 +335,7 @@ const CreatePayroll = ({
                   type="text"
                   placeholder="Paste wallet address"
                   className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-secondary"
-                  autoFocus={true}
                   autoComplete="off"
-                  disabled
                 />
               </div>
             </div>

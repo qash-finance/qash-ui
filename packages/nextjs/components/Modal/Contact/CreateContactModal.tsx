@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { CreateContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
@@ -73,22 +73,28 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
   </div>
 );
 
+const DEFAULT_TOKEN: AssetWithMetadata = {
+  amount: "0",
+  faucetId: QASH_TOKEN_ADDRESS,
+  metadata: {
+    symbol: QASH_TOKEN_SYMBOL,
+    decimals: QASH_TOKEN_DECIMALS,
+    maxSupply: QASH_TOKEN_MAX_SUPPLY,
+  },
+};
+
+const DEFAULT_NETWORK: { icon: string; name: string; value: string } = {
+  icon: "/chain/miden.svg",
+  name: "Miden Testnet",
+  value: "miden",
+};
+
 export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateContactModalProps>) {
   const { isAuthenticated } = useAuth();
-  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>({
-    amount: "0",
-    faucetId: QASH_TOKEN_ADDRESS,
-    metadata: {
-      symbol: QASH_TOKEN_SYMBOL,
-      decimals: QASH_TOKEN_DECIMALS,
-      maxSupply: QASH_TOKEN_MAX_SUPPLY,
-    },
-  });
-  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>({
-    icon: "/chain/miden.svg",
-    name: "Miden Testnet",
-    value: "miden",
-  });
+  const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(DEFAULT_TOKEN);
+  const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
+    DEFAULT_NETWORK,
+  );
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
 
@@ -127,6 +133,21 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
 
   const { data: nameDuplicate } = useCheckEmployeeNameDuplicate(watchedName, selectedGroup?.id ?? 0);
   const { data: addressDuplicate } = useCheckEmployeeAddressDuplicate(watchedAddress, selectedGroup?.id ?? 0);
+
+  // Reset to defaults when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedToken(DEFAULT_TOKEN);
+      setSelectedNetwork(DEFAULT_NETWORK);
+      setSelectedGroup(undefined);
+      reset({
+        name: "",
+        walletAddress: "",
+        email: "",
+        groupId: undefined,
+      });
+    }
+  }, [isOpen, reset]);
 
   const groupIdRegister = register("groupId", {
     required: "Group is required",
@@ -227,7 +248,8 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
       toast.success("Contact created successfully");
 
       reset();
-      setSelectedToken(null);
+      setSelectedToken(DEFAULT_TOKEN);
+      setSelectedNetwork(DEFAULT_NETWORK);
       setSelectedGroup(undefined);
       onClose();
     } catch (error) {
@@ -247,9 +269,9 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
 
   const handleCancel = () => {
     reset();
-    setSelectedToken(null);
+    setSelectedToken(DEFAULT_TOKEN);
+    setSelectedNetwork(DEFAULT_NETWORK);
     setSelectedGroup(undefined);
-    setSelectedNetwork(null);
     onClose();
   };
 

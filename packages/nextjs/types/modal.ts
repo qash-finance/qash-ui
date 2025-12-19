@@ -443,6 +443,7 @@ export interface ConnectMidenWalletProps extends BaseModalProps {
 export interface RemovePayrollModalProps extends BaseModalProps {
   onRemove: () => Promise<void>;
   payrollOwnerName?: string;
+  payrollId?: number;
 }
 
 export interface RemoveInvoiceModalProps extends BaseModalProps {

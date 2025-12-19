@@ -87,7 +87,7 @@ export interface PayrollModel {
     token: {
       address: string;
       symbol: string;
-    }
+    };
     uuid: string;
     network: NetworkDto;
     order: number;
@@ -109,4 +109,10 @@ export interface PaginatedPayrollsResponseDto {
     total: number;
     totalPages: number;
   };
+}
+
+export interface PendingInvoiceReviewsDto {
+  hasPendingReviews: boolean;
+  pendingCount?: number;
+  pendingInvoiceUuids?: string[];
 }

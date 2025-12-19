@@ -73,6 +73,7 @@ const PayrollContainer = () => {
 
   const handleRemovePayroll = (id: number) => {
     openModal("REMOVE_PAYROLL", {
+      payrollId: id,
       payrollOwnerName: data?.payrolls.find(payroll => payroll.id === id)?.employee.name || "",
       onRemove: async () => {
         await deletePayroll.mutateAsync(id);
@@ -110,8 +111,10 @@ const PayrollContainer = () => {
       ),
       Amount: (
         <div className="flex flex-row justify-center items-center gap-2">
-          <img src="/token/qash.svg" alt="token" className="w-5" />
-          <span className="font-bold">{payroll.amount}</span>
+          <img src={`/token/${payroll.token.symbol.toLowerCase()}.svg`} alt="token" className="w-5" />
+          <span className="font-bold">
+            {payroll.amount} {payroll.token.symbol.toUpperCase()}
+          </span>
         </div>
       ),
       Date: payroll.payStartDate ? new Date(payroll.payStartDate).toLocaleDateString() : "-",
