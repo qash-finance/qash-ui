@@ -13,10 +13,10 @@ const BillDetailActionTooltip: React.FC<BatchActionTooltipProps> = ({ onEdit, on
   return (
     <div className="bg-background relative rounded-2xl w-50 shadow-sm border border-primary-divider flex flex-col">
       {/* Edit Transaction Button */}
-      <button className={`${itemStyles} rounded-t-2xl`} onClick={onEdit}>
+      {/* <button className={`${itemStyles} rounded-t-2xl`} onClick={onEdit}>
         <img src="/misc/copy-icon.svg" alt="edit" className="w-5 h-5" />
         <span className="font-medium text-sm text-gray-900 whitespace-nowrap">Copy invoice link</span>
-      </button>
+      </button> */}
 
       {/* Duplicate Transaction Button */}
       <button className={`${itemStyles}`} onClick={onDuplicate}>

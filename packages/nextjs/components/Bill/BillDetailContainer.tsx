@@ -7,18 +7,19 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import toast from "react-hot-toast";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps } from "@/types/modal";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useInvoice } from "@/hooks/server/useInvoice";
-import { InvoiceModel, InvoiceStatusEnum } from "@/types/invoice";
+import { InvoiceStatusEnum } from "@/types/invoice";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { CategoryShapeEnum } from "@/types/employee";
 
 const BillDetailContainer = () => {
+  const router = useRouter();
   const { openModal } = useModal();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("uuid") || "";
-  const { isLoading, fetchInvoiceByUUID, confirmInvoiceData, downloadPdf, cancelInvoiceData } = useInvoice();
+  const { isLoading, fetchInvoiceByUUID, downloadPdf, cancelInvoiceData } = useInvoice();
   const [invoice, setInvoice] = useState<any>(null);
   const { data: groups } = useGetAllEmployeeGroups();
 
@@ -48,6 +49,9 @@ const BillDetailContainer = () => {
   const handleDeleteInvoice = async () => {
     await cancelInvoiceData(invoiceUUID);
     toast.success("Invoice cancelled successfully");
+
+    // redirect back to bill list page
+    router.replace("/bill");
   };
 
   const formatDate = (dateString?: string) => {
@@ -146,7 +150,10 @@ const BillDetailContainer = () => {
                     name: invoice.toCompany?.companyName,
                     company: `${invoice.toCompany?.companyName} ${invoice.toCompany?.companyType}`,
                   },
-                  currency: invoice.currency || "USDT",
+                  paymentToken: {
+                    name: invoice.paymentToken?.name?.toUpperCase() || "USDT",
+                  },
+                  currency: invoice.currency || "USD",
                   date: invoice.issueDate!,
                   dueDate: invoice.dueDate!,
                   from: {
@@ -220,7 +227,7 @@ const BillDetailContainer = () => {
                 <div className="flex items-center gap-2">
                   <img src="/token/qash.svg" alt="QASH" className="w-5 h-5" />
                   <p className="text-sm text-gray-900 font-medium">
-                    {invoice.total} {invoice.currency}
+                    {invoice.total} {invoice.paymentToken?.name?.toUpperCase()}
                   </p>
                 </div>
                 <p className="text-sm text-gray-900 font-medium">{formatDate(invoice.issueDate)}</p>
@@ -254,10 +261,7 @@ const BillDetailContainer = () => {
                   <p className="text-sm text-gray-500 font-medium">Billed to</p>
                 </div>
                 <div className="flex flex-col gap-0">
-                  <p className="text-sm text-gray-900 font-medium">
-                    {invoice.toDetails?.companyName}{" "}
-                    <span className="text-gray-500">({invoice.toCompany?.companyName})</span>
-                  </p>
+                  <p className="text-sm text-gray-900 font-medium">{invoice.toDetails?.companyName} </p>
                   <p className="text-sm text-blue-600 font-medium">{invoice.emailTo}</p>
                 </div>
               </div>
@@ -298,10 +302,10 @@ const BillDetailContainer = () => {
                   <p className="text-sm text-gray-900 font-medium">{item.description}</p>
                   <p className="text-sm text-gray-900 font-medium text-center">{item.quantity}</p>
                   <p className="text-sm text-gray-900 font-medium text-right">
-                    {Number(item.unitPrice).toFixed(2)} {invoice.currency}
+                    {Number(item.unitPrice).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                   </p>
                   <p className="text-sm text-gray-900 font-medium text-right">
-                    {Number(item.total).toFixed(2)} {invoice.currency}
+                    {Number(item.total).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                   </p>
                 </div>
               ))}
@@ -312,7 +316,7 @@ const BillDetailContainer = () => {
                 <div />
                 <p className="text-sm text-gray-900 font-medium text-right">Subtotal</p>
                 <p className="text-base text-gray-900 font-semibold text-right">
-                  {Number(invoice.subtotal).toFixed(2)} {invoice.currency}
+                  {Number(invoice.subtotal).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                 </p>
               </div>
 
@@ -322,7 +326,7 @@ const BillDetailContainer = () => {
                 <div />
                 <p className="text-sm text-gray-900 font-medium text-right">Amount due</p>
                 <p className="text-base text-gray-900 font-semibold text-right">
-                  {Number(invoice.total).toFixed(2)} {invoice.currency}
+                  {Number(invoice.total).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                 </p>
               </div>
             </div>

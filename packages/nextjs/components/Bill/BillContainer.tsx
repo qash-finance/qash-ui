@@ -59,25 +59,25 @@ const renderTabHeader = (activeTab: Tab) => {
         <div className="flex flex-col gap-2">
           <span className="text-text-primary text-2xl font-medium leading-none">Overview</span>
           <span className="text-text-secondary text-[14px] font-medium leading-none">
-            Manage all the invoices you received from vendors
+            Manage all the invoices you received from vendors, clients and employees
           </span>
         </div>
       );
     case "paid":
       return (
         <div className="flex flex-col gap-2">
-          <span className="text-text-primary text-2xl font-medium leading-none">Pending bills</span>
+          <span className="text-text-primary text-2xl font-medium leading-none">Paid bills</span>
           <span className="text-text-secondary text-[14px] font-medium leading-none">
-            Waiting for vendor to review and confirm their invoices.
+            All bills that have been fully paid.
           </span>
         </div>
       );
     case "pending":
       return (
         <div className="flex flex-col gap-2">
-          <span className="text-text-primary text-2xl font-medium leading-none">Paid bills</span>
+          <span className="text-text-primary text-2xl font-medium leading-none">Pending bills</span>
           <span className="text-text-secondary text-[14px] font-medium leading-none">
-            All bills that have been fully paid.
+            All bills that pending to be paid.
           </span>
         </div>
       );
@@ -167,11 +167,13 @@ const BillContainer = () => {
       Amount: (
         <div className="flex items-center gap-2 justify-center">
           <span>{b.invoice?.total || "0"}</span>
-          <img
+          {/* TODO: Add token icon and network */}
+          <div className="flex items-center gap-2">{b.invoice?.paymentToken?.name?.toUpperCase()}</div>
+          {/* <img
             alt={`${b.invoice?.paymentNetwork?.name?.toLowerCase()}`}
             className="w-4"
             src={`/token/${b.invoice?.paymentToken?.name?.toLowerCase()}.svg` || "USDT"}
-          />
+          /> */}
         </div>
       ),
       "Due Date": dueDate,
@@ -245,22 +247,23 @@ const BillContainer = () => {
 
           {/* Filter Button */}
           <div className="flex items-center gap-2">
-            <SecondaryButton
+            {/* TODO: IMPLEMENT SORT AND FILTER */}
+            {/* <SecondaryButton
               text="Sort"
               icon="/misc/sort-icon.svg"
               onClick={() => console.log("Sort button clicked")}
               iconPosition="left"
               variant="light"
               buttonClassName="px-2"
-            />
-            <SecondaryButton
+            /> */}
+            {/* <SecondaryButton
               text="Filter"
               icon="/wallet-analytics/setting-icon.gif"
               onClick={() => console.log("Filter button clicked")}
               iconPosition="left"
               variant="light"
               buttonClassName="px-2"
-            />
+            /> */}
           </div>
         </div>
         <Table
@@ -281,8 +284,8 @@ const BillContainer = () => {
           rowClassName="py-5"
           headerClassName="py-3"
           showPagination={true}
-          actionColumn={true}
-          actionRenderer={billActionRenderer}
+          actionColumn={false}
+          //  TODO: IMPLEMENT ACTION RENDERER
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           rowsPerPage={rowsPerPage}

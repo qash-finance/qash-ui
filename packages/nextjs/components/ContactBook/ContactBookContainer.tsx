@@ -39,11 +39,11 @@ const CategoryTab = ({ label }: { label: React.ReactNode }) => {
 export const CategoryBadge = ({ shape, color, name }: { shape: CategoryShapeEnum; color: string; name: string }) => {
   return (
     <div
-      className={`flex flex-row items-center justify-center gap-3 px-5 py-1 rounded-full border w-fit`}
+      className={`flex flex-row items-center justify-center gap-3 px-3 py-1 rounded-full border w-fit`}
       style={{ borderColor: color, backgroundColor: `${color}20` }}
     >
       {createShapeElement(shape, color)}
-      <span className="font-semibold truncate" style={{ color: color }}>
+      <span className="-mt-0.5 font-semibold truncate" style={{ color: color }}>
         {name}
       </span>
     </div>

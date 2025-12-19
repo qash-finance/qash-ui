@@ -357,7 +357,6 @@ export interface RemoveTransactionConfirmationModalProps extends BaseModalProps 
   onRemove?: () => Promise<void>;
 }
 
-
 // Allow passing a callback when a group is created so callers can react (e.g., auto-select)
 export interface CreateGroupModalProps extends BaseModalProps {
   onGroupCreated?: (group: CompanyGroupResponseDto) => void;
@@ -404,34 +403,37 @@ export interface InvoiceModalProps extends BaseModalProps {
   // Add any specific props for InvoiceModal here
   invoice: {
     invoiceNumber: string;
-      from: {
-        name: string;
-        company: string;
-        address: string;
-        email: string;
-      };
-      billTo: {
-        name: string;
-        company: string;
-        address: string;
-        email: string;
-      };
-      date: string;
-      dueDate: string;
-      network: string;
-      currency: string;
-      items: Array<{
-        name: string;
-        rate: number;
-        qty: number;
-        amount: number;
-      }>;
-      subtotal: number;
-      tax: number;
-      total: number;
-      walletAddress: string;
-      amountDue: string;
-  }
+    from: {
+      name: string;
+      company: string;
+      address: string;
+      email: string;
+    };
+    billTo: {
+      name: string;
+      company: string;
+      address: string;
+      email: string;
+    };
+    date: string;
+    dueDate: string;
+    network: string;
+    paymentToken: {
+      name: string;
+    };
+    currency: string;
+    items: Array<{
+      name: string;
+      rate: number;
+      qty: number;
+      amount: number;
+    }>;
+    subtotal: number;
+    tax: number;
+    total: number;
+    walletAddress: string;
+    amountDue: string;
+  };
 }
 
 export interface ConnectMidenWalletProps extends BaseModalProps {

@@ -8,12 +8,12 @@ import {
   SchedulePayment,
 } from "@/types/schedule-payment";
 
-
 // *************************************************
 // **************** GET METHODS *******************
 // *************************************************
 
 const useGetSchedulePayments = (query?: SchedulePaymentQuery) => {
+  return [];
   return useQuery({
     queryKey: ["schedule-payments", query],
     queryFn: async () => {

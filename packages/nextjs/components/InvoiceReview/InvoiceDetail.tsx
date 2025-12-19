@@ -18,7 +18,12 @@ const tokenRow = "flex items-center gap-2";
 const editIconClass = "w-5 h-5 cursor-pointer hover:opacity-80";
 const itemRow = "flex flex-row gap-2 justify-between items-start";
 
-const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string) => void; onWalletAddressUpdate?: (walletAddress: string) => void }) => {
+const InvoiceDetail = (
+  props: InvoiceData & {
+    onAddressUpdate?: (address: string) => void;
+    onWalletAddressUpdate?: (walletAddress: string) => void;
+  },
+) => {
   const invoiceData = props;
   const onAddressUpdate = props.onAddressUpdate;
   const onWalletAddressUpdate = props.onWalletAddressUpdate;
@@ -149,12 +154,14 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
             ) : (
               <div className="flex items-center gap-2">
                 <p className={valueClass}>{invoiceData.from.address || "No address"}</p>
-                <img
-                  src="/misc/edit-icon.svg"
-                  alt="Edit"
-                  className={editIconClass}
-                  onClick={() => setIsEditingAddress(true)}
-                />
+                {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
+                  <img
+                    src="/misc/edit-icon.svg"
+                    alt="Edit"
+                    className={editIconClass}
+                    onClick={() => setIsEditingAddress(true)}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -169,12 +176,14 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
                   className="w-6 h-6 rounded-full"
                 />
                 <p className="font-semibold text-text-primary">{invoiceData.from.network}</p>
-                <img
-                  src="/misc/edit-icon.svg"
-                  alt="Edit"
-                  className={editIconClass}
-                  onClick={() => openModal(MODAL_IDS.SELECT_NETWORK)}
-                />
+                {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
+                  <img
+                    src="/misc/edit-icon.svg"
+                    alt="Edit"
+                    className={editIconClass}
+                    onClick={() => openModal(MODAL_IDS.SELECT_NETWORK)}
+                  />
+                )}
               </div>
             </div>
 
@@ -187,12 +196,14 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
                   className="w-6 h-6 rounded-full"
                 />
                 <p className="font-semibold text-text-primary">{invoiceData.from.token}</p>
-                <img
-                  src="/misc/edit-icon.svg"
-                  alt="Edit"
-                  className={editIconClass}
-                  onClick={() => openModal(MODAL_IDS.SELECT_TOKEN)}
-                />
+                {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
+                  <img
+                    src="/misc/edit-icon.svg"
+                    alt="Edit"
+                    className={editIconClass}
+                    onClick={() => openModal(MODAL_IDS.SELECT_TOKEN)}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -219,12 +230,14 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
             ) : (
               <div className="flex items-center gap-2">
                 <p className="text-text-primary">{invoiceData.from.walletAddress}</p>
-                <img
-                  src="/misc/edit-icon.svg"
-                  alt="Edit"
-                  className={editIconClass + " flex-shrink-0"}
-                  onClick={() => setIsEditingWalletAddress(true)}
-                />
+                {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
+                  <img
+                    src="/misc/edit-icon.svg"
+                    alt="Edit"
+                    className={editIconClass + " flex-shrink-0"}
+                    onClick={() => setIsEditingWalletAddress(true)}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -273,13 +286,13 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
               <div className="w-32 text-right">
                 <p className={labelClass}>Price</p>
                 <p className={smallValue}>
-                  {item.price} {item.currency}
+                  {item.price} {invoiceData.from.token.toUpperCase()}
                 </p>
               </div>
               <div className="w-32 text-right">
                 <p className={labelClass}>Amount</p>
                 <p className={smallValue}>
-                  {item.amount} {item.currency}
+                  {item.amount} {invoiceData.from.token.toUpperCase()}
                 </p>
               </div>
             </div>
@@ -292,19 +305,19 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
         <div className="flex justify-end items-center gap-4">
           <p className="text-sm text-text-secondary">Subtotal</p>
           <p className="text-base font-semibold text-text-primary">
-            {invoiceData.subtotal.toFixed(2)} {invoiceData.currency}
+            {invoiceData.subtotal.toFixed(2)} {invoiceData.from.token.toUpperCase()}
           </p>
         </div>
         <div className="flex justify-end items-center gap-4">
           <p className="text-sm text-text-secondary">Total</p>
           <p className="text-base font-semibold text-text-primary">
-            {invoiceData.total.toFixed(2)} {invoiceData.currency}
+            {invoiceData.total.toFixed(2)} {invoiceData.from.token.toUpperCase()}
           </p>
         </div>
         <div className="flex justify-end items-center gap-4">
           <p className="text-sm text-text-secondary">Amount due</p>
           <p className="text-base font-semibold text-text-primary">
-            {invoiceData.amountDue.toFixed(2)} {invoiceData.currency}
+            {invoiceData.amountDue.toFixed(2)} {invoiceData.from.token.toUpperCase()}
           </p>
         </div>
       </div>

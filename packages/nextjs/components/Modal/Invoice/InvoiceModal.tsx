@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { InvoiceModalProps, ValidatingModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
@@ -19,11 +19,29 @@ const formatDate = (dateString: string | undefined): string => {
 };
 
 export function InvoiceModal({ isOpen, onClose, zIndex, invoice }: ModalProp<InvoiceModalProps>) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
-      <div className="bg-white rounded-xl shadow-lg overflow-y-auto max-h-[90vh] w-[650px]">
+      <div ref={modalRef} className="bg-white rounded-xl shadow-lg overflow-y-auto max-h-[90vh] w-[650px]">
         {/* Main Content */}
         <div className="px-12 py-8 flex flex-col gap-6">
           {/* Invoice Header */}
@@ -79,6 +97,10 @@ export function InvoiceModal({ isOpen, onClose, zIndex, invoice }: ModalProp<Inv
                 <span>Currency: </span>
                 <span className="font-bold">{invoice.currency}</span>
               </p>
+              <p>
+                <span>Token: </span>
+                <span className="font-bold">{invoice.paymentToken.name}</span>
+              </p>
             </div>
           </div>
 
@@ -108,7 +130,7 @@ export function InvoiceModal({ isOpen, onClose, zIndex, invoice }: ModalProp<Inv
               <div className="flex justify-between items-center">
                 <p className="text-xs font-bold text-gray-900">SUBTOTAL</p>
                 <p className="text-xs text-gray-900">
-                  {invoice.subtotal} {invoice.currency}
+                  {invoice.subtotal} {invoice.paymentToken.name}
                 </p>
               </div>
               <div className="flex justify-between items-center text-xs text-gray-600">
@@ -118,7 +140,7 @@ export function InvoiceModal({ isOpen, onClose, zIndex, invoice }: ModalProp<Inv
               <div className="border-t-2 border-gray-300 pt-2 flex justify-between items-center">
                 <p className="text-xs font-bold text-gray-900">TOTAL</p>
                 <p className="text-xs font-bold text-gray-900">
-                  {invoice.total} {invoice.currency}
+                  {invoice.total} {invoice.paymentToken.name}
                 </p>
               </div>
             </div>
@@ -132,7 +154,9 @@ export function InvoiceModal({ isOpen, onClose, zIndex, invoice }: ModalProp<Inv
             </div>
             <div className="flex flex-col gap-2 items-end">
               <p className="text-xs text-gray-500">Amount Due</p>
-              <p className="text-2xl font-bold text-gray-900">{invoice.amountDue}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {invoice.amountDue} {invoice.paymentToken.name}
+              </p>
             </div>
           </div>
         </div>

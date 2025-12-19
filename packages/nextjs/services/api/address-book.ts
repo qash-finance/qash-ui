@@ -28,20 +28,8 @@ const useGetCategories = () => {
   });
 };
 
-const useGetAllAddressBooks = () => {
-  return useQuery({
-    queryKey: ["address-book", "all"],
-    queryFn: async () => {
-      return apiServerWithAuth.getData<AddressBook[]>(`/address-book`);
-    },
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
-};
-
 const useGetAddressBooks = () => {
+  return [];
   return useQuery({
     queryKey: ["address-book"],
     queryFn: async () => {
@@ -82,40 +70,6 @@ const useGetAddressBooks = () => {
       return categories;
     },
     staleTime: 0, // Always consider data stale
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
-};
-
-const useCheckNameDuplicate = (name: string, category: string) => {
-  return useQuery({
-    queryKey: ["address-book", "check-name-duplicate", name, category],
-    queryFn: async () => {
-      return apiServerWithAuth.getData(`/address-book/check-name-duplicate?name=${name}&category=${category}`);
-    },
-    enabled: !!name && !!category,
-  });
-};
-
-// const useCheckCategoryExists = (category: string) => {
-//   return useQuery({
-//     queryKey: ["address-book", "check-category-exists", category],
-//     queryFn: async () => {
-//       return apiServerWithAuth.getData<boolean>(`/address-book/check-category-exists?category=${category}`);
-//     },
-//     enabled: !!category,
-//   });
-// };
-
-const useGetAddressBooksByCategory = (categoryId: number | null) => {
-  return useQuery({
-    queryKey: ["address-book", "by-category", categoryId],
-    queryFn: async () => {
-      return apiServerWithAuth.getData<AddressBook[]>(`/address-book/by-category?categoryId=${categoryId}`);
-    },
-    enabled: categoryId !== null,
-    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
@@ -228,14 +182,11 @@ const useUpdateAddressBookOrder = () => {
 
 export {
   useGetAddressBooks,
-  useGetAllAddressBooks,
   useCreateAddressBook,
   useUpdateAddressBook,
   useDeleteAddressBook,
   useUpdateAddressBookOrder,
-  useCheckNameDuplicate,
   useCreateCategory,
   useGetCategories,
   useUpdateCategoryOrder,
-  useGetAddressBooksByCategory,
 };

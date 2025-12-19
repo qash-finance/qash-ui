@@ -375,7 +375,7 @@ export const InvoiceReviewContainer = () => {
                 iconPosition="left"
                 disabled={isLoading}
               />
-              {invoiceData.status === "REVIEWED" && (
+              {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
                 <PrimaryButton
                   text="Confirm"
                   onClick={handleConfirmInvoice}
