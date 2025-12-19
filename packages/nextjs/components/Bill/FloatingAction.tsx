@@ -17,7 +17,7 @@ export const FloatingAction = ({
 
   return (
     <div className="absolute bottom-1/9 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="backdrop-blur-[15px] bg-primary-blue flex items-center justify-between px-2 py-2 rounded-full gap-30">
+      <div className="backdrop-blur-[15px] bg-primary-blue flex items-center justify-between px-2 py-2 rounded-full  w-160">
         {/* Deselect all button */}
         <button
           onClick={onDeselectAll}

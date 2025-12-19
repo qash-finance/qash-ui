@@ -232,6 +232,7 @@ export const InvoiceReviewContainer = () => {
   const handleDownloadPdf = async () => {
     try {
       const blob = await downloadPdf(invoiceUUID);
+      console.log("🚀 ~ handleDownloadPdf ~ blob:", blob);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -282,8 +283,6 @@ export const InvoiceReviewContainer = () => {
       });
     }
   };
-
-  console.log(invoiceData);
 
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">
@@ -375,7 +374,7 @@ export const InvoiceReviewContainer = () => {
                 iconPosition="left"
                 disabled={isLoading}
               />
-              {invoiceData.status === "REVIEWED" && (
+              {invoiceData.status === "SENT" && (
                 <PrimaryButton
                   text="Confirm"
                   onClick={handleConfirmInvoice}
