@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BaseContainer } from "../Common/BaseContainer";
 import { TabContainer } from "../Common/TabContainer";
 import { SecondaryButton } from "../Common/SecondaryButton";
@@ -96,14 +96,44 @@ const BillContainer = () => {
   const { openModal } = useModal();
 
   const handleCheckRow = (idx: number) => {
+    const bill = bills[idx];
+    // Only allow checking if bill is pending
+    if (bill?.status !== BillStatusEnum.PENDING) {
+      const statusMessage =
+        bill?.status === BillStatusEnum.PAID
+          ? "This bill cannot be checked because it has already been paid"
+          : bill?.status === BillStatusEnum.CANCELLED
+            ? "This bill cannot be checked because it has been cancelled"
+            : `This bill cannot be checked because it is ${bill?.status?.toLowerCase()}`;
+      toast.error(statusMessage);
+      return;
+    }
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   };
 
   const handleCheckAll = () => {
-    if (checkedRows.length === (billDatas?.length || 0)) {
-      setCheckedRows([]);
+    // Only get indices of pending bills
+    const pendingIndices = bills
+      .map((bill, idx) => (bill.status === BillStatusEnum.PENDING ? idx : null))
+      .filter((idx): idx is number => idx !== null);
+
+    // If there are no pending bills, show a warning
+    if (pendingIndices.length === 0) {
+      toast.error("No pending bills available to check");
+      return;
+    }
+
+    const allPendingChecked = pendingIndices.every(idx => checkedRows.includes(idx));
+
+    if (allPendingChecked) {
+      // Uncheck all pending bills
+      setCheckedRows(prev => prev.filter(idx => !pendingIndices.includes(idx)));
     } else {
-      setCheckedRows(billDatas?.map((_, idx) => idx) || []);
+      // Check all pending bills (keep existing checked rows that aren't pending)
+      setCheckedRows(prev => {
+        const nonPendingChecked = prev.filter(idx => bills[idx]?.status !== BillStatusEnum.PENDING);
+        return [...nonPendingChecked, ...pendingIndices];
+      });
     }
   };
 
@@ -118,6 +148,11 @@ const BillContainer = () => {
   const bills = React.useMemo(() => {
     return billsResponse?.bills ?? [];
   }, [billsResponse?.bills]);
+
+  // Clean up checked rows when bills change - remove any checked rows for non-pending bills
+  useEffect(() => {
+    setCheckedRows(prev => prev.filter(idx => bills[idx]?.status === BillStatusEnum.PENDING));
+  }, [bills]);
 
   const payBillsMutation = usePayBills();
   const deleteBill = useDeleteBill();
@@ -149,7 +184,11 @@ const BillContainer = () => {
       __id: b.invoice?.uuid,
       "header-0": (
         <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
-          <CustomCheckbox checked={checkedRows.includes(idx)} onChange={() => handleCheckRow(idx)} />
+          <CustomCheckbox
+            checked={checkedRows.includes(idx)}
+            onChange={() => handleCheckRow(idx)}
+            disabled={b.status !== BillStatusEnum.PENDING}
+          />
         </div>
       ),
       "Creation date": createdDate,
@@ -185,7 +224,10 @@ const BillContainer = () => {
     };
   });
 
-  const isAllChecked = checkedRows.length === billDatas?.length;
+  // Only consider pending bills for "check all" functionality
+  const pendingBillsCount = bills.filter(b => b.status === BillStatusEnum.PENDING).length;
+  const checkedPendingCount = checkedRows.filter(idx => bills[idx]?.status === BillStatusEnum.PENDING).length;
+  const isAllChecked = pendingBillsCount > 0 && checkedPendingCount === pendingBillsCount;
 
   return (
     <div className="flex flex-col w-full h-full justify-start items-start p-5 gap-5">

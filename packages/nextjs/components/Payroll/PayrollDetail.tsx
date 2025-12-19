@@ -139,7 +139,13 @@ const PayrollDetail = () => {
       <div className="w-full flex justify-center items-center">
         <Badge
           text={invoice.status}
-          status={invoice?.status === InvoiceStatusEnum.PAID ? BadgeStatus.SUCCESS : BadgeStatus.AWAITING}
+          status={
+            invoice?.status === InvoiceStatusEnum?.CANCELLED
+              ? BadgeStatus.FAIL
+              : invoice?.status === InvoiceStatusEnum.PAID
+                ? BadgeStatus.SUCCESS
+                : BadgeStatus.AWAITING
+          }
           className="px-5"
         />
       </div>
@@ -299,7 +305,8 @@ const PayrollDetail = () => {
 
           {/* Filter Button */}
           <div className="flex items-center gap-2">
-            <SecondaryButton
+            {/* TODO: IMPLEMENT SORT AND FILTER */}
+            {/* <SecondaryButton
               text="Sort"
               icon="/misc/sort-icon.svg"
               onClick={() => console.log("Sort button clicked")}
@@ -314,7 +321,7 @@ const PayrollDetail = () => {
               iconPosition="left"
               variant="light"
               buttonClassName="px-2"
-            />
+            /> */}
           </div>
         </div>
         <Table

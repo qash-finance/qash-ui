@@ -12,16 +12,9 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps, TransactionOverviewModalProps } from "@/types/modal";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { PrimaryButton } from "../Common/PrimaryButton";
-import {
-  SendTransaction,
-  WalletNotConnectedError,
-  CustomTransaction,
-  TransactionType,
-} from "@demox-labs/miden-wallet-adapter-base";
+import { SendTransaction, WalletNotConnectedError } from "@demox-labs/miden-wallet-adapter-base";
 import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import toast from "react-hot-toast";
-import { OutputNotesArray, TransactionRequestBuilder } from "@demox-labs/miden-sdk";
-import { createBatchNote, createP2IDNote } from "@/services/utils/miden/note";
 import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_SYMBOL } from "@/services/utils/constant";
 import { usePayBills } from "@/services/api/bill";
 
@@ -108,7 +101,7 @@ const BillReviewContainer = () => {
     setTitle(
       <div className="flex items-center gap-2">
         <span className="text-text-secondary">Bills /</span>
-        <span className="text-text-primary">Review and propose</span>
+        <span className="text-text-primary">Review invoices</span>
       </div>,
     );
     setShowBackArrow(true);
@@ -275,7 +268,7 @@ const BillReviewContainer = () => {
     <div className="flex flex-col w-full h-full justify-start items-start p-7 gap-5">
       <div className="flex flex-row gap-3">
         <img src="/misc/flag-icon.svg" alt="Bill Placeholder" className="w-6" />
-        <span className="font-bold text-2xl">Review and propose</span>
+        <span className="font-bold text-2xl">Review invoices</span>
       </div>
 
       <div className="flex flex-row w-full h-full">
@@ -327,6 +320,9 @@ const BillReviewContainer = () => {
                     openModal<InvoiceModalProps>("INVOICE_MODAL", {
                       invoice: {
                         amountDue: inv.total,
+                        paymentToken: {
+                          name: inv.paymentToken.name.toUpperCase(),
+                        },
                         billTo: {
                           address: [inv.toCompany?.address1, inv.toCompany?.city, inv.toCompany?.country]
                             .filter(Boolean)
@@ -365,11 +361,8 @@ const BillReviewContainer = () => {
         <div className="w-150 border-l-0 border border-primary-divider rounded-r-2xl bg-[#E7E7E7] h-full flex flex-col gap-4">
           <div className="flex flex-col h-full justify-between px-7 py-4">
             <div className=" flex flex-col gap-2 justify-between">
-              <span className="font-bold text-3xl">Create Payment Proposal</span>
-              <span className="text-text-secondary ">
-                You’re about to propose a payout for invoices. Review the details and select a multisig account to send
-                the proposal to.
-              </span>
+              <span className="font-bold text-3xl">Payment Overview</span>
+              <span className="text-text-secondary ">Make sure the details are correct before proceeding.</span>
             </div>
 
             <div className="flex flex-col gap-3">

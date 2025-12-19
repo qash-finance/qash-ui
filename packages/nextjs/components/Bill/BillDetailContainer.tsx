@@ -198,11 +198,14 @@ const BillDetailContainer = () => {
         border="none"
         opacity={1}
         render={() => {
+          const isPaidOrCancelled =
+            invoice.status === InvoiceStatusEnum.PAID || invoice.status === InvoiceStatusEnum.CANCELLED;
           return (
             <BillDetailActionTooltip
               onEdit={handleCopyInvoiceLink}
               onDuplicate={handleDownloadPDF}
               onRemove={handleDeleteInvoice}
+              showDelete={!isPaidOrCancelled}
             />
           );
         }}
