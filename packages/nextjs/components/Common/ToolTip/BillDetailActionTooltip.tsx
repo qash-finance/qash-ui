@@ -25,10 +25,10 @@ const BillDetailActionTooltip: React.FC<BatchActionTooltipProps> = ({
       </button> */}
 
       {/* Duplicate Transaction Button */}
-      <button className={`${itemStyles} ${!showDelete ? "rounded-b-2xl" : ""}`} onClick={onDuplicate}>
+      {/* <button className={`${itemStyles} ${!showDelete ? "rounded-b-2xl" : ""}`} onClick={onDuplicate}>
         <img src="/misc/download-icon.svg" alt="duplicate" className="w-5 h-5" />
         <span className="font-medium text-sm text-gray-900 whitespace-nowrap">Download PDF</span>
-      </button>
+      </button> */}
 
       {/* Remove Transaction Button - Only show if showDelete is true */}
       {showDelete && (

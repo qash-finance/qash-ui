@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import { useForm } from "react-hook-form";
@@ -8,9 +8,8 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { AssetWithMetadata } from "@/types/faucet";
 import { ContractTerm } from "./ContractTerm";
 import { useTitle } from "@/contexts/TitleProvider";
-import { set } from "lodash";
-import { CompanyContactResponseDto, CompanyGroupResponseDto } from "@/types/employee";
-import { useCreatePayroll, useCreateSandboxPayroll } from "@/services/api/payroll";
+import { CompanyContactResponseDto } from "@/types/employee";
+import { useCreatePayroll } from "@/services/api/payroll";
 import { Company, useGetMyCompany } from "@/services/api/company";
 import { ContractTermEnum, CreatePayrollDto } from "@/types/payroll";
 import toast from "react-hot-toast";
@@ -18,12 +17,6 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
 import { useAuth } from "@/services/auth/context";
 import { AuthMeResponse } from "@/services/auth/api";
-import {
-  QASH_TOKEN_ADDRESS,
-  QASH_TOKEN_DECIMALS,
-  QASH_TOKEN_MAX_SUPPLY,
-  QASH_TOKEN_SYMBOL,
-} from "@/services/utils/constant";
 
 interface CreatePayrollFormData {
   employee: string;
@@ -121,7 +114,7 @@ const CreatePayroll = ({
       employee,
     } = formData;
 
-    if (!selectedNetwork || !selectedToken || !selectedToken.metadata.symbol || !employeeId) {
+    if (!selectedNetwork || !selectedToken || !selectedToken.metadata.symbol || !employeeId || !description) {
       toast.error("Missing required fields");
       return;
     }
@@ -132,8 +125,9 @@ const CreatePayroll = ({
     }
 
     const durationValue = parseInt(duration);
-    const payStart = new Date();
+    const payStart = new Date(); //pay start is always starting next month
     payStart.setDate(selectedPayDay);
+    payStart.setMonth(payStart.getMonth() + 1);
     const payEnd = new Date(payStart);
     if (durationUnit === "year") {
       payEnd.setFullYear(payEnd.getFullYear() + durationValue);
@@ -146,6 +140,7 @@ const CreatePayroll = ({
       network: {
         name: selectedNetwork.name,
         chainId: parseInt(selectedNetwork.value),
+        description: selectedNetwork.name,
         metadata: {},
       },
       token: {
@@ -391,7 +386,9 @@ function createInvoiceDataFromPayroll(
   const invoiceDate = new Date(dueDate);
   invoiceDate.setDate(dueDate.getDate() - 5);
   const billToName = company?.companyName;
-  const billToEmail = ownerEmail;
+  const billToEmail = owner?.email;
+
+  console.log(invoiceDate.toISOString().split("T")[0], payroll.payStartDate.split("T")[0]);
 
   return {
     invoiceNumber: `INV0001`,
@@ -405,7 +402,7 @@ function createInvoiceDataFromPayroll(
       //   .filter(Boolean)
       //   .join(", "),
       token: payroll?.token?.symbol || "QASH",
-      network: payroll?.network?.name || "Miden",
+      network: payroll?.network?.name || "Miden Testnet",
       walletAddress: employee.walletAddress,
     },
     billTo: {
@@ -434,15 +431,23 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: 
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const router = useRouter();
 
-  const { mutateAsync: createPayroll } = useCreateSandboxPayroll();
+  const { mutateAsync: createPayroll } = useCreatePayroll();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirmAndCreate = async () => {
     setIsSubmitting(true);
     try {
       await createPayroll({
-        ...payrollDto,
-        amount: Number(payrollDto.amount),
+        employeeId: payrollDto.employeeId,
+        network: payrollDto.network,
+        token: payrollDto.token,
+        contractTerm: payrollDto.contractTerm,
+        payrollCycle: payrollDto.payrollCycle,
+        amount: payrollDto.amount,
+        joiningDate: payrollDto.joiningDate,
+        payday: payrollDto.metadata?.payDay,
+        generateDaysBefore: 5,
+        description: payrollDto.description,
       }).catch(err => {
         throw err;
       });

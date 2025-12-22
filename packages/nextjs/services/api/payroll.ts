@@ -8,6 +8,7 @@ import {
   PayrollModel,
   PaginatedPayrollsResponseDto,
   PendingInvoiceReviewsDto,
+  CreatePayroll,
 } from "@/types/payroll";
 
 // *************************************************
@@ -114,7 +115,7 @@ const useCreatePayroll = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreatePayrollDto) => {
+    mutationFn: async (data: CreatePayroll) => {
       return apiServerWithAuth.postData<PayrollModel>("/api/v1/payroll", data);
     },
     onSuccess: () => {

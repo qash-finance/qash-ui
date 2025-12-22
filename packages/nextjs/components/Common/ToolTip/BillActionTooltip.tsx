@@ -37,10 +37,10 @@ const BillActionTooltip: React.FC<BillActionTooltipProps> = ({
       </button> */}
 
       {/* Download PDF */}
-      <button className={`${itemStyles}`} onClick={onDownloadPDF}>
+      {/* <button className={`${itemStyles}`} onClick={onDownloadPDF}>
         <img src="/misc/download-icon.svg" alt="download" className="w-5 h-5" />
         <span className="font-medium text-sm text-gray-900 whitespace-nowrap">Download PDF</span>
-      </button>
+      </button> */}
 
       {/* Delete Invoice */}
       <button className={`${itemStyles} rounded-b-2xl`} onClick={onDeleteInvoice}>

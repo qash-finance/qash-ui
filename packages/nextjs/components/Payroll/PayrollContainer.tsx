@@ -18,7 +18,8 @@ const getTabs = () => [
   {
     id: "manage-payrolls",
     label: "Manage Payroll",
-    description: "Send a request, receive funds with ease",
+    description:
+      "Create payroll for your employees and wait for them to review auto sent invoices then pay the bills in one click.",
     displayLabel: "Payroll management",
   },
   {
@@ -147,7 +148,8 @@ const PayrollContainer = () => {
             <div className="flex flex-col gap-1">
               <span className="text-text-primary text-2xl font-medium leading-none">Overview</span>
               <span className="text-text-secondary text-[14px] font-medium leading-none">
-                Send a request, receive funds with ease
+                Create payroll for your employees and wait for them to review auto sent invoices then pay the bills in
+                one click.
               </span>
             </div>
             <div className="flex flex-row gap-5">
@@ -231,6 +233,7 @@ const PayrollContainer = () => {
               const payrollId = (rowData as any).__id;
               router.push(`/payroll/detail?id=${payrollId}`);
             }}
+            noDataMessage="No payrolls found"
           />
         )}
       </BaseContainer>

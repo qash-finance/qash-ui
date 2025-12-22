@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef } from "react";
+import { ReactNode, useRef, useEffect } from "react";
 import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
@@ -21,7 +21,7 @@ import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { TransactionProviderC } from "@/contexts/TransactionProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ModalTriggerRef } from "./Common/ModalTrigger";
@@ -79,8 +79,16 @@ function ProtectedContent({ children }: { children: ReactNode }) {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
+  const router = useRouter();
   const { isConnected } = useWalletConnect();
   const modalRef = useRef<ModalTriggerRef | null>(null);
+
+  // Redirect from "/" to "/payroll"
+  useEffect(() => {
+    if (pathname === "/") {
+      router.replace("/payroll");
+    }
+  }, [pathname, router]);
 
   const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
 

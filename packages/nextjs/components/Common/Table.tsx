@@ -40,6 +40,7 @@ interface TableProps {
   rowsPerPage?: number;
   onRowsPerPageChange?: (rowsPerPage: number) => void;
   onRowClick?: (rowData: Record<string, CellContent>, index: number) => void;
+  noDataMessage?: string;
 }
 
 const createTableRow = (
@@ -303,10 +304,12 @@ const EmptyRow = ({
   headers,
   actionColumn,
   draggable,
+  noDataMessage,
 }: {
   headers: (string | React.ReactNode)[];
   actionColumn: boolean;
   draggable: boolean;
+  noDataMessage?: string;
 }) => {
   return (
     <tr>
@@ -319,7 +322,9 @@ const EmptyRow = ({
         }}
       >
         <img src="/misc/hexagon-magnifer-icon.svg" alt="No data" className="w-20 m-auto" />
-        <span className="text-sm tracking-tight leading-4 text-text-secondary">No results found</span>
+        <span className="text-sm tracking-tight leading-4 text-text-secondary">
+          {noDataMessage ? noDataMessage : "No results found"}
+        </span>
       </td>
     </tr>
   );
@@ -345,6 +350,7 @@ export function Table({
   rowsPerPage = 10,
   onRowsPerPageChange,
   onRowClick,
+  noDataMessage,
 }: TableProps) {
   const [items, setItems] = useState(data);
 
@@ -393,7 +399,12 @@ export function Table({
               />
               <tbody className={tableBodyStyle}>
                 {items.length === 0 ? (
-                  <EmptyRow headers={headers} actionColumn={actionColumn} draggable={draggable} />
+                  <EmptyRow
+                    headers={headers}
+                    actionColumn={actionColumn}
+                    draggable={draggable}
+                    noDataMessage={noDataMessage}
+                  />
                 ) : (
                   <SortableContext
                     items={items.map((_, index) => `row-${index}`)}

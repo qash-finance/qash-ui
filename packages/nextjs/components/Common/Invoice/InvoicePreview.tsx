@@ -75,7 +75,7 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
             />
 
             <PreviewCard
-              name={invoiceData.billTo.name}
+              name={invoiceData.billTo.company}
               email={invoiceData.billTo.email}
               company={invoiceData.billTo.company}
               address={invoiceData.billTo.address}

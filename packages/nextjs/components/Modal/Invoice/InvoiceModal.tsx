@@ -108,7 +108,7 @@ export function InvoiceModal({ isOpen, onClose, zIndex, invoice }: ModalProp<Inv
           <div className="overflow-hidden">
             <div className="grid grid-cols-[2fr_1fr_1fr_1.2fr] gap-3 bg-gray-100 p-3 rounded-t-lg mb-0">
               <p className="text-xs font-bold text-gray-900">Item</p>
-              <p className="text-xs font-bold text-gray-900">Rate</p>
+              <p className="text-xs font-bold text-gray-900">Price</p>
               <p className="text-xs font-bold text-gray-900">Qty</p>
               <p className="text-xs font-bold text-gray-900 text-right">Amount</p>
             </div>

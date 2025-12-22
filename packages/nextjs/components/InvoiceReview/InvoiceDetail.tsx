@@ -153,20 +153,19 @@ const InvoiceDetail = (
               </form>
             ) : (
               <div className="flex items-center gap-2">
-                <p className={valueClass}>{invoiceData.from.address || "No address"}</p>
-                {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
-                  {invoiceData.from.address ? (
-                  <p className={`${valueClass}`}>{invoiceData.from.address}</p>
-                ) : (
-                  <p className={`${valueClass} italic`}>{"No address"}</p>
-                )}
+                {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") &&
+                  (invoiceData.from.address ? (
+                    <p className={`${valueClass}`}>{invoiceData.from.address}</p>
+                  ) : (
+                    <p className={`${valueClass} italic`}>{"No address"}</p>
+                  ))}
+
                 <img
                   src="/misc/edit-icon.svg"
                   alt="Edit"
                   className={editIconClass}
                   onClick={() => setIsEditingAddress(true)}
                 />
-                )}
               </div>
             )}
           </div>

@@ -16,6 +16,7 @@ import { CategoryShapeEnum } from "@/types/employee";
 import { InvoiceStatusEnum } from "@/types/invoice";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps } from "@/types/modal";
+import { useInvoice } from "@/hooks/server/useInvoice";
 
 const labelStyles = "py-1 text-base font-medium text-text-secondary";
 
@@ -28,6 +29,7 @@ const PayrollDetail = () => {
   const payrollId = parseInt(searchParams.get("id") || "0", 10);
   const { data: payrollData, isLoading, error } = useGetPayrollDetails(payrollId);
   const { data: groups } = useGetAllEmployeeGroups();
+  const { fetchInvoiceByUUID } = useInvoice();
 
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,10 +53,12 @@ const PayrollDetail = () => {
   };
 
   // Handle row click to open invoice modal
-  const handleRowClick = (_: Record<string, any>, index: number) => {
+  const handleRowClick = async (_: Record<string, any>, index: number) => {
     const invoices = getFilteredInvoices();
-    const invoice = invoices[index];
+    const invoiceIncomplete = invoices[index];
 
+    const invoice = await fetchInvoiceByUUID(invoiceIncomplete.uuid);
+    console.log("🚀 ~ handleRowClick ~ invoice:", invoice);
     if (invoice && payrollData) {
       //@ts-ignore
       const company = `${payrollData.company.companyName} ${payrollData.company.companyType} `;
@@ -73,14 +77,29 @@ const PayrollDetail = () => {
           billTo: {
             name: invoice.toDetails?.companyName || "",
             company: company,
-            address: invoice.toDetails?.address1 || "",
+            address: [
+              invoice.toDetails?.address1,
+              invoice.toDetails?.address2,
+              invoice.toDetails?.city,
+              invoice.toDetails?.country,
+            ]
+              .filter(Boolean)
+              .join(", "),
             email: invoice.toDetails?.email || "",
           },
           date: invoice.createdAt,
           dueDate: invoice.dueDate || "",
           network: payrollData.network.name || "",
-          currency: invoice.paymentToken?.symbol || "",
-          items: [],
+          paymentToken: payrollData.token,
+          currency: invoice.currency || "",
+          items: invoice.items.map((item: any) => {
+            return {
+              name: item?.description || "",
+              rate: item?.unitPrice || 0,
+              qty: item?.quantity || 0,
+              amount: item?.total || 0,
+            };
+          }),
           subtotal,
           tax: 0,
           total,
@@ -151,7 +170,7 @@ const PayrollDetail = () => {
   // Transform invoices to table data format
   const paymentHistoryData = getFilteredInvoices().map(invoice => ({
     "Creation date": new Date(invoice.createdAt).toLocaleDateString(),
-    Invoice: `#${invoice.invoiceNumber}`,
+    Invoice: `${invoice.invoiceNumber}`,
     Name: invoice.fromDetails?.name || payrollData.employee.name,
     Amount: (
       <div className="flex items-center gap-2 justify-center">
@@ -276,7 +295,7 @@ const PayrollDetail = () => {
             <div className={labelStyles}>Created on</div>
             <div className={labelStyles}>Contract term</div>
             <div className={labelStyles}>Amount</div>
-            <div className={labelStyles}>Pay date</div>
+            <div className={labelStyles}>Payday</div>
             <div className={labelStyles}>Group</div>
           </div>
 
@@ -298,7 +317,7 @@ const PayrollDetail = () => {
                 {payrollData.amount} {payrollData.token.symbol} / month
               </span>
             </div>
-            <div className=" py-1 text-base font-medium text-text-primary">{payrollData.payrollCycle}th monthly</div>
+            <div className=" py-1 text-base font-medium text-text-primary">{payrollData.paydayDay}th every month</div>
             <div className="flex justify-start items-center">
               <CategoryBadge
                 shape={groups?.find(cat => cat.id === payrollData.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}

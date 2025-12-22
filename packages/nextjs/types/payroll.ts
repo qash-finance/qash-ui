@@ -32,19 +32,33 @@ export interface CreatePayrollDto {
   payStartDate: string;
   joiningDate: string;
   payEndDate: string;
-  description?: string;
+  description: string;
+  note?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface CreatePayroll {
+  employeeId: number;
+  network: NetworkDto;
+  token: TokenDto;
+  contractTerm: ContractTermEnum;
+  payrollCycle: number;
+  amount: string;
+  joiningDate: string;
+  payday: string;
+  generateDaysBefore: number;
+  description: string;
   note?: string;
   metadata?: Record<string, any>;
 }
 
 export interface UpdatePayrollDto {
-  payday?: number;
+  paydayDay?: number;
   network?: NetworkDto;
   token?: TokenDto;
   contractTerm?: ContractTermEnum;
   payrollCycle?: number;
   amount?: string;
-  payStartDate?: string;
   note?: string;
   metadata?: Record<string, any>;
 }
@@ -99,6 +113,7 @@ export interface PayrollModel {
   status: string;
   createdAt: string;
   updatedAt: string;
+  paydayDay: number;
 }
 
 export interface PaginatedPayrollsResponseDto {

@@ -195,7 +195,6 @@ const BillContainer = () => {
     return {
       __id: b.invoice?.uuid,
       __billId: b.id,
-      __id: b.id,
       __invoiceUuid: b.invoice?.uuid,
       "header-0": (
         <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>

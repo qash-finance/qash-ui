@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import InvoiceDetail from "./InvoiceDetail";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
@@ -78,7 +77,7 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 };
 
 export const InvoiceReviewContainer = () => {
-  const { openModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
   const { isAuthenticated, email, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
   const searchParams = useSearchParams();
@@ -284,6 +283,9 @@ export const InvoiceReviewContainer = () => {
       openModal<ConfirmAndReviewInvoiceModalProps>("CONFIRM_AND_REVIEW_INVOICE", {
         onConfirm: async () => {
           await confirmInvoiceData(invoiceUUID);
+          // close modal
+          closeModal("CONFIRM_AND_REVIEW_INVOICE");
+
           setSuccessMessage("Invoice confirmed successfully");
           setShowSuccess(true);
           // Reload invoice data
@@ -430,7 +432,8 @@ export const InvoiceReviewContainer = () => {
             </div>
 
             <div className="flex flex-row items-center gap-2">
-              <SecondaryButton
+              {/* TODO: Add download PDF button */}
+              {/* <SecondaryButton
                 text="Download PDF"
                 onClick={handleDownloadPdf}
                 variant="light"
@@ -438,7 +441,7 @@ export const InvoiceReviewContainer = () => {
                 icon="/invoice/download-invoice-icon.svg"
                 iconPosition="left"
                 disabled={isLoading}
-              />
+              /> */}
               {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
                 <PrimaryButton
                   text="Confirm"
