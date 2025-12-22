@@ -274,7 +274,7 @@ export const InvoiceReviewContainer = () => {
 
   const handleConfirmInvoice = async () => {
     // Check if address has been updated
-    if (invoiceData && invoiceData.from.address === originalAddress) {
+    if (invoiceData && !invoiceData.from.address) {
       toast.error("Please update the address before confirming the invoice");
       return;
     }

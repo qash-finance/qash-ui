@@ -340,7 +340,12 @@ const BillReviewContainer = () => {
                           name: inv.paymentToken.name.toUpperCase(),
                         },
                         billTo: {
-                          address: [inv.toCompany?.address1, inv.toCompany?.city, inv.toCompany?.country]
+                          address: [
+                            inv.toDetails?.address1,
+                            inv.toDetails?.address2,
+                            inv.toDetails?.city,
+                            inv.toDetails?.country,
+                          ]
                             .filter(Boolean)
                             .join(", "),
                           email: inv.toDetails?.email,

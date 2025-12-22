@@ -126,16 +126,18 @@ const BillDetailContainer = () => {
         </div>
 
         <div className="flex flex-row gap-2">
-          <SecondaryButton
-            text="Pay Invoice"
-            buttonClassName="w-[150px]"
-            icon="/misc/coin-icon.svg"
-            iconPosition="left"
-            onClick={() => {
-              // redirect to `http://localhost:3000/bill/review?invoiceUUID=${invoiceUUID}`
-              router.push(`/bill/review?invoiceUUID=${invoiceUUID}`);
-            }}
-          />
+          {invoice.status !== InvoiceStatusEnum.PAID && invoice.status !== InvoiceStatusEnum.CANCELLED && (
+            <SecondaryButton
+              text="Pay Invoice"
+              buttonClassName="w-[150px]"
+              icon="/misc/coin-icon.svg"
+              iconPosition="left"
+              onClick={() => {
+                // redirect to `http://localhost:3000/bill/review?invoiceUUID=${invoiceUUID}`
+                router.push(`/bill/review?invoiceUUID=${invoiceUUID}`);
+              }}
+            />
+          )}
           <SecondaryButton
             text="View invoice PDF"
             variant="light"
@@ -147,7 +149,12 @@ const BillDetailContainer = () => {
                 invoice: {
                   amountDue: invoice.total!,
                   billTo: {
-                    address: [invoice.toCompany?.address1, invoice.toCompany?.city, invoice.toCompany?.country]
+                    address: [
+                      invoice.toDetails?.address1,
+                      invoice.toDetails?.address2,
+                      invoice.toDetails?.city,
+                      invoice.toDetails?.country,
+                    ]
                       .filter(Boolean)
                       .join(", "),
                     email: invoice.toCompany?.email,
@@ -182,43 +189,47 @@ const BillDetailContainer = () => {
               });
             }}
           />
-          <img
-            src="/misc/three-dot-icon.svg"
-            alt=""
-            data-tooltip-id="bill-detail-action-tooltip"
-            data-tooltip-content="0"
-            className="w-6 cursor-pointer"
-          />
+          {invoice.status !== InvoiceStatusEnum.PAID && invoice.status !== InvoiceStatusEnum.CANCELLED && (
+            <img
+              src="/misc/three-dot-icon.svg"
+              alt=""
+              data-tooltip-id="bill-detail-action-tooltip"
+              data-tooltip-content="0"
+              className="w-6 cursor-pointer"
+            />
+          )}
         </div>
       </div>
 
       {/* Bill Detail Action Tooltip */}
-      <Tooltip
-        id="bill-detail-action-tooltip"
-        clickable
-        style={{
-          zIndex: 20,
-          borderRadius: "16px",
-          padding: "0",
-        }}
-        place="left"
-        openOnClick
-        noArrow
-        border="none"
-        opacity={1}
-        render={() => {
-          const isPaidOrCancelled =
-            invoice.status === InvoiceStatusEnum.PAID || invoice.status === InvoiceStatusEnum.CANCELLED;
-          return (
-            <BillDetailActionTooltip
-              onEdit={handleCopyInvoiceLink}
-              onDuplicate={handleDownloadPDF}
-              onRemove={handleDeleteInvoice}
-              showDelete={!isPaidOrCancelled}
-            />
-          );
-        }}
-      />
+      {
+        <Tooltip
+          id="bill-detail-action-tooltip"
+          clickable
+          style={{
+            zIndex: 20,
+            borderRadius: "16px",
+            padding: "0",
+          }}
+          place="left"
+          openOnClick
+          noArrow
+          border="none"
+          opacity={1}
+          render={() => {
+            const isPaidOrCancelled =
+              invoice.status === InvoiceStatusEnum.PAID || invoice.status === InvoiceStatusEnum.CANCELLED;
+            return (
+              <BillDetailActionTooltip
+                onEdit={handleCopyInvoiceLink}
+                onDuplicate={handleDownloadPDF}
+                onRemove={handleDeleteInvoice}
+                showDelete={!isPaidOrCancelled}
+              />
+            );
+          }}
+        />
+      }
 
       <div className="w-full h-full flex flex-row gap-10">
         <div className="flex-1 flex-col w-full h-full">

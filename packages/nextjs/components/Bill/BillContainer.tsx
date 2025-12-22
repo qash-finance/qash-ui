@@ -95,17 +95,24 @@ const BillContainer = () => {
   const { data: billStats } = useGetBillStats();
   const { openModal } = useModal();
 
-  const billActionRenderer = (rowData: Record<string, any>, index: number) => (
-    <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
-      <img
-        src="/misc/three-dot-icon.svg"
-        alt="three dot icon"
-        className="w-6 h-6 cursor-pointer"
-        data-tooltip-id="bill-action-tooltip"
-        data-tooltip-content={rowData.__id?.toString()}
-      />
-    </div>
-  );
+  const billActionRenderer = (rowData: Record<string, any>, index: number) => {
+    const bill = bills.find(b => b.id === rowData.__billId);
+    // Hide action icon if bill is paid
+    if (bill?.status === BillStatusEnum.PAID) {
+      return <div>None</div>;
+    }
+    return (
+      <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
+        <img
+          src="/misc/three-dot-icon.svg"
+          alt="three dot icon"
+          className="w-6 h-6 cursor-pointer"
+          data-tooltip-id="bill-action-tooltip"
+          data-tooltip-content={rowData.__id?.toString()}
+        />
+      </div>
+    );
+  };
 
   const handleCheckRow = (idx: number) => {
     const bill = bills[idx];
