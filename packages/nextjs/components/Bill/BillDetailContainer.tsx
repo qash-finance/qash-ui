@@ -86,6 +86,7 @@ const BillDetailContainer = () => {
   const loadInvoice = async () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
+      console.log("🚀 ~ loadInvoice ~ data:", data);
       setInvoice(data);
     } catch (err) {
       console.error("Failed to load invoice:", err);
@@ -258,7 +259,7 @@ const BillDetailContainer = () => {
                     {invoice.toDetails?.companyName}{" "}
                     <span className="text-gray-500">({invoice.toCompany?.companyName})</span>
                   </p>
-                  <p className="text-sm text-blue-600 font-medium">{invoice.emailTo}</p>
+                  <p className="text-sm text-blue-600 font-medium">{invoice.toDetails.email}</p>
                 </div>
               </div>
               <div className="flex flex-row gap-5">

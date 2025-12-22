@@ -309,6 +309,7 @@ const BillReviewContainer = () => {
           ) : (
             filteredInvoices.length > 0 &&
             filteredInvoices.map(inv => {
+              console.log("🚀 ~ BillReviewContainer ~ inv:", inv);
               const groupData = groups?.find(grp => grp.id === inv.employee?.groupId);
               return (
                 <InvoiceItem
@@ -331,7 +332,7 @@ const BillReviewContainer = () => {
                           address: [inv.toCompany?.address1, inv.toCompany?.city, inv.toCompany?.country]
                             .filter(Boolean)
                             .join(", "),
-                          email: inv.toCompany?.email,
+                          email: inv.toDetails?.email,
                           name: inv.toCompany?.companyName,
                           company: `${inv.toCompany?.companyName} ${inv.toCompany?.companyType}`,
                         },

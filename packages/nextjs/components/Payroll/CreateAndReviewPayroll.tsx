@@ -53,7 +53,6 @@ interface ReviewPayrollProps {
   onBackAndEdit: () => void;
   payrollDto: CreatePayrollDto;
   employee: EmployeeInfo;
-  ownerEmail: string | null;
   owner: AuthMeResponse["user"];
   company: Company;
 }
@@ -372,7 +371,6 @@ const CreatePayroll = ({
 
 function createInvoiceDataFromPayroll(
   payroll: CreatePayrollDto,
-  ownerEmail: string | null,
   company?: any,
   employee?: EmployeeInfo,
   owner?: AuthMeResponse["user"],
@@ -386,8 +384,8 @@ function createInvoiceDataFromPayroll(
   const today = new Date();
   const dueDate = new Date(today);
   dueDate.setDate(today.getDate() + 30);
-  const billToName = company?.companyName;
-  const billToEmail = ownerEmail;
+  const billToName = `${owner?.teamMembership?.firstName} ${owner.teamMembership?.lastName}`;
+  const billToEmail = owner.email;
 
   return {
     invoiceNumber: `INV0001`,
@@ -396,7 +394,7 @@ function createInvoiceDataFromPayroll(
     from: {
       name: employeeName,
       email: employee?.email,
-      // company: company?.companyName,
+      company: company?.companyName,
       // address: [company?.address1, company?.address2, company?.city, company?.country, company?.postalCode]
       //   .filter(Boolean)
       //   .join(", "),
@@ -426,7 +424,7 @@ function createInvoiceDataFromPayroll(
   };
 }
 
-const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, ownerEmail, owner, company }: ReviewPayrollProps) => {
+const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: ReviewPayrollProps) => {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const router = useRouter();
 
@@ -455,7 +453,7 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, ownerEmail, owner,
   };
 
   useEffect(() => {
-    const data = createInvoiceDataFromPayroll(payrollDto, ownerEmail, company, employee, owner);
+    const data = createInvoiceDataFromPayroll(payrollDto, company, employee, owner);
     setInvoiceData(data);
   }, [payrollDto, employee]);
 
@@ -518,7 +516,7 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, ownerEmail, owner,
 };
 
 const CreateAndReviewPayroll = () => {
-  const { email, user } = useAuth();
+  const { user } = useAuth();
   const { data: company } = useGetMyCompany();
   const router = useRouter();
   const [step, setStep] = useState<Step>("create");
@@ -593,9 +591,8 @@ const CreateAndReviewPayroll = () => {
             onBackAndEdit={() => setStep("create")}
             payrollDto={payrollDto}
             employee={employee}
-            ownerEmail={email}
-            owner={user as AuthMeResponse["user"]}
             company={company}
+            owner={user as AuthMeResponse["user"]}
           />
         ) : null;
       default:

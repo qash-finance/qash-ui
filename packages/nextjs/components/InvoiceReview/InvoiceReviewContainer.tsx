@@ -67,6 +67,7 @@ export const InvoiceReviewContainer = () => {
 
   const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [originalAddress, setOriginalAddress] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [otp, setOtp] = useState("");
@@ -106,7 +107,9 @@ export const InvoiceReviewContainer = () => {
         (async () => {
           try {
             const data = await fetchInvoiceByUUID(invoiceUUID);
-            setInvoiceData(mapApiResponseToInvoiceData(data));
+            const mappedData = mapApiResponseToInvoiceData(data);
+            setInvoiceData(mappedData);
+            setOriginalAddress(mappedData.from.address);
             setStep("review");
           } catch (err) {
             console.error("Failed to load invoice:", err);
@@ -146,7 +149,9 @@ export const InvoiceReviewContainer = () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
       console.log("🚀 ~ loadInvoice ~ data:", data);
-      setInvoiceData(mapApiResponseToInvoiceData(data));
+      const mappedData = mapApiResponseToInvoiceData(data);
+      setInvoiceData(mappedData);
+      setOriginalAddress(mappedData.from.address);
     } catch (err) {
       console.error("Failed to load invoice:", err);
     }
@@ -190,11 +195,13 @@ export const InvoiceReviewContainer = () => {
 
   const mapApiResponseToInvoiceData = (apiData: any): InvoiceData => {
     // Map API response to InvoiceData interface
-    const toDetails = apiData.toDetails || apiData.toCompany || {};
+    const invoiceNumber = apiData.invoiceNumber;
+    
     const fromDetails = apiData.fromDetails || {};
+    const toDetails = apiData.toDetails || apiData.toCompany || {};
 
     return {
-      invoiceNumber: apiData.invoiceNumber || "",
+      invoiceNumber: invoiceNumber,
       date: apiData.issueDate ? new Date(apiData.issueDate).toLocaleDateString() : "",
       dueDate: apiData.dueDate ? new Date(apiData.dueDate).toLocaleDateString() : "",
       from: {
@@ -207,12 +214,12 @@ export const InvoiceReviewContainer = () => {
         walletAddress: fromDetails.walletAddress || apiData.employee?.walletAddress || "",
       },
       billTo: {
-        name: apiData.toCompany?.companyName || apiData.toCompanyName || "",
-        email: apiData.toCompanyEmail || apiData.emailTo || "",
+        name: apiData.toCompany?.companyName + " " + apiData.toCompany?.companyType,
+        email: toDetails.email,
         company: apiData.toCompany?.companyName || apiData.toCompanyName || "",
         address: [toDetails.address1, toDetails.address2, toDetails.city, toDetails.country, toDetails.postalCode]
           .filter(Boolean)
-          .join(", "),
+          .join(", ")
       },
       items: (apiData.items || []).map((item: any) => ({
         description: item.description || "",
@@ -247,6 +254,12 @@ export const InvoiceReviewContainer = () => {
   };
 
   const handleConfirmInvoice = async () => {
+    // Check if address has been updated
+    if (invoiceData && invoiceData.from.address === originalAddress) {
+      toast.error("Please update the address before confirming the invoice");
+      return;
+    }
+
     try {
       await confirmInvoiceData(invoiceUUID);
       setSuccessMessage("Invoice confirmed successfully");

@@ -130,7 +130,7 @@ export function TableFooter({
           </button>
 
           {dropdownOpen && (
-            <div className="absolute top-full right-0 mt-1 bg-background border border-primary-divider rounded-lg shadow-lg z-10">
+            <div className="absolute bottom-full right-0 mb-1 bg-background border border-primary-divider rounded-lg shadow-lg z-10">
               {[5, 10, 25, 50].map(option => (
                 <button
                   key={option}

@@ -18,7 +18,12 @@ const tokenRow = "flex items-center gap-2";
 const editIconClass = "w-5 h-5 cursor-pointer hover:opacity-80";
 const itemRow = "flex flex-row gap-2 justify-between items-start";
 
-const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string) => void; onWalletAddressUpdate?: (walletAddress: string) => void }) => {
+const InvoiceDetail = (
+  props: InvoiceData & {
+    onAddressUpdate?: (address: string) => void;
+    onWalletAddressUpdate?: (walletAddress: string) => void;
+  },
+) => {
   const invoiceData = props;
   const onAddressUpdate = props.onAddressUpdate;
   const onWalletAddressUpdate = props.onWalletAddressUpdate;
@@ -130,7 +135,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
           <div className="flex flex-col gap-1">
             <p className={labelClass}>Address</p>
             {isEditingAddress ? (
-              <form onSubmit={handleSubmit(onAddressSubmit)} className="flex flex-row gap-2">
+              <form onSubmit={handleSubmit(onAddressSubmit)} className="flex flex-row w-100 gap-1">
                 <input
                   {...register("address", { required: "Address cannot be empty" })}
                   type="text"
@@ -148,7 +153,11 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
               </form>
             ) : (
               <div className="flex items-center gap-2">
-                <p className={valueClass}>{invoiceData.from.address || "No address"}</p>
+                {invoiceData.from.address ? (
+                  <p className={`${valueClass}`}>{invoiceData.from.address}</p>
+                ) : (
+                  <p className={`${valueClass} italic`}>{"No address"}</p>
+                )}
                 <img
                   src="/misc/edit-icon.svg"
                   alt="Edit"
@@ -200,7 +209,7 @@ const InvoiceDetail = (props: InvoiceData & { onAddressUpdate?: (address: string
           <div className="flex flex-col gap-1 mt-4">
             <p className={labelClass}>Wallet address</p>
             {isEditingWalletAddress ? (
-              <form onSubmit={handleSubmit(onWalletAddressSubmit)} className="flex flex-row gap-2">
+              <form onSubmit={handleSubmit(onWalletAddressSubmit)} className="flex flex-row w-130 gap-1">
                 <input
                   {...register("walletAddress", { required: "Wallet address cannot be empty" })}
                   type="text"
