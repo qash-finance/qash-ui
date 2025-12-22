@@ -198,7 +198,7 @@ export const CancelPayment = () => {
     if (checkedRows.length === (recallableNotes?.recallableItems?.length || 0)) {
       setCheckedRows([]);
     } else {
-      setCheckedRows((recallableNotes?.recallableItems || []).map((_, idx) => idx));
+      setCheckedRows((recallableNotes?.recallableItems || []).map((_: any, idx: any) => idx));
     }
   }, [checkedRows, recallableNotes?.recallableItems]);
 
@@ -210,7 +210,7 @@ export const CancelPayment = () => {
     if (checkedWaitingRows.length === (recallableNotes?.waitingToRecallItems?.length || 0)) {
       setCheckedWaitingRows([]);
     } else {
-      setCheckedWaitingRows((recallableNotes?.waitingToRecallItems || []).map((_, idx) => idx));
+      setCheckedWaitingRows((recallableNotes?.waitingToRecallItems || []).map((_: any, idx: any) => idx));
     }
   }, [checkedWaitingRows, recallableNotes?.waitingToRecallItems]);
 
@@ -475,7 +475,7 @@ export const CancelPayment = () => {
     })) || [];
 
   const upcomingCancelData =
-    recallableNotes?.waitingToRecallItems?.map((note, index) => ({
+    recallableNotes?.waitingToRecallItems?.map((note: any, index: number) => ({
       "header-0": (
         <CustomCheckbox checked={checkedWaitingRows.includes(index)} onChange={() => handleCheckWaitingRow(index)} />
       ),

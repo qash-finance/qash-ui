@@ -11,6 +11,8 @@ import toast from "react-hot-toast";
 import Welcome from "../Common/Welcome";
 import LoginButton from "../Login/LoginButton";
 import { useAuth } from "@/services/auth/context";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { ConfirmAndReviewInvoiceModalProps } from "@/types/modal";
 
 type Step = "verify" | "review" | "success";
 
@@ -76,6 +78,8 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 };
 
 export const InvoiceReviewContainer = () => {
+  const { openModal } = useModal();
+
   const { isAuthenticated, email, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
@@ -83,6 +87,7 @@ export const InvoiceReviewContainer = () => {
 
   const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [originalAddress, setOriginalAddress] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [otp, setOtp] = useState("");
@@ -122,7 +127,9 @@ export const InvoiceReviewContainer = () => {
         (async () => {
           try {
             const data = await fetchInvoiceByUUID(invoiceUUID);
-            setInvoiceData(mapApiResponseToInvoiceData(data));
+            const mappedData = mapApiResponseToInvoiceData(data);
+            setInvoiceData(mappedData);
+            setOriginalAddress(mappedData.from.address);
             setStep("review");
           } catch (err) {
             console.error("Failed to load invoice:", err);
@@ -162,7 +169,9 @@ export const InvoiceReviewContainer = () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
       console.log("🚀 ~ loadInvoice ~ data:", data);
-      setInvoiceData(mapApiResponseToInvoiceData(data));
+      const mappedData = mapApiResponseToInvoiceData(data);
+      setInvoiceData(mappedData);
+      setOriginalAddress(mappedData.from.address);
     } catch (err) {
       console.error("Failed to load invoice:", err);
     }
@@ -206,11 +215,13 @@ export const InvoiceReviewContainer = () => {
 
   const mapApiResponseToInvoiceData = (apiData: any): InvoiceData => {
     // Map API response to InvoiceData interface
-    const toDetails = apiData.toDetails || apiData.toCompany || {};
+    const invoiceNumber = apiData.invoiceNumber;
+
     const fromDetails = apiData.fromDetails || {};
+    const toDetails = apiData.toDetails || apiData.toCompany || {};
 
     return {
-      invoiceNumber: apiData.invoiceNumber || "",
+      invoiceNumber: invoiceNumber,
       date: apiData.issueDate ? new Date(apiData.issueDate).toLocaleDateString() : "",
       dueDate: apiData.dueDate ? new Date(apiData.dueDate).toLocaleDateString() : "",
       from: {
@@ -223,8 +234,8 @@ export const InvoiceReviewContainer = () => {
         walletAddress: fromDetails.walletAddress || apiData.employee?.walletAddress || "",
       },
       billTo: {
-        name: apiData.toCompany?.companyName || apiData.toCompanyName || "",
-        email: apiData.toCompanyEmail || apiData.emailTo || "",
+        name: apiData.toCompany?.companyName + " " + apiData.toCompany?.companyType,
+        email: toDetails.email,
         company: apiData.toCompany?.companyName || apiData.toCompanyName || "",
         address: [toDetails.address1, toDetails.address2, toDetails.city, toDetails.country, toDetails.postalCode]
           .filter(Boolean)
@@ -248,6 +259,7 @@ export const InvoiceReviewContainer = () => {
   const handleDownloadPdf = async () => {
     try {
       const blob = await downloadPdf(invoiceUUID);
+      console.log("🚀 ~ handleDownloadPdf ~ blob:", blob);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -262,12 +274,22 @@ export const InvoiceReviewContainer = () => {
   };
 
   const handleConfirmInvoice = async () => {
+    // Check if address has been updated
+    if (invoiceData && invoiceData.from.address === originalAddress) {
+      toast.error("Please update the address before confirming the invoice");
+      return;
+    }
+
     try {
-      await confirmInvoiceData(invoiceUUID);
-      setSuccessMessage("Invoice confirmed successfully");
-      setShowSuccess(true);
-      // Reload invoice data
-      loadInvoice();
+      openModal<ConfirmAndReviewInvoiceModalProps>("CONFIRM_AND_REVIEW_INVOICE", {
+        onConfirm: async () => {
+          await confirmInvoiceData(invoiceUUID);
+          setSuccessMessage("Invoice confirmed successfully");
+          setShowSuccess(true);
+          // Reload invoice data
+          loadInvoice();
+        },
+      });
     } catch (err) {
       console.error("Failed to confirm invoice:", err);
     }
@@ -298,8 +320,6 @@ export const InvoiceReviewContainer = () => {
       });
     }
   };
-
-  console.log(invoiceData);
 
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">

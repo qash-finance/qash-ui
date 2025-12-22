@@ -218,7 +218,7 @@ export const CancelDashboardContainer: React.FC = () => {
     if (checkedRows.length === (recallableNotes?.recallableItems?.length || 0)) {
       setCheckedRows([]);
     } else {
-      setCheckedRows((recallableNotes?.recallableItems || []).map((_, idx) => idx));
+      setCheckedRows((recallableNotes?.recallableItems || []).map((_: any, idx: any) => idx));
     }
   }, [checkedRows, recallableNotes?.recallableItems]);
 
@@ -230,7 +230,7 @@ export const CancelDashboardContainer: React.FC = () => {
     if (checkedWaitingRows.length === (recallableNotes?.waitingToRecallItems?.length || 0)) {
       setCheckedWaitingRows([]);
     } else {
-      setCheckedWaitingRows((recallableNotes?.waitingToRecallItems || []).map((_, idx) => idx));
+      setCheckedWaitingRows((recallableNotes?.waitingToRecallItems || []).map((_: any, idx: any) => idx));
     }
   }, [checkedWaitingRows, recallableNotes?.waitingToRecallItems]);
 
@@ -580,7 +580,7 @@ export const CancelDashboardContainer: React.FC = () => {
             subtitle="Payments that will become cancellable once their scheduled time is reached. The cancel button will automatically enable at the specified time."
             headers={upcomingCancelHeaders}
             data={
-              recallableNotes?.waitingToRecallItems?.map((note, index) => ({
+              recallableNotes?.waitingToRecallItems?.map((note: any) => ({
                 Amount: (
                   <div className="relative flex flex-row flex-wrap gap-1 items-center">
                     <div className="group relative flex items-center gap-1">

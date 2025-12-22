@@ -20,10 +20,10 @@ const PreviewCard = ({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-2xl font-semibold text-text-primary">{name}</p>
-          {isFrom && <p className="text-xs font-normal text-text-secondary">{email}</p>}
+          <p className="text-xs font-normal text-text-secondary">{email}</p>
         </div>
       </div>
-      <div className="mt-auto flex flex-col gap-1">
+      <div className="flex flex-col gap-1">
         <p className="text-xs font-medium text-primary-blue">{company}</p>
         <p className="text-xs font-medium text-text-secondary">{address}</p>
       </div>
@@ -76,7 +76,7 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
 
             <PreviewCard
               name={invoiceData.billTo.name}
-              email={invoiceData.billTo.email || ""}
+              email={invoiceData.billTo.email}
               company={invoiceData.billTo.company}
               address={invoiceData.billTo.address}
               isFrom={false}

@@ -90,6 +90,7 @@ const BillDetailContainer = () => {
   const loadInvoice = async () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
+      console.log("🚀 ~ loadInvoice ~ data:", data);
       setInvoice(data);
     } catch (err) {
       console.error("Failed to load invoice:", err);

@@ -135,7 +135,7 @@ const InvoiceDetail = (
           <div className="flex flex-col gap-1">
             <p className={labelClass}>Address</p>
             {isEditingAddress ? (
-              <form onSubmit={handleSubmit(onAddressSubmit)} className="flex flex-row gap-2">
+              <form onSubmit={handleSubmit(onAddressSubmit)} className="flex flex-row w-100 gap-1">
                 <input
                   {...register("address", { required: "Address cannot be empty" })}
                   type="text"
@@ -155,12 +155,17 @@ const InvoiceDetail = (
               <div className="flex items-center gap-2">
                 <p className={valueClass}>{invoiceData.from.address || "No address"}</p>
                 {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
-                  <img
-                    src="/misc/edit-icon.svg"
-                    alt="Edit"
-                    className={editIconClass}
-                    onClick={() => setIsEditingAddress(true)}
-                  />
+                  {invoiceData.from.address ? (
+                  <p className={`${valueClass}`}>{invoiceData.from.address}</p>
+                ) : (
+                  <p className={`${valueClass} italic`}>{"No address"}</p>
+                )}
+                <img
+                  src="/misc/edit-icon.svg"
+                  alt="Edit"
+                  className={editIconClass}
+                  onClick={() => setIsEditingAddress(true)}
+                />
                 )}
               </div>
             )}
@@ -211,7 +216,7 @@ const InvoiceDetail = (
           <div className="flex flex-col gap-1 mt-4">
             <p className={labelClass}>Wallet address</p>
             {isEditingWalletAddress ? (
-              <form onSubmit={handleSubmit(onWalletAddressSubmit)} className="flex flex-row gap-2">
+              <form onSubmit={handleSubmit(onWalletAddressSubmit)} className="flex flex-row w-130 gap-1">
                 <input
                   {...register("walletAddress", { required: "Wallet address cannot be empty" })}
                   type="text"

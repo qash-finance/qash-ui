@@ -5,37 +5,25 @@ import { BaseContainer } from "../Common/BaseContainer";
 import { Table } from "../Common/Table";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { TabContainer } from "../Common/TabContainer";
-import { StatusBadge } from "../Common/StatusBadge";
-import { RequestPaymentStatus } from "@/types/request-payment";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { useTitle } from "@/contexts/TitleProvider";
 import { useRouter } from "next/navigation";
-import { useGetPayrollDetails, useGetPayrollStats } from "@/services/api/payroll";
+import { useGetPayrollDetails } from "@/services/api/payroll";
 import toast from "react-hot-toast";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { CategoryShapeEnum } from "@/types/employee";
 import { InvoiceStatusEnum } from "@/types/invoice";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { InvoiceModalProps } from "@/types/modal";
 
 const labelStyles = "py-1 text-base font-medium text-text-secondary";
-
-// Action renderer for payroll table
-const payrollActionRenderer = (rowData: Record<string, any>, index: number) => (
-  <div className="flex items-center justify-center w-full">
-    <img
-      src="/misc/three-dot-icon.svg"
-      alt="three dot icon"
-      className="w-6 h-6 cursor-pointer"
-      data-tooltip-id="payroll-action-tooltip"
-      data-tooltip-content={index.toString()}
-    />
-  </div>
-);
 
 const PayrollDetail = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+  const { openModal } = useModal();
 
   const payrollId = parseInt(searchParams.get("id") || "0", 10);
   const { data: payrollData, isLoading, error } = useGetPayrollDetails(payrollId);
@@ -44,6 +32,64 @@ const PayrollDetail = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Filter invoices based on active tab
+  const getFilteredInvoices = () => {
+    if (!payrollData?.invoices) return [];
+
+    const invoices = payrollData.invoices;
+
+    switch (activeTab) {
+      case "awaiting":
+        return invoices.filter(invoice => invoice.status === "SENT");
+      case "paid":
+        return invoices.filter(invoice => invoice.status === "PAID");
+      case "all":
+      default:
+        return invoices;
+    }
+  };
+
+  // Handle row click to open invoice modal
+  const handleRowClick = (_: Record<string, any>, index: number) => {
+    const invoices = getFilteredInvoices();
+    const invoice = invoices[index];
+
+    if (invoice && payrollData) {
+      //@ts-ignore
+      const company = `${payrollData.company.companyName} ${payrollData.company.companyType} `;
+      const subtotal = typeof invoice.subtotal === "string" ? parseFloat(invoice.subtotal) : invoice.subtotal || 0;
+      const total = typeof invoice.total === "string" ? parseFloat(invoice.total) : invoice.total || 0;
+
+      openModal<InvoiceModalProps>("INVOICE_MODAL", {
+        invoice: {
+          invoiceNumber: invoice.invoiceNumber || "",
+          from: {
+            name: invoice.fromDetails?.name || payrollData.employee.name || "",
+            company: company,
+            address: invoice.fromDetails?.address || "",
+            email: invoice.fromDetails?.email || payrollData.employee.email || "",
+          },
+          billTo: {
+            name: invoice.toDetails?.companyName || "",
+            company: company,
+            address: invoice.toDetails?.address1 || "",
+            email: invoice.toDetails?.email || "",
+          },
+          date: invoice.createdAt,
+          dueDate: invoice.dueDate || "",
+          network: payrollData.network.name || "",
+          currency: invoice.paymentToken?.symbol || "",
+          items: [],
+          subtotal,
+          tax: 0,
+          total,
+          walletAddress: payrollData.employee.walletAddress || "",
+          amountDue: total.toString(),
+        },
+      });
+    }
+  };
 
   useEffect(() => {
     const handleBack = () => {
@@ -101,23 +147,6 @@ const PayrollDetail = () => {
       </div>
     );
   }
-
-  // Filter invoices based on active tab
-  const getFilteredInvoices = () => {
-    if (!payrollData?.invoices) return [];
-
-    const invoices = payrollData.invoices;
-
-    switch (activeTab) {
-      case "awaiting":
-        return invoices.filter(invoice => invoice.status === "SENT");
-      case "paid":
-        return invoices.filter(invoice => invoice.status === "PAID");
-      case "all":
-      default:
-        return invoices;
-    }
-  };
 
   // Transform invoices to table data format
   const paymentHistoryData = getFilteredInvoices().map(invoice => ({
@@ -331,12 +360,11 @@ const PayrollDetail = () => {
           rowClassName="py-5"
           headerClassName="py-3"
           showPagination={true}
-          actionColumn={true}
-          actionRenderer={payrollActionRenderer}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={setRowsPerPage}
+          onRowClick={handleRowClick}
         />
       </BaseContainer>
     </div>

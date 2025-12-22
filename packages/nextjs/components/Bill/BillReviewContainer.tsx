@@ -327,11 +327,11 @@ const BillReviewContainer = () => {
                           address: [inv.toCompany?.address1, inv.toCompany?.city, inv.toCompany?.country]
                             .filter(Boolean)
                             .join(", "),
-                          email: inv.toCompany?.email,
+                          email: inv.toDetails?.email,
                           name: inv.toCompany?.companyName,
                           company: `${inv.toCompany?.companyName} ${inv.toCompany?.companyType}`,
                         },
-                        currency: "USDT",
+                        currency: inv.currency,
                         date: inv.issueDate,
                         dueDate: inv.dueDate,
                         from: {

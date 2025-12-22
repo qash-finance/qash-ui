@@ -22,6 +22,7 @@ export interface AuthContextValue extends AuthState {
   verifyOtp: (email: string, otp: string) => Promise<AuthMeResponse["user"] | null>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   clearError: () => void;
   isSessionValid: () => boolean;
 }
@@ -224,6 +225,23 @@ export function AuthProvider({
     }
   }, [api, logout]);
 
+  const refreshUser = useCallback(async (): Promise<void> => {
+    const storedAccessToken = AuthStorage.getAccessToken();
+    if (!storedAccessToken) return;
+
+    try {
+      const me = await api.getMe(storedAccessToken);
+      setState(prev => ({
+        ...prev,
+        user: me.user ?? null,
+        error: null,
+      }));
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+      throw error;
+    }
+  }, [api]);
+
   useEffect(() => {
     if (!autoRefresh || !state.isAuthenticated) return;
 
@@ -240,6 +258,7 @@ export function AuthProvider({
     verifyOtp,
     logout,
     refreshSession,
+    refreshUser,
     clearError,
     isSessionValid,
   };

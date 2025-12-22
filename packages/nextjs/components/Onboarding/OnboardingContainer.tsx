@@ -48,7 +48,7 @@ const mapCompanyTypeToEnum = (displayName: string): CompanyTypeEnum => {
 
 export default function OnboardingContainer() {
   const router = useRouter();
-  const { isAuthenticated, accessToken, user } = useAuth();
+  const { isAuthenticated, accessToken, user, refreshUser } = useAuth();
   const createCompanyMutation = useCreateCompany();
   const [step, setStep] = useState<Step>("company");
   const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
@@ -110,6 +110,8 @@ export default function OnboardingContainer() {
           postalCode: data.postalCode,
         });
         toast.success("Company registered successfully");
+        // Refresh the user data to get updated company info
+        await refreshUser?.();
         setStep("complete");
       } catch (error) {
         toast.error("Failed to create company");

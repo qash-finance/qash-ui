@@ -95,6 +95,18 @@ const BillContainer = () => {
   const { data: billStats } = useGetBillStats();
   const { openModal } = useModal();
 
+  const billActionRenderer = (rowData: Record<string, any>, index: number) => (
+    <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
+      <img
+        src="/misc/three-dot-icon.svg"
+        alt="three dot icon"
+        className="w-6 h-6 cursor-pointer"
+        data-tooltip-id="bill-action-tooltip"
+        data-tooltip-content={rowData.__id?.toString()}
+      />
+    </div>
+  );
+
   const handleCheckRow = (idx: number) => {
     const bill = bills[idx];
     // Only allow checking if bill is pending
@@ -183,6 +195,8 @@ const BillContainer = () => {
     return {
       __id: b.invoice?.uuid,
       __billId: b.id,
+      __id: b.id,
+      __invoiceUuid: b.invoice?.uuid,
       "header-0": (
         <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
           <CustomCheckbox
@@ -334,7 +348,7 @@ const BillContainer = () => {
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={setRowsPerPage}
           onRowClick={rowData => {
-            const invoiceUUID = (rowData as any).__id;
+            const invoiceUUID = (rowData as any).__invoiceUuid;
             router.push(`/bill/detail?uuid=${invoiceUUID}`);
           }}
         />
@@ -391,7 +405,8 @@ const BillContainer = () => {
 
           const handleDownload = async () => {
             try {
-              const blob = await downloadPdf(bill.uuid);
+              if (!bill.invoice?.uuid) throw new Error("Invoice UUID not found");
+              const blob = await downloadPdf(bill.invoice?.uuid);
               const url = window.URL.createObjectURL(blob);
               const link = document.createElement("a");
               link.href = url;
@@ -422,6 +437,7 @@ const BillContainer = () => {
               onDeleteInvoice={handleDelete}
               onDownloadPDF={handleDownload}
               onPay={handlePay}
+              billStatus={bill.status}
             />
           );
         }}
