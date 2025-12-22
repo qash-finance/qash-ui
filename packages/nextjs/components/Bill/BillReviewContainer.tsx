@@ -309,7 +309,6 @@ const BillReviewContainer = () => {
           ) : (
             filteredInvoices.length > 0 &&
             filteredInvoices.map(inv => {
-              console.log("🚀 ~ BillReviewContainer ~ inv:", inv);
               const groupData = groups?.find(grp => grp.id === inv.employee?.groupId);
               return (
                 <InvoiceItem
@@ -336,7 +335,7 @@ const BillReviewContainer = () => {
                           name: inv.toCompany?.companyName,
                           company: `${inv.toCompany?.companyName} ${inv.toCompany?.companyType}`,
                         },
-                        currency: "USDT",
+                        currency: inv.currency,
                         date: inv.issueDate,
                         dueDate: inv.dueDate,
                         from: {

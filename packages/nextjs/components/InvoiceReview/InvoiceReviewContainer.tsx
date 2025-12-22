@@ -11,6 +11,8 @@ import toast from "react-hot-toast";
 import Welcome from "../Common/Welcome";
 import LoginButton from "../Login/LoginButton";
 import { useAuth } from "@/services/auth/context";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { ConfirmAndReviewInvoiceModalProps } from "@/types/modal";
 
 type Step = "verify" | "review" | "success";
 
@@ -60,6 +62,8 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 };
 
 export const InvoiceReviewContainer = () => {
+  const { openModal } = useModal();
+
   const { isAuthenticated, email, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
@@ -196,7 +200,7 @@ export const InvoiceReviewContainer = () => {
   const mapApiResponseToInvoiceData = (apiData: any): InvoiceData => {
     // Map API response to InvoiceData interface
     const invoiceNumber = apiData.invoiceNumber;
-    
+
     const fromDetails = apiData.fromDetails || {};
     const toDetails = apiData.toDetails || apiData.toCompany || {};
 
@@ -219,7 +223,7 @@ export const InvoiceReviewContainer = () => {
         company: apiData.toCompany?.companyName || apiData.toCompanyName || "",
         address: [toDetails.address1, toDetails.address2, toDetails.city, toDetails.country, toDetails.postalCode]
           .filter(Boolean)
-          .join(", ")
+          .join(", "),
       },
       items: (apiData.items || []).map((item: any) => ({
         description: item.description || "",
@@ -261,11 +265,15 @@ export const InvoiceReviewContainer = () => {
     }
 
     try {
-      await confirmInvoiceData(invoiceUUID);
-      setSuccessMessage("Invoice confirmed successfully");
-      setShowSuccess(true);
-      // Reload invoice data
-      loadInvoice();
+      openModal<ConfirmAndReviewInvoiceModalProps>("CONFIRM_AND_REVIEW_INVOICE", {
+        onConfirm: async () => {
+          await confirmInvoiceData(invoiceUUID);
+          setSuccessMessage("Invoice confirmed successfully");
+          setShowSuccess(true);
+          // Reload invoice data
+          loadInvoice();
+        },
+      });
     } catch (err) {
       console.error("Failed to confirm invoice:", err);
     }
