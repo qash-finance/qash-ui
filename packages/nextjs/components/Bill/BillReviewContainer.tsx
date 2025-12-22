@@ -12,11 +12,17 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps, TransactionOverviewModalProps } from "@/types/modal";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { PrimaryButton } from "../Common/PrimaryButton";
-import { SendTransaction, WalletNotConnectedError } from "@demox-labs/miden-wallet-adapter-base";
+import {
+  Transaction,
+  MidenTransaction,
+  TransactionType,
+  WalletNotConnectedError,
+} from "@demox-labs/miden-wallet-adapter-base";
 import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import toast from "react-hot-toast";
 import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_SYMBOL } from "@/services/utils/constant";
 import { usePayBills } from "@/services/api/bill";
+import { getFaucetMetadata } from "@/services/utils/miden/faucet";
 
 const InvoiceItem = ({
   invoiceId,
@@ -87,7 +93,7 @@ const TokenItem = ({ token, amount, amountUsd }: { token: string; amount: string
 
 const BillReviewContainer = () => {
   const router = useRouter();
-  const { address, wallet, requestConsumableNotes } = useWallet();
+  const { address, wallet, requestTransaction } = useWallet();
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
   const { data: groups } = useGetAllEmployeeGroups();
   const { openModal, closeModal } = useModal();
@@ -172,67 +178,74 @@ const BillReviewContainer = () => {
   }, [searchParams, fetchInvoiceByUUID]);
 
   const handleSubmit = async () => {
-    if (!address) throw new WalletNotConnectedError();
+    const midenSdk = await import("@demox-labs/miden-sdk");
+    const { Note, Address, NoteAssets, FungibleAsset, NoteType, Felt, TransactionRequestBuilder, OutputNote } =
+      midenSdk;
+    const OutputNoteArray = (midenSdk as any).OutputNoteArray;
 
-    const amount = 1; // Example amount
+    if (!address) throw new WalletNotConnectedError();
 
     try {
       openModal("PROCESSING_TRANSACTION");
 
       // prepare an array of p2id note
-      // const {
-      //   Note,
-      //   Address,
-      //   NoteAssets,
-      //   FungibleAsset,
-      //   NoteType,
-      //   Felt,
-      //   TransactionRequestBuilder,
-      //   OutputNote,
-      //   OutputNoteArray,
-      // } = await import("@demox-labs/miden-sdk");
+      const p2idNotes: any[] = [];
+      const recipientAddresses = [];
+      const assets = [];
+      let totalAmount = 0;
+      // loop through selected invoices
+      for (const inv of selectedInvoices) {
+        // payment token address
+        const paymentTokenAddress = inv.paymentToken.address;
 
-      // // prepare an array of p2id note
-      // const p2idNotes = await Promise.all(
-      //   selectedInvoices.map(async inv => {
-      //     return OutputNote.full(
-      //       Note.createP2IDENote(
-      //         Address.fromBech32(address).accountId(),
-      //         Address.fromBech32(inv?.emploee?.walletAddress).accountId(),
-      //         new NoteAssets([
-      //           new FungibleAsset(
-      //             Address.fromBech32(QASH_TOKEN_ADDRESS).accountId(),
-      //             BigInt(amount! * 10 ** QASH_TOKEN_DECIMALS),
-      //           ),
-      //         ]),
-      //         null,
-      //         null,
-      //         NoteType.Private,
-      //         new Felt(BigInt(0)),
-      //       ),
-      //     );
-      //   }),
-      // );
-      // const transactionRequest = new TransactionRequestBuilder()
-      //   .withOwnOutputNotes(new OutputNoteArray(p2idNotes))
-      //   .build();
-      // const midenTransaction = new CustomTransaction(
-      //   address,
-      //   "mtst1ar22f8fc95u8vyppkztvmcas8vmckq7f_qruqqypuyph",
-      //   transactionRequest,
-      // );
+        // payment amount
+        const paymentAmount = inv.total;
 
-      // const txId = (await (wallet?.adapter as MidenWalletAdapter).requestTransaction(midenTransaction as any)) || "";
+        // recipient address
+        const recipientAddress = inv.paymentWalletAddress;
 
-      const midenTransaction = new SendTransaction(
+        // get faucet metadata
+        const faucetMetadata = await getFaucetMetadata(paymentTokenAddress);
+        assets.push(faucetMetadata);
+        totalAmount += Number(paymentAmount);
+
+        // build p2id note
+        const p2idNote = Note.createP2IDENote(
+          Address.fromBech32(address).accountId(),
+          Address.fromBech32("mtst1appk6v056hx9xyptrga2z7730yegdrsd_qruqqypuyph").accountId(),
+          new NoteAssets([
+            new FungibleAsset(
+              Address.fromBech32(paymentTokenAddress).accountId(),
+              BigInt(paymentAmount! * 10 ** faucetMetadata.decimals || 8),
+            ),
+          ]),
+          null,
+          null,
+          NoteType.Private,
+          new Felt(BigInt(0)),
+        );
+        // Convert Note to OutputNote
+        p2idNotes.push(OutputNote.full(p2idNote));
+        recipientAddresses.push(recipientAddress);
+      }
+
+      // Build transaction request with OutputNoteArray
+      const outputNotesArray = new OutputNoteArray(p2idNotes);
+      const transactionRequest = new TransactionRequestBuilder().withOwnOutputNotes(outputNotesArray).build();
+
+      const midenCustomTransaction = Transaction.createCustomTransaction(
         address,
-        "mtst1ar22f8fc95u8vyppkztvmcas8vmckq7f_qruqqypuyph",
-        QASH_TOKEN_ADDRESS,
-        "public",
-        amount! * 10 ** QASH_TOKEN_DECIMALS,
+        recipientAddresses[0],
+        transactionRequest,
       );
 
-      const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
+      const midenTransaction: MidenTransaction = {
+        type: midenCustomTransaction.type,
+        payload: midenCustomTransaction.payload,
+      };
+
+      const txId = await requestTransaction?.(midenTransaction);
+
       toast.success(`Transaction ${txId} submitted`);
 
       payBillsMutate.mutate({
@@ -243,8 +256,11 @@ const BillReviewContainer = () => {
       closeModal("PROCESSING_TRANSACTION");
 
       openModal<TransactionOverviewModalProps>("TRANSACTION_OVERVIEW", {
-        amount: amount.toString(),
-        tokenSymbol: QASH_TOKEN_SYMBOL,
+        amount: totalAmount.toString(),
+        tokenSymbol: selectedInvoices
+          .map(inv => inv.assets?.map((asset: any) => asset.symbol).join(","))
+          .filter(Boolean)
+          .join(","),
         tokenAddress: QASH_TOKEN_ADDRESS,
         accountAddress: address,
         accountName: "You",
@@ -258,7 +274,7 @@ const BillReviewContainer = () => {
         },
       });
     } catch (error: any) {
-      console.log("🚀 ~ handleSubmit ~ error:", error);
+      console.log(error);
     } finally {
       closeModal("PROCESSING_TRANSACTION");
     }
@@ -341,7 +357,12 @@ const BillReviewContainer = () => {
                           company: `${inv.toCompany?.companyName} ${inv.toCompany?.companyType}`,
                         },
                         invoiceNumber: inv.invoiceNumber,
-                        items: inv.items,
+                        items: inv.items.map((item: any) => ({
+                          name: item.description,
+                          rate: item.unitPrice,
+                          qty: item.quantity,
+                          amount: item.total,
+                        })),
                         subtotal: inv.subtotal,
                         tax: 0,
                         total: inv.total,

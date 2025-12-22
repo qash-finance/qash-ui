@@ -124,13 +124,14 @@ const CreatePayroll = ({
       return;
     }
 
-    const durationValue = parseInt(duration);
+    let durationValue = parseInt(duration);
     const payStart = new Date(); //pay start is always starting next month
     payStart.setDate(selectedPayDay);
     payStart.setMonth(payStart.getMonth() + 1);
     const payEnd = new Date(payStart);
     if (durationUnit === "year") {
       payEnd.setFullYear(payEnd.getFullYear() + durationValue);
+      durationValue = durationValue * 12;
     } else {
       payEnd.setMonth(payEnd.getMonth() + durationValue);
     }
@@ -351,6 +352,7 @@ const CreatePayroll = ({
             setSelectedPayDay={setSelectedPayDay}
             register={register}
             errors={errors}
+            setValue={setValue}
             inputContainerClass={inputContainerClass}
             labelClass={labelClass}
           />

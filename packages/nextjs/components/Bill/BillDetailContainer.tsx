@@ -167,7 +167,12 @@ const BillDetailContainer = () => {
                     company: `${invoice.fromCompany?.companyName || invoice.payroll?.company?.companyName}`,
                   },
                   invoiceNumber: invoice.invoiceNumber!,
-                  items: invoice.items,
+                  items: invoice.items.map((item: any) => ({
+                    name: item.description,
+                    rate: item.unitPrice,
+                    qty: item.quantity,
+                    amount: item.total,
+                  })),
                   subtotal: parseFloat(invoice.subtotal!.toString()),
                   tax: 0,
                   total: parseFloat(invoice.total!.toString()),

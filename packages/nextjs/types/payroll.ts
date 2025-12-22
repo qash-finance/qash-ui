@@ -53,6 +53,7 @@ export interface CreatePayroll {
 }
 
 export interface UpdatePayrollDto {
+  description?: string;
   paydayDay?: number;
   network?: NetworkDto;
   token?: TokenDto;

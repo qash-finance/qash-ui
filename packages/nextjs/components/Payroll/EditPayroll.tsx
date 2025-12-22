@@ -178,6 +178,10 @@ const EditPayroll = () => {
       payEnd.setMonth(payEnd.getMonth() + durationValue);
     }
 
+    // Calculate payrollCycle: convert years to months if needed
+    // Since payroll is monthly, 1 year = 12 cycles
+    const payrollCycle = durationUnit === "year" ? durationValue * 12 : durationValue;
+
     const updatePayrollDto: UpdatePayrollDto = {
       network: {
         name: selectedNetwork.name,
@@ -194,9 +198,10 @@ const EditPayroll = () => {
       },
       paydayDay: selectedPayDay,
       contractTerm: ContractTermEnum.PERMANENT,
-      payrollCycle: durationValue,
+      payrollCycle: payrollCycle,
       amount: monthlyAmount,
       note: note,
+      description: description || "",
       metadata: {
         payDay: selectedPayDay,
         durationUnit,
@@ -395,6 +400,7 @@ const EditPayroll = () => {
             setSelectedPayDay={setSelectedPayDay}
             register={register}
             errors={errors}
+            setValue={setValue}
             inputContainerClass={inputContainerClass}
             labelClass={labelClass}
           />
