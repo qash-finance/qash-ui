@@ -2,7 +2,6 @@
 
 import { ReactNode, useMemo, useState, useEffect, useRef } from "react";
 import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
-import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
