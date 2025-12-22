@@ -376,6 +376,7 @@ const BillContainer = () => {
               onDeleteInvoice={handleDelete}
               onDownloadPDF={handleDownload}
               onPay={handlePay}
+              billStatus={bill.status}
             />
           );
         }}
