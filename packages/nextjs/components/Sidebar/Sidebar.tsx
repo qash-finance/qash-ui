@@ -34,6 +34,7 @@ export enum SidebarLink {
   AccountManagement = "account-management",
   Transactions = "transactions",
   Bill = "bill",
+  Invoice = "invoice",
 }
 
 // Enum for submenu types
@@ -97,7 +98,8 @@ export const actionItems = [
     filledIcon: "/sidebar/filled-invoice.svg",
     label: "Invoice",
     isActive: false,
-    disabled: true,
+    link: SidebarLink.Invoice,
+    disabled: false,
   },
   {
     icon: "/sidebar/move-crypto.svg",

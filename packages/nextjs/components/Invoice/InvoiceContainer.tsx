@@ -1,0 +1,420 @@
+"use client";
+import React, { useState } from "react";
+import { BaseContainer } from "../Common/BaseContainer";
+import { TabContainer } from "../Common/TabContainer";
+import { SecondaryButton } from "../Common/SecondaryButton";
+import { Badge, BadgeStatus } from "../Common/Badge";
+import { Table } from "../Common/Table";
+import { CustomCheckbox } from "../Common/CustomCheckbox";
+import { FloatingFooter } from "../Common/FloatingFooter";
+import { FloatingAction } from "./FloatingAction";
+import { BillStatusEnum } from "@/types/bill";
+import { useGetBills, usePayBills, useGetBillStats } from "@/services/api/bill";
+import { CategoryShapeEnum } from "@/types/employee";
+import { CategoryBadge } from "../ContactBook/ContactBookContainer";
+import { useGetAllEmployeeGroups } from "@/services/api/employee";
+import { Tooltip } from "react-tooltip";
+import BillActionTooltip from "../Common/ToolTip/BillActionTooltip";
+import { useDeleteBill } from "@/services/api/bill";
+import { useInvoice } from "@/hooks/server/useInvoice";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { PrimaryButton } from "../Common/PrimaryButton";
+
+type Tab = "all" | "sent" | "paid";
+
+const Card = ({ title, text }: { title: string; text: React.ReactNode }) => {
+  return (
+    <div
+      className="relative w-full h-full rounded-xl border border-primary-divider p-4 flex flex-col overflow-hidden gap-3"
+      style={{
+        backgroundImage: `url(/card/background.svg)`,
+        backgroundSize: "30%",
+        backgroundPosition: "right",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <span className="text-text-secondary text-sm leading-none">{title}</span>
+      {text}
+    </div>
+  );
+};
+
+const renderTabHeader = (activeTab: Tab) => {
+  switch (activeTab) {
+    case "all":
+      return (
+        <div className="flex flex-col gap-2">
+          <span className="text-text-primary text-2xl font-medium leading-none">Overview</span>
+          <span className="text-text-secondary text-[14px] font-medium leading-none">Manage all the invoices</span>
+        </div>
+      );
+    case "sent":
+      return (
+        <div className="flex flex-col gap-2">
+          <span className="text-text-primary text-2xl font-medium leading-none">Sent invoices</span>
+          <span className="text-text-secondary text-[14px] font-medium leading-none">Track your invoice progress</span>
+        </div>
+      );
+    case "paid":
+      return (
+        <div className="flex flex-col gap-2">
+          <span className="text-text-primary text-2xl font-medium leading-none">Paid invoices</span>
+          <span className="text-text-secondary text-[14px] font-medium leading-none">
+            Invoices that have been approved and processed successfully
+          </span>
+        </div>
+      );
+    default:
+      return;
+  }
+};
+
+const InvoiceContainer = () => {
+  const [activeTab, setActiveTab] = useState<Tab>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
+  const { data: groups } = useGetAllEmployeeGroups();
+  const { data: billStats } = useGetBillStats();
+  const { openModal } = useModal();
+
+  const billActionRenderer = (rowData: Record<string, any>, index: number) => (
+    <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
+      <img
+        src="/misc/three-dot-icon.svg"
+        alt="three dot icon"
+        className="w-6 h-6 cursor-pointer"
+        data-tooltip-id="bill-action-tooltip"
+        data-tooltip-content={rowData.__id?.toString()}
+      />
+    </div>
+  );
+
+  const handleCheckRow = (idx: number) => {
+    setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
+  };
+
+  const handleCheckAll = () => {
+    if (checkedRows.length === (billDatas?.length || 0)) {
+      setCheckedRows([]);
+    } else {
+      setCheckedRows(billDatas?.map((_, idx) => idx) || []);
+    }
+  };
+
+  // Fetch bills from API
+  const { data: billsResponse, isLoading } = useGetBills({
+    page: currentPage,
+    limit: rowsPerPage,
+    status: activeTab === "all" ? undefined : activeTab === "sent" ? BillStatusEnum.PENDING : BillStatusEnum.PAID,
+  });
+
+  // Show all bills when "all" tab is active, otherwise show filtered bills from API
+  const bills = React.useMemo(() => {
+    return billsResponse?.bills ?? [];
+  }, [billsResponse?.bills]);
+
+  const payBillsMutation = usePayBills();
+  const deleteBill = useDeleteBill();
+  const { downloadPdf } = useInvoice();
+  const router = useRouter();
+
+  const billDatas = bills.map((b, idx) => {
+    const createdDate = b.createdAt
+      ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "";
+    const dueDate = b.invoice?.dueDate
+      ? new Date(b.invoice.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "";
+
+    const badgeStatus = (() => {
+      switch (b.status) {
+        case "PAID":
+          return BadgeStatus.SUCCESS;
+        case "PENDING":
+          return BadgeStatus.AWAITING;
+        case "OVERDUE":
+          return BadgeStatus.FAIL;
+        default:
+          return BadgeStatus.NEUTRAL;
+      }
+    })();
+
+    return {
+      __id: b.id,
+      __invoiceUuid: b.invoice?.uuid,
+      "header-0": (
+        <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
+          <CustomCheckbox checked={checkedRows.includes(idx)} onChange={() => handleCheckRow(idx)} />
+        </div>
+      ),
+      "Creation date": createdDate,
+      Invoice: b.invoice?.invoiceNumber || b.uuid,
+      Name: b.invoice?.fromDetails?.name,
+      Group: (
+        <div className="flex justify-center items-center">
+          <CategoryBadge
+            shape={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.name || "-"}
+          />
+        </div>
+      ),
+      Amount: (
+        <div className="flex items-center gap-2 justify-center">
+          <span>{b.invoice?.total || "0"}</span>
+          <img
+            alt={`${b.invoice?.paymentNetwork?.name?.toLowerCase()}`}
+            className="w-4"
+            src={`/token/${b.invoice?.paymentToken?.name?.toLowerCase()}.svg` || "USDT"}
+          />
+        </div>
+      ),
+      "Due Date": dueDate,
+      Status: (
+        <div className="w-full flex justify-center items-center">
+          <Badge text={b.status} status={badgeStatus} className="px-5" />
+        </div>
+      ),
+    };
+  });
+
+  const isAllChecked = checkedRows.length === billDatas?.length;
+
+  return (
+    <div className="flex flex-col w-full h-full justify-start items-start p-5 gap-5">
+      <div className="flex flex-col w-full px-5 gap-10">
+        <div className="flex flex-row justify-between items-center">
+          <div className="flex flex-row gap-3">
+            <img src="/sidebar/bill.svg" alt="Bill Placeholder" className="w-6" />
+            <span className="font-bold text-2xl">Invoices</span>
+          </div>
+          <PrimaryButton
+            text="Create invoice"
+            icon="/misc/plus-icon.svg"
+            iconPosition="left"
+            onClick={() => {
+              router.push("/invoice/create");
+            }}
+            containerClassName="w-[140px]"
+            buttonClassName="py-2.5"
+          />
+        </div>
+
+        <div className="flex flex-row w-full gap-2">
+          <Card
+            title="All invoices"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalBills ?? 0}</span>
+            }
+          />
+          <Card
+            title="Sent"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalPending ?? 0}</span>
+            }
+          />
+          <Card
+            title="Draft"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalPaid ?? 0}</span>
+            }
+          />
+          <Card
+            title="Paid"
+            text={
+              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalOverdue ?? 0}</span>
+            }
+          />
+        </div>
+      </div>
+
+      <BaseContainer
+        header={
+          <div className="flex w-full justify-between items-center py-3 px-5">
+            <div className="flex flex-col gap-1">
+              <TabContainer
+                tabs={[
+                  { id: "all", label: "All" },
+                  { id: "sent", label: "Sent" },
+                  { id: "paid", label: "Paid" },
+                ]}
+                activeTab={activeTab}
+                //@ts-ignore
+                setActiveTab={setActiveTab}
+              />
+            </div>
+          </div>
+        }
+        childrenClassName="p-5 gap-5"
+        containerClassName="w-full h-full bg-[#F6F6F6]"
+      >
+        <div className="flex w-full justify-between items-center">
+          {renderTabHeader(activeTab)}
+
+          {/* Filter Button */}
+          <div className="flex items-center gap-2">
+            <SecondaryButton
+              text="Sort"
+              icon="/misc/sort-icon.svg"
+              onClick={() => console.log("Sort button clicked")}
+              iconPosition="left"
+              variant="light"
+              buttonClassName="px-2"
+            />
+            <SecondaryButton
+              text="Filter"
+              icon="/wallet-analytics/setting-icon.gif"
+              onClick={() => console.log("Filter button clicked")}
+              iconPosition="left"
+              variant="light"
+              buttonClassName="px-2"
+            />
+          </div>
+        </div>
+        <Table
+          headers={[
+            <div className="flex justify-center items-center">
+              <CustomCheckbox checked={isAllChecked as boolean} onChange={handleCheckAll} />
+            </div>,
+            "Creation date",
+            "Invoice",
+            "Name",
+            "Group",
+            "Amount",
+            "Due Date",
+            "Status",
+          ]}
+          data={billDatas}
+          className="w-full"
+          rowClassName="py-5"
+          headerClassName="py-3"
+          showPagination={true}
+          actionColumn={true}
+          actionRenderer={billActionRenderer}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={setRowsPerPage}
+          onRowClick={rowData => {
+            const invoiceUUID = (rowData as any).__invoiceUuid;
+            router.push(`/bill/detail?uuid=${invoiceUUID}`);
+          }}
+        />
+      </BaseContainer>
+
+      <Tooltip
+        id="bill-action-tooltip"
+        clickable
+        style={{
+          zIndex: 20,
+          borderRadius: "16px",
+          padding: "0",
+        }}
+        place="left"
+        openOnClick
+        noArrow
+        border="none"
+        opacity={1}
+        render={({ content }) => {
+          if (!content) return null;
+          const id = parseInt(content, 10);
+          const bill = bills?.find(b => b.id === id);
+          if (!bill) return null;
+
+          const handlePay = async () => {
+            // Collect uuids: include the clicked bill and any selected rows
+            const selectedUUIDs = checkedRows.map(i => bills[i]?.invoice?.uuid).filter(Boolean) as string[];
+            const uuids = Array.from(new Set([bill.invoice?.uuid, ...selectedUUIDs]));
+
+            if (uuids.length === 0) return;
+
+            const params = new URLSearchParams();
+
+            //@ts-ignore
+            uuids.forEach(u => params.append("invoiceUUID", u));
+            router.push(`/bill/review?${params.toString()}`);
+          };
+
+          const handleDelete = () => {
+            openModal("REMOVE_INVOICE", {
+              invoiceOwnerName: bill.invoice?.fromDetails?.name || "",
+              onRemove: async () => {
+                deleteBill.mutate(bill.uuid, {
+                  onError: err => {
+                    console.error("Delete invoice failed", err);
+                    toast.error("Failed to delete invoice");
+                  },
+                });
+              },
+            });
+          };
+
+          const handleDownload = async () => {
+            try {
+              if (!bill.invoice?.uuid) throw new Error("Invoice UUID not found");
+              const blob = await downloadPdf(bill.invoice?.uuid);
+              const url = window.URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = `invoice-${bill.invoice?.invoiceNumber || bill.uuid}.pdf`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              console.error("Failed to download PDF:", err);
+            }
+          };
+
+          const handleCopyInvoiceLink = async () => {
+            try {
+              const link = `${window.location.origin}/invoice-review?invoiceUUID=${bill.uuid}`;
+              await navigator.clipboard.writeText(link);
+              // Lightweight confirmation
+              toast.success("Invoice link copied to clipboard");
+            } catch (err) {
+              console.error("Failed to copy invoice link", err);
+            }
+          };
+
+          return (
+            <BillActionTooltip
+              onCopyInvoiceLink={handleCopyInvoiceLink}
+              onDeleteInvoice={handleDelete}
+              onDownloadPDF={handleDownload}
+              onPay={handlePay}
+              billStatus={bill.status}
+            />
+          );
+        }}
+      />
+
+      {checkedRows.length > 0 && (
+        <FloatingAction
+          selectedCount={checkedRows.length}
+          allSelected={isAllChecked}
+          onDeselectAll={() => setCheckedRows([])}
+          actionButtons={
+            <SecondaryButton
+              text="Pay all"
+              buttonClassName="w-40 rounded-full"
+              onClick={async () => {
+                const uuids = checkedRows.map(i => bills[i]?.invoice?.uuid).filter(Boolean) as string[];
+                if (uuids.length === 0) return;
+                // Navigate to review page with multiple invoiceUUID query params
+                const params = new URLSearchParams();
+                uuids.forEach(u => params.append("invoiceUUID", u));
+                router.push(`/bill/review?${params.toString()}`);
+              }}
+            />
+          }
+        />
+      )}
+    </div>
+  );
+};
+
+export default InvoiceContainer;
