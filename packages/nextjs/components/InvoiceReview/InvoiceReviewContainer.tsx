@@ -79,7 +79,7 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 export const InvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
 
-  const { isAuthenticated, user, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
+  const { isAuthenticated, isLoading: authIsLoading, sendOtp, verifyOtp, user } = useAuth();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const employeeEmail = searchParams.get("email") || "";

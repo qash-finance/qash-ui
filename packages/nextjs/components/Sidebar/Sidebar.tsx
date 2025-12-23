@@ -124,7 +124,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showMoveCryptoSidebar, setShowMoveCryptoSidebar] = useState(false);
-  const { isAuthenticated, email, user, isLoading, logout } = useAuth();
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
   // **************** Effect ****************
   useEffect(() => {
     // Check if any submenu is currently open
@@ -249,7 +249,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
                     {(user as AuthMeResponse["user"])?.teamMembership?.firstName}{" "}
                     {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
                   </span>
-                  <span className="text-text-secondary leading-none">{email}</span>
+                  <span className="text-text-secondary leading-none">{(user as AuthMeResponse["user"])?.email}</span>
                 </div>
                 <img
                   src="/misc/three-dot-icon.svg"
