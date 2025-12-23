@@ -1,10 +1,6 @@
 # Qash
 
-**Qash** is a privacy‑first, programmable payment platform built on Miden, a blockchain that supports privacy by default by executing transactions locally and storing account data locally.
-
-It enables custom payment logic (like cancellable, time‑lock, recurring, streaming and more) and private multisig management designed for teams, with AI integration for usability and personalization.
-
-Qash is currently live on the Miden testnet. Try it here: [qash.finance](https://qash.finance)
+**Qash** is a private neobank for global teams to run payroll, earn yield, and spend across chains and currencies.
 
 ## Have an idea to improve this?
 
