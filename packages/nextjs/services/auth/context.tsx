@@ -59,7 +59,6 @@ export function AuthProvider({
       try {
         const storedAccessToken = AuthStorage.getAccessToken();
         const storedRefreshToken = AuthStorage.getRefreshToken();
-        const storedEmail = AuthStorage.getEmail();
 
         if (!storedRefreshToken) {
           setState(prev => ({ ...prev, isLoading: false }));
@@ -88,7 +87,7 @@ export function AuthProvider({
         setState(prev => ({
           ...prev,
           isAuthenticated: true,
-          email: storedEmail,
+          email: me?.user?.email ?? null,
           accessToken,
           refreshToken,
           user: me.user ?? null,
@@ -122,7 +121,6 @@ export function AuthProvider({
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       await api.sendOtp(email);
-      AuthStorage.storeEmail(email);
       setState(prev => ({ ...prev, email, isLoading: false }));
     } catch (error) {
       console.error("Send OTP failed:", error);
@@ -140,7 +138,6 @@ export function AuthProvider({
       const refreshToken = (response as any).refreshToken ?? (response as any).refresh_token;
 
       // Store tokens and email first (synchronously) to ensure they persist
-      AuthStorage.storeEmail(email);
       if (accessToken) AuthStorage.storeAccessToken(accessToken);
       if (refreshToken) AuthStorage.storeRefreshToken(refreshToken);
 

@@ -22,11 +22,9 @@ export const HomeContainer = () => {
       const { NetworkId, AccountInterface, TransactionFilter, NoteFilter, NoteFilterTypes, WebClient } = await import(
         "@demox-labs/miden-sdk"
       );
-      console.log("Fetching transactions for account:", accountId);
       setLoading(true);
       try {
         if (client instanceof WebClient) {
-          console.log("ACCOUNT ID", accountId);
           const transactionRecords = (await client.getTransactions(TransactionFilter.all())).filter(
             tx => tx.accountId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet) === accountId,
           );

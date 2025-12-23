@@ -79,7 +79,7 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 export const InvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
 
-  const { isAuthenticated, email, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
+  const { isAuthenticated, user, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const employeeEmail = searchParams.get("email") || "";
@@ -99,7 +99,7 @@ export const InvoiceReviewContainer = () => {
   const { isLoading, fetchInvoiceByUUID, confirmInvoiceData, downloadPdf } = useInvoice();
 
   const normalizedEmployeeEmail = useMemo(() => employeeEmail.trim().toLowerCase(), [employeeEmail]);
-  const normalizedUserEmail = useMemo(() => (email || "").trim().toLowerCase(), [email]);
+  const normalizedUserEmail = useMemo(() => (user?.email || "").trim().toLowerCase(), [user?.email]);
 
   const isEmployeeEmailMatch = useMemo(() => {
     if (!isAuthenticated) return false;
