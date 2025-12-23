@@ -42,7 +42,8 @@ const nanumPenScript = Nanum_Pen_Script({
 });
 export const metadata: Metadata = {
   title: "Qash",
-  description: "Manage your cash on-chain with privacy",
+  description:
+    "Neobank for global teams to run payroll, earn yield, and spend across chains and currencies without exposing sensitive information onchain.",
   icons: {
     icon: "/logo/qash-icon.svg",
   },
