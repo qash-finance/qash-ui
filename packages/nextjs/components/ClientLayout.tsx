@@ -26,7 +26,7 @@ import { TransactionProviderC } from "@/contexts/TransactionProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ModalTriggerRef } from "./Common/ModalTrigger";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
-import { ParaProvider } from "@getpara/react-sdk";
+import { Environment, ParaProvider } from "@getpara/react-sdk";
 import "@getpara/react-sdk/styles.css";
 
 const SIDEBAR_WIDTH = 280;
@@ -110,13 +110,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <QueryClientProvider client={queryClient}>
       <ParaProvider
         paraClientConfig={{
-          apiKey: "beta_b3777e92f2c5b6f7455ae6a3d536b625",
+          env: Environment.BETA,
+          apiKey: process.env.NEXT_PUBLIC_PARA_API_KEY || "",
         }}
-        config={{ appName: "Starter for MidenxPara" }}
+        config={{ appName: "Qash x Para" }}
         paraModalConfig={{
           oAuthMethods: ["GOOGLE"],
           disablePhoneLogin: true,
-          authLayout: ["AUTH:FULL"],
           recoverySecretStepEnabled: true,
           onRampTestMode: true,
         }}
