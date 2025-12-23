@@ -42,10 +42,10 @@ export const MoreActionsTooltip = ({ onPay, onEdit, onExport, onRemove }: MoreAc
   return (
     <div className="bg-white border border-primary-divider rounded-2xl shadow-lg w-[185px]">
       {/* Pay Button */}
-      <TooltipItem onClick={onPay} isFirst>
+      {/* <TooltipItem onClick={onPay} isFirst>
         <img src="/misc/coin-icon.svg" alt="coin" className="w-5 h-5" />
         <span className={`text-sm text-text-primary`}>Pay</span>
-      </TooltipItem>
+      </TooltipItem> */}
 
       {/* Edit Contact Button */}
       <TooltipItem onClick={onEdit}>

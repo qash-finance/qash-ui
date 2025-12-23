@@ -74,9 +74,9 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           <div className="flex flex-col gap-1">
             <span className="text-text-secondary text-sm">Transfer Successful</span>
             <div className="flex flex-row gap-2 items-center">
-              <img src="/token/qash.svg" alt={tokenSymbol} className="w-9" />
+              {/* <img src="/token/qash.svg" alt={tokenSymbol} className="w-9" /> */}
               <span className="text-text-primary text-3xl">
-                {amount} {tokenSymbol}
+                $ {amount} {tokenSymbol}
               </span>
             </div>
           </div>

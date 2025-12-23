@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import InvoiceDetail from "./InvoiceDetail";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
@@ -51,6 +50,22 @@ export interface InvoiceData {
   status: string;
 }
 
+const Header = () => {
+  return (
+    <div className="w-full flex justify-between items-center p-2 pt-1">
+      <div className="flex items-center justify-center">
+        <img src="/logo/qash-icon.svg" alt="Qash Logo" />
+        <img
+          src="/logo/ash-text-icon.svg"
+          alt="Qash Logo"
+          className="w-12"
+          style={{ transition: "width 200ms ease" }}
+        />
+      </div>
+    </div>
+  );
+};
+
 const InvoiceSuccess = ({ message }: { message: string }) => {
   return (
     <div className="flex flex-col w-full h-full justify-center items-center gap-3 ">
@@ -62,7 +77,7 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 };
 
 export const InvoiceReviewContainer = () => {
-  const { openModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
   const { isAuthenticated, isLoading: authIsLoading, sendOtp, verifyOtp, user } = useAuth();
   const searchParams = useSearchParams();
@@ -259,7 +274,7 @@ export const InvoiceReviewContainer = () => {
 
   const handleConfirmInvoice = async () => {
     // Check if address has been updated
-    if (invoiceData && invoiceData.from.address === originalAddress) {
+    if (invoiceData && !invoiceData.from.address) {
       toast.error("Please update the address before confirming the invoice");
       return;
     }
@@ -268,6 +283,9 @@ export const InvoiceReviewContainer = () => {
       openModal<ConfirmAndReviewInvoiceModalProps>("CONFIRM_AND_REVIEW_INVOICE", {
         onConfirm: async () => {
           await confirmInvoiceData(invoiceUUID);
+          // close modal
+          closeModal("CONFIRM_AND_REVIEW_INVOICE");
+
           setSuccessMessage("Invoice confirmed successfully");
           setShowSuccess(true);
           // Reload invoice data
@@ -376,8 +394,36 @@ export const InvoiceReviewContainer = () => {
         </div>
       )}
 
+      {/* if invoice is deleted, show its not active anymore */}
+      {invoiceData?.status === "DELETED" && (
+        <div className="flex flex-col w-full h-full bg-app-background p-2 gap-2">
+          <Header />
+          <div
+            className="w-full h-full relative flex justify-center items-center flex-col rounded-lg"
+            style={{
+              background: "linear-gradient(180deg, #D7D7D7 0%, #FFF 60.33%)",
+            }}
+          >
+            <div className="w-fit h-fit relative flex justify-center items-center flex-col gap-4 z-2">
+              <span className="text-text-primary text-7xl font-bold anton-regular leading-none uppercase">
+                Oops, this invoice isn’t available anymore.
+              </span>
+              <span className="text-text-primary text-lg">
+                Looks like the employer has deleted the invoice. You can reach out to your employer if anything wrong.
+              </span>
+            </div>
+          </div>
+
+          <img
+            src="/gift/background-qash-text.svg"
+            alt="background-qash-text"
+            className="w-[1050px] absolute top-100 left-1/2 -translate-x-1/2 -translate-y-1/2 z-1"
+          />
+        </div>
+      )}
+
       {/* Review Step */}
-      {step === "review" && invoiceData && !showSuccess && (
+      {step === "review" && invoiceData && !showSuccess && invoiceData.status !== "DELETED" && (
         <>
           <div className="flex flex-row w-full justify-between items-center px-4 py-3 border-b border-primary-divider">
             <div className="flex flex-row items-center gap-2">
@@ -386,7 +432,8 @@ export const InvoiceReviewContainer = () => {
             </div>
 
             <div className="flex flex-row items-center gap-2">
-              <SecondaryButton
+              {/* TODO: Add download PDF button */}
+              {/* <SecondaryButton
                 text="Download PDF"
                 onClick={handleDownloadPdf}
                 variant="light"
@@ -394,8 +441,8 @@ export const InvoiceReviewContainer = () => {
                 icon="/invoice/download-invoice-icon.svg"
                 iconPosition="left"
                 disabled={isLoading}
-              />
-              {invoiceData.status === "SENT" && (
+              /> */}
+              {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
                 <PrimaryButton
                   text="Confirm"
                   onClick={handleConfirmInvoice}

@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import { useForm } from "react-hook-form";
@@ -8,9 +8,8 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { AssetWithMetadata } from "@/types/faucet";
 import { ContractTerm } from "./ContractTerm";
 import { useTitle } from "@/contexts/TitleProvider";
-import { set } from "lodash";
-import { CompanyContactResponseDto, CompanyGroupResponseDto } from "@/types/employee";
-import { useCreatePayroll, useCreateSandboxPayroll } from "@/services/api/payroll";
+import { CompanyContactResponseDto } from "@/types/employee";
+import { useCreatePayroll } from "@/services/api/payroll";
 import { Company, useGetMyCompany } from "@/services/api/company";
 import { ContractTermEnum, CreatePayrollDto } from "@/types/payroll";
 import toast from "react-hot-toast";
@@ -18,12 +17,6 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
 import { useAuth } from "@/services/auth/context";
 import { AuthMeResponse } from "@/services/auth/api";
-import {
-  QASH_TOKEN_ADDRESS,
-  QASH_TOKEN_DECIMALS,
-  QASH_TOKEN_MAX_SUPPLY,
-  QASH_TOKEN_SYMBOL,
-} from "@/services/utils/constant";
 
 interface CreatePayrollFormData {
   employee: string;
@@ -91,6 +84,7 @@ const CreatePayroll = ({
     handleSubmit,
     formState: { errors, isValid },
     setValue,
+    watch,
   } = useForm<CreatePayrollFormData>({
     mode: "onChange",
     defaultValues: initialFormData || {
@@ -120,7 +114,7 @@ const CreatePayroll = ({
       employee,
     } = formData;
 
-    if (!selectedNetwork || !selectedToken || !selectedToken.metadata.symbol || !employeeId) {
+    if (!selectedNetwork || !selectedToken || !selectedToken.metadata.symbol || !employeeId || !description) {
       toast.error("Missing required fields");
       return;
     }
@@ -130,12 +124,14 @@ const CreatePayroll = ({
       return;
     }
 
-    const durationValue = parseInt(duration);
-    const payStart = new Date();
+    let durationValue = parseInt(duration);
+    const payStart = new Date(); //pay start is always starting next month
     payStart.setDate(selectedPayDay);
+    payStart.setMonth(payStart.getMonth() + 1);
     const payEnd = new Date(payStart);
     if (durationUnit === "year") {
       payEnd.setFullYear(payEnd.getFullYear() + durationValue);
+      durationValue = durationValue * 12;
     } else {
       payEnd.setMonth(payEnd.getMonth() + durationValue);
     }
@@ -145,6 +141,7 @@ const CreatePayroll = ({
       network: {
         name: selectedNetwork.name,
         chainId: parseInt(selectedNetwork.value),
+        description: selectedNetwork.name,
         metadata: {},
       },
       token: {
@@ -224,6 +221,8 @@ const CreatePayroll = ({
     setSelectedNetwork(network);
   };
 
+  const selectedEmployeeName = watch("employee");
+
   return (
     <>
       {/* Header */}
@@ -238,26 +237,30 @@ const CreatePayroll = ({
         <div className="w-[45%] p-4 pr-0 flex flex-col gap-3 top-1 sticky h-fit">
           <h2 className="text-text-primary text-lg leading-none">Basic Information</h2>
 
-          {/* Employee Input */}
-          <div className={`${inputContainerClass} flex items-center justify-between`}>
-            <div className="flex flex-col gap-0.5 flex-1">
-              <p className={labelClass}>Employee</p>
-              <input
-                {...register("employee", { required: true })}
-                type="text"
-                autoComplete="off"
-                placeholder="Enter full name"
-                className="outline-none"
-                disabled
-              />
+          {/* Employee Selector */}
+          <div
+            className={`${inputContainerClass} flex items-center justify-between cursor-pointer`}
+            onClick={handleChooseRecipient}
+          >
+            <div className="flex gap-3 items-center flex-1">
+              {selectedEmployeeName ? (
+                <>
+                  <div className="bg-app-background flex items-center justify-center rounded-lg w-10 h-10 border border-primary-divider">
+                    <img alt="" className="w-5 h-5" src="/misc/address-book-icon.svg" />
+                  </div>
+                  <div className="flex flex-col">
+                    <p className={labelClass}>Employee</p>
+                    <p className="text-text-primary text-sm font-bold">{selectedEmployeeName}</p>
+                  </div>
+                </>
+              ) : (
+                <span className="text-text-primary py-1">Select employee</span>
+              )}
             </div>
-            <button
-              className="bg-app-background flex items-center justify-center rounded-lg w-8 h-8 cursor-pointer border border-primary-divider"
-              onClick={handleChooseRecipient}
-            >
-              <img alt="" className="w-4 h-4" src="/misc/address-book-icon.svg" />
-            </button>
+            <img alt="" className="w-6 h-6" src="/arrow/chevron-down.svg" />
           </div>
+          {/* Hidden input for form validation */}
+          <input type="hidden" {...register("employee", { required: true })} />
 
           {/* Network Selector */}
           <div
@@ -327,9 +330,7 @@ const CreatePayroll = ({
                   type="text"
                   placeholder="Paste wallet address"
                   className="w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-secondary"
-                  autoFocus={true}
                   autoComplete="off"
-                  disabled
                 />
               </div>
             </div>
@@ -351,6 +352,7 @@ const CreatePayroll = ({
             setSelectedPayDay={setSelectedPayDay}
             register={register}
             errors={errors}
+            setValue={setValue}
             inputContainerClass={inputContainerClass}
             labelClass={labelClass}
           />
@@ -381,15 +383,18 @@ function createInvoiceDataFromPayroll(
   }
 
   const employeeName = employee?.name;
-  const today = new Date();
-  const dueDate = new Date(today);
-  dueDate.setDate(today.getDate() + 30);
-  const billToName = `${owner?.teamMembership?.firstName} ${owner.teamMembership?.lastName}`;
-  const billToEmail = owner.email;
+  const dueDate = new Date(payroll.payStartDate);
+  // Invoice date should be 5 days before due date
+  const invoiceDate = new Date(dueDate);
+  invoiceDate.setDate(dueDate.getDate() - 5);
+  const billToName = company?.companyName;
+  const billToEmail = owner?.email;
+
+  console.log(invoiceDate.toISOString().split("T")[0], payroll.payStartDate.split("T")[0]);
 
   return {
     invoiceNumber: `INV0001`,
-    date: today.toISOString().split("T")[0],
+    date: invoiceDate.toISOString().split("T")[0],
     dueDate: payroll.payStartDate.split("T")[0],
     from: {
       name: employeeName,
@@ -399,7 +404,7 @@ function createInvoiceDataFromPayroll(
       //   .filter(Boolean)
       //   .join(", "),
       token: payroll?.token?.symbol || "QASH",
-      network: payroll?.network?.name || "Miden",
+      network: payroll?.network?.name || "Miden Testnet",
       walletAddress: employee.walletAddress,
     },
     billTo: {
@@ -428,15 +433,23 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: 
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const router = useRouter();
 
-  const { mutateAsync: createPayroll } = useCreateSandboxPayroll();
+  const { mutateAsync: createPayroll } = useCreatePayroll();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirmAndCreate = async () => {
     setIsSubmitting(true);
     try {
       await createPayroll({
-        ...payrollDto,
-        amount: Number(payrollDto.amount),
+        employeeId: payrollDto.employeeId,
+        network: payrollDto.network,
+        token: payrollDto.token,
+        contractTerm: payrollDto.contractTerm,
+        payrollCycle: payrollDto.payrollCycle,
+        amount: payrollDto.amount,
+        joiningDate: payrollDto.joiningDate,
+        payday: payrollDto.metadata?.payDay,
+        generateDaysBefore: 5,
+        description: payrollDto.description,
       }).catch(err => {
         throw err;
       });

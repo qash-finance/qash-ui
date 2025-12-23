@@ -114,7 +114,7 @@ export default function LoginContainer() {
       // Small delay to ensure state updates are committed before navigation
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      router.push(hasCompany ? "/" : "/onboarding");
+      router.push(hasCompany ? "/payroll" : "/onboarding");
     } catch (error) {
       setOtpError(true);
       toast.error(error instanceof Error ? error.message : "Failed to verify OTP");

@@ -65,13 +65,57 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
   </div>
 );
 
+// Helper function to map network name to icon and value
+const getNetworkFromName = (networkName?: string): { icon: string; name: string; value: string } | null => {
+  if (!networkName) return null;
+
+  const normalizedName = networkName.trim();
+
+  const networkMap: Record<string, { icon: string; value: string; displayName: string }> = {
+    "miden testnet": { icon: "/chain/miden.svg", value: "miden", displayName: "Miden Testnet" },
+    ethereum: { icon: "/chain/ethereum.svg", value: "eth", displayName: "Ethereum" },
+    solana: { icon: "/chain/solana.svg", value: "sol", displayName: "Solana" },
+    base: { icon: "/chain/base.svg", value: "base", displayName: "Base" },
+    "bnb smart chain (bep20)": { icon: "/chain/bnb.svg", value: "bnb", displayName: "BNB Smart Chain (BEP20)" },
+  };
+
+  // Try exact match first (case-sensitive)
+  const exactMatch = networkMap[normalizedName];
+  if (exactMatch) {
+    return { icon: exactMatch.icon, name: exactMatch.displayName, value: exactMatch.value };
+  }
+
+  // Try case-insensitive match
+  const lowerName = normalizedName.toLowerCase();
+  const caseInsensitiveMatch = networkMap[lowerName];
+  if (caseInsensitiveMatch) {
+    return {
+      icon: caseInsensitiveMatch.icon,
+      name: caseInsensitiveMatch.displayName,
+      value: caseInsensitiveMatch.value,
+    };
+  }
+
+  // Try partial match (e.g., "Miden" matches "Miden Testnet")
+  for (const [key, network] of Object.entries(networkMap)) {
+    if (lowerName.includes(key) || key.includes(lowerName)) {
+      return { icon: network.icon, name: network.displayName, value: network.value };
+    }
+  }
+
+  // Default to Miden if not found, but preserve the original name
+  return { icon: "/chain/miden.svg", name: networkName, value: "miden" };
+};
+
 export function EditContactModal({ isOpen, onClose, zIndex, contactData }: ModalProp<EditContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<TokenDto | null>(contactData?.token || null);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
-    contactData?.network
-      ? { icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" }
-      : { icon: "/chain/miden.svg", name: "Miden Testnet", value: "miden" },
+    getNetworkFromName(contactData?.network?.name) || {
+      icon: "/chain/miden.svg",
+      name: "Miden Testnet",
+      value: "miden",
+    },
   );
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
   const { openModal } = useModal();
@@ -98,6 +142,8 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     setValue,
     watch,
   } = useForm<EditContactFormData>({
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       name: contactData?.name || "",
       walletAddress: contactData?.address || "",
@@ -109,12 +155,30 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
   const watchedName = watch("name");
   const watchedAddress = watch("walletAddress");
 
-  const { data: nameDuplicate } = useCheckEmployeeNameDuplicate(watchedName, selectedGroup?.id ?? 0);
-  const { data: addressDuplicate } = useCheckEmployeeAddressDuplicate(watchedAddress, selectedGroup?.id ?? 0);
+  // Debounce name and address to avoid hitting server on every keystroke
+  const [debouncedName, setDebouncedName] = useState(watchedName);
+  const [debouncedAddress, setDebouncedAddress] = useState(watchedAddress);
 
-  // Update form when contactData or groups change
   useEffect(() => {
-    if (contactData) {
+    const handler = setTimeout(() => {
+      setDebouncedName(watchedName);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [watchedName]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedAddress(watchedAddress);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [watchedAddress]);
+
+  const { data: nameDuplicate } = useCheckEmployeeNameDuplicate(debouncedName, selectedGroup?.id ?? 0);
+  const { data: addressDuplicate } = useCheckEmployeeAddressDuplicate(debouncedAddress, selectedGroup?.id ?? 0);
+
+  // Update form when modal opens or contactData/groups change
+  useEffect(() => {
+    if (isOpen && contactData) {
       setValue("name", contactData.name);
       setValue("walletAddress", contactData.address);
       setValue("email", contactData.email || "");
@@ -126,10 +190,20 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
 
       // Initialize selectedNetwork from contact data if available
       if (contactData.network) {
-        setSelectedNetwork({ icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" });
+        const network = getNetworkFromName(contactData.network.name);
+        if (network) {
+          setSelectedNetwork(network);
+        } else {
+          // Fallback if network name doesn't match
+          setSelectedNetwork({
+            icon: "/chain/miden.svg",
+            name: contactData.network.name,
+            value: "miden",
+          });
+        }
       }
     }
-  }, [contactData, setValue, employeeGroups]);
+  }, [isOpen, contactData, setValue, employeeGroups]);
 
   const groupIdRegister = register("groupId", {
     required: "Group is required",
@@ -176,16 +250,29 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
   });
 
   const emailRegister = register("email", {
-    pattern: {
-      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      message: "Email must be a valid email address",
-    },
-    maxLength: {
-      value: 255,
-      message: "Email cannot be longer than 255 characters",
-    },
     validate: value => {
-      if (!value || value.trim() === "") return true; // Email is optional
+      // Email is optional - if empty, it's valid
+      if (!value || value.trim() === "") return true;
+
+      const trimmedValue = value.trim();
+
+      // Check if email format is valid
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedValue)) {
+        return "Email must be a valid email address";
+      }
+
+      // Check max length
+      if (trimmedValue.length > 255) {
+        return "Email cannot be longer than 255 characters";
+      }
+
+      // Check if email has changed (similar to name and address validation)
+      // If email hasn't changed, it's valid (no need to check for duplicates)
+      if (contactData?.email && contactData.email.trim().toLowerCase() === trimmedValue.toLowerCase()) {
+        return true; // Email hasn't changed, so it's valid
+      }
+
       return true;
     },
   });
@@ -264,9 +351,7 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
     setSelectedGroup(matchedGroup);
     setValue("groupId", matchedGroup?.id ?? undefined, { shouldValidate: true, shouldTouch: true });
 
-    setSelectedNetwork(
-      contactData?.network ? { icon: "/chain/miden.svg", name: contactData.network.name, value: "miden" } : null,
-    );
+    setSelectedNetwork(contactData?.network ? getNetworkFromName(contactData.network.name) : null);
 
     onClose();
   };
