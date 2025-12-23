@@ -26,6 +26,8 @@ import { TransactionProviderC } from "@/contexts/TransactionProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { ModalTriggerRef } from "./Common/ModalTrigger";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
+import { ParaProvider } from "@getpara/react-sdk";
+import "@getpara/react-sdk/styles.css";
 
 const SIDEBAR_WIDTH = 280;
 
@@ -106,102 +108,116 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MidenSdkProvider>
-        <WalletProvider wallets={wallets as unknown as Adapter[]} autoConnect onError={handleError}>
-          <WalletModalProvider>
-            <TransactionProviderC>
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  style: {
-                    padding: "6px",
-                    background: "var(--toast-background) !important",
-                    border: "4px solid var(--toast-border) !important",
-                    width: "full",
-                    maxWidth: "900px",
-                    borderRadius: "9999px",
-                  },
-                  success: {
-                    icon: <img src="/toast/success.svg" alt="success" />,
-                  },
-                  error: {
-                    icon: <img src="/toast/error.svg" alt="error" />,
-                  },
-                  loading: {
-                    icon: <img src="/toast/loading.gif" alt="loading" className="w-10.5" />,
-                  },
-                }}
-                children={t => (
-                  <ToastBar
-                    toast={t}
-                    style={{
-                      ...t.style,
-                    }}
-                  >
-                    {({ icon, message }) => (
-                      <div className="flex items-center justify-between gap-8 pr-3">
-                        <div className="flex items-center">
-                          {icon}
-                          <span className="text-toast-text leading-none">{message}</span>
+      <ParaProvider
+        paraClientConfig={{
+          apiKey: "beta_b3777e92f2c5b6f7455ae6a3d536b625",
+        }}
+        config={{ appName: "Starter for MidenxPara" }}
+        paraModalConfig={{
+          oAuthMethods: ["GOOGLE"],
+          disablePhoneLogin: true,
+          authLayout: ["AUTH:FULL"],
+          recoverySecretStepEnabled: true,
+          onRampTestMode: true,
+        }}
+      >
+        <MidenSdkProvider>
+          <WalletProvider wallets={wallets as unknown as Adapter[]} autoConnect onError={handleError}>
+            <WalletModalProvider>
+              <TransactionProviderC>
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    style: {
+                      padding: "6px",
+                      background: "var(--toast-background) !important",
+                      border: "4px solid var(--toast-border) !important",
+                      width: "full",
+                      maxWidth: "900px",
+                      borderRadius: "9999px",
+                    },
+                    success: {
+                      icon: <img src="/toast/success.svg" alt="success" />,
+                    },
+                    error: {
+                      icon: <img src="/toast/error.svg" alt="error" />,
+                    },
+                    loading: {
+                      icon: <img src="/toast/loading.gif" alt="loading" className="w-10.5" />,
+                    },
+                  }}
+                  children={t => (
+                    <ToastBar
+                      toast={t}
+                      style={{
+                        ...t.style,
+                      }}
+                    >
+                      {({ icon, message }) => (
+                        <div className="flex items-center justify-between gap-8 pr-3">
+                          <div className="flex items-center">
+                            {icon}
+                            <span className="text-toast-text leading-none">{message}</span>
+                          </div>
+                          <img
+                            src="/toast/close-icon.svg"
+                            alt="close"
+                            className="w-5 cursor-pointer"
+                            onClick={() => toast.dismiss(t.id)}
+                          />
                         </div>
-                        <img
-                          src="/toast/close-icon.svg"
-                          alt="close"
-                          className="w-5 cursor-pointer"
-                          onClick={() => toast.dismiss(t.id)}
-                        />
-                      </div>
-                    )}
-                  </ToastBar>
-                )}
-              />
-              <TourProviderWrapper>
-                <SocketProvider>
-                  <ModalProvider>
-                    <AnalyticsProvider config={analyticsConfig}>
-                      <AuthProvider
-                        apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                        autoRefresh={true}
-                        refreshInterval={AUTH_REFRESH_INTERVAL}
-                      >
-                        <ProtectedContent>
-                          <AccountProvider>
-                            <TitleProvider>
-                              {/* <ConnectWalletButton /> */}
-                              <ModalManager />
-                              {fullscreenPages.has(pathname) ? (
-                                <div className="h-screen w-screen">{children}</div>
-                              ) : (
-                                <div className="flex flex-col h-screen overflow-hidden">
-                                  <TestnetBanner />
-                                  <div className="flex flex-row gap-2">
-                                    <div className="top-0" style={{ width: SIDEBAR_WIDTH }}>
-                                      <Sidebar />
-                                    </div>
-                                    {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
-                                    <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
-                                      <Title />
-                                      <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
-                                        {children}
+                      )}
+                    </ToastBar>
+                  )}
+                />
+                <TourProviderWrapper>
+                  <SocketProvider>
+                    <ModalProvider>
+                      <AnalyticsProvider config={analyticsConfig}>
+                        <AuthProvider
+                          apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
+                          autoRefresh={true}
+                          refreshInterval={AUTH_REFRESH_INTERVAL}
+                        >
+                          <ProtectedContent>
+                            <AccountProvider>
+                              <TitleProvider>
+                                {/* <ConnectWalletButton /> */}
+                                <ModalManager />
+                                {fullscreenPages.has(pathname) ? (
+                                  <div className="h-screen w-screen">{children}</div>
+                                ) : (
+                                  <div className="flex flex-col h-screen overflow-hidden">
+                                    <TestnetBanner />
+                                    <div className="flex flex-row gap-2">
+                                      <div className="top-0" style={{ width: SIDEBAR_WIDTH }}>
+                                        <Sidebar />
+                                      </div>
+                                      {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
+                                      <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
+                                        <Title />
+                                        <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
+                                          {children}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
-                              {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                              {!fullscreenPages.has(pathname) && <Background />}
-                            </TitleProvider>
-                          </AccountProvider>
-                        </ProtectedContent>
-                      </AuthProvider>
-                    </AnalyticsProvider>
-                  </ModalProvider>
-                </SocketProvider>
-              </TourProviderWrapper>
-            </TransactionProviderC>
-          </WalletModalProvider>
-        </WalletProvider>
-      </MidenSdkProvider>
+                                )}
+                                {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                                {!fullscreenPages.has(pathname) && <Background />}
+                              </TitleProvider>
+                            </AccountProvider>
+                          </ProtectedContent>
+                        </AuthProvider>
+                      </AnalyticsProvider>
+                    </ModalProvider>
+                  </SocketProvider>
+                </TourProviderWrapper>
+              </TransactionProviderC>
+            </WalletModalProvider>
+          </WalletProvider>
+        </MidenSdkProvider>
+      </ParaProvider>
     </QueryClientProvider>
   );
 }

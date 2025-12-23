@@ -10,6 +10,9 @@ import InputOutlined from "../Common/Input/InputOutlined";
 import { useAuth } from "@/services/auth/context";
 import toast from "react-hot-toast";
 import { User } from "@/types/user";
+import { useModal as useParaModal } from "@getpara/react-sdk";
+import { useParaMiden } from "miden-para-react";
+import { useAccount as useParaAccount } from "@getpara/react-sdk";
 
 type Step = "email" | "otp";
 
@@ -27,6 +30,9 @@ export default function LoginContainer() {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const debouncedValidateRef = useRef<DebouncedFunc<(value: string) => void> | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const { openModal: openParaModal } = useParaModal();
+  const { para } = useParaMiden("https://rpc.testnet.miden.io");
+  const { isConnected } = useParaAccount();
 
   // Create debounced email validation
   useEffect(() => {
@@ -166,6 +172,24 @@ export default function LoginContainer() {
               />
               {validationError && <span className="text-[16px] text-[#E93544] mt-2 self-start">{validationError}</span>}
               {error && <span className="text-[16px] text-[#E93544] mt-2 self-start">{error}</span>}
+              <div
+                onClick={() => {
+                  openParaModal?.();
+                }}
+                className="p-10 bg-red-500 text-xl text-white"
+              >
+                CONNECT WITH PARA
+              </div>
+              <div className="p-10 bg-red-500 text-xl text-white">{isConnected ? "CONNECTED" : "NOT CONNECTED"}</div>
+              <div
+                onClick={async () => {
+                  const jwt = await para?.issueJwt();
+                  console.log(jwt);
+                }}
+                className="p-10 bg-red-500 text-xl text-white"
+              >
+                LOG JWT TOKEN WITH LOGGED IN USER
+              </div>
               <LoginButton
                 onClick={handleSendOtp}
                 loading={sendingOtp || isLoading}
