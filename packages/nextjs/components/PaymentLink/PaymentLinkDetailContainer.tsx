@@ -73,7 +73,7 @@ const PaymentLinkDetailContainer = () => {
       "header-0": (
         <div className="flex justify-center items-center">
           <span className="text-text-primary">
-            {new Date(record.createdAt).toLocaleString("sv-SE", { hour12: false }).replace(" ", " ")}
+            {new Date(record.createdAt).toLocaleString("sv-SE", { hour12: false })}
           </span>
         </div>
       ),
