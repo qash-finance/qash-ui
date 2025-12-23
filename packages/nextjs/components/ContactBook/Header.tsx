@@ -18,7 +18,7 @@ export const Header = () => {
           text="Add contact"
           icon="/misc/plus-icon.svg"
           iconPosition="left"
-          onClick={() => openModal(MODAL_IDS.CREATE_CONTACT)}
+          onClick={() => openModal(MODAL_IDS.CHOOSE_CONTACT_TYPE)}
           containerClassName="w-[140px]"
         />
       </div>

@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { CreateContactModalProps } from "@/types/modal";
+import { CreateEmployeeContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { Category, CategoryShape } from "@/types/address-book";
 import BaseModal from "../BaseModal";
@@ -73,7 +73,7 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
   </div>
 );
 
-export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateContactModalProps>) {
+export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateEmployeeContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>({
     amount: "0",
@@ -368,4 +368,4 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
   );
 }
 
-export default CreateContactModal;
+export default CreateEmployeeContactModal;

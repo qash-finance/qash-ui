@@ -43,7 +43,8 @@ import CreateWalletModal from "@/components/Modal/Wallet/CreateWalletModal";
 import ImportWalletModal from "@/components/Modal/Wallet/ImportWalletModal";
 import RemoveTransactionConfirmationModal from "@/components/Modal/Batch/RemoveTransactionConfirmationModal";
 import CreateGroupModal from "@/components/Modal/Contact/CreateGroupModal";
-import CreateContactModal from "@/components/Modal/Contact/CreateContactModal";
+import CreateEmployeeContactModal from "@/components/Modal/Contact/CreateEmployeeContactModal";
+import CreateClientContactModal from "@/components/Modal/Contact/CreateClientContactModal";
 import EditContactModal from "@/components/Modal/Contact/EditContactModal";
 import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveContactConfirmationModal";
 import BonusAmountModal from "@/components/Modal/Payroll/BonusAmountModal";
@@ -55,6 +56,7 @@ import RemoveInvoiceModal from "@/components/Modal/Invoice/RemoveInvoiceModal";
 import ConnectMidenWallet from "@/components/Modal/Wallet/ConnectMidenWallet";
 import RemovePayrollModal from "@/components/Modal/Payroll/RemovePayrollModal";
 import ConfirmAndReviewInvoiceModal from "@/components/Modal/Invoice/ConfirmAndReviewInvoiceModal";
+import ChooseContactTypeModal from "@/components/Modal/Contact/ChooseContactTypeModal";
 import { Group } from "./group-payment";
 import { CompanyGroupResponseDto } from "./employee";
 import { BatchTransaction } from "@/services/store/batchTransactions";
@@ -109,7 +111,8 @@ export const MODAL_IDS = {
   CREATE_WALLET: "CREATE_WALLET",
   REMOVE_TRANSACTION_CONFIRMATION: "REMOVE_TRANSACTION_CONFIRMATION",
   CREATE_GROUP: "CREATE_GROUP",
-  CREATE_CONTACT: "CREATE_CONTACT",
+  CREATE_EMPLOYEE_CONTACT: "CREATE_EMPLOYEE_CONTACT",
+  CREATE_CLIENT_CONTACT: "CREATE_CLIENT_CONTACT",
   EDIT_CONTACT: "EDIT_CONTACT",
   REMOVE_CONTACT_CONFIRMATION: "REMOVE_CONTACT_CONFIRMATION",
   BONUS_AMOUNT: "BONUS_AMOUNT",
@@ -121,6 +124,7 @@ export const MODAL_IDS = {
   REMOVE_PAYROLL: "REMOVE_PAYROLL",
   REMOVE_INVOICE: "REMOVE_INVOICE",
   CONFIRM_AND_REVIEW_INVOICE: "CONFIRM_AND_REVIEW_INVOICE",
+  CHOOSE_CONTACT_TYPE: "CHOOSE_CONTACT_TYPE",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -365,7 +369,9 @@ export interface CreateGroupModalProps extends BaseModalProps {
   onGroupCreated?: (group: CompanyGroupResponseDto) => void;
 }
 
-export interface CreateContactModalProps extends BaseModalProps {}
+export interface CreateEmployeeContactModalProps extends BaseModalProps {}
+
+export interface CreateClientContactModalProps extends BaseModalProps {}
 
 export interface EditContactModalProps extends BaseModalProps {
   contactData: {
@@ -454,6 +460,16 @@ export interface ConfirmAndReviewInvoiceModalProps extends BaseModalProps {
   onConfirm: () => Promise<void>;
 }
 
+export interface ChooseContactTypeModalProps extends BaseModalProps {
+  onContactTypeSelect: (type: "employee" | "client") => void;
+}
+
+export interface CreateEmployeeContactModalProps extends BaseModalProps {
+}
+
+export interface CreateClientContactModalProps extends BaseModalProps {
+}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -498,7 +514,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.PROCESSING_TRANSACTION]: ProcessingTransactionModalProps;
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModalProps;
   [MODAL_IDS.CREATE_GROUP]: CreateGroupModalProps;
-  [MODAL_IDS.CREATE_CONTACT]: CreateContactModalProps;
+  [MODAL_IDS.CREATE_EMPLOYEE_CONTACT]: CreateEmployeeContactModalProps;
+  [MODAL_IDS.CREATE_CLIENT_CONTACT]: CreateClientContactModalProps;
   [MODAL_IDS.EDIT_CONTACT]: EditContactModalProps;
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModalProps;
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModalProps;
@@ -510,6 +527,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModalProps;
   [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModalProps;
   [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModalProps;
+  [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -558,7 +576,8 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_WALLET]: CreateWalletModal,
   [MODAL_IDS.REMOVE_TRANSACTION_CONFIRMATION]: RemoveTransactionConfirmationModal,
   [MODAL_IDS.CREATE_GROUP]: CreateGroupModal,
-  [MODAL_IDS.CREATE_CONTACT]: CreateContactModal,
+  [MODAL_IDS.CREATE_EMPLOYEE_CONTACT]: CreateEmployeeContactModal,
+  [MODAL_IDS.CREATE_CLIENT_CONTACT]: CreateClientContactModal,
   [MODAL_IDS.EDIT_CONTACT]: EditContactModal,
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModal,
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModal,
@@ -569,5 +588,6 @@ export const modalRegistry = {
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWallet,
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModal,
   [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModal,
-  [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModal
+  [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModal,
+  [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModal
 } as const;
