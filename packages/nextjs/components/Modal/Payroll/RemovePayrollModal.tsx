@@ -4,6 +4,7 @@ import { RemovePayrollModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { SecondaryButton } from "@/components/Common/SecondaryButton";
+import { useGetPayrollPendingReviews } from "@/services/api/payroll";
 
 export function RemovePayrollModal({
   isOpen,
@@ -11,7 +12,10 @@ export function RemovePayrollModal({
   zIndex,
   payrollOwnerName,
   onRemove,
+  payrollId,
 }: ModalProp<RemovePayrollModalProps>) {
+  const { data: pendingReviews, isLoading: isLoadingPendingReviews } = useGetPayrollPendingReviews(payrollId || 0);
+
   if (!isOpen) return null;
 
   return (
@@ -29,9 +33,22 @@ export function RemovePayrollModal({
           </div>
         </div>
         <div className="flex flex-col rounded-b-2xl justify-center items-center py-5 px-3 gap-7 ">
-          <span className="text-lg text-center text-text-primary px-5 font-bold">
-            Are you sure you want to delete <span className="text-primary-blue">{payrollOwnerName}</span> payroll?
-          </span>
+          <div className="flex flex-col gap-3 items-center">
+            <span className="text-lg text-center text-text-primary px-5 font-bold">
+              Are you sure you want to delete <span className="text-primary-blue">{payrollOwnerName}</span> payroll?
+            </span>
+            {!isLoadingPendingReviews && pendingReviews?.hasPendingReviews && (
+              <div className="flex items-start justify-center rounded-lg mx-5 w-full">
+                <div className="flex flex-col gap-1">
+                  <span className="flex justify-center text-xs text-center text-red-700">
+                    {pendingReviews.pendingCount
+                      ? `There ${pendingReviews.pendingCount === 1 ? "is" : "are"} ${pendingReviews.pendingCount} pending invoice${pendingReviews.pendingCount === 1 ? "" : "s"} waiting for employee review.`
+                      : "There are invoices waiting for employee review."}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex w-full flex-row gap-3">
             <SecondaryButton onClick={onClose} buttonClassName="flex-1" variant="light" text="Cancel" />
             <SecondaryButton

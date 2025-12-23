@@ -180,7 +180,13 @@ export default function OnboardingContainer() {
               <InputOutlined
                 label="Address 1"
                 placeholder="Enter address 1"
-                {...register("address1", { required: true })}
+                {...register("address1", {
+                  required: true,
+                  minLength: {
+                    value: 10,
+                    message: "Address must be at least 10 characters",
+                  },
+                })}
               />
 
               {/* Address 2 */}
@@ -199,7 +205,13 @@ export default function OnboardingContainer() {
                   <InputOutlined
                     label="Company registration number"
                     placeholder="e.g. 8683949"
-                    {...register("registrationNumber", { required: true })}
+                    {...register("registrationNumber", {
+                      required: true,
+                      minLength: {
+                        value: 8,
+                        message: "Registration number must be at least 8 characters",
+                      },
+                    })}
                   />
                 </div>
               </div>

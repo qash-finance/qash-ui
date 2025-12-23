@@ -1,26 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGetPayrolls, useDeletePayroll } from "@/services/api/payroll";
 import { Header } from "./Header";
 import { BaseContainer } from "../Common/BaseContainer";
-import { TabContainer } from "../Common/TabContainer";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { Table } from "../Common/Table";
 import PayrollActionTooltip from "../Common/ToolTip/PayrollActionTooltip";
 import { Tooltip } from "react-tooltip";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useAuth } from "@/services/auth/context";
-import { useGetAllEmployeeGroups, useGetAllEmployees } from "@/services/api/employee";
+import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { CategoryShapeEnum } from "@/types/employee";
 import { useRouter } from "next/navigation";
-import { ro } from "react-day-picker/locale";
 import { useModal } from "@/contexts/ModalManagerProvider";
 
 const getTabs = () => [
   {
     id: "manage-payrolls",
     label: "Manage Payroll",
-    description: "Send a request, receive funds with ease",
+    description:
+      "Create payroll for your employees and wait for them to review auto sent invoices then pay the bills in one click.",
     displayLabel: "Payroll management",
   },
   {
@@ -39,22 +38,30 @@ const getTabs = () => [
 
 const PayrollContainer = () => {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState(() => getTabs()[0]);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const { data: groups } = useGetAllEmployeeGroups();
   const { openModal } = useModal();
 
-  const tabs = getTabs();
+  // Debounce search input - update debouncedSearch after 1 second of no typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Fetch payrolls from API
   const { data, isLoading, isError, refetch } = useGetPayrolls({
     page: currentPage,
     limit: rowsPerPage,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
   });
 
   // Delete payroll mutation
@@ -67,6 +74,7 @@ const PayrollContainer = () => {
 
   const handleRemovePayroll = (id: number) => {
     openModal("REMOVE_PAYROLL", {
+      payrollId: id,
       payrollOwnerName: data?.payrolls.find(payroll => payroll.id === id)?.employee.name || "",
       onRemove: async () => {
         await deletePayroll.mutateAsync(id);
@@ -104,8 +112,10 @@ const PayrollContainer = () => {
       ),
       Amount: (
         <div className="flex flex-row justify-center items-center gap-2">
-          <img src="/token/qash.svg" alt="token" className="w-5" />
-          <span className="font-bold">{payroll.amount}</span>
+          <img src={`/token/${payroll.token.symbol.toLowerCase()}.svg`} alt="token" className="w-5" />
+          <span className="font-bold">
+            {payroll.amount} {payroll.token.symbol.toUpperCase()}
+          </span>
         </div>
       ),
       Date: payroll.payStartDate ? new Date(payroll.payStartDate).toLocaleDateString() : "-",
@@ -138,7 +148,8 @@ const PayrollContainer = () => {
             <div className="flex flex-col gap-1">
               <span className="text-text-primary text-2xl font-medium leading-none">Overview</span>
               <span className="text-text-secondary text-[14px] font-medium leading-none">
-                Send a request, receive funds with ease
+                Create payroll for your employees and wait for them to review auto sent invoices then pay the bills in
+                one click.
               </span>
             </div>
             <div className="flex flex-row gap-5">
@@ -147,8 +158,8 @@ const PayrollContainer = () => {
                 className="bg-app-background border border-primary-divider flex flex-row gap-2 items-center pr-1 pl-3 py-2 rounded-lg w-[300px]"
                 onSubmit={e => {
                   e.preventDefault();
+                  setDebouncedSearch(search);
                   setCurrentPage(1);
-                  refetch();
                 }}
               >
                 <div className="flex flex-row gap-2 flex-1">
@@ -159,7 +170,6 @@ const PayrollContainer = () => {
                     value={search}
                     onChange={e => {
                       setSearch(e.target.value);
-                      setCurrentPage(1);
                     }}
                   />
                 </div>
@@ -173,7 +183,8 @@ const PayrollContainer = () => {
 
               {/* Filter Button */}
               <div className="flex items-center gap-2">
-                <SecondaryButton
+                {/* TODO: IMPLEMENT SORT AND FILTER */}
+                {/* <SecondaryButton
                   text="Sort"
                   icon="/misc/sort-icon.svg"
                   onClick={() => console.log("Sort button clicked")}
@@ -188,7 +199,7 @@ const PayrollContainer = () => {
                   iconPosition="left"
                   variant="light"
                   buttonClassName="px-2"
-                />
+                /> */}
               </div>
             </div>
           </div>
@@ -222,6 +233,7 @@ const PayrollContainer = () => {
               const payrollId = (rowData as any).__id;
               router.push(`/payroll/detail?id=${payrollId}`);
             }}
+            noDataMessage="No payrolls found"
           />
         )}
       </BaseContainer>

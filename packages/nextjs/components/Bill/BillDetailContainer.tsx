@@ -7,18 +7,19 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import toast from "react-hot-toast";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps } from "@/types/modal";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useInvoice } from "@/hooks/server/useInvoice";
-import { InvoiceModel, InvoiceStatusEnum } from "@/types/invoice";
+import { InvoiceStatusEnum } from "@/types/invoice";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { CategoryShapeEnum } from "@/types/employee";
 
 const BillDetailContainer = () => {
+  const router = useRouter();
   const { openModal } = useModal();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("uuid") || "";
-  const { isLoading, fetchInvoiceByUUID, confirmInvoiceData, downloadPdf, cancelInvoiceData } = useInvoice();
+  const { isLoading, fetchInvoiceByUUID, downloadPdf, cancelInvoiceData } = useInvoice();
   const [invoice, setInvoice] = useState<any>(null);
   const { data: groups } = useGetAllEmployeeGroups();
 
@@ -48,6 +49,9 @@ const BillDetailContainer = () => {
   const handleDeleteInvoice = async () => {
     await cancelInvoiceData(invoiceUUID);
     toast.success("Invoice cancelled successfully");
+
+    // redirect back to bill list page
+    router.replace("/bill");
   };
 
   const formatDate = (dateString?: string) => {
@@ -86,7 +90,6 @@ const BillDetailContainer = () => {
   const loadInvoice = async () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
-      console.log("🚀 ~ loadInvoice ~ data:", data);
       setInvoice(data);
     } catch (err) {
       console.error("Failed to load invoice:", err);
@@ -123,12 +126,18 @@ const BillDetailContainer = () => {
         </div>
 
         <div className="flex flex-row gap-2">
-          <SecondaryButton
-            text="Pay Invoice"
-            buttonClassName="w-[150px]"
-            icon="/misc/coin-icon.svg"
-            iconPosition="left"
-          />
+          {invoice.status !== InvoiceStatusEnum.PAID && invoice.status !== InvoiceStatusEnum.CANCELLED && (
+            <SecondaryButton
+              text="Pay Invoice"
+              buttonClassName="w-[150px]"
+              icon="/misc/coin-icon.svg"
+              iconPosition="left"
+              onClick={() => {
+                // redirect to `http://localhost:3000/bill/review?invoiceUUID=${invoiceUUID}`
+                router.push(`/bill/review?invoiceUUID=${invoiceUUID}`);
+              }}
+            />
+          )}
           <SecondaryButton
             text="View invoice PDF"
             variant="light"
@@ -140,14 +149,22 @@ const BillDetailContainer = () => {
                 invoice: {
                   amountDue: invoice.total!,
                   billTo: {
-                    address: [invoice.toCompany?.address1, invoice.toCompany?.city, invoice.toCompany?.country]
+                    address: [
+                      invoice.toDetails?.address1,
+                      invoice.toDetails?.address2,
+                      invoice.toDetails?.city,
+                      invoice.toDetails?.country,
+                    ]
                       .filter(Boolean)
                       .join(", "),
                     email: invoice.toCompany?.email,
                     name: invoice.toCompany?.companyName,
                     company: `${invoice.toCompany?.companyName} ${invoice.toCompany?.companyType}`,
                   },
-                  currency: invoice.currency || "USDT",
+                  paymentToken: {
+                    name: invoice.paymentToken?.name?.toUpperCase() || "USDT",
+                  },
+                  currency: invoice.currency || "USD",
                   date: invoice.issueDate!,
                   dueDate: invoice.dueDate!,
                   from: {
@@ -157,7 +174,12 @@ const BillDetailContainer = () => {
                     company: `${invoice.fromCompany?.companyName || invoice.payroll?.company?.companyName}`,
                   },
                   invoiceNumber: invoice.invoiceNumber!,
-                  items: invoice.items,
+                  items: invoice.items.map((item: any) => ({
+                    name: item.description,
+                    rate: item.unitPrice,
+                    qty: item.quantity,
+                    amount: item.total,
+                  })),
                   subtotal: parseFloat(invoice.subtotal!.toString()),
                   tax: 0,
                   total: parseFloat(invoice.total!.toString()),
@@ -167,40 +189,47 @@ const BillDetailContainer = () => {
               });
             }}
           />
-          <img
-            src="/misc/three-dot-icon.svg"
-            alt=""
-            data-tooltip-id="bill-detail-action-tooltip"
-            data-tooltip-content="0"
-            className="w-6 cursor-pointer"
-          />
+          {invoice.status !== InvoiceStatusEnum.PAID && invoice.status !== InvoiceStatusEnum.CANCELLED && (
+            <img
+              src="/misc/three-dot-icon.svg"
+              alt=""
+              data-tooltip-id="bill-detail-action-tooltip"
+              data-tooltip-content="0"
+              className="w-6 cursor-pointer"
+            />
+          )}
         </div>
       </div>
 
       {/* Bill Detail Action Tooltip */}
-      <Tooltip
-        id="bill-detail-action-tooltip"
-        clickable
-        style={{
-          zIndex: 20,
-          borderRadius: "16px",
-          padding: "0",
-        }}
-        place="left"
-        openOnClick
-        noArrow
-        border="none"
-        opacity={1}
-        render={() => {
-          return (
-            <BillDetailActionTooltip
-              onEdit={handleCopyInvoiceLink}
-              onDuplicate={handleDownloadPDF}
-              onRemove={handleDeleteInvoice}
-            />
-          );
-        }}
-      />
+      {
+        <Tooltip
+          id="bill-detail-action-tooltip"
+          clickable
+          style={{
+            zIndex: 20,
+            borderRadius: "16px",
+            padding: "0",
+          }}
+          place="left"
+          openOnClick
+          noArrow
+          border="none"
+          opacity={1}
+          render={() => {
+            const isPaidOrCancelled =
+              invoice.status === InvoiceStatusEnum.PAID || invoice.status === InvoiceStatusEnum.CANCELLED;
+            return (
+              <BillDetailActionTooltip
+                onEdit={handleCopyInvoiceLink}
+                onDuplicate={handleDownloadPDF}
+                onRemove={handleDeleteInvoice}
+                showDelete={!isPaidOrCancelled}
+              />
+            );
+          }}
+        />
+      }
 
       <div className="w-full h-full flex flex-row gap-10">
         <div className="flex-1 flex-col w-full h-full">
@@ -221,7 +250,7 @@ const BillDetailContainer = () => {
                 <div className="flex items-center gap-2">
                   <img src="/token/qash.svg" alt="QASH" className="w-5 h-5" />
                   <p className="text-sm text-gray-900 font-medium">
-                    {invoice.total} {invoice.currency}
+                    {invoice.total} {invoice.paymentToken?.name?.toUpperCase()}
                   </p>
                 </div>
                 <p className="text-sm text-gray-900 font-medium">{formatDate(invoice.issueDate)}</p>
@@ -255,11 +284,8 @@ const BillDetailContainer = () => {
                   <p className="text-sm text-gray-500 font-medium">Billed to</p>
                 </div>
                 <div className="flex flex-col gap-0">
-                  <p className="text-sm text-gray-900 font-medium">
-                    {invoice.toDetails?.companyName}{" "}
-                    <span className="text-gray-500">({invoice.toCompany?.companyName})</span>
-                  </p>
-                  <p className="text-sm text-blue-600 font-medium">{invoice.toDetails.email}</p>
+                  <p className="text-sm text-gray-900 font-medium">{invoice.toDetails?.companyName} </p>
+                  <p className="text-sm text-blue-600 font-medium">{invoice.toDetails?.email}</p>
                 </div>
               </div>
               <div className="flex flex-row gap-5">
@@ -299,10 +325,10 @@ const BillDetailContainer = () => {
                   <p className="text-sm text-gray-900 font-medium">{item.description}</p>
                   <p className="text-sm text-gray-900 font-medium text-center">{item.quantity}</p>
                   <p className="text-sm text-gray-900 font-medium text-right">
-                    {Number(item.unitPrice).toFixed(2)} {invoice.currency}
+                    {Number(item.unitPrice).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                   </p>
                   <p className="text-sm text-gray-900 font-medium text-right">
-                    {Number(item.total).toFixed(2)} {invoice.currency}
+                    {Number(item.total).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                   </p>
                 </div>
               ))}
@@ -313,7 +339,7 @@ const BillDetailContainer = () => {
                 <div />
                 <p className="text-sm text-gray-900 font-medium text-right">Subtotal</p>
                 <p className="text-base text-gray-900 font-semibold text-right">
-                  {Number(invoice.subtotal).toFixed(2)} {invoice.currency}
+                  {Number(invoice.subtotal).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                 </p>
               </div>
 
@@ -323,7 +349,7 @@ const BillDetailContainer = () => {
                 <div />
                 <p className="text-sm text-gray-900 font-medium text-right">Amount due</p>
                 <p className="text-base text-gray-900 font-semibold text-right">
-                  {Number(invoice.total).toFixed(2)} {invoice.currency}
+                  {Number(invoice.total).toFixed(2)} {invoice.paymentToken?.name?.toUpperCase()}
                 </p>
               </div>
             </div>

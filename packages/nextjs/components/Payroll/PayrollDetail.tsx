@@ -16,6 +16,7 @@ import { CategoryShapeEnum } from "@/types/employee";
 import { InvoiceStatusEnum } from "@/types/invoice";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps } from "@/types/modal";
+import { useInvoice } from "@/hooks/server/useInvoice";
 
 const labelStyles = "py-1 text-base font-medium text-text-secondary";
 
@@ -28,6 +29,7 @@ const PayrollDetail = () => {
   const payrollId = parseInt(searchParams.get("id") || "0", 10);
   const { data: payrollData, isLoading, error } = useGetPayrollDetails(payrollId);
   const { data: groups } = useGetAllEmployeeGroups();
+  const { fetchInvoiceByUUID } = useInvoice();
 
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,10 +53,12 @@ const PayrollDetail = () => {
   };
 
   // Handle row click to open invoice modal
-  const handleRowClick = (_: Record<string, any>, index: number) => {
+  const handleRowClick = async (_: Record<string, any>, index: number) => {
     const invoices = getFilteredInvoices();
-    const invoice = invoices[index];
+    const invoiceIncomplete = invoices[index];
 
+    const invoice = await fetchInvoiceByUUID(invoiceIncomplete.uuid);
+    console.log("🚀 ~ handleRowClick ~ invoice:", invoice);
     if (invoice && payrollData) {
       //@ts-ignore
       const company = `${payrollData.company.companyName} ${payrollData.company.companyType} `;
@@ -73,14 +77,29 @@ const PayrollDetail = () => {
           billTo: {
             name: invoice.toDetails?.companyName || "",
             company: company,
-            address: invoice.toDetails?.address1 || "",
+            address: [
+              invoice.toDetails?.address1,
+              invoice.toDetails?.address2,
+              invoice.toDetails?.city,
+              invoice.toDetails?.country,
+            ]
+              .filter(Boolean)
+              .join(", "),
             email: invoice.toDetails?.email || "",
           },
           date: invoice.createdAt,
           dueDate: invoice.dueDate || "",
           network: payrollData.network.name || "",
-          currency: invoice.paymentToken?.symbol || "",
-          items: [],
+          paymentToken: payrollData.token,
+          currency: invoice.currency || "",
+          items: invoice.items.map((item: any) => {
+            return {
+              name: item?.description || "",
+              rate: item?.unitPrice || 0,
+              qty: item?.quantity || 0,
+              amount: item?.total || 0,
+            };
+          }),
           subtotal,
           tax: 0,
           total,
@@ -117,7 +136,25 @@ const PayrollDetail = () => {
   if (isLoading) {
     return (
       <div className="p-5 flex flex-col items-center justify-center w-full h-full">
-        <p className="text-text-secondary">Loading payroll details...</p>
+        <div role="status">
+          <svg
+            aria-hidden="true"
+            className="w-8 h-8 text-neutral-tertiary animate-spin fill-brand"
+            viewBox="0 0 100 101"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+              fill="currentColor"
+            />
+            <path
+              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+              fill="currentFill"
+            />
+          </svg>
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -133,7 +170,7 @@ const PayrollDetail = () => {
   // Transform invoices to table data format
   const paymentHistoryData = getFilteredInvoices().map(invoice => ({
     "Creation date": new Date(invoice.createdAt).toLocaleDateString(),
-    Invoice: `#${invoice.invoiceNumber}`,
+    Invoice: `${invoice.invoiceNumber}`,
     Name: invoice.fromDetails?.name || payrollData.employee.name,
     Amount: (
       <div className="flex items-center gap-2 justify-center">
@@ -150,7 +187,13 @@ const PayrollDetail = () => {
       <div className="w-full flex justify-center items-center">
         <Badge
           text={invoice.status}
-          status={invoice?.status === InvoiceStatusEnum.PAID ? BadgeStatus.SUCCESS : BadgeStatus.AWAITING}
+          status={
+            invoice?.status === InvoiceStatusEnum?.CANCELLED
+              ? BadgeStatus.FAIL
+              : invoice?.status === InvoiceStatusEnum.PAID
+                ? BadgeStatus.SUCCESS
+                : BadgeStatus.AWAITING
+          }
           className="px-5"
         />
       </div>
@@ -234,7 +277,7 @@ const PayrollDetail = () => {
               <span className="text-base font-medium text-text-primary">{payrollData.employee.walletAddress}</span>
               <img
                 alt="Copy"
-                className="w-5 h-5"
+                className="w-5 h-5 cursor-pointer"
                 src="/misc/copy-icon.svg"
                 onClick={async () => {
                   await navigator.clipboard.writeText(payrollData.employee.walletAddress);
@@ -252,7 +295,7 @@ const PayrollDetail = () => {
             <div className={labelStyles}>Created on</div>
             <div className={labelStyles}>Contract term</div>
             <div className={labelStyles}>Amount</div>
-            <div className={labelStyles}>Pay date</div>
+            <div className={labelStyles}>Payday</div>
             <div className={labelStyles}>Group</div>
           </div>
 
@@ -274,7 +317,7 @@ const PayrollDetail = () => {
                 {payrollData.amount} {payrollData.token.symbol} / month
               </span>
             </div>
-            <div className=" py-1 text-base font-medium text-text-primary">{payrollData.payrollCycle}th monthly</div>
+            <div className=" py-1 text-base font-medium text-text-primary">{payrollData.paydayDay}th every month</div>
             <div className="flex justify-start items-center">
               <CategoryBadge
                 shape={groups?.find(cat => cat.id === payrollData.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
@@ -310,7 +353,8 @@ const PayrollDetail = () => {
 
           {/* Filter Button */}
           <div className="flex items-center gap-2">
-            <SecondaryButton
+            {/* TODO: IMPLEMENT SORT AND FILTER */}
+            {/* <SecondaryButton
               text="Sort"
               icon="/misc/sort-icon.svg"
               onClick={() => console.log("Sort button clicked")}
@@ -325,7 +369,7 @@ const PayrollDetail = () => {
               iconPosition="left"
               variant="light"
               buttonClassName="px-2"
-            />
+            /> */}
           </div>
         </div>
         <Table

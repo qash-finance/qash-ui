@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { getRecallable } from "@/services/api/transaction";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWalletAuth } from "./useWalletAuth";
 import { STALE_TIME } from "@/services/utils/constant";
-import { RecallableDashboard } from "@/types/transaction";
 
 export function useRecallableNotes() {
   const queryClient = useQueryClient();
@@ -12,6 +10,7 @@ export function useRecallableNotes() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recallable-notes", walletAddress],
     queryFn: async (): Promise<any> => {
+      return [];
       // const recallableNotes: RecallableDashboard = await getRecallable();
       // return recallableNotes;
     },

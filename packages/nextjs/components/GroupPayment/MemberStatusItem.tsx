@@ -46,7 +46,9 @@ export const MemberStatusItem: React.FC<MemberStatusItemProps> = ({
     // Priority 1: Address book name (if available)
     if (addressBooks) {
       for (const category of addressBooks) {
-        const foundAddress = category.addressBooks?.find(addr => addr.address === memberStatus.memberAddress);
+        const foundAddress = (category as any).addressBooks?.find(
+          (addr: any) => addr.address === memberStatus.memberAddress,
+        );
         if (foundAddress) {
           return foundAddress.name;
         }
