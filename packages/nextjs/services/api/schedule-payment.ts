@@ -13,19 +13,19 @@ import {
 // *************************************************
 
 const useGetSchedulePayments = (query?: SchedulePaymentQuery) => {
-  return [];
   return useQuery({
     queryKey: ["schedule-payments", query],
     queryFn: async () => {
-      const queryParams = query ? new URLSearchParams() : undefined;
-      if (query) {
-        if (query.status) queryParams!.set("status", query.status);
-        if (query.payer) queryParams!.set("payer", query.payer);
-        if (query.payee) queryParams!.set("payee", query.payee);
-      }
+      // const queryParams = query ? new URLSearchParams() : undefined;
+      // if (query) {
+      //   if (query.status) queryParams!.set("status", query.status);
+      //   if (query.payer) queryParams!.set("payer", query.payer);
+      //   if (query.payee) queryParams!.set("payee", query.payee);
+      // }
 
-      const url = queryParams ? `/schedule-payment?${queryParams.toString()}` : "/schedule-payment";
-      return apiServerWithAuth.getData<SchedulePayment[]>(url);
+      // const url = queryParams ? `/schedule-payment?${queryParams.toString()}` : "/schedule-payment";
+      // return apiServerWithAuth.getData<SchedulePayment[]>(url);
+      return [];
     },
     staleTime: 0, // Always consider data stale
     refetchOnMount: true,
