@@ -69,5 +69,9 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "resolutions": {
+    "@getpara/react-sdk": "2.0.0-alpha.73",
+    "@getpara/web-sdk": "2.0.0-alpha.73"
   }
 }
