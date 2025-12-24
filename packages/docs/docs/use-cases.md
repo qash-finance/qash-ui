@@ -25,7 +25,7 @@ Here’s how the process works:
 
 ## 2. Private Multisig with Milestone-Based Grants Payments
 
-The foundation wants to fund a developer team through a grant but only release funds once milestones are completed.
+The foundation wants to fund a developer team through a grant but only releases funds once milestones are completed.
 
 From the foundation side, they set:
 
