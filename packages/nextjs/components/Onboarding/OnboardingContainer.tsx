@@ -48,7 +48,7 @@ const mapCompanyTypeToEnum = (displayName: string): CompanyTypeEnum => {
 
 export default function OnboardingContainer() {
   const router = useRouter();
-  const { isAuthenticated, accessToken, user, refreshUser } = useAuth();
+  const { isAuthenticated, user, refreshUser } = useAuth();
   const createCompanyMutation = useCreateCompany();
   const [step, setStep] = useState<Step>("company");
   const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
@@ -81,7 +81,7 @@ export default function OnboardingContainer() {
     const destination = hasCompany ? "/bill" : "/onboarding";
 
     router.push(destination);
-  }, [isAuthenticated, accessToken, user, router]);
+  }, [isAuthenticated, user, router]);
 
   // Redirect unauthenticated users away from onboarding
   useEffect(() => {

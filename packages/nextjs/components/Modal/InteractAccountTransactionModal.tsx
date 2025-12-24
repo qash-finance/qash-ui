@@ -22,20 +22,20 @@ export function InteractAccountTransactionModal({
   const [clientInitialized, setClientInitialized] = useState(false);
   const [localTransactions, setLocalTransactions] = useState<any[]>([]);
   const [localLoading, setLocalLoading] = useState(false);
-  const client = useMidenSdkStore(state => state.client);
+  // const client = useMidenSdkStore(state => state.client);
 
-  const transactions = useTransactionStore(state => state.transactions);
+  // const transactions = useTransactionStore(state => state.transactions);
 
   // Filter for transactions FROM this specific address TO the current user
   // Only show transactions where:
   // 1. transaction.type === "Incoming" (received funds by current user)
   // 2. transaction.sender === address (sent FROM this address)
   // 3. transaction.recipient === current user's address
-  const { accountId } = useAccount();
-  const incomingTransactions = transactions.filter(
-    transaction =>
-      transaction.type === "Incoming" && transaction.sender === address && transaction.recipient === accountId,
-  );
+  // const { accountId } = useAccount();
+  // const incomingTransactions = transactions.filter(
+  //   transaction =>
+  //     transaction.type === "Incoming" && transaction.sender === address && transaction.recipient === accountId,
+  // );
 
   const getTypeColor = (type: string) => {
     return "text-[#48b3ff]";
@@ -55,7 +55,7 @@ export function InteractAccountTransactionModal({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Transactions from ${formatAddress(address)} (${incomingTransactions.length} transactions)`}
+      title={`Transactions from ${formatAddress(address)} (0 transactions)`}
       icon="/wallet-analytics/tx-history-icon.gif"
       zIndex={zIndex}
     >
@@ -89,13 +89,13 @@ export function InteractAccountTransactionModal({
             <div className="flex items-center justify-center py-8">
               <span className="text-white">Loading transactions...</span>
             </div>
-          ) : incomingTransactions.length === 0 ? (
+          ) : [].length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <span className="text-white">No incoming transactions found for this address</span>
             </div>
           ) : (
             /* Transaction Rows */
-            incomingTransactions.map((transaction: any, index: number) => (
+            [].map((transaction: any, index: number) => (
               <div
                 key={index}
                 className="grid grid-cols-12 gap-2.5 items-center px-2 py-0 rounded-lg w-full h-15 hover:bg-[#292929]"
