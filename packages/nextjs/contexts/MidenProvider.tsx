@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode, useState, useEffect } from
 import { useAccount, useLogout, useModal, useWallet, Wallet } from "@getpara/react-sdk";
 import { useMiden } from "@/hooks/web3/useMiden";
 import { getBalance } from "@/services/utils/getBalance";
+import { Address } from "@demox-labs/miden-sdk";
 
 // Type definition for the context
 interface MidenContextType {
@@ -49,6 +50,31 @@ export function MidenProvider({ children }: { children: ReactNode }) {
 
     fetchBalances();
   }, [address]);
+
+  useEffect(() => {
+    if (!client) return;
+
+    const interval = setInterval(async () => {
+      const to = await client.getAccount(Address.fromBech32(address).accountId());
+
+      if (!to) {
+        console.error("Destination account not found");
+        return;
+      }
+
+      const mintedNotes = await client.getConsumableNotes(Address.fromBech32(address).accountId());
+
+      if (mintedNotes.length === 0) return;
+
+      console.log("🚀 ~ MidenProvider ~ mintedNotes:", mintedNotes);
+      const mintedNoteIds = mintedNotes.map(n => n.inputNoteRecord().id().toString());
+      const consumeTxRequest = client.newConsumeTransactionRequest(mintedNoteIds);
+      const consumeTxHash = await client.submitNewTransaction(to.id(), consumeTxRequest);
+      await client.syncState();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [client, address]);
 
   const value: MidenContextType = {
     isConnected,
