@@ -6,41 +6,23 @@ import { TabContainer } from "../Common/TabContainer";
 import { Table, CellContent } from "../Common/Table";
 import { MoreActionsTooltip } from "../Common/ToolTip/MoreActionsTooltip";
 import { MultipleContactActionsTooltip } from "../Common/ToolTip/MultipleContactActionsTooltip";
-import {
-  useGetAllEmployeeGroups,
-  useGetEmployeesByGroup,
-  useGetAllEmployees,
-  useBulkDeleteEmployees,
-  useUpdateEmployeesOrder,
-} from "@/services/api/employee";
+import { useGetClients, useDeleteClient } from "@/services/api/client";
+import { CustomCheckbox } from "../Common/CustomCheckbox";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { CustomCheckbox } from "../Common/CustomCheckbox";
-import { formatAddress } from "@/services/utils/miden/address";
-import { CategoryShapeEnum } from "@/types/employee";
-import { createShapeElement } from "../Common/ToolTip/ShapeSelectionTooltip";
-import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
-import { blo } from "blo";
-import { turnBechToHex } from "@/services/utils/turnBechToHex";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useAuth } from "@/services/auth/context";
-import { CategoryBadge } from "./EmployeeContact";
-import { CategoryTab } from "./ContactBookContainer";
 import { useForm } from "react-hook-form";
 
 export const ClientContact = () => {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { openModal } = useModal();
-  const [tabs, setTabs] = useState<{ id: string; label: React.ReactNode }[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const { data: groups } = useGetAllEmployeeGroups();
-  const { mutate: deleteEmployees, isPending: isDeleting } = useBulkDeleteEmployees();
-  const { mutate: updateEmployeesOrder, isPending: isReordering } = useUpdateEmployeesOrder();
-  const { data: allAddressBooksData, isLoading: isLoadingAllAddressBooks } = useGetAllEmployees(1, 1000, {
-    enabled: isAuthenticated,
-  });
+  const deleteClientMutation = useDeleteClient();
+  const { data: clientsResponse, isLoading: isLoadingClients } = useGetClients(
+    { page: 1, limit: 1000 },
+    { enabled: isAuthenticated },
+  );
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
   const [showMultipleActions, setShowMultipleActions] = useState<boolean>(false);
@@ -73,206 +55,107 @@ export const ClientContact = () => {
     };
   }, [activeTooltipId, showMultipleActions]);
 
-  // Get address books based on active tab
-  const getCategoryId = () => {
-    if (activeTab === "all" || activeTab === "more") return null;
-    return Number(activeTab);
-  };
+  const clients = clientsResponse?.data || [];
+  const isLoadingAddressBooks = isLoadingClients;
 
-  const { data: categoryAddressBooksData, isLoading: isLoadingCategoryAddressBooks } = useGetEmployeesByGroup(
-    getCategoryId() || 0,
-    1,
-    1000,
-  );
+  // useEffect(() => {
+  //   if (groups) {
+  //     const visiblegroups = groups.slice(0, 3);
+  //     const remainingCount = groups.length - 3;
 
-  // Use appropriate data source based on active tab
-  const addressBooks = activeTab === "all" ? allAddressBooksData?.data : categoryAddressBooksData?.data;
-  const isLoadingAddressBooks = activeTab === "all" ? isLoadingAllAddressBooks : isLoadingCategoryAddressBooks;
+  //     const categoryTabs = visiblegroups.map(category => ({
+  //       id: category.id.toString(),
+  //       label: <CategoryTab label={category.name} />,
+  //     }));
 
-  useEffect(() => {
-    if (groups) {
-      const visiblegroups = groups.slice(0, 3);
-      const remainingCount = groups.length - 3;
+  //     if (remainingCount > 0) {
+  //       categoryTabs.push({
+  //         id: "more",
+  //         label: (
+  //           <div
+  //             data-tooltip-id="category-more-tooltip"
+  //             className="flex flex-row items-center justify-center gap-2 h-10 cursor-pointer"
+  //           >
+  //             <img src="/misc/category-icon.svg" alt="category" className="w-5 h-5" />
+  //             <span className="text-text-primary truncate">{remainingCount} more...</span>
+  //           </div>
+  //         ),
+  //       });
+  //     }
 
-      const categoryTabs = visiblegroups.map(category => ({
-        id: category.id.toString(),
-        label: <CategoryTab label={category.name} />,
-      }));
-
-      if (remainingCount > 0) {
-        categoryTabs.push({
-          id: "more",
-          label: (
-            <div
-              data-tooltip-id="category-more-tooltip"
-              className="flex flex-row items-center justify-center gap-2 h-10 cursor-pointer"
-            >
-              <img src="/misc/category-icon.svg" alt="category" className="w-5 h-5" />
-              <span className="text-text-primary truncate">{remainingCount} more...</span>
-            </div>
-          ),
-        });
-      }
-
-      setTabs(categoryTabs);
-    }
-  }, [groups]);
-
-  const handleCategorySelect = (category: { id: string | number; name: string; icon?: string }) => {
-    const categoryId = category.id.toString();
-    setSelectedCategoryId(categoryId);
-
-    // Check if the selected category is in the "more" section (groups 4+)
-    if (groups) {
-      const visibleCategoryIds = groups.slice(0, 3).map(cat => cat.id.toString());
-
-      // If the category is not in the first 3 visible tabs, set active tab to "more"
-      if (!visibleCategoryIds.includes(categoryId)) {
-        setActiveTab("more");
-      } else {
-        setActiveTab(categoryId);
-      }
-    } else {
-      setActiveTab(categoryId);
-    }
-  };
-
-  const handleCategoryReorder = (reorderedgroups: { id: string | number; name: string; icon?: string }[]) => {
-    if (!groups) return;
-
-    // Store the original order before any modifications
-    const originalgroups = [...groups];
-
-    const firstThreegroups = originalgroups.slice(0, 3);
-    const allgroups = [...firstThreegroups, ...reorderedgroups];
-
-    // Extract category IDs in the new order
-    const categoryIds = allgroups.map(cat => Number(cat.id));
-
-    // Call the API to update the category order
-    // updateCategoryOrder(categoryIds, {
-    //   onSuccess: () => {
-    //     console.log("Category order updated successfully");
-    //   },
-    //   onError: error => {
-    //     console.error("Failed to update category order:", error);
-    //   },
-    // });
-  };
+  //     setTabs(categoryTabs);
+  //   }
+  // }, []);
 
   const handleCheckRow = (idx: number) => {
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   };
 
   const handleCheckAll = () => {
-    if (checkedRows.length === (addressBooks?.length || 0)) {
+    if (checkedRows.length === (clients?.length || 0)) {
       setCheckedRows([]);
     } else {
-      setCheckedRows(addressBooks?.map((_, idx) => idx) || []);
+      setCheckedRows(clients?.map((_, idx) => idx) || []);
     }
   };
 
-  const isAllChecked = !!(addressBooks && addressBooks.length > 0 && checkedRows.length === addressBooks.length);
+  const isAllChecked = !!(clients && clients.length > 0 && checkedRows.length === clients.length);
 
   // Tooltip action handlers
-  const handlePay = (contactIndex: number) => {
-    const contact = addressBooks?.[contactIndex];
-    if (contact) {
-      // Navigate to move-crypto page with recipient data
-      const params = new URLSearchParams();
-      params.set("tab", "send");
-      params.set("recipient", contact.walletAddress);
-      params.set("name", contact.name);
-
-      // If contact has a token, include it in the URL
-      if (contact.token?.address) {
-        params.set("tokenAddress", contact.token.address);
-      }
-
-      router.push(`/move-crypto?${params.toString()}`);
+  const handlePay = (clientIndex: number) => {
+    const client = clients[clientIndex];
+    if (client) {
+      toast.success("Client: " + client.companyName);
       setActiveTooltipId(null);
     }
   };
 
-  const handleEdit = (contactIndex: number) => {
-    const contact = addressBooks?.[contactIndex];
-    if (contact) {
-      // Find the group for this contact
-      const group = groups?.find(cat => cat.id === contact.groupId);
-
-      openModal(MODAL_IDS.EDIT_CONTACT, {
-        contactData: {
-          id: contact.id?.toString() || "",
-          name: contact.name,
-          address: contact.walletAddress,
-          email: contact.email || "",
-          group: group?.name || "",
-          token: contact.token,
+  const handleEdit = (clientIndex: number) => {
+    const client = clients[clientIndex];
+    if (client) {
+      openModal(MODAL_IDS.EDIT_CLIENT_CONTACT, {
+        clientData: {
+          uuid: client.uuid,
+          email: client.email,
+          companyName: client.companyName,
+          companyType: client.companyType,
+          country: client.country,
+          city: client.city,
+          address1: client.address1,
+          address2: client.address2,
+          taxId: client.taxId,
+          postalCode: client.postalCode,
+          registrationNumber: client.registrationNumber,
         },
       });
       setActiveTooltipId(null);
     }
   };
 
-  const handleExport = (contactIndex: number) => {
-    const contact = addressBooks?.[contactIndex];
-    if (contact) {
-      console.log("Export contact:", contact);
+  const handleExport = (clientIndex: number) => {
+    const client = clients[clientIndex];
+    if (client) {
+      console.log("Export client:", client);
       // TODO: Implement export functionality
       setActiveTooltipId(null);
     }
   };
 
-  const handleRemove = (contactIndex: number) => {
-    const contact = addressBooks?.[contactIndex];
-    if (contact) {
+  const handleRemove = (clientIndex: number) => {
+    const client = clients[clientIndex];
+    if (client) {
       openModal(MODAL_IDS.REMOVE_CONTACT_CONFIRMATION, {
-        contactName: contact.name,
-        contactAddress: contact.walletAddress,
+        contactName: client.companyName,
+        contactAddress: client.email,
         onRemove: () => {
-          if (contact.id) {
-            deleteEmployees([contact.id], {
-              onSuccess: () => {
-                toast.success("Contact deleted successfully");
-                setActiveTooltipId(null);
-              },
-              onError: error => {
-                console.error("Failed to delete contact:", error);
-                toast.error("Failed to delete contact");
-              },
-            });
-          }
-        },
-      });
-    }
-  };
-
-  // Multiple contact action handlers
-  const handleMultipleExport = () => {
-    const selectedContacts = checkedRows.map(index => addressBooks?.[index]).filter(Boolean);
-    console.log("Export multiple contacts:", selectedContacts);
-    // TODO: Implement multiple export functionality
-    setShowMultipleActions(false);
-  };
-
-  const handleMultipleRemove = () => {
-    const selectedContacts = checkedRows.map(index => addressBooks?.[index]).filter(Boolean);
-    if (selectedContacts.length > 0) {
-      const contactIds = selectedContacts.map(contact => contact?.id).filter(Boolean) as number[];
-
-      openModal(MODAL_IDS.REMOVE_CONTACT_CONFIRMATION, {
-        contactName: `${selectedContacts.length} contacts`,
-        contactAddress: "",
-        onRemove: () => {
-          deleteEmployees(contactIds, {
+          deleteClientMutation.mutate(client.uuid, {
             onSuccess: () => {
-              toast.success(`${selectedContacts.length} contacts deleted successfully`);
-              setCheckedRows([]);
-              setShowMultipleActions(false);
+              toast.success("Client deleted successfully");
+              setActiveTooltipId(null);
             },
             onError: error => {
-              console.error("Failed to delete contacts:", error);
-              toast.error("Failed to delete contacts");
+              console.error("Failed to delete client:", error);
+              toast.error("Failed to delete client");
             },
           });
         },
@@ -280,127 +163,93 @@ export const ClientContact = () => {
     }
   };
 
-  const handleReorder = (reorderedData: Record<string, CellContent>[]) => {
-    if (!addressBooks) return;
+  // Multiple client action handlers
+  const handleMultipleExport = () => {
+    const selectedClients = checkedRows.map(index => clients[index]).filter(Boolean);
+    console.log("Export multiple clients:", selectedClients);
+    // TODO: Implement multiple export functionality
+    setShowMultipleActions(false);
+  };
 
-    // Get the current category ID
-    const currentCategoryId = getCategoryId();
-    if (currentCategoryId === null) {
-      toast.error("Cannot reorder contacts in 'All groups' view");
-      return;
-    }
-
-    // Extract the IDs in the new order by matching the Name field
-    const entryIds = reorderedData
-      .map(rowData => {
-        const name = rowData.Name as string;
-        const contact = addressBooks.find(contact => contact.name === name);
-        return contact?.id;
-      })
-      .filter((id): id is number => id !== undefined);
-
-    if (entryIds.length > 0) {
-      // Assuming AddressBookOrderDto is { id: number, order: number }
-      const orderDtos = entryIds.map((id, idx) => ({
-        id,
-        order: idx,
-      }));
-      updateEmployeesOrder(orderDtos, {
-        onSuccess: () => {
-          toast.success("Contact order updated successfully");
-        },
-        onError: error => {
-          console.error("Failed to update contact order:", error);
-          toast.error("Failed to update contact order");
+  const handleMultipleRemove = () => {
+    const selectedClients = checkedRows.map(index => clients[index]).filter(Boolean);
+    if (selectedClients.length > 0) {
+      openModal(MODAL_IDS.REMOVE_CONTACT_CONFIRMATION, {
+        contactName: `${selectedClients.length} clients`,
+        contactAddress: "",
+        onRemove: () => {
+          selectedClients.forEach(client => {
+            deleteClientMutation.mutate(client.uuid, {
+              onSuccess: () => {
+                if (selectedClients.indexOf(client) === selectedClients.length - 1) {
+                  toast.success(`${selectedClients.length} clients deleted successfully`);
+                  setCheckedRows([]);
+                  setShowMultipleActions(false);
+                }
+              },
+              onError: error => {
+                console.error("Failed to delete client:", error);
+                toast.error("Failed to delete client");
+              },
+            });
+          });
         },
       });
     }
   };
 
-  // Format address book data for table
+  const handleReorder = (reorderedData: Record<string, CellContent>[]) => {
+    // Clients don't support reordering
+    toast.success("Reordering is not available for clients");
+  };
+
+  // Format client data for table
   const tableHeaders = [
     <div className="flex justify-center items-center">
       <CustomCheckbox checked={isAllChecked as boolean} onChange={handleCheckAll} />
     </div>,
-    "Name",
+    "Company Name",
     "Email",
-    "Group",
-    "Wallet Address",
-    "Token",
+    "Country",
+    "City",
+    "Type",
     " ",
   ];
 
-  const tableData =
-    addressBooks?.map((contact, index) => {
-      return {
-        "header-0": (
-          <div className="flex justify-center items-center">
-            <CustomCheckbox checked={checkedRows.includes(index)} onChange={() => handleCheckRow(index)} />
+  const tableData = clients.map((client, index) => {
+    return {
+      "header-0": (
+        <div className="flex justify-center items-center">
+          <CustomCheckbox checked={checkedRows.includes(index)} onChange={() => handleCheckRow(index)} />
+        </div>
+      ),
+      "Company Name": client.companyName,
+      Email: client.email || "-",
+      Country: client.country || "-",
+      City: client.city || "-",
+      Type: client.companyType || "-",
+      " ": (
+        <div className="flex justify-center items-center">
+          <div
+            data-tooltip-id={checkedRows.length > 0 ? "multiple-actions-tooltip" : `more-actions-${index}`}
+            className="cursor-pointer"
+            onClick={e => {
+              e.stopPropagation();
+              if (checkedRows.length > 0) {
+                setShowMultipleActions(!showMultipleActions);
+                setActiveTooltipId(null);
+              } else {
+                setActiveTooltipId(activeTooltipId === `more-actions-${index}` ? null : `more-actions-${index}`);
+                setShowMultipleActions(false);
+              }
+            }}
+          >
+            <img src="/misc/three-dot-icon.svg" alt="more actions" className="w-6 h-6" />
           </div>
-        ),
-        Name: contact.name,
-        Email: contact.email || "-",
-        Group: (
-          <div className="flex justify-center items-center">
-            <CategoryBadge
-              shape={groups?.find(cat => cat.id === contact.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-              color={groups?.find(cat => cat.id === contact.groupId)?.color || "#35ADE9"}
-              name={groups?.find(cat => cat.id === contact.groupId)?.name || "-"}
-            />
-          </div>
-        ),
-        "Wallet Address": (
-          <div className="flex justify-center items-center gap-2">
-            {formatAddress(contact.walletAddress)}{" "}
-            <img
-              src="/misc/copy-icon.svg"
-              alt="copy"
-              className="w-4 h-4 cursor-pointer"
-              onClick={() => {
-                navigator.clipboard.writeText(contact.walletAddress);
-                toast.success("Copied to clipboard");
-              }}
-            />
-          </div>
-        ),
-        Token: (
-          <div className="flex justify-center items-center">
-            <div className="flex justify-center items-center bg-app-background rounded-full px-3 py-2 w-fit gap-2 border-b-2 border-primary-divider">
-              <img
-                src={
-                  contact.token?.address === QASH_TOKEN_ADDRESS
-                    ? "/q3x-icon.png"
-                    : blo(turnBechToHex(contact.token?.address || ""))
-                }
-                alt="token"
-                className="w-4 h-4"
-              />
-              <span className="text-text-primary text-sm leading-none">{contact.token?.symbol || "Unknown"}</span>
-            </div>
-          </div>
-        ),
-        " ": (
-          <div className="flex justify-center items-center">
-            <div
-              data-tooltip-id={checkedRows.length > 0 ? "multiple-actions-tooltip" : `more-actions-${index}`}
-              className="cursor-pointer"
-              onClick={e => {
-                e.stopPropagation();
-                if (checkedRows.length > 0) {
-                  setShowMultipleActions(!showMultipleActions);
-                  setActiveTooltipId(null);
-                } else {
-                  setActiveTooltipId(activeTooltipId === `more-actions-${index}` ? null : `more-actions-${index}`);
-                  setShowMultipleActions(false);
-                }
-              }}
-            >
-              <img src="/misc/three-dot-icon.svg" alt="more actions" className="w-6 h-6" />
-            </div>
-          </div>
-        ),
-      };
-    }) || [];
+        </div>
+      ),
+    };
+  });
 
   return (
     <BaseContainer
@@ -422,7 +271,7 @@ export const ClientContact = () => {
               <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
             </button>
           </div>
-          <span className="text-text-primary">{addressBooks?.length || 0} contacts</span>
+          <span className="text-text-primary">{clients.length || 0} clients</span>
         </div>
       }
       containerClassName="w-full h-full"
@@ -431,7 +280,7 @@ export const ClientContact = () => {
         <Table
           data={tableData}
           headers={tableHeaders}
-          draggable={activeTab !== "all"}
+          draggable={false}
           columnWidths={{ "0": "40px", "3": "20px" }}
           onDragEnd={handleReorder}
           selectedRows={checkedRows}
@@ -468,8 +317,8 @@ export const ClientContact = () => {
         )}
       />
 
-      {/* More Actions Tooltips for each contact */}
-      {addressBooks?.map((_, index) => (
+      {/* More Actions Tooltips for each client */}
+      {clients.map((_, index) => (
         <Tooltip
           key={`more-actions-${index}`}
           id={`more-actions-${index}`}

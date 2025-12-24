@@ -206,7 +206,7 @@ export const EmployeeContact = () => {
       // Find the group for this contact
       const group = groups?.find(cat => cat.id === contact.groupId);
 
-      openModal(MODAL_IDS.EDIT_CONTACT, {
+      openModal(MODAL_IDS.EDIT_EMPLOYEE_CONTACT, {
         contactData: {
           id: contact.id?.toString() || "",
           name: contact.name,

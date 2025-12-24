@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { EditContactModalProps } from "@/types/modal";
+import { EditEmployeeContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { UpdateAddressBookDto, CompanyGroupResponseDto, TokenDto, NetworkDto } from "@/types/employee";
 import BaseModal from "../BaseModal";
@@ -107,7 +107,12 @@ const getNetworkFromName = (networkName?: string): { icon: string; name: string;
   return { icon: "/chain/miden.svg", name: networkName, value: "miden" };
 };
 
-export function EditContactModal({ isOpen, onClose, zIndex, contactData }: ModalProp<EditContactModalProps>) {
+export function EditEmployeeContactModal({
+  isOpen,
+  onClose,
+  zIndex,
+  contactData,
+}: ModalProp<EditEmployeeContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<TokenDto | null>(contactData?.token || null);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
@@ -471,4 +476,4 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
   );
 }
 
-export default EditContactModal;
+export default EditEmployeeContactModal;

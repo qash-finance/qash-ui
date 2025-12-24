@@ -1,19 +1,18 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { CreateClientContactModalProps } from "@/types/modal";
+import { EditClientContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { Category, CategoryShape } from "@/types/address-book";
 import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
 import { SecondaryButton } from "../../Common/SecondaryButton";
-import { CategoryDropdown } from "../../Common/Dropdown/CategoryDropdown";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import toast from "react-hot-toast";
-import { useCreateClient } from "@/services/api/client";
-import { CreateClientDto } from "@/types/client";
+import { useUpdateClient } from "@/services/api/client";
+import { UpdateClientDto } from "@/types/client";
+import { ClientResponseDto } from "@/types/client";
 import { useAuth } from "@/services/auth/context";
 import { CompanyTypeDropdown } from "@/components/Common/Dropdown/CompanyTypeDropdown";
 import { CountryDropdown } from "@/components/Common/Dropdown/CountryDropdown";
@@ -53,11 +52,16 @@ const FormInput = ({ label, placeholder, type = "text", register, error, disable
   </div>
 );
 
-export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateClientContactModalProps>) {
+export function EditClientContactModal({
+  isOpen,
+  onClose,
+  zIndex,
+  clientData,
+}: ModalProp<EditClientContactModalProps>) {
   const { isAuthenticated } = useAuth();
-  const createClient = useCreateClient();
-  const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
-  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const updateClient = useUpdateClient();
+  const [selectedCompanyType, setSelectedCompanyType] = useState<string>(clientData?.companyType || "");
+  const [selectedCountry, setSelectedCountry] = useState<string>(clientData?.country || "");
   const { closeModal } = useModal();
 
   const {
@@ -69,23 +73,47 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
     watch,
   } = useForm({
     defaultValues: {
-      firstName: "",
-      companyEmail: "",
-      companyName: "",
-      companyType: "",
-      country: "",
-      city: "",
-      address1: "",
-      address2: "",
-      taxId: "",
-      postalCode: "",
-      registrationNumber: "",
+      companyEmail: clientData?.email || "",
+      companyName: clientData?.companyName || "",
+      companyType: clientData?.companyType || "",
+      country: clientData?.country || "",
+      city: clientData?.city || "",
+      address1: clientData?.address1 || "",
+      address2: clientData?.address2 || "",
+      taxId: clientData?.taxId || "",
+      postalCode: clientData?.postalCode || "",
+      registrationNumber: clientData?.registrationNumber || "",
     },
   });
 
+  // Update form values when clientData changes
+  useEffect(() => {
+    if (clientData) {
+      reset({
+        companyEmail: clientData.email || "",
+        companyName: clientData.companyName || "",
+        companyType: clientData.companyType || "",
+        country: clientData.country || "",
+        city: clientData.city || "",
+        address1: clientData.address1 || "",
+        address2: clientData.address2 || "",
+        taxId: clientData.taxId || "",
+        postalCode: clientData.postalCode || "",
+        registrationNumber: clientData.registrationNumber || "",
+      });
+      setSelectedCompanyType(clientData.companyType || "");
+      setSelectedCountry(clientData.country || "");
+    }
+  }, [clientData]);
+
   const onSubmit = async (data: any) => {
+    if (!clientData?.uuid) {
+      toast.error("Client ID not found");
+      return;
+    }
+
     try {
-      const clientPayload: CreateClientDto = {
+      const clientPayload: UpdateClientDto = {
         email: data.companyEmail.trim(),
         companyName: data.companyName.trim(),
         companyType: selectedCompanyType || undefined,
@@ -98,17 +126,20 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
         registrationNumber: data.registrationNumber?.trim() || undefined,
       };
 
-      await createClient.mutateAsync(clientPayload);
+      await updateClient.mutateAsync({
+        uuid: clientData.uuid,
+        data: clientPayload,
+      });
 
-      toast.success("Client created successfully");
+      toast.success("Client updated successfully");
 
       reset();
       setSelectedCompanyType("");
       setSelectedCountry("");
       onClose();
     } catch (error) {
-      console.error("Failed to create client:", error);
-      toast.error("Failed to create client");
+      console.error("Failed to update client:", error);
+      toast.error("Failed to update client");
     }
   };
 
@@ -124,7 +155,7 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} zIndex={zIndex}>
-      <ModalHeader title="Add new client" icon="/misc/blue-user-hexagon-icon.svg" onClose={onClose} />
+      <ModalHeader title="Edit client" icon="/misc/blue-user-hexagon-icon.svg" onClose={onClose} />
       <div className="bg-background border-2 border-primary-divider rounded-b-2xl w-[720px] p-5">
         <form className="flex flex-col gap-3 w-full" onSubmit={handleSubmit(onSubmit)}>
           {/* Email */}
@@ -204,4 +235,4 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
   );
 }
 
-export default CreateClientContactModal;
+export default EditClientContactModal;

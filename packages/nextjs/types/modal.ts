@@ -45,7 +45,8 @@ import RemoveTransactionConfirmationModal from "@/components/Modal/Batch/RemoveT
 import CreateGroupModal from "@/components/Modal/Contact/CreateGroupModal";
 import CreateEmployeeContactModal from "@/components/Modal/Contact/CreateEmployeeContactModal";
 import CreateClientContactModal from "@/components/Modal/Contact/CreateClientContactModal";
-import EditContactModal from "@/components/Modal/Contact/EditContactModal";
+import EditEmployeeContactModal from "@/components/Modal/Contact/EditEmployeeContactModal";
+import EditClientContactModal from "@/components/Modal/Contact/EditClientContactModal";
 import RemoveContactConfirmationModal from "@/components/Modal/Contact/RemoveContactConfirmationModal";
 import BonusAmountModal from "@/components/Modal/Payroll/BonusAmountModal";
 import PayrollPreviewModal from "@/components/Modal/Payroll/PayrollPreviewModal";
@@ -65,6 +66,7 @@ import { DateRange } from "react-day-picker";
 import { SchedulePaymentFrequency } from "./schedule-payment";
 import { TransactionStatus } from "./transaction";
 import { CompanyContactResponseDto, NetworkDto, TokenDto } from "./employee";
+import { ClientResponseDto } from "@/types/client";
 
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
@@ -113,7 +115,8 @@ export const MODAL_IDS = {
   CREATE_GROUP: "CREATE_GROUP",
   CREATE_EMPLOYEE_CONTACT: "CREATE_EMPLOYEE_CONTACT",
   CREATE_CLIENT_CONTACT: "CREATE_CLIENT_CONTACT",
-  EDIT_CONTACT: "EDIT_CONTACT",
+  EDIT_EMPLOYEE_CONTACT: "EDIT_EMPLOYEE_CONTACT",
+  EDIT_CLIENT_CONTACT: "EDIT_CLIENT_CONTACT",
   REMOVE_CONTACT_CONFIRMATION: "REMOVE_CONTACT_CONFIRMATION",
   BONUS_AMOUNT: "BONUS_AMOUNT",
   PAYROLL_PREVIEW: "PAYROLL_PREVIEW",
@@ -372,7 +375,7 @@ export interface CreateEmployeeContactModalProps extends BaseModalProps {}
 
 export interface CreateClientContactModalProps extends BaseModalProps {}
 
-export interface EditContactModalProps extends BaseModalProps {
+export interface EditEmployeeContactModalProps extends BaseModalProps {
   contactData: {
     id: string;
     name: string;
@@ -382,6 +385,10 @@ export interface EditContactModalProps extends BaseModalProps {
     token?: TokenDto;
     network?: NetworkDto;
   };
+}
+
+export interface EditClientContactModalProps extends BaseModalProps {
+  clientData?: ClientResponseDto;
 }
 
 export interface RemoveContactConfirmationModalProps extends BaseModalProps {
@@ -519,7 +526,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.CREATE_GROUP]: CreateGroupModalProps;
   [MODAL_IDS.CREATE_EMPLOYEE_CONTACT]: CreateEmployeeContactModalProps;
   [MODAL_IDS.CREATE_CLIENT_CONTACT]: CreateClientContactModalProps;
-  [MODAL_IDS.EDIT_CONTACT]: EditContactModalProps;
+  [MODAL_IDS.EDIT_EMPLOYEE_CONTACT]: EditEmployeeContactModalProps;
+  [MODAL_IDS.EDIT_CLIENT_CONTACT]: EditClientContactModalProps;
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModalProps;
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModalProps;
   [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModalProps;
@@ -581,7 +589,8 @@ export const modalRegistry = {
   [MODAL_IDS.CREATE_GROUP]: CreateGroupModal,
   [MODAL_IDS.CREATE_EMPLOYEE_CONTACT]: CreateEmployeeContactModal,
   [MODAL_IDS.CREATE_CLIENT_CONTACT]: CreateClientContactModal,
-  [MODAL_IDS.EDIT_CONTACT]: EditContactModal,
+  [MODAL_IDS.EDIT_EMPLOYEE_CONTACT]: EditEmployeeContactModal,
+  [MODAL_IDS.EDIT_CLIENT_CONTACT]: EditClientContactModal,
   [MODAL_IDS.REMOVE_CONTACT_CONFIRMATION]: RemoveContactConfirmationModal,
   [MODAL_IDS.BONUS_AMOUNT]: BonusAmountModal,
   [MODAL_IDS.PAYROLL_PREVIEW]: PayrollPreviewModal,

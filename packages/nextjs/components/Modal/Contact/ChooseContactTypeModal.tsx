@@ -53,7 +53,6 @@ export function ChooseContactTypeModal({ isOpen, onClose, zIndex }: ModalProp<Ch
             title="Employee"
             subtitle="Add your company's employees to manage their payroll details and payments."
             onClick={() => {
-              onClose();
               openModal("CREATE_EMPLOYEE_CONTACT");
             }}
           />
@@ -62,7 +61,6 @@ export function ChooseContactTypeModal({ isOpen, onClose, zIndex }: ModalProp<Ch
             title="Client"
             subtitle="Add your clients so you can easily send invoices and track payments"
             onClick={() => {
-              onClose();
               openModal("CREATE_CLIENT_CONTACT");
             }}
           />
