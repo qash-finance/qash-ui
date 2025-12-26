@@ -24,7 +24,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { isBalanceVisible, toggleBalanceVisibility } = useBalanceVisibility();
   const { closeModal } = useModal();
-  const blockNumber = useMidenSdkStore(state => state.blockNum);
+  const blockNumber = 0;
   const transactions = useTransactionStore(state => state.transactions);
 
   const { moneyIn, moneyOut } = useMemo(() => {

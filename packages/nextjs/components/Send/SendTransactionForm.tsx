@@ -106,7 +106,7 @@ export const SendTransactionForm: React.FC<SendTransactionFormProps> = ({
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const { mutateAsync: createSchedulePayment } = useCreateSchedulePayment();
   const { refetch: refetchSchedulePayments } = useGetSchedulePayments();
-  const blockNum = useMidenSdkStore(state => state.blockNum);
+  const blockNum = 0;
 
   // Get initial data based on usage mode
   // Use URL search params for standalone form

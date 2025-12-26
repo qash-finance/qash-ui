@@ -85,7 +85,7 @@ const PaymentLinkDetailContainer = () => {
               src={
                 paymentLink.acceptedTokens[0].symbol === "QASH"
                   ? "/token/qash.svg"
-                  : blo(turnBechToHex(paymentLink.acceptedTokens[0].faucetId))
+                  : blo(turnBechToHex(paymentLink.acceptedTokens[0].address))
               }
               alt={paymentLink.acceptedTokens[0].symbol}
               className="w-4 h-4"
@@ -222,7 +222,7 @@ const PaymentLinkDetailContainer = () => {
                   src={
                     paymentLink.acceptedTokens[0].symbol === "QASH"
                       ? "/token/qash.svg"
-                      : blo(turnBechToHex(paymentLink.acceptedTokens[0].faucetId))
+                      : blo(turnBechToHex(paymentLink.acceptedTokens[0].address))
                   }
                   alt={paymentLink.acceptedTokens[0].symbol}
                   className="w-5 h-5"

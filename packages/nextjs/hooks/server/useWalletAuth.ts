@@ -36,13 +36,7 @@ export function useEmailAuth(): EmailAuthHook {
   // Create authenticated API client
   const api = new AuthenticatedApiClient(
     process.env.NEXT_PUBLIC_SERVER_URL || "",
-    () => auth.accessToken || null,
-    async () => {
-      // await auth.refreshToken();
-    },
-    () => {
-      auth.logout();
-    },
+    () => auth || null,
   );
 
   const clearError = useCallback(() => {
@@ -54,7 +48,7 @@ export function useEmailAuth(): EmailAuthHook {
     async (email: string) => {
       try {
         setLocalError(null);
-        await auth.sendOtp(email);
+        // await auth.sendOtp(email);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Failed to send OTP";
         setLocalError(errorMessage);
@@ -68,7 +62,7 @@ export function useEmailAuth(): EmailAuthHook {
     async (email: string, otp: string) => {
       try {
         setLocalError(null);
-        return await auth.verifyOtp(email, otp);
+        // return await auth.verifyOtp(email, otp);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Failed to verify OTP";
         setLocalError(errorMessage);
@@ -102,7 +96,7 @@ export function useEmailAuth(): EmailAuthHook {
 
   return {
     isAuthenticated: auth.isAuthenticated,
-    email: auth.email,
+    email: "",
     user: auth.user,
     isLoading: auth.isLoading,
     error,

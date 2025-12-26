@@ -22,9 +22,9 @@ export const TransactionProviderC = ({ children }: Props) => {
 };
 
 export const useTransactionStore = <T,>(selector: (store: TransactionStore) => T): T => {
-  // const midenSdkStoreContext = useContext(MidenSdkStoreContext);
-  // if (!midenSdkStoreContext) {
-  //   throw new Error(`useCounterStore must be used within CounterStoreProvider`);
-  // }
-  // return useStore(midenSdkStoreContext, selector);
+  const midenSdkStoreContext = useContext(MidenSdkStoreContext);
+  if (!midenSdkStoreContext) {
+    throw new Error(`useCounterStore must be used within CounterStoreProvider`);
+  }
+  return useStore(midenSdkStoreContext, selector);
 };
