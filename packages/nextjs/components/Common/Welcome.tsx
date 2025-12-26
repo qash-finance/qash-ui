@@ -20,11 +20,11 @@ export default function Welcome() {
 
       <div className="w-[460px] flex flex-col justify-center items-start text-left mb-8">
         <h1 className="text-white text-[40px] font-normal mb-4 leading-13">
-          Cross-chain banking built for global businesses
+          Private banking solution built for global businesses
         </h1>
         <span className="text-white text-[18px] font-light">
-          Handle cross-chain payouts with full confidentiality, chain-agnostic flexibility, and native yield on your
-          idle funds.
+          A platform to run payroll, earn yield, and spend across chains and currencies without exposing sensitive
+          information onchain
         </span>
       </div>
     </div>
