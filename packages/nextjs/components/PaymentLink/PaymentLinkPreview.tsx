@@ -13,6 +13,7 @@ import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useAuth } from "@/services/auth/context";
 import { AuthMeResponse } from "@/services/auth/api";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 const SubIcon = ({
   icon,
@@ -61,7 +62,7 @@ export const PaymentLinkPreview = ({
   isSending,
 }: PaymentLinkPreviewProps) => {
   const { user } = useAuth();
-  const { address: walletAddress } = useWallet();
+  const { address: walletAddress } = useMidenProvider();
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
   return (
@@ -302,7 +303,7 @@ export const PaymentLinkPreview = ({
                   {selectedToken && (
                     <img
                       src={
-                        `${QASH_TOKEN_ADDRESS}` === selectedToken?.faucetId
+                        QASH_TOKEN_ADDRESS.includes(selectedToken?.faucetId || "")
                           ? "/token/qash.svg"
                           : blo(turnBechToHex(selectedToken?.faucetId || ""))
                       }
@@ -362,7 +363,7 @@ export const PaymentLinkPreview = ({
                     {selectedToken && (
                       <img
                         src={
-                          `${QASH_TOKEN_ADDRESS}` === selectedToken?.faucetId
+                          QASH_TOKEN_ADDRESS.includes(selectedToken?.faucetId || "")
                             ? "/token/qash.svg"
                             : blo(turnBechToHex(selectedToken?.faucetId || ""))
                         }

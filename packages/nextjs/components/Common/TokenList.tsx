@@ -7,18 +7,22 @@ import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
 import { formatUnits } from "viem";
+import { supportedTokens } from "@/services/utils/supportedToken";
 
 interface TokenListProps {
-  assets: AssetWithMetadata[];
+  balances: {
+    assetId: string;
+    balance: string;
+  }[];
   onTokenSelect?: (token: AssetWithMetadata | null) => void;
   searchQuery?: string;
 }
 
-export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps) {
+export function TokenList({ balances, onTokenSelect, searchQuery }: TokenListProps) {
   return (
     <section className="flex flex-col gap-2.5 items-start w-full">
       <div className="flex flex-col gap-0.5 items-start w-full">
-        {assets.length === 0 ? (
+        {balances.length === 0 ? (
           <div className="flex flex-col items-center justify-center w-full py-8 gap-2">
             <p className="text-neutral-400 text-sm text-center">
               {searchQuery && searchQuery.trim() ? `No tokens found matching "${searchQuery}"` : "No tokens available"}
@@ -28,21 +32,33 @@ export function TokenList({ assets, onTokenSelect, searchQuery }: TokenListProps
             )}
           </div>
         ) : (
-          assets.map((asset, index) => (
-            <TokenItem
-              key={asset.faucetId}
-              icon={asset.faucetId === QASH_TOKEN_ADDRESS ? "/token/qash.svg" : blo(turnBechToHex(asset.faucetId))}
-              address={asset.faucetId}
-              name={asset.metadata.symbol}
-              usdValue={formatNumberWithCommas(
-                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
-              )} // 1:1 ratio with token amount
-              tokenAmount={formatNumberWithCommas(
-                formatUnits(BigInt(Math.round(Number(asset.amount))), asset.metadata.decimals),
-              )}
-              onClick={() => onTokenSelect?.(asset)}
-            />
-          ))
+          [...balances]
+            .sort((a, b) => {
+              const aSymbol = supportedTokens.find(t => t.faucetId.includes(a.assetId))?.symbol || "UNKW";
+              const bSymbol = supportedTokens.find(t => t.faucetId.includes(b.assetId))?.symbol || "UNKW";
+              if (aSymbol === "QASH") return -1;
+              if (bSymbol === "QASH") return 1;
+              return 0;
+            })
+            .map((asset, index: number) => {
+              const token = {
+                faucetId: asset.assetId,
+                metadata: {
+                  symbol: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW",
+                  decimals: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8,
+                  maxSupply: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0,
+                },
+                amount: asset.balance,
+                value: "1",
+                icon:
+                  supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol === "QASH"
+                    ? "/q3x-icon.png"
+                    : blo(turnBechToHex(asset.assetId)),
+                chain: "Miden",
+              };
+
+              return <TokenItem key={index} token={token} onClick={() => onTokenSelect?.(token)} />;
+            })
         )}
       </div>
     </section>

@@ -17,6 +17,7 @@ import { CreatePaymentLink, TokenMetadata } from "@/types/payment-link";
 import { useRouter } from "next/navigation";
 import { PaymentLinkPreview } from "./PaymentLinkPreview";
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 interface CreatePaymentLinkFormData {
   title: string;
@@ -93,7 +94,7 @@ const NetworkBadge = ({ networkId }: { networkId: string }) => {
 
 const CreatePaymentLinkContainer = () => {
   const router = useRouter();
-  const { address: walletAddress } = useWallet();
+  const { address: walletAddress } = useMidenProvider();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);

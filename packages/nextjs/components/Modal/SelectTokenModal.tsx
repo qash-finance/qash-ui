@@ -8,6 +8,7 @@ import BaseModal from "./BaseModal";
 import { useAccountContext } from "@/contexts/AccountProvider";
 import { AssetWithMetadata } from "@/types/faucet";
 import { ModalHeader } from "../Common/ModalHeader";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 export function SelectTokenModal({
   isOpen,
@@ -16,11 +17,10 @@ export function SelectTokenModal({
   zIndex,
 }: ModalProp<SelectTokenModalProps> & { zIndex?: number }) {
   // **************** Custom Hooks *******************
-  const { assets, isError } = useAccountContext();
+  const { address, balances } = useMidenProvider();
 
   // **************** Local State *******************
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredAssets, setFilteredAssets] = useState<AssetWithMetadata[]>([]);
 
   // **************** Local Functions *******************
   const handleTokenSelect = (token: AssetWithMetadata | null) => {
@@ -32,21 +32,6 @@ export function SelectTokenModal({
   const handleClearSearch = () => {
     setSearchQuery("");
   };
-
-  // **************** Effect  *******************
-  useEffect(() => {
-    const filteredAssets = assets.filter(asset => {
-      const query = searchQuery.toLowerCase().trim();
-      if (!query) return true;
-
-      const symbol = asset.metadata.symbol.toLowerCase();
-      const tokenAddress = asset.faucetId.toLowerCase();
-
-      return symbol.includes(query) || tokenAddress.includes(query);
-    });
-
-    setFilteredAssets(filteredAssets);
-  }, [assets, searchQuery, isError]);
 
   if (!isOpen) return null;
 
@@ -69,7 +54,7 @@ export function SelectTokenModal({
             <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
           </button>
         </div>
-        <TokenList assets={filteredAssets} onTokenSelect={handleTokenSelect} searchQuery={searchQuery} />
+        <TokenList balances={balances || []} onTokenSelect={handleTokenSelect} searchQuery={searchQuery} />
       </main>
     </BaseModal>
   );

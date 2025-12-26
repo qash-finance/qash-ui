@@ -26,6 +26,7 @@ import { PaymentLinkPreview } from "@/components/PaymentLink/PaymentLinkPreview"
 import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { SendTransaction } from "@demox-labs/miden-wallet-adapter-base";
 import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 const SubIcon = ({
   icon,
@@ -53,7 +54,8 @@ const SubIcon = ({
 };
 
 const Header = () => {
-  const { walletAddress } = useWalletConnect();
+  const { openModal } = useModal();
+  const { address: walletAddress } = useMidenProvider();
 
   const router = useRouter();
 
@@ -71,7 +73,10 @@ const Header = () => {
 
       <div className="flex items-center justify-center gap-3">
         {walletAddress && (
-          <div className="flex items-center justify-center gap-2 bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider">
+          <div
+            className="flex items-center justify-center gap-2 bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider cursor-pointer"
+            onClick={() => openModal("PORTFOLIO")}
+          >
             <img src="/chain/miden.svg" alt="Qash Logo" />
             <span className="text-text-primary text-lg">{formatAddress(walletAddress)}</span>
           </div>
@@ -92,7 +97,7 @@ const Header = () => {
 const PaymentLinkDetailPage = () => {
   const params = useParams();
   const code = params.code as string;
-  const { address: walletAddress, wallet } = useWallet();
+  const { address: walletAddress, openModal: openParaModal } = useMidenProvider();
   const { data: paymentLink, isLoading, error } = useGetPaymentLinkByCode(code);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
@@ -197,8 +202,8 @@ const PaymentLinkDetailPage = () => {
         amount! * 10 ** QASH_TOKEN_DECIMALS,
       );
 
-      const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
-      toast.success(`Transaction ${txId} submitted`);
+      // const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
+      // toast.success(`Transaction ${txId} submitted`);
 
       // submit transaction to server
       // const response = await sendSingleTransaction({
@@ -235,7 +240,7 @@ const PaymentLinkDetailPage = () => {
         message: `Payment for ${paymentLink?.title}`,
         tokenAddress: paymentLink?.acceptedTokens?.[0]?.address,
         tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol,
-        transactionHash: txId,
+        // transactionHash: txId,
         onConfirm: async () => {
           closeModal(MODAL_IDS.TRANSACTION_OVERVIEW);
         },
@@ -356,7 +361,7 @@ const PaymentLinkDetailPage = () => {
                   }
                 : null
             }
-            handleConnectWallet={() => openModal(MODAL_IDS.CONNECT_MIDEN_WALLET)}
+            handleConnectWallet={() => openParaModal?.()}
             handleSubmitPayment={handleSubmitPayment}
             isSending={isSending}
           />
