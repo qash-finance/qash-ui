@@ -82,6 +82,7 @@ export const InvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
 
   const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser } = useAuth();
+  console.log("🚀 ~ InvoiceReviewContainer ~ user:", user);
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const employeeEmail = searchParams.get("email") || "";
@@ -120,9 +121,15 @@ export const InvoiceReviewContainer = () => {
       // Send JWT to backend
       await loginWithPara(jwtResult.token);
 
-      toast.success("Successfully authenticated with Para");
-
       await refreshUser();
+
+      const email = user?.email || para.email;
+      if (email && email.toLowerCase() !== employeeEmail.toLowerCase()) {
+        toast.error("The logged in account email does not match the invoice recipient email.");
+        return;
+      }
+
+      toast.success("Successfully authenticated with Para");
 
       // Load invoice data
       await loadInvoice();
@@ -159,34 +166,23 @@ export const InvoiceReviewContainer = () => {
     const key = `${invoiceUUID}:${normalizedEmployeeEmail}`;
 
     // If user is authenticated and email matches: auto move to review
-    if (isAuthenticated) {
-      if (isEmployeeEmailMatch) {
-        if (autoReviewKeyRef.current === key) return;
-        autoReviewKeyRef.current = key;
+    if (isAuthenticated && isEmployeeEmailMatch) {
+      if (autoReviewKeyRef.current === key) return;
+      autoReviewKeyRef.current = key;
 
-        (async () => {
-          try {
-            const data = await fetchInvoiceByUUID(invoiceUUID);
-            const mappedData = mapApiResponseToInvoiceData(data);
-            setInvoiceData(mappedData);
-            setOriginalAddress(mappedData.from.address);
-            setStep("review");
-          } catch (err) {
-            console.error("Failed to load invoice:", err);
-          }
-        })();
-      }
-      return;
+      (async () => {
+        try {
+          const data = await fetchInvoiceByUUID(invoiceUUID);
+          const mappedData = mapApiResponseToInvoiceData(data);
+          setInvoiceData(mappedData);
+          setOriginalAddress(mappedData.from.address);
+          setStep("review");
+        } catch (err) {
+          console.error("Failed to load invoice:", err);
+        }
+      })();
     }
-  }, [
-    authIsLoading,
-    employeeEmail,
-    fetchInvoiceByUUID,
-    invoiceUUID,
-    isAuthenticated,
-    isEmployeeEmailMatch,
-    normalizedEmployeeEmail,
-  ]);
+  }, [authIsLoading, employeeEmail, invoiceUUID, isAuthenticated, isEmployeeEmailMatch, normalizedEmployeeEmail]);
 
   const loadInvoice = async () => {
     try {
