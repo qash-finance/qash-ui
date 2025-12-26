@@ -34,14 +34,21 @@ export default function LoginContainer() {
   const { openModal: openParaModal } = useParaModal();
   const { para } = useParaMiden("https://rpc.testnet.miden.io");
   const { isConnected } = useParaAccount();
+  const isAuthenticatingRef = useRef(false);
 
   // Handle Para authentication after connection
   const handleParaAuthentication = async () => {
+    // Prevent duplicate authentication attempts
+    if (isAuthenticatingRef.current) {
+      return;
+    }
+
     if (!isConnected || !para) {
       toast.error("Please connect your wallet first");
       return;
     }
 
+    isAuthenticatingRef.current = true;
     setAuthenticatingWithPara(true);
     try {
       // Issue JWT from Para
@@ -56,7 +63,7 @@ export default function LoginContainer() {
       // Send JWT to backend
       const userData = await loginWithPara(jwtResult.token);
 
-      toast.success("Successfully authenticated with Para");
+      toast.success("Successfully authenticated");
 
       await refreshUser();
 
@@ -71,22 +78,23 @@ export default function LoginContainer() {
       console.error("Para authentication failed:", error);
       toast.error(error instanceof Error ? error.message : "Failed to authenticate with Para");
     } finally {
+      isAuthenticatingRef.current = false;
       setAuthenticatingWithPara(false);
     }
   };
 
   // Auto-authenticate when Para connection is established
   useEffect(() => {
-    if (isConnected && !isAuthenticated && !authenticatingWithPara) {
+    if (isConnected && !isAuthenticated && !authenticatingWithPara && !isAuthenticatingRef.current) {
       handleParaAuthentication();
     }
-  }, [isConnected, isAuthenticated]);
+  }, [isConnected, isAuthenticated, authenticatingWithPara]);
 
   // Redirect authenticated users away from login
   useEffect(() => {
     if (!isAuthenticated) return;
     const hasCompany = !!(user as User)?.teamMembership?.companyId || !!(user as User)?.teamMembership?.company;
-    const destination = hasCompany ? "/bill" : "/onboarding";
+    const destination = hasCompany ? "/payroll" : "/onboarding";
 
     router.push(destination);
   }, [isAuthenticated, user, router]);
@@ -108,7 +116,7 @@ export default function LoginContainer() {
           onClick={() => {
             openParaModal?.();
           }}
-          text={authenticatingWithPara ? "Authenticating..." : "Connect Wallet"}
+          text={authenticatingWithPara ? "Authenticating..." : "Continue by email"}
           disabled={authenticatingWithPara || isLoading}
         />
       </div>

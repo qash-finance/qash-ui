@@ -1,66 +1,116 @@
 "use client";
-import React from "react";
-import { TokenItem } from "./TokenItem";
-import { AssetWithMetadata } from "@/types/faucet";
-import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
-import { formatNumberWithCommas } from "@/services/utils/formatNumber";
-import { turnBechToHex } from "@/services/utils/turnBechToHex";
+
+import React, { useState } from "react";
 import { blo } from "blo";
-import { formatUnits } from "viem";
+import { TokenItem } from "./TokenItem";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
+import { TabContainer } from "../Common/TabContainer";
+import { Select } from "../Common/Select";
+import { FilterButton } from "../Common/FilterButton";
 import { supportedTokens } from "@/services/utils/supportedToken";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
-interface TokenListProps {
-  balances: {
-    assetId: string;
-    balance: string;
-  }[];
-  onTokenSelect?: (token: AssetWithMetadata | null) => void;
-  searchQuery?: string;
-}
+const tokenSortOptions = [
+  // { value: "bitcoin", label: "Bitcoin", icon: "/token/btc.svg" },
+  // { value: "ethereum", label: "Ethereum", icon: "/token/eth.svg" },
+  // { value: "usdt", label: "USDT", icon: "/token/usdt.svg" },
+  // { value: "strk", label: "STRK", icon: "/token/strk.svg" },
+  { value: "qash", label: "QASH", icon: "/token/qash.svg" },
+];
 
-export function TokenList({ balances, onTokenSelect, searchQuery }: TokenListProps) {
+const networkSortOptions = [
+  // { value: "base", label: "BASE", icon: "/chain/base.svg" },
+  // { value: "ethereum", label: "Ethereum", icon: "/chain/ethereum.svg" },
+  // { value: "solana", label: "Solana", icon: "/chain/solana.svg" },
+  // { value: "bnb", label: "BNB", icon: "/chain/bnb.svg" },
+  { value: "miden", label: "Miden", icon: "/chain/miden.svg" },
+];
+
+const filterOptions = [
+  { value: "alphabetically", label: "Alphabetically (A-Z)" },
+  { value: "balance", label: "Balance ($ high-low)" },
+];
+
+const tabs = [
+  { id: "tokens", label: "Token Assets" },
+  { id: "nfts", label: "NFTs" },
+];
+
+export function TokenList() {
+  // **************** Custom Hooks *******************
+  const { address, balances } = useMidenProvider();
+
+  // **************** Local State *******************
+  const [activeTab, setActiveTab] = useState<"tokens" | "nfts">("tokens");
+
   return (
-    <section className="flex flex-col gap-2.5 items-start w-full">
-      <div className="flex flex-col gap-0.5 items-start w-full">
-        {balances.length === 0 ? (
-          <div className="flex flex-col items-center justify-center w-full py-8 gap-2">
-            <p className="text-neutral-400 text-sm text-center">
-              {searchQuery && searchQuery.trim() ? `No tokens found matching "${searchQuery}"` : "No tokens available"}
-            </p>
-            {searchQuery && searchQuery.trim() && (
-              <p className="text-neutral-500 text-xs text-center">Try searching by token symbol or address</p>
-            )}
-          </div>
-        ) : (
-          [...balances]
-            .sort((a, b) => {
-              const aSymbol = supportedTokens.find(t => t.faucetId.includes(a.assetId))?.symbol || "UNKW";
-              const bSymbol = supportedTokens.find(t => t.faucetId.includes(b.assetId))?.symbol || "UNKW";
-              if (aSymbol === "QASH") return -1;
-              if (bSymbol === "QASH") return 1;
-              return 0;
-            })
-            .map((asset, index: number) => {
-              const token = {
-                faucetId: asset.assetId,
-                metadata: {
-                  symbol: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW",
-                  decimals: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8,
-                  maxSupply: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0,
-                },
-                amount: asset.balance,
-                value: "1",
-                icon:
-                  supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol === "QASH"
-                    ? "/q3x-icon.png"
-                    : blo(turnBechToHex(asset.assetId)),
-                chain: "Miden",
-              };
-
-              return <TokenItem key={index} token={token} onClick={() => onTokenSelect?.(token)} />;
-            })
-        )}
+    <section className="flex flex-col gap-3 items-center self-stretch p-3 rounded-2xl bg-background flex-[1_0_0] max-sm:p-2">
+      <div className="w-full">
+        <span className="text-text-primary text-2xl text-center w-full">My Assets</span>
       </div>
+      {/* Tab Navigation */}
+      <TabContainer
+        tabs={tabs}
+        activeTab={activeTab}
+        setActiveTab={(tab: string) => setActiveTab(tab as "tokens" | "nfts")}
+      />
+
+      {/* Token List */}
+      {(() => {
+        switch (activeTab) {
+          case "tokens":
+            return (
+              <>
+                {address && balances && balances.balances?.length > 0 ? (
+                  <div className="flex flex-col justify-start">
+                    <div className="w-full flex justify-between items-center">
+                      <div className="flex gap-2">
+                        <Select label="Token" options={tokenSortOptions} />
+                        <Select label="Network" options={networkSortOptions} />
+                      </div>
+                      <FilterButton options={filterOptions} />
+                    </div>
+                    <div className="flex flex-col items-center self-stretch rounded-lg">
+                      {balances.balances.map((asset, index: number) => {
+                        const token = {
+                          faucetId: asset.assetId,
+                          metadata: {
+                            symbol: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW",
+                            decimals: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8,
+                            maxSupply: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0,
+                          },
+                          amount: asset.balance,
+                          value: "1",
+                          icon:
+                            supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol === "QASH"
+                              ? "/q3x-icon.png"
+                              : blo(turnBechToHex(asset.assetId)),
+                          chain: "Miden",
+                        };
+
+                        return <TokenItem key={index} token={token} />;
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1">
+                    <img src="/portfolio/blue-square-wallet-icon.svg" alt="No tokens" className="w-20 h-20" />
+                    <span className="text-text-secondary">Loading assets...</span>
+                  </div>
+                )}
+              </>
+            );
+          case "nfts":
+            return (
+              <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1 text-white opacity-50">
+                <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
+                <p>No NFTs</p>
+              </div>
+            );
+          default:
+            return null;
+        }
+      })()}
     </section>
   );
 }

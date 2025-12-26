@@ -118,7 +118,7 @@ const PayrollContainer = () => {
           </span>
         </div>
       ),
-      Date: payroll.payStartDate ? new Date(payroll.payStartDate).toLocaleDateString() : "-",
+      Payday: payroll.paydayDay ? `${payroll.paydayDay}th every month` : "-",
       "Contract Term": <span className="font-bold text-primary-blue">{payroll.contractTerm}</span>,
       " ": null, // Placeholder for action column
     };
@@ -213,7 +213,7 @@ const PayrollContainer = () => {
           <div className="w-full flex justify-center items-center py-10 text-red-500">Failed to load payrolls.</div>
         ) : (
           <Table
-            headers={["Employee name", "Group", "Amount", "Date", "Contract Term"]}
+            headers={["Employee name", "Group", "Amount", "Payday", "Contract Term"]}
             data={payrollData}
             actionColumn={true}
             actionRenderer={payrollActionRenderer}

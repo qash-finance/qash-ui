@@ -15,6 +15,8 @@ import toast from "react-hot-toast";
 import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_SYMBOL } from "@/services/utils/constant";
 import { usePayBills } from "@/services/api/bill";
 import { getFaucetMetadata } from "@/services/utils/miden/faucet";
+import { useMidenProvider } from "@/contexts/MidenProvider";
+import { importAndGetAccount } from "@/services/utils/miden/account";
 
 const InvoiceItem = ({
   invoiceId,
@@ -85,8 +87,8 @@ const TokenItem = ({ token, amount, amountUsd }: { token: string; amount: string
 
 const BillReviewContainer = () => {
   const router = useRouter();
-  const { address, wallet, requestTransaction } = useWallet();
   const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+  const { address, client } = useMidenProvider();
   const { data: groups } = useGetAllEmployeeGroups();
   const { openModal, closeModal } = useModal();
   const payBillsMutate = usePayBills();
@@ -171,17 +173,29 @@ const BillReviewContainer = () => {
 
   const handleSubmit = async () => {
     const midenSdk = await import("@demox-labs/miden-sdk");
-    const { Note, Address, NoteAssets, FungibleAsset, NoteType, Felt, TransactionRequestBuilder, OutputNote } =
-      midenSdk;
+    const {
+      Note,
+      WebClient,
+      Address,
+      NoteAssets,
+      FungibleAsset,
+      NoteType,
+      Felt,
+      TransactionRequestBuilder,
+      BasicFungibleFaucetComponent,
+      OutputNote,
+    } = midenSdk;
     const OutputNoteArray = (midenSdk as any).OutputNoteArray;
 
-    if (!address) throw new WalletNotConnectedError();
+    if (!address) {
+      return toast.error("Please connect your wallet");
+    }
 
     try {
       openModal("PROCESSING_TRANSACTION");
-
       // prepare an array of p2id note
       const p2idNotes: any[] = [];
+      const p2idNotesCopy: any[] = [];
       const recipientAddresses = [];
       const assets = [];
       let totalAmount = 0;
@@ -192,23 +206,22 @@ const BillReviewContainer = () => {
 
         // payment amount
         const paymentAmount = inv.total;
-
         // recipient address
         const recipientAddress = inv.paymentWalletAddress;
-
+        const faucetAccount = await importAndGetAccount(client, paymentTokenAddress);
         // get faucet metadata
-        const faucetMetadata = await getFaucetMetadata(paymentTokenAddress);
+        const faucetMetadata = await BasicFungibleFaucetComponent.fromAccount(faucetAccount);
         assets.push(faucetMetadata);
         totalAmount += Number(paymentAmount);
 
         // build p2id note
         const p2idNote = Note.createP2IDENote(
           Address.fromBech32(address).accountId(),
-          Address.fromBech32("mtst1appk6v056hx9xyptrga2z7730yegdrsd_qruqqypuyph").accountId(),
+          Address.fromBech32(recipientAddress).accountId(),
           new NoteAssets([
             new FungibleAsset(
               Address.fromBech32(paymentTokenAddress).accountId(),
-              BigInt(paymentAmount! * 10 ** faucetMetadata.decimals || 8),
+              BigInt(paymentAmount! * 10 ** faucetMetadata.decimals() || 8),
             ),
           ]),
           null,
@@ -216,37 +229,37 @@ const BillReviewContainer = () => {
           NoteType.Private,
           new Felt(BigInt(0)),
         );
+        const p2idNoteCopy = p2idNote;
         // Convert Note to OutputNote
         p2idNotes.push(OutputNote.full(p2idNote));
+        p2idNotesCopy.push(p2idNoteCopy);
         recipientAddresses.push(recipientAddress);
       }
-
       // Build transaction request with OutputNoteArray
       const outputNotesArray = new OutputNoteArray(p2idNotes);
       const transactionRequest = new TransactionRequestBuilder().withOwnOutputNotes(outputNotesArray).build();
-
-      const midenCustomTransaction = Transaction.createCustomTransaction(
-        address,
-        recipientAddresses[0],
+      const midenParaClient = client as import("@demox-labs/miden-sdk").WebClient;
+      const executedTx = await midenParaClient.executeTransaction(
+        Address.fromBech32(address).accountId(),
         transactionRequest,
       );
-
-      const midenTransaction: MidenTransaction = {
-        type: midenCustomTransaction.type,
-        payload: midenCustomTransaction.payload,
-      };
-
-      const txId = await requestTransaction?.(midenTransaction);
-
-      toast.success(`Transaction ${txId} submitted`);
-
+      console.log("Start proving transaction");
+      const provenTx = await midenParaClient.proveTransaction(executedTx);
+      console.log("Start submitting proven transaction");
+      const submissionHeight = await midenParaClient.submitProvenTransaction(provenTx, executedTx);
+      console.log("Start applying transaction");
+      await midenParaClient.applyTransaction(executedTx, submissionHeight);
+      console.log("Start sending private notes");
+      // loop through p2idNotes and recipientAddresses, send each private note
+      for (let i = 0; i < p2idNotes.length; i++) {
+        await midenParaClient.sendPrivateNote(p2idNotesCopy[i], Address.fromBech32(recipientAddresses[i]));
+      }
+      console.log("Start mutating bills");
       payBillsMutate.mutate({
         billUUIDs: selectedInvoices.map(inv => inv.bill?.uuid),
-        transactionHash: txId,
+        transactionHash: "",
       });
-
       closeModal("PROCESSING_TRANSACTION");
-
       openModal<TransactionOverviewModalProps>("TRANSACTION_OVERVIEW", {
         amount: totalAmount.toString(),
         tokenSymbol: selectedInvoices
@@ -256,10 +269,10 @@ const BillReviewContainer = () => {
         tokenAddress: QASH_TOKEN_ADDRESS,
         accountAddress: address,
         accountName: "You",
-        recipientAddress: "mtst1ar22f8fc95u8vyppkztvmcas8vmckq7f_qruqqypuyph",
+        recipientAddress: recipientAddresses.join(","),
         recipientName: "Reciever",
         transactionType: "Send",
-        transactionHash: txId,
+        transactionHash: executedTx.executedTransaction().id().toHex(),
         onConfirm: () => {
           closeModal("TRANSACTION_OVERVIEW");
           router.push("/bill");
@@ -267,6 +280,7 @@ const BillReviewContainer = () => {
       });
     } catch (error: any) {
       console.log(error);
+      toast.error(String(error));
     } finally {
       closeModal("PROCESSING_TRANSACTION");
     }

@@ -1,26 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { OnboardingModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import BaseModal from "./BaseModal";
-import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
-import { ActionButton } from "../Common/ActionButton";
-import { useWalletAuth } from "@/hooks/server/useWalletAuth";
-import { mintToken } from "@/services/utils/miden/faucet";
-import toast from "react-hot-toast";
-import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
+import { MIDEN_EXPLORER_URL, QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import { createFaucetMintAndConsume } from "@/services/utils/mint";
+import BaseModal from "./BaseModal";
+import toast from "react-hot-toast";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 
 export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalProps>) {
   // **************** Custom Hooks *******************
-  const { client, address } = useMidenProvider();
-  const { forceFetch: forceRefetchConsumableNotes } = useConsumableNotes();
-  const router = useRouter();
-  const pathname = usePathname();
+  const { client, address, fetchBalances } = useMidenProvider();
 
   // **************** Local State *******************
   const [loading, setLoading] = useState(false);
@@ -46,22 +38,9 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
         </div>,
       );
 
-      // Wait for network propagation then force fresh fetch
-      setTimeout(async () => {
-        try {
-          await forceRefetchConsumableNotes();
-        } catch (error) {
-          // Retry after additional delay if needed
-          setTimeout(async () => {
-            await forceRefetchConsumableNotes();
-            toast.dismiss();
-          }, 3000);
-          console.error("Error refetching notes:", error);
-        }
-      }, 2000);
-
       onClose();
       setSuccess(true);
+      fetchBalances();
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to mint tokens, it might because the faucet was drained!");
@@ -88,7 +67,7 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
           <div className="flex flex-col gap-4 items-center">
             <img src="/token/qash.svg" alt="QASH Token" className="w-16 h-16" />
             <div className="flex flex-col gap-2 items-center">
-              <span className="text-5xl font-bold text-text-primary">10</span>
+              <span className="text-5xl font-bold text-text-primary">100</span>
               <span className="text-xl text-text-primary text-center">
                 Grab your free test tokens to start exploring Qash on testnet.
               </span>

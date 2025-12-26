@@ -10,6 +10,8 @@ import { Tooltip } from "react-tooltip";
 import { AccountTooltip } from "../Common/ToolTip/AccountTooltip";
 import { AuthMeResponse } from "@/services/auth/api";
 import { useMidenProvider } from "@/contexts/MidenProvider";
+import { formatAddress } from "@/services/utils/miden/address";
+import toast from "react-hot-toast";
 
 export const MOVE_CRYPTO_SIDEBAR_OFFSET = 230;
 
@@ -126,7 +128,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   const pathname = usePathname();
   const [showMoveCryptoSidebar, setShowMoveCryptoSidebar] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
-  const { logoutAsync } = useMidenProvider();
+  const { logoutAsync, address } = useMidenProvider();
   // **************** Effect ****************
   useEffect(() => {
     // Check if any submenu is currently open
@@ -252,6 +254,25 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
                     {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
                   </span>
                   <span className="text-text-secondary leading-none">{(user as AuthMeResponse["user"])?.email}</span>
+                  {address && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-text-secondary leading-none">{formatAddress(address)}</span>
+                      <img
+                        src="/misc/copy-icon.svg"
+                        alt="copy"
+                        className="w-6 h-6 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(address);
+                            toast.success("Wallet address copied to clipboard");
+                          } catch (err) {
+                            console.error("Failed to copy address:", err);
+                            toast.error("Failed to copy address");
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <img
                   src="/misc/three-dot-icon.svg"

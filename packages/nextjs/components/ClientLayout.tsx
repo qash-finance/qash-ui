@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useEffect, useMemo } from "react";
+import { ReactNode, useEffect, useMemo } from "react";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
@@ -8,38 +8,26 @@ import { Title } from "./Common/Title";
 import { ModalProvider } from "@/contexts/ModalManagerProvider";
 import { ModalManager } from "./Common/ModalManager";
 import { AuthProvider } from "@/services/auth/context";
-import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
 import { TitleProvider } from "@/contexts/TitleProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
-import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
 // import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
 import { usePathname, useRouter } from "next/navigation";
 import { TransactionProviderC } from "@/contexts/TransactionProvider";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { ModalTriggerRef } from "./Common/ModalTrigger";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
 import { Environment, ParaProvider } from "@getpara/react-sdk";
-import "@getpara/react-sdk/styles.css";
 import { MidenProvider } from "@/contexts/MidenProvider";
+import "@getpara/react-sdk/styles.css";
 
 const SIDEBAR_WIDTH = 280;
 
 interface ClientLayoutProps {
   children: ReactNode;
 }
-
-const analyticsConfig = {
-  baseUrl: process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000",
-  enableAutoTracking: true,
-  enablePageTracking: true,
-  enableErrorTracking: true,
-  sessionTimeout: 30, // 30 minutes
-};
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -160,10 +148,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <TourProviderWrapper>
             <SocketProvider>
               <ModalProvider>
-                <AnalyticsProvider config={analyticsConfig}>
-                  <AuthProvider>
-                    <ProtectedContent>
-                      <AccountProvider>
+                <AuthProvider>
+                  <ProtectedContent>
+                    <AccountProvider>
+                      <TransactionProviderC>
                         <TitleProvider>
                           {/* <ConnectWalletButton /> */}
                           <ModalManager />
@@ -189,10 +177,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                           {!isFullscreen && <FloatingActionButton imgSrc="/token/qash.svg" />}
                           {!isFullscreen && <Background />}
                         </TitleProvider>
-                      </AccountProvider>
-                    </ProtectedContent>
-                  </AuthProvider>
-                </AnalyticsProvider>
+                      </TransactionProviderC>
+                    </AccountProvider>
+                  </ProtectedContent>
+                </AuthProvider>
               </ModalProvider>
             </SocketProvider>
           </TourProviderWrapper>

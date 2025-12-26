@@ -14,6 +14,8 @@ import { useModal as useParaModal } from "@getpara/react-sdk";
 import { useParaMiden } from "miden-para-react";
 import { useAccount as useParaAccount } from "@getpara/react-sdk";
 import { SecondaryButton } from "../Common/SecondaryButton";
+import { useMidenProvider } from "@/contexts/MidenProvider";
+import { useRouter } from "next/navigation";
 
 type Step = "verify" | "review" | "success";
 
@@ -80,8 +82,9 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 
 export const InvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
+  const router = useRouter();
 
-  const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser } = useAuth();
+  const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser, logout } = useAuth();
   console.log("🚀 ~ InvoiceReviewContainer ~ user:", user);
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
@@ -89,6 +92,7 @@ export const InvoiceReviewContainer = () => {
   const { openModal: openParaModal } = useParaModal();
   const { para } = useParaMiden("https://rpc.testnet.miden.io");
   const { isConnected } = useParaAccount();
+  const { logoutAsync } = useMidenProvider();
 
   const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
@@ -96,6 +100,7 @@ export const InvoiceReviewContainer = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [authenticatingWithPara, setAuthenticatingWithPara] = useState(false);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
   const autoReviewKeyRef = useRef<string | null>(null);
 
@@ -306,6 +311,23 @@ export const InvoiceReviewContainer = () => {
     }
   };
 
+  const handleSwitchAccount = async () => {
+    setSwitchingAccount(true);
+    try {
+      await logoutAsync();
+      await logout();
+      // Reset state to allow re-authentication
+      setStep("verify");
+      setInvoiceData(null);
+      autoReviewKeyRef.current = null;
+    } catch (error) {
+      console.error("Failed to switch account:", error);
+      toast.error("Failed to switch account");
+    } finally {
+      setSwitchingAccount(false);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">
       {/* Verify OTP Step */}
@@ -347,6 +369,18 @@ export const InvoiceReviewContainer = () => {
                 text={authenticatingWithPara ? "Authenticating..." : "Connect Wallet"}
                 disabled={authenticatingWithPara || authIsLoading}
               />
+            )}
+
+            {isAuthenticated && (
+              <div className="mt-4">
+                <SecondaryButton
+                  text={switchingAccount ? "Switching..." : "Switch Account"}
+                  onClick={handleSwitchAccount}
+                  disabled={switchingAccount || authenticatingWithPara}
+                  variant="light"
+                  buttonClassName="w-[200px]"
+                />
+              </div>
             )}
           </div>
         </div>
@@ -391,7 +425,7 @@ export const InvoiceReviewContainer = () => {
 
             <div className="flex flex-row items-center gap-2">
               {/* TODO: Add download PDF button */}
-              <SecondaryButton
+              {/* <SecondaryButton
                 text="Download PDF"
                 onClick={handleDownloadPdf}
                 variant="light"
@@ -399,7 +433,7 @@ export const InvoiceReviewContainer = () => {
                 icon="/invoice/download-invoice-icon.svg"
                 iconPosition="left"
                 disabled={isLoading}
-              />
+              /> */}
               {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
                 <PrimaryButton
                   text="Confirm"

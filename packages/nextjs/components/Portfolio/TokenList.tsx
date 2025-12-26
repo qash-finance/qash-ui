@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { blo } from "blo";
 import { TokenItem } from "./TokenItem";
-import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { TabContainer } from "../Common/TabContainer";
 import { Select } from "../Common/Select";
 import { FilterButton } from "../Common/FilterButton";
-import { PrimaryButton } from "../Common/PrimaryButton";
-import { useAccount, useLogout, useModal, useWallet } from "@getpara/react-sdk";
-import { getBalance } from "@/services/utils/getBalance";
 import { supportedTokens } from "@/services/utils/supportedToken";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 
@@ -43,7 +38,7 @@ const tabs = [
 
 export function TokenList() {
   // **************** Custom Hooks *******************
-  const { address, balances } = useMidenProvider();
+  const { balances, balancesLoading } = useMidenProvider();
 
   // **************** Local State *******************
   const [activeTab, setActiveTab] = useState<"tokens" | "nfts">("tokens");
@@ -66,7 +61,13 @@ export function TokenList() {
           case "tokens":
             return (
               <>
-                {address && balances && balances?.length > 0 ? (
+                {balancesLoading ? (
+                  <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1">
+                    <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
+
+                    <span className="text-text-secondary">Loading assets...</span>
+                  </div>
+                ) : (
                   <>
                     <div className="w-full flex justify-between items-center">
                       <div className="flex gap-2">
@@ -75,42 +76,45 @@ export function TokenList() {
                       </div>
                       <FilterButton options={filterOptions} />
                     </div>
-                    <div className="flex flex-col items-center self-stretch rounded-lg">
-                      {[...balances]
-                        .sort((a, b) => {
-                          const aSymbol = supportedTokens.find(t => t.faucetId.includes(a.assetId))?.symbol || "UNKW";
-                          const bSymbol = supportedTokens.find(t => t.faucetId.includes(b.assetId))?.symbol || "UNKW";
-                          if (aSymbol === "QASH") return -1;
-                          if (bSymbol === "QASH") return 1;
-                          return 0;
-                        })
-                        .map((asset, index: number) => {
-                          const token = {
-                            faucetId: asset.assetId,
-                            metadata: {
-                              symbol: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW",
-                              decimals: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8,
-                              maxSupply: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0,
-                            },
-                            amount: asset.balance,
-                            value: "1",
-                            icon:
-                              supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol === "QASH"
-                                ? "/q3x-icon.png"
-                                : blo(turnBechToHex(asset.assetId)),
-                            chain: "Miden",
-                          };
+                    <div className="flex flex-col items-center self-stretch rounded-lg flex-1 justify-start">
+                      {balances && balances.balances.length > 0 ? (
+                        [...balances.balances]
+                          .sort((a, b) => {
+                            const aSymbol = supportedTokens.find(t => t.faucetId.includes(a.assetId))?.symbol || "UNKW";
+                            const bSymbol = supportedTokens.find(t => t.faucetId.includes(b.assetId))?.symbol || "UNKW";
+                            if (aSymbol === "QASH") return -1;
+                            if (bSymbol === "QASH") return 1;
+                            return 0;
+                          })
+                          .map((asset, index: number) => {
+                            const token = {
+                              faucetId: asset.assetId,
+                              metadata: {
+                                symbol: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW",
+                                decimals: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8,
+                                maxSupply:
+                                  supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0,
+                              },
+                              amount: asset.balance,
+                              value: "1",
+                              icon:
+                                supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol === "QASH"
+                                  ? "/q3x-icon.png"
+                                  : blo(turnBechToHex(asset.assetId)),
+                              chain: "Miden",
+                            };
 
-                          return <TokenItem key={index} token={token} />;
-                        })}
+                            return <TokenItem key={index} token={token} />;
+                          })
+                      ) : (
+                        <div className="h-full flex flex-col justify-center items-center justify-center gap-2">
+                          <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
+
+                          <span className="text-text-secondary">No assets</span>
+                        </div>
+                      )}
                     </div>
                   </>
-                ) : (
-                  <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1">
-                    <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
-
-                    <span className="text-text-secondary">Loading assets...</span>
-                  </div>
                 )}
               </>
             );
