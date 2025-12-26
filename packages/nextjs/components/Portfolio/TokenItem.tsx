@@ -22,6 +22,7 @@ interface TokenItemProps {
 
 export function TokenItem({ token }: TokenItemProps) {
   const { isBalanceVisible } = useBalanceVisibility();
+  const totalValue = Number(token.value) * Number(token.amount);
 
   return (
     <article
@@ -46,8 +47,8 @@ export function TokenItem({ token }: TokenItemProps) {
           <span className="text-base font-medium leading-6 text-text-primary">
             {isBalanceVisible ? (
               <>
-                {formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}{" "}
-                {token.metadata.symbol}
+                {/* {formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}{" "} */}
+                {token.amount} {token.metadata.symbol}
               </>
             ) : (
               "****"
@@ -55,7 +56,8 @@ export function TokenItem({ token }: TokenItemProps) {
           </span>
           <span className="text-sm leading-4 text-text-secondary">
             {isBalanceVisible
-              ? `$ ${formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}`
+              ? // ? `$ ${formatNumberWithCommas(formatUnits(BigInt(Math.round(Number(token.amount))), token.metadata.decimals))}`
+                `$ ${totalValue}`
               : "****"}
           </span>
         </div>

@@ -16,6 +16,7 @@ import { useCreatePaymentLink } from "@/services/api/payment-link";
 import { CreatePaymentLink, TokenMetadata } from "@/types/payment-link";
 import { useRouter } from "next/navigation";
 import { PaymentLinkPreview } from "./PaymentLinkPreview";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 interface CreatePaymentLinkFormData {
   title: string;
@@ -92,7 +93,7 @@ const NetworkBadge = ({ networkId }: { networkId: string }) => {
 
 const CreatePaymentLinkContainer = () => {
   const router = useRouter();
-  const { walletAddress } = useWalletState(state => state);
+  const { address: walletAddress } = useMidenProvider();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
@@ -131,7 +132,8 @@ const CreatePaymentLinkContainer = () => {
         {
           symbol: selectedToken.metadata.symbol,
           decimals: selectedToken.metadata.decimals,
-          faucetId: selectedToken.faucetId,
+          address: selectedToken.faucetId || QASH_TOKEN_ADDRESS,
+          name: selectedToken.metadata.symbol,
         },
       ];
 
@@ -139,7 +141,7 @@ const CreatePaymentLinkContainer = () => {
         title: data.title,
         description: data.description,
         amount: data.amount,
-        payee: walletAddress,
+        paymentWalletAddress: walletAddress,
         acceptedTokens,
       };
 

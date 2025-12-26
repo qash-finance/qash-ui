@@ -292,11 +292,21 @@ const BillDetailContainer = () => {
                 <div className="w-30">
                   <p className="text-sm text-gray-500 font-medium">Default method</p>
                 </div>
+
                 <div className="flex items-center gap-2">
                   <img src="/token/qash.svg" alt="USDT" className="w-5 h-5" />
                   <p className="text-sm text-gray-900 font-medium">
                     {invoice.paymentToken?.symbol} ({invoice.paymentNetwork?.name})
                   </p>
+                </div>
+              </div>
+              <div className="flex flex-row gap-5">
+                <div className="w-30">
+                  <p className="text-sm text-gray-500 font-medium">Payment address</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-900 font-medium">{invoice.paymentWalletAddress}</p>
                 </div>
               </div>
             </div>

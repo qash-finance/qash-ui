@@ -70,7 +70,7 @@ const SpendingAverageChart = () => {
   const { assets } = useAccountContext();
   const [timeRange, setTimeRange] = useState("Last 5 days");
   const transactions = useTransactionStore(state => state.transactions);
-  const blockNumber = useMidenSdkStore(state => state.blockNum);
+  const blockNumber = 0;
 
   // Calculate transaction statistics based on time range and block numbers
   const transactionStats = useMemo(() => {

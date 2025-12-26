@@ -66,7 +66,13 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
   const isSchedulePayment = schedulePayment?.times !== undefined;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose}>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        onConfirm?.();
+      }}
+    >
       <ModalHeader title="Transaction Details" onClose={onClose} />
       <div className="flex flex-col gap-4 p-4 bg-background rounded-b-2xl w-[600px] border-2 border-primary-divider">
         <div className="flex flex-row gap-3 items-center">
@@ -116,7 +122,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           />
 
           {/* Transaction Hash Row */}
-          {/* <DetailRow
+          <DetailRow
             label="Transaction Hash"
             value={
               <div className="flex gap-2 items-center">
@@ -126,7 +132,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
                 </span>
               </div>
             }
-          /> */}
+          />
 
           {/* Schedule Payment Row */}
           {isSchedulePayment && (
@@ -148,7 +154,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
           /> */}
         </div>
         <div className="mt-3 flex gap-2 w-full">
-          {/* <SecondaryButton
+          <SecondaryButton
             text="View on Explorer"
             variant="light"
             onClick={() => {
@@ -157,7 +163,7 @@ export function TransactionOverviewModal({ isOpen, onClose, ...props }: ModalPro
             buttonClassName="flex-1"
             icon="/misc/globe.svg"
             iconPosition="left"
-          /> */}
+          />
           <SecondaryButton
             text="Done"
             onClick={() => {

@@ -5,13 +5,17 @@ import InvoiceDetail from "./InvoiceDetail";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
 import { useInvoice } from "@/hooks/server/useInvoice";
 import { useSearchParams } from "next/navigation";
-import OtpInput from "react-otp-input";
 import toast from "react-hot-toast";
 import Welcome from "../Common/Welcome";
-import LoginButton from "../Login/LoginButton";
 import { useAuth } from "@/services/auth/context";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { ConfirmAndReviewInvoiceModalProps } from "@/types/modal";
+import { useModal as useParaModal } from "@getpara/react-sdk";
+import { useParaMiden } from "miden-para-react";
+import { useAccount as useParaAccount } from "@getpara/react-sdk";
+import { SecondaryButton } from "../Common/SecondaryButton";
+import { useMidenProvider } from "@/contexts/MidenProvider";
+import { useRouter } from "next/navigation";
 
 type Step = "verify" | "review" | "success";
 
@@ -78,25 +82,70 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 
 export const InvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
+  const router = useRouter();
 
-  const { isAuthenticated, isLoading: authIsLoading, sendOtp, verifyOtp, user } = useAuth();
+  const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser, logout } = useAuth();
+  console.log("🚀 ~ InvoiceReviewContainer ~ user:", user);
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const employeeEmail = searchParams.get("email") || "";
+  const { openModal: openParaModal } = useParaModal();
+  const { para } = useParaMiden("https://rpc.testnet.miden.io");
+  const { isConnected } = useParaAccount();
+  const { logoutAsync } = useMidenProvider();
 
   const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [originalAddress, setOriginalAddress] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpError, setOtpError] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [authenticatingWithPara, setAuthenticatingWithPara] = useState(false);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
-  const otpSentKeyRef = useRef<string | null>(null);
   const autoReviewKeyRef = useRef<string | null>(null);
 
   const { isLoading, fetchInvoiceByUUID, confirmInvoiceData, downloadPdf } = useInvoice();
+
+  const handleParaAuthentication = async () => {
+    if (!isConnected || !para) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    setAuthenticatingWithPara(true);
+    try {
+      // Issue JWT from Para
+      const jwtResult = await para.issueJwt();
+
+      if (!jwtResult?.token) {
+        throw new Error("Failed to get JWT token from Para");
+      }
+
+      console.log("Para JWT issued:", { keyId: jwtResult.keyId });
+
+      // Send JWT to backend
+      await loginWithPara(jwtResult.token);
+
+      await refreshUser();
+
+      const email = user?.email || para.email;
+      if (email && email.toLowerCase() !== employeeEmail.toLowerCase()) {
+        toast.error("The logged in account email does not match the invoice recipient email.");
+        return;
+      }
+
+      toast.success("Successfully authenticated with Para");
+
+      // Load invoice data
+      await loadInvoice();
+      setStep("review");
+    } catch (error) {
+      console.error("Para authentication failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to authenticate with Para");
+    } finally {
+      setAuthenticatingWithPara(false);
+    }
+  };
 
   const normalizedEmployeeEmail = useMemo(() => employeeEmail.trim().toLowerCase(), [employeeEmail]);
   const normalizedUserEmail = useMemo(() => (user?.email || "").trim().toLowerCase(), [user?.email]);
@@ -107,62 +156,38 @@ export const InvoiceReviewContainer = () => {
     return normalizedEmployeeEmail === normalizedUserEmail;
   }, [isAuthenticated, normalizedEmployeeEmail, normalizedUserEmail]);
 
+  // Auto-authenticate when Para connection is established
+  useEffect(() => {
+    if (isConnected && !isAuthenticated && !authenticatingWithPara) {
+      handleParaAuthentication();
+    }
+  }, [isConnected, isAuthenticated]);
+
   useEffect(() => {
     if (!invoiceUUID || !employeeEmail) return;
-    // Don't run OTP/auto-review logic until auth has finished initializing.
-    // Otherwise we may send OTP while a session exists and overwrite stored email.
+    // Don't run auto-review logic until auth has finished initializing.
     if (authIsLoading) return;
 
     const key = `${invoiceUUID}:${normalizedEmployeeEmail}`;
 
-    // 2) If user is authenticated: don't send OTP
-    //    a) If email === employeeEmail: auto move to review
-    //    b) If email !== employeeEmail: stay on verify but hide OTP input
-    if (isAuthenticated) {
-      if (isEmployeeEmailMatch) {
-        if (autoReviewKeyRef.current === key) return;
-        autoReviewKeyRef.current = key;
+    // If user is authenticated and email matches: auto move to review
+    if (isAuthenticated && isEmployeeEmailMatch) {
+      if (autoReviewKeyRef.current === key) return;
+      autoReviewKeyRef.current = key;
 
-        (async () => {
-          try {
-            const data = await fetchInvoiceByUUID(invoiceUUID);
-            const mappedData = mapApiResponseToInvoiceData(data);
-            setInvoiceData(mappedData);
-            setOriginalAddress(mappedData.from.address);
-            setStep("review");
-          } catch (err) {
-            console.error("Failed to load invoice:", err);
-          }
-        })();
-      }
-      return;
-    }
-
-    // 1) If user is not authenticated: auto send OTP (once per invoice+email)
-    if (otpSentKeyRef.current === key) return;
-    otpSentKeyRef.current = key;
-
-    sendOtp(employeeEmail)
-      .then(() => {
-        toast.success(`OTP sent to ${employeeEmail}`);
-      })
-      .catch((error: any) => {
-        if (error && error.message.includes("Rate limit")) {
-          toast.error("Too many requests. Please wait before trying again.");
-        } else {
-          toast.error("Failed to send OTP");
+      (async () => {
+        try {
+          const data = await fetchInvoiceByUUID(invoiceUUID);
+          const mappedData = mapApiResponseToInvoiceData(data);
+          setInvoiceData(mappedData);
+          setOriginalAddress(mappedData.from.address);
+          setStep("review");
+        } catch (err) {
+          console.error("Failed to load invoice:", err);
         }
-      });
-  }, [
-    authIsLoading,
-    employeeEmail,
-    fetchInvoiceByUUID,
-    invoiceUUID,
-    isAuthenticated,
-    isEmployeeEmailMatch,
-    normalizedEmployeeEmail,
-    sendOtp,
-  ]);
+      })();
+    }
+  }, [authIsLoading, employeeEmail, invoiceUUID, isAuthenticated, isEmployeeEmailMatch, normalizedEmployeeEmail]);
 
   const loadInvoice = async () => {
     try {
@@ -173,42 +198,6 @@ export const InvoiceReviewContainer = () => {
       setOriginalAddress(mappedData.from.address);
     } catch (err) {
       console.error("Failed to load invoice:", err);
-    }
-  };
-
-  const handleVerifyOtp = async (valueOtp?: string) => {
-    const otpToVerify = valueOtp ?? otp;
-
-    if (otpToVerify.length !== 6) {
-      setOtpError(true);
-      return;
-    }
-
-    setOtpError(false);
-    setVerifyingOtp(true);
-
-    try {
-      await verifyOtp(employeeEmail, otpToVerify);
-      toast.success("OTP verified successfully");
-      // Load invoice data and move to review step
-      await loadInvoice();
-      setStep("review");
-    } catch (err) {
-      setOtpError(true);
-      toast.error(err instanceof Error ? err.message : "Failed to verify OTP");
-    } finally {
-      setVerifyingOtp(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    try {
-      await sendOtp(employeeEmail);
-      toast.success("OTP sent to your email");
-      setOtp("");
-      setOtpError(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to resend OTP");
     }
   };
 
@@ -258,7 +247,6 @@ export const InvoiceReviewContainer = () => {
   const handleDownloadPdf = async () => {
     try {
       const blob = await downloadPdf(invoiceUUID);
-      console.log("🚀 ~ handleDownloadPdf ~ blob:", blob);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -323,6 +311,23 @@ export const InvoiceReviewContainer = () => {
     }
   };
 
+  const handleSwitchAccount = async () => {
+    setSwitchingAccount(true);
+    try {
+      await logoutAsync();
+      await logout();
+      // Reset state to allow re-authentication
+      setStep("verify");
+      setInvoiceData(null);
+      autoReviewKeyRef.current = null;
+    } catch (error) {
+      console.error("Failed to switch account:", error);
+      toast.error("Failed to switch account");
+    } finally {
+      setSwitchingAccount(false);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">
       {/* Verify OTP Step */}
@@ -338,8 +343,7 @@ export const InvoiceReviewContainer = () => {
               </p>
               {!isAuthenticated && (
                 <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
-                  We’ve sent a OTP to <span className="text-primary-blue">{employeeEmail}</span> Please enter it to
-                  continue.
+                  Connect your wallet to continue.
                 </p>
               )}
 
@@ -351,44 +355,32 @@ export const InvoiceReviewContainer = () => {
 
               {isAuthenticated && !isEmployeeEmailMatch && (
                 <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
-                  We’ve sent a OTP to <span className="text-primary-blue">{employeeEmail}</span>.
+                  The logged in account <span className="text-primary-blue">{normalizedUserEmail}</span> does not match
+                  the invoice recipient email.
                 </p>
               )}
             </div>
 
             {!isAuthenticated && (
-              <>
-                <OtpInput
-                  value={otp}
-                  onChange={value => {
-                    setOtp(value);
-                    if (otpError) setOtpError(false);
+              <PrimaryButton
+                onClick={() => {
+                  openParaModal?.();
+                }}
+                text={authenticatingWithPara ? "Authenticating..." : "Connect Wallet"}
+                disabled={authenticatingWithPara || authIsLoading}
+              />
+            )}
 
-                    // Auto-submit when OTP is fully entered
-                    if (value.length === 6) {
-                      handleVerifyOtp(value);
-                    }
-                  }}
-                  numInputs={6}
-                  containerStyle={{ gap: "8px" }}
-                  inputStyle={{
-                    width: "50px",
-                    height: "55px",
-                    borderRadius: "12px",
-                    fontSize: "24px",
-                    textAlign: "center",
-                    backgroundColor: "#F6F6F6",
-                    border: otpError ? "2px solid #E93544" : undefined,
-                  }}
-                  placeholder=""
-                  renderInput={props => <input {...props} />}
+            {isAuthenticated && (
+              <div className="mt-4">
+                <SecondaryButton
+                  text={switchingAccount ? "Switching..." : "Switch Account"}
+                  onClick={handleSwitchAccount}
+                  disabled={switchingAccount || authenticatingWithPara}
+                  variant="light"
+                  buttonClassName="w-[200px]"
                 />
-                {otpError && <span className="text-[16px] text-[#E93544] my-3">Incorrect code. Please try again.</span>}
-                <LoginButton onClick={handleVerifyOtp} loading={verifyingOtp || isLoading} />
-                <span className="text-[18px] text-primary-blue mt-4 cursor-pointer" onClick={handleResendOtp}>
-                  Resend OTP
-                </span>
-              </>
+              </div>
             )}
           </div>
         </div>

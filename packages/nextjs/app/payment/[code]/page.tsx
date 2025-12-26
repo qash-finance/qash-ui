@@ -8,7 +8,7 @@ import { blo } from "blo";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { formatAddress } from "@/services/utils/miden/address";
 import toast from "react-hot-toast";
-import { QASH_TOKEN_ADDRESS, BLOCK_TIME, REFETCH_DELAY } from "@/services/utils/constant";
+import { QASH_TOKEN_ADDRESS, BLOCK_TIME, REFETCH_DELAY, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { Badge, BadgeStatus } from "@/components/Common/Badge";
 import { PaymentLinkStatus } from "@/types/payment-link";
 import { useWalletState } from "@/services/store";
@@ -23,6 +23,7 @@ import { sendSingleTransaction } from "@/services/api/transaction";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { PaymentLinkPreview } from "@/components/PaymentLink/PaymentLinkPreview";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 const SubIcon = ({
   icon,
@@ -50,7 +51,8 @@ const SubIcon = ({
 };
 
 const Header = () => {
-  const { walletAddress } = useWalletConnect();
+  const { openModal } = useModal();
+  const { address: walletAddress } = useMidenProvider();
 
   const router = useRouter();
 
@@ -68,7 +70,10 @@ const Header = () => {
 
       <div className="flex items-center justify-center gap-3">
         {walletAddress && (
-          <div className="flex items-center justify-center gap-2 bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider">
+          <div
+            className="flex items-center justify-center gap-2 bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider cursor-pointer"
+            onClick={() => openModal("PORTFOLIO")}
+          >
             <img src="/chain/miden.svg" alt="Qash Logo" />
             <span className="text-text-primary text-lg">{formatAddress(walletAddress)}</span>
           </div>
@@ -89,23 +94,22 @@ const Header = () => {
 const PaymentLinkDetailPage = () => {
   const params = useParams();
   const code = params.code as string;
-  const { walletAddress } = useWalletState();
+  const { address: walletAddress, openModal: openParaModal } = useMidenProvider();
   const { data: paymentLink, isLoading, error } = useGetPaymentLinkByCode(code);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
   const recordPaymentMutation = useRecordPayment();
   const { openModal, closeModal } = useModal();
-  const { accountBalance } = useAccount();
   const { assets, accountId: walletAddressFromContext, forceFetch: forceRefetchAssets } = useAccountContext();
   const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const [isSending, setIsSending] = useState(false);
   const router = useRouter();
 
   const handleSubmitPayment = async () => {
-    if (Number(accountBalance) < parseFloat(paymentLink?.amount || "0")) {
-      toast.error("Insufficient balance");
-      return;
-    }
+    // if (Number(accountBalance) < parseFloat(paymentLink?.amount || "0")) {
+    //   toast.error("Insufficient balance");
+    //   return;
+    // }
 
     if (!walletAddress) {
       toast.error("Please connect your wallet");
@@ -127,9 +131,9 @@ const PaymentLinkDetailPage = () => {
     const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
 
     // Find the selected token from assets based on tokenAddress
-    const selectedToken = assets.find(asset => asset.faucetId === paymentLink.acceptedTokens?.[0]?.faucetId) || {
+    const selectedToken = assets.find(asset => asset.faucetId === paymentLink.acceptedTokens?.[0]?.address) || {
       amount: "0",
-      faucetId: paymentLink.acceptedTokens[0].faucetId,
+      faucetId: paymentLink.acceptedTokens[0].address,
       metadata: {
         symbol: paymentLink.acceptedTokens[0].symbol,
         decimals: paymentLink.acceptedTokens[0].decimals,
@@ -139,12 +143,12 @@ const PaymentLinkDetailPage = () => {
 
     // Create AccountId objects once to avoid aliasing issues
     const senderAccountId = walletAddress;
-    const recipientAccountId = paymentLink.payee;
+    const recipientAccountId = paymentLink.paymentWalletAddress;
     const faucetAccountId = selectedToken.faucetId;
 
     await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, {
       amount: parseFloat(paymentLink.amount || "0"),
-      recipientAddress: paymentLink.payee,
+      recipientAddress: paymentLink.paymentWalletAddress,
       recallableTime,
       isPrivateTransaction: false,
       message: paymentLink.description,
@@ -164,97 +168,126 @@ const PaymentLinkDetailPage = () => {
       message?: string;
     },
   ) => {
+    if (!walletAddress) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
     const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
 
     try {
       // create note
-      const [note, serialNumbers, noteRecallHeight] = await createP2IDENote(
-        senderAccountId,
-        recipientAccountId,
-        faucetAccountId,
-        Math.round(amount * Math.pow(10, paymentLink?.acceptedTokens?.[0]?.decimals || 8)),
-        isPrivateTransaction ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
-        recallHeight,
-      );
+      // const [note, serialNumbers, noteRecallHeight] = await createP2IDENote(
+      //   senderAccountId,
+      //   recipientAccountId,
+      //   faucetAccountId,
+      //   Math.round(amount * Math.pow(10, paymentLink?.acceptedTokens?.[0]?.decimals || 8)),
+      //   isPrivateTransaction ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
+      //   recallHeight,
+      // );
 
-      const noteId = note.id().toString();
+      // const noteId = note.id().toString();
 
-      // submit transaction to miden
-      const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
+      // // submit transaction to miden
+      // const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
+
+      // const midenTransaction = new SendTransaction(
+      //   walletAddress,
+      //   recipientAccountId,
+      //   QASH_TOKEN_ADDRESS,
+      //   "public",
+      //   amount! * 10 ** QASH_TOKEN_DECIMALS,
+      // );
+
+      // const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
+      // toast.success(`Transaction ${txId} submitted`);
+
       // submit transaction to server
-      const response = await sendSingleTransaction({
-        assets: [
-          {
-            faucetId: paymentLink?.acceptedTokens?.[0]?.faucetId || "",
-            amount: amount.toString(),
-            metadata: {
-              symbol: paymentLink?.acceptedTokens?.[0]?.symbol || "",
-              decimals: paymentLink?.acceptedTokens?.[0]?.decimals || 8,
-              maxSupply: 0,
-            },
-          },
-        ],
-        private: isPrivateTransaction,
-        recipient: recipientAddress,
-        recallable: true,
-        recallableTime: new Date(Date.now() + recallableTime * 1000),
-        recallableHeight: noteRecallHeight,
-        serialNumber: serialNumbers,
-        noteType: CustomNoteType.P2IDR,
-        noteId: noteId,
-        transactionId: txId,
+      // const response = await sendSingleTransaction({
+      //   assets: [
+      //     {
+      //       faucetId: paymentLink?.acceptedTokens?.[0]?.address || "",
+      //       amount: amount.toString(),
+      //       metadata: {
+      //         symbol: paymentLink?.acceptedTokens?.[0]?.symbol || "",
+      //         decimals: paymentLink?.acceptedTokens?.[0]?.decimals || 8,
+      //         maxSupply: 0,
+      //       },
+      //     },
+      //   ],
+      //   private: isPrivateTransaction,
+      //   recipient: recipientAddress,
+      //   recallable: true,
+      //   recallableTime: new Date(Date.now() + recallableTime * 1000),
+      //   recallableHeight: recallHeight,
+      //   serialNumber: ["1"],
+      //   noteType: CustomNoteType.P2IDR,
+      //   noteId: "",
+      //   transactionId: txId,
+      // });
+
+      openModal<TransactionOverviewModalProps>(MODAL_IDS.TRANSACTION_OVERVIEW, {
+        amount: amount.toString(),
+        accountName: "My Account",
+        accountAddress: walletAddress,
+        recipientName: paymentLink?.title,
+        recipientAddress,
+        transactionType: isPrivateTransaction ? "Private" : "Public",
+        cancellableTime: `${recallableTime / 3600} hour(s)`,
+        message: `Payment for ${paymentLink?.title}`,
+        tokenAddress: paymentLink?.acceptedTokens?.[0]?.address,
+        tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol,
+        // transactionHash: txId,
+        onConfirm: async () => {
+          closeModal(MODAL_IDS.TRANSACTION_OVERVIEW);
+        },
       });
 
-      setTimeout(() => {
-        forceRefetchAssets();
-        forceRefetchRecallablePayment();
-      }, REFETCH_DELAY);
+      // if (response) {
+      //   // Record the payment in the payment link system
+      //   try {
+      //     await recordPaymentMutation.mutateAsync({
+      //       code,
+      //       data: {
+      //         payer: walletAddress,
+      //         txid: txId,
+      //         token: paymentLink?.acceptedTokens?.[0],
+      //       },
+      //     });
 
-      if (response) {
-        // Record the payment in the payment link system
-        try {
-          await recordPaymentMutation.mutateAsync({
-            code,
-            data: {
-              payer: walletAddress,
-              txid: txId,
-              token: paymentLink?.acceptedTokens?.[0],
-            },
-          });
+      //     // Close processing modal
+      //     closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
 
-          // Close processing modal
-          closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
+      //     toast.success("Payment completed!");
 
-          toast.success("Payment completed!");
-
-          openModal<TransactionOverviewModalProps>(MODAL_IDS.TRANSACTION_OVERVIEW, {
-            amount: amount.toString(),
-            accountName: "My Account",
-            accountAddress: walletAddress,
-            recipientName: paymentLink?.title,
-            recipientAddress,
-            transactionType: isPrivateTransaction ? "Private" : "Public",
-            cancellableTime: `${recallableTime / 3600} hour(s)`,
-            message: `Payment for ${paymentLink?.title}`,
-            tokenAddress: paymentLink?.acceptedTokens?.[0]?.faucetId,
-            tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol,
-            transactionHash: txId,
-            onConfirm: async () => {
-              router.push(`/`);
-            },
-          });
-        } catch (recordError: any) {
-          console.error("Failed to record payment:", recordError);
-          toast.error("Payment completed but failed to record in payment link system");
-        }
-      }
+      //     openModal<TransactionOverviewModalProps>(MODAL_IDS.TRANSACTION_OVERVIEW, {
+      //       amount: amount.toString(),
+      //       accountName: "My Account",
+      //       accountAddress: walletAddress,
+      //       recipientName: paymentLink?.title,
+      //       recipientAddress,
+      //       transactionType: isPrivateTransaction ? "Private" : "Public",
+      //       cancellableTime: `${recallableTime / 3600} hour(s)`,
+      //       message: `Payment for ${paymentLink?.title}`,
+      //       tokenAddress: paymentLink?.acceptedTokens?.[0]?.address,
+      //       tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol,
+      //       transactionHash: txId,
+      //       onConfirm: async () => {
+      //         router.push(`/`);
+      //       },
+      //     });
+      //   } catch (recordError: any) {
+      //     console.error("Failed to record payment:", recordError);
+      //     toast.error("Payment completed but failed to record in payment link system");
+      //   }
+      // }
     } catch (error) {
       // Close processing modal on error
-      closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
       console.error("Failed to send transaction:", error);
       toast.error("Failed to send transaction :(");
     } finally {
       setIsSending(false);
+      closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
     }
   };
 
@@ -315,7 +348,7 @@ const PaymentLinkDetailPage = () => {
             selectedToken={
               paymentLink.acceptedTokens?.[0]
                 ? {
-                    faucetId: paymentLink.acceptedTokens?.[0]?.faucetId || "",
+                    faucetId: paymentLink.acceptedTokens?.[0]?.address || "",
                     metadata: {
                       symbol: paymentLink.acceptedTokens?.[0]?.symbol || "",
                       decimals: paymentLink.acceptedTokens?.[0]?.decimals || 8,
@@ -325,7 +358,7 @@ const PaymentLinkDetailPage = () => {
                   }
                 : null
             }
-            handleConnectWallet={() => openModal(MODAL_IDS.SELECT_WALLET)}
+            handleConnectWallet={() => openParaModal?.()}
             handleSubmitPayment={handleSubmitPayment}
             isSending={isSending}
           />

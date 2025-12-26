@@ -43,7 +43,7 @@ const nanumPenScript = Nanum_Pen_Script({
 export const metadata: Metadata = {
   title: "Qash",
   description:
-    "Neobank for global teams to run payroll, earn yield, and spend across chains and currencies without exposing sensitive information onchain.",
+    "Private neobank for global teams to run payroll, earn yield, and spend across chains and currencies without exposing sensitive information onchain.",
   icons: {
     icon: "/logo/qash-icon.svg",
   },
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
