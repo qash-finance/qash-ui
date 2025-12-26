@@ -13,7 +13,7 @@ The "end-to-end" has dual meaning: seamlessly bridging fiat-to-crypto conversion
 
 ### Private everywhere
 
-Qash preserves privacy without sacrificing compliance. Using zkKYC and zkKYB, transactions remain compliant while hiding sensitive details, no on-chain exposure of balances, senders, or receivers.
+Qash preserves privacy without sacrificing compliance. Using zkKYC and zkKYB, transactions remain compliant while hiding sensitive details, with no on-chain exposure of balances, senders, or receivers.
 
 Payroll is team-based, thus Qash also supports private multisig: signers, balances, transactions, recipients, and amounts are all hidden. Your company wallet stays secure—without leaking information to the public.
 
@@ -23,7 +23,7 @@ Qash adapts to every payment need. We support recurring payments, batch payments
 
 ### Receiver-first payroll
 
-Unlike traditional payroll tools that stop at sending funds, Qash is built for how people actually want to receive. Employees and contractors can define receive logic—split income across on-chain savings, off-ramping to bank, or forwarding to other accounts.
+Unlike traditional payroll tools that stop at sending funds, Qash is built for how people actually want to receive. Employees and contractors can define receive logic—split income across on-chain savings, off-ramping to a bank, or forwarding to other accounts.
 
 ### AI Payroll Copilot
 
