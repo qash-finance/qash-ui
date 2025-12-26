@@ -1,5 +1,4 @@
 "use client";
-import { getAccountAssets } from "@/services/utils/miden/account";
 import { AssetWithMetadata } from "@/types/faucet";
 import {
   QASH_TOKEN_ADDRESS,
@@ -32,11 +31,11 @@ interface AccountData {
 // Function to fetch assets and notes
 const fetchAccountData = async (walletAddress: string | null): Promise<AccountData> => {
   return {
-      assets: [defaultQashToken],
-      isAccountDeployed: false,
-      accountBalance: "0",
-      error: "",
-    };
+    assets: [defaultQashToken],
+    isAccountDeployed: false,
+    accountBalance: "0",
+    error: "",
+  };
 };
 
 export function useAccount() {

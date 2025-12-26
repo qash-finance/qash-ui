@@ -149,7 +149,7 @@ export default function LoginContainer() {
                 onClick={() => {
                   openParaModal?.();
                 }}
-                text={authenticatingWithPara ? "Authenticating..." : "Connect Wallet"}
+                text={authenticatingWithPara ? "Authenticating..." : "Continue by email"}
                 disabled={authenticatingWithPara || isLoading}
               />
             </div>

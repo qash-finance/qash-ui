@@ -1,14 +1,15 @@
 "use client";
-import { getFaucetMetadata } from "./faucet";
-import { AssetWithMetadata } from "@/types/faucet";
 import { NODE_ENDPOINT } from "../constant";
-import { FungibleAsset } from "@demox-labs/miden-sdk";
 
 export async function deployAccount(isPublic: boolean) {
   const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
 
   const client = await WebClient.createClient(NODE_ENDPOINT);
-  const account = await client.newWallet(isPublic ? AccountStorageMode.public() : AccountStorageMode.private(), true, 1);
+  const account = await client.newWallet(
+    isPublic ? AccountStorageMode.public() : AccountStorageMode.private(),
+    true,
+    1,
+  );
   return account;
 }
 
@@ -39,47 +40,12 @@ export async function getAccountById(accountId: string) {
   }
 }
 
-export const getAccountAssets = async (address: string): Promise<AssetWithMetadata[]> => {
-  try {
-    const { AccountInterface, NetworkId } = await import("@demox-labs/miden-sdk");
-
-    let account = await importAndGetAccount(address);
-
-    const accountAssets: FungibleAsset[] = account.vault().fungibleAssets();
-    // Process assets sequentially to avoid Rust memory aliasing issues
-    const assetsWithMetadata = [];
-    for (let index = 0; index < accountAssets.length; index++) {
-      const asset = accountAssets[index];
-      try {
-        // get token metadata
-        const faucet = asset.faucetId();
-
-        const metadata = await getFaucetMetadata(faucet.toBech32(NetworkId.Testnet, AccountInterface.BasicWallet));
-        assetsWithMetadata.push({
-          faucetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet),
-          amount: asset.amount().toString(),
-          metadata,
-        });
-      } catch (error) {
-        console.error(`Error processing asset ${index + 1}:`, error);
-        // Continue processing other assets instead of failing completely
-        console.log(`Skipping asset ${index + 1} due to error`);
-      }
-    }
-
-    return assetsWithMetadata;
-  } catch (err) {
-    console.error("Error in getAccountAssets:", err);
-    return [];
-  }
-};
-
-export const importAndGetAccount = async (account: string): Promise<any> => {
-  const { WebClient, AccountId, Address } = await import("@demox-labs/miden-sdk");
-
+export const importAndGetAccount = async (
+  client: import("@demox-labs/miden-sdk").WebClient,
+  account: string,
+): Promise<any> => {
   const importPromise = (async () => {
-    const client = await WebClient.createClient(NODE_ENDPOINT);
-
+    const { Address } = await import("@demox-labs/miden-sdk");
     const accountId = Address.fromBech32(account);
 
     let accountContract = await client.getAccount(accountId.accountId());

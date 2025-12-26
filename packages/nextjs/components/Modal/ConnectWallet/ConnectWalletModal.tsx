@@ -9,8 +9,6 @@ import toast from "react-hot-toast";
 import { useWalletConnect, getLastConnectedAddress, getWalletAddresses } from "@/hooks/web3/useWalletConnect";
 import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useTour } from "@reactour/tour";
-import { TOUR_SKIPPED_KEY } from "@/services/utils/constant";
-import { usePathname, useRouter } from "next/navigation";
 import { useCreateDefaultGroup } from "@/services/api/group-payment";
 import { CreateGroupDto } from "@/types/group-payment";
 import { LoadingBar } from "../../Common/LoadingBar";
@@ -23,8 +21,6 @@ export function ConnectWalletModal({ isOpen, onClose, zIndex }: ModalProp<Connec
   const { handleCreateWallet, handleConnectExisting, handleImportWallet } = useWalletConnect();
   const { connectWallet } = useWalletAuth();
   const { mutate: createGroup } = useCreateDefaultGroup();
-  const router = useRouter();
-  const pathname = usePathname();
 
   // **************** Local State *******************
   const [currentStep, setCurrentStep] = useState<Step>("init");

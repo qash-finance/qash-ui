@@ -1,23 +1,40 @@
 import { NetworkId } from "@demox-labs/miden-sdk";
 
-export async function getBalance(address: string) {
-  const { WebClient, Address } = await import("@demox-labs/miden-sdk");
+export async function getBalance(client: import("@demox-labs/miden-sdk").WebClient, address: string) {
+  const { Address, BasicFungibleFaucetComponent } = await import("@demox-labs/miden-sdk");
 
-  const client = await WebClient.createClient(); // default endpoint is tesnet
   await client.syncState();
 
-  const account = await client.getAccount(
-    Address.fromBech32(address).accountId()
-  );
+  const account = await client.getAccount(Address.fromBech32(address).accountId());
   if (!account) {
     throw new Error("Account not found");
   }
-  await client.terminate();
-  return account
-    .vault()
-    .fungibleAssets()
-    .map((asset) => ({
-      assetId: Address.fromAccountId(asset.faucetId()).toBech32(NetworkId.Testnet),
-      balance: (Number(asset.amount()) / 1e8).toString(),
-    }));
+
+  const assets = account.vault().fungibleAssets();
+
+  // Fetch metadata for each asset independently
+  const assetsWithMetadata = await Promise.all(
+    assets.map(async asset => {
+      const faucetId = Address.fromAccountId(asset.faucetId()).toBech32(NetworkId.Testnet);
+
+      // get account by id
+      const faucetAccount = await client.getAccount(Address.fromBech32(faucetId).accountId());
+
+      if (!faucetAccount) {
+        throw new Error("Faucet account not found");
+      }
+
+      const metadata = await BasicFungibleFaucetComponent.fromAccount(faucetAccount);
+
+      return {
+        assetId: faucetId,
+        balance: (Number(asset.amount()) / Math.pow(10, metadata.decimals())).toString(),
+        decimals: metadata.decimals(),
+        maxSupply: metadata.maxSupply(),
+        symbol: metadata.symbol(),
+      };
+    }),
+  );
+
+  return assetsWithMetadata;
 }

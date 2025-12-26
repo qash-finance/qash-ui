@@ -1,31 +1,22 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { useWalletAuth } from "@/hooks/server/useWalletAuth";
 import { useRouter } from "next/navigation";
-import { useAccount } from "@/hooks/web3/useAccount";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
-import { PrimaryButton } from "../Common/PrimaryButton";
 import { useBalanceVisibility } from "@/contexts/BalanceVisibilityProvider";
-import { ThemeToggle } from "../Common/ThemeToggle";
-import { ActionButton } from "../Common/ActionButton";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS } from "@/types/modal";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { useAccountContext } from "@/contexts/AccountProvider";
-import { Badge, BadgeStatus } from "../Common/Badge";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 export function WalletHeader({ onClose }: { onClose: () => void }) {
   // **************** Custom Hooks *******************
-  const { accountBalance, forceFetch, loading } = useAccount();
   const { assets } = useAccountContext();
-  const router = useRouter();
   const { isBalanceVisible, toggleBalanceVisibility } = useBalanceVisibility();
-  const { closeModal } = useModal();
   const blockNumber = useMidenSdkStore(state => state.blockNum);
   const transactions = useTransactionStore(state => state.transactions);
+  const { balances, balancesLoading, fetchBalances } = useMidenProvider();
 
   const { moneyIn, moneyOut } = useMemo(() => {
     if (!blockNumber) {
@@ -140,14 +131,14 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
       <div className="flex gap-2 items-center justify-between w-full">
         <div className="flex gap-2 items-center">
           <span className=" text-text-primary text-2xl">Portfolio</span>
-          {loading ? (
+          {balancesLoading ? (
             <img src="/portfolio/loading-icon.gif" alt="loading" className="w-6 h-6" />
           ) : (
             <img
               src="/portfolio/loading-icon.svg"
               alt="loading"
               className="w-4 h-4 cursor-pointer"
-              onClick={() => forceFetch()}
+              onClick={() => fetchBalances()}
             />
           )}
         </div>
@@ -174,7 +165,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
           <span className="text-4xl leading-9 text-text-secondary uppercase">$</span>
           {isBalanceVisible ? (
             <span className="text-4xl font-bold tracking-tighter leading-9 text-text-primary uppercase">
-              {formatNumberWithCommas(accountBalance)}
+              {formatNumberWithCommas(balances?.totalUsd || 0)}
             </span>
           ) : (
             <div className="flex gap-1 items-center">
@@ -185,14 +176,14 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {isBalanceVisible && (
+        {/* {isBalanceVisible && (
           <div className="flex gap-1 items-center self-stretch">
             <div className="flex flex-row gap-2 items-center">
               <span className="font-medium text-[#02BE75] text-base">+${moneyInChange.toFixed(2)}</span>
               <Badge status={BadgeStatus.SUCCESS} text={`${moneyInChange.toFixed(2)}%`} />
             </div>
           </div>
-        )}
+        )} */}
       </section>
 
       {/* Action Buttons */}

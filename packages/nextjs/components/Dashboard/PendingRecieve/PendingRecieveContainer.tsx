@@ -17,7 +17,6 @@ import { AssetWithMetadata, PartialConsumableNote } from "@/types/faucet";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { formatUnits } from "viem";
-import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import useConsumeNotes from "@/hooks/server/useConsume";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
 import { blo } from "blo";
@@ -129,12 +128,7 @@ export const PendingRecieveContainer: React.FC = () => {
   const { openModal } = useModal();
 
   // **************** Server Hooks *******************
-  const {
-    data: consumableNotesFromServer,
-    isLoading: isLoadingConsumableNotesFromServer,
-    error: errorConsumableNotesFromServer,
-    isRefetching: isRefetchingConsumableNotesFromServer,
-  } = useConsumableNotes();
+
   const { forceFetch: forceRefetchRecallableNotes } = useRecallableNotes();
   const { mutateAsync: consumeNotes } = useConsumeNotes();
   const { mutateAsync: consumePublicNotes } = useConsumePublicNotes();
@@ -144,22 +138,21 @@ export const PendingRecieveContainer: React.FC = () => {
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const [claiming, setClaiming] = useState(false);
-  console.log("consumableNotesFromServer", consumableNotesFromServer);
-  useEffect(() => {
-    (async () => {
-      if (walletAddress && isConnected) {
-        if (!errorConsumableNotesFromServer) {
-          if (consumableNotesFromServer) {
-            setConsumableNotes(consumableNotesFromServer);
-          } else {
-            setConsumableNotes([]);
-          }
-        } else {
-          setConsumableNotes([]);
-        }
-      }
-    })();
-  }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
+  // useEffect(() => {
+  //   (async () => {
+  //     if (walletAddress && isConnected) {
+  //       if (!errorConsumableNotesFromServer) {
+  //         if (consumableNotesFromServer) {
+  //           setConsumableNotes(consumableNotesFromServer);
+  //         } else {
+  //           setConsumableNotes([]);
+  //         }
+  //       } else {
+  //         setConsumableNotes([]);
+  //       }
+  //     }
+  //   })();
+  // }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
 
   const isAllChecked = consumableNotes.length > 0 && checkedRows.length === consumableNotes.length;
 
@@ -343,7 +336,7 @@ export const PendingRecieveContainer: React.FC = () => {
               <div className="mt-2">
                 <Empty title="No pending receive" />
               </div>
-            ) : isLoadingConsumableNotesFromServer ? (
+            ) : true ? (
               <SkeletonLoading />
             ) : (
               <div>

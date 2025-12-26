@@ -8,7 +8,6 @@ import { PaymentLink } from "./PaymentInteration/PaymentLink";
 import { FloatingFooter } from "../Common/FloatingFooter";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import { PartialConsumableNote } from "@/types/faucet";
 
 const getTabs = () => [
@@ -43,35 +42,35 @@ export const PaymentInteraction = () => {
   const { walletAddress, isConnected } = useWalletConnect();
 
   // **************** Server Hooks *******************
-  const {
-    data: consumableNotesFromServer,
-    isLoading: isLoadingConsumableNotesFromServer,
-    error: errorConsumableNotesFromServer,
-    isRefetching: isRefetchingConsumableNotesFromServer,
-  } = useConsumableNotes();
+  // const {
+  //   data: consumableNotesFromServer,
+  //   isLoading: isLoadingConsumableNotesFromServer,
+  //   error: errorConsumableNotesFromServer,
+  //   isRefetching: isRefetchingConsumableNotesFromServer,
+  // } = useConsumableNotes();
 
   // **************** Local State *******************
   const [consumableNotes, setConsumableNotes] = useState<PartialConsumableNote[]>([]);
 
   // Update consumable notes and count in background
-  useEffect(() => {
-    (async () => {
-      if (walletAddress && isConnected) {
-        if (!errorConsumableNotesFromServer) {
-          if (consumableNotesFromServer) {
-            setConsumableNotes(consumableNotesFromServer);
-            setReceiveNotesCount(consumableNotesFromServer.length);
-          } else {
-            setConsumableNotes([]);
-            setReceiveNotesCount(0);
-          }
-        } else {
-          setConsumableNotes([]);
-          setReceiveNotesCount(0);
-        }
-      }
-    })();
-  }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
+  // useEffect(() => {
+  //   (async () => {
+  //     if (walletAddress && isConnected) {
+  //       if (!errorConsumableNotesFromServer) {
+  //         if (consumableNotesFromServer) {
+  //           setConsumableNotes(consumableNotesFromServer);
+  //           setReceiveNotesCount(consumableNotesFromServer.length);
+  //         } else {
+  //           setConsumableNotes([]);
+  //           setReceiveNotesCount(0);
+  //         }
+  //       } else {
+  //         setConsumableNotes([]);
+  //         setReceiveNotesCount(0);
+  //       }
+  //     }
+  //   })();
+  // }, [walletAddress, isConnected, consumableNotesFromServer, isRefetchingConsumableNotesFromServer]);
 
   // Update receiveNotesCount whenever consumableNotes changes (e.g., when notes are claimed)
   useEffect(() => {

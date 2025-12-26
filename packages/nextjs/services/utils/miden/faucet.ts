@@ -16,32 +16,6 @@ export async function deployFaucet(symbol: string, decimals: number, maxSupply: 
   }
 }
 
-export async function mintToken(account: string, faucet: string, amount: bigint): Promise<any> {
-  try {
-    const { NoteType, WebClient, AccountId, Address, NetworkId } = await import("@demox-labs/miden-sdk");
-
-    const client = await WebClient.createClient(NODE_ENDPOINT);
-
-    const accountId = Address.fromBech32(account);
-    const faucetId = Address.fromBech32(faucet);
-
-    // import faucet
-    const faucetAccount = await importAndGetAccount(faucetId.toBech32(NetworkId.Testnet));
-
-    const mintTxRequest = client.newMintTransactionRequest(
-      accountId.accountId(),
-      faucetId.accountId(),
-      NoteType.Public,
-      amount,
-    );
-    const txResult = await client.submitNewTransaction(faucetId.accountId(), mintTxRequest);
-    return txResult;
-  } catch (err) {
-    console.log(err);
-    throw new Error("Failed to mint token");
-  }
-}
-
 function decodeFeltToSymbol(encodedFelt: number): string {
   const TokenSymbol = {
     MAX_ENCODED_VALUE: 0xffffffffffff, // Example max value
@@ -81,7 +55,10 @@ function decodeFeltToSymbol(encodedFelt: number): string {
 
 const faucetMetadataCache = new Map<string, Promise<FaucetMetadata>>();
 
-export const getFaucetMetadata = async (faucetId: string): Promise<FaucetMetadata> => {
+export const getFaucetMetadata = async (
+  client: import("@demox-labs/miden-sdk").WebClient,
+  faucetId: string,
+): Promise<FaucetMetadata> => {
   const faucetIdStr = faucetId.toString();
 
   // Check if we already have this metadata cached or being fetched
@@ -91,7 +68,7 @@ export const getFaucetMetadata = async (faucetId: string): Promise<FaucetMetadat
 
   // Create a promise for this metadata fetch
   const metadataPromise = (async () => {
-    const faucet = await importAndGetAccount(faucetId);
+    const faucet = await importAndGetAccount(client, faucetId);
 
     // read slot 0
 

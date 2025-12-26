@@ -1,9 +1,7 @@
 "use client";
 
-import { ReactNode, useRef, useEffect } from "react";
-import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
+import { ReactNode, useEffect } from "react";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
@@ -16,19 +14,13 @@ import { TitleProvider } from "@/contexts/TitleProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
-import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
-// import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
-import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import { usePathname, useRouter } from "next/navigation";
-import { TransactionProviderC } from "@/contexts/TransactionProvider";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { ModalTriggerRef } from "./Common/ModalTrigger";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
 import { Environment, ParaProvider } from "@getpara/react-sdk";
-import "@getpara/react-sdk/styles.css";
 import { MidenProvider } from "@/contexts/MidenProvider";
+import "@getpara/react-sdk/styles.css";
 
 const SIDEBAR_WIDTH = 280;
 
@@ -83,8 +75,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
   const router = useRouter();
-  const { isConnected } = useWalletConnect();
-  const modalRef = useRef<ModalTriggerRef | null>(null);
 
   // Redirect from "/" to "/payroll"
   useEffect(() => {
@@ -92,20 +82,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       router.replace("/payroll");
     }
   }, [pathname, router]);
-
-  const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
-
-  const handleError = (error: WalletError) => {
-    console.error(error);
-    switch (error.error.name) {
-      case "NotGrantedMidenWalletError":
-        toast.error("User denied access to their wallet");
-        break;
-      default:
-        toast.error("An error occurred while connecting to your wallet");
-        break;
-    }
-  };
 
   return (
     <QueryClientProvider client={queryClient}>

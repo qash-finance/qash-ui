@@ -1,20 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { blo } from "blo";
 import { TokenItem } from "./TokenItem";
-import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS } from "@/services/utils/constant";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { TabContainer } from "../Common/TabContainer";
 import { Select } from "../Common/Select";
 import { FilterButton } from "../Common/FilterButton";
-import { PrimaryButton } from "../Common/PrimaryButton";
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
-import { AllowedPrivateData, PrivateDataPermission } from "@demox-labs/miden-wallet-adapter-base";
-import { useAccount, useLogout, useModal, useWallet } from "@getpara/react-sdk";
-import { useMiden } from "@/hooks/web3/useMiden";
-import { getBalance } from "@/services/utils/getBalance";
 import { supportedTokens } from "@/services/utils/supportedToken";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 
@@ -69,7 +61,7 @@ export function TokenList() {
           case "tokens":
             return (
               <>
-                {address && balances && balances?.length > 0 ? (
+                {address && balances && balances.balances?.length > 0 ? (
                   <>
                     <div className="w-full flex justify-between items-center">
                       <div className="flex gap-2">
@@ -79,7 +71,7 @@ export function TokenList() {
                       <FilterButton options={filterOptions} />
                     </div>
                     <div className="flex flex-col items-center self-stretch rounded-lg">
-                      {balances.map((asset, index: number) => {
+                      {balances.balances.map((asset, index: number) => {
                         const token = {
                           faucetId: asset.assetId,
                           metadata: {

@@ -1,12 +1,9 @@
 "use client";
 import React from "react";
-import { MODAL_IDS, ValidatingModalProps } from "@/types/modal";
-import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
+import { ValidatingModalProps } from "@/types/modal";
+import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "../BaseModal";
 import { Badge, BadgeStatus } from "../../Common/Badge";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
-import { AllowedPrivateData, PrivateDataPermission } from "@demox-labs/miden-wallet-adapter-base";
 
 const WalletItem = ({
   label,
@@ -36,8 +33,6 @@ const WalletItem = ({
 };
 
 export function ConnectMidenWallet({ isOpen, onClose, zIndex }: ModalProp<ValidatingModalProps>) {
-  const { connect } = useWallet();
-
   if (!isOpen) return null;
 
   return (
@@ -68,7 +63,7 @@ export function ConnectMidenWallet({ isOpen, onClose, zIndex }: ModalProp<Valida
           <img src="/logo/miden.svg" alt="Miden wallet connection illustration" className="w-7 rounded" />
           <span className="font-bold text-xl text-white">Connect Miden Wallet</span>
         </div> */}
-        <WalletMultiButton
+        {/* <WalletMultiButton
           privateDataPermission={PrivateDataPermission.Auto}
           allowedPrivateData={AllowedPrivateData.All}
           startIcon={<img src="/logo/miden.svg" alt="Miden wallet connection illustration" className="rounded" />}
@@ -80,7 +75,7 @@ export function ConnectMidenWallet({ isOpen, onClose, zIndex }: ModalProp<Valida
           }}
           children="Connect Miden Wallet"
           onClick={() => onClose()}
-        />
+        /> */}
       </div>
     </BaseModal>
   );
