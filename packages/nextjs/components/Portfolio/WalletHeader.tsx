@@ -11,7 +11,6 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
   // const blockNumber = 0;
   // const transactions = useTransactionStore(state => state.transactions);
   const { balances, balancesLoading, fetchBalances } = useMidenProvider();
-  console.log("balances", balances);
   // const { moneyIn, moneyOut } = useMemo(() => {
   //   if (!blockNumber) {
   //     return { moneyIn: 0, moneyOut: 0 };

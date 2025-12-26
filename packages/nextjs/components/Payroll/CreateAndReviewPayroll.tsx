@@ -17,6 +17,8 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
 import { useAuth } from "@/services/auth/context";
 import { AuthMeResponse } from "@/services/auth/api";
+import { blo } from "blo";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
 
 interface CreatePayrollFormData {
   employee: string;
@@ -304,8 +306,12 @@ const CreatePayroll = ({
                   <div className="relative w-10 h-10">
                     <img
                       alt=""
-                      className="w-full h-full"
-                      src={selectedToken.metadata.symbol === "QASH" ? "/token/qash.svg" : "/token/eth.svg"}
+                      className="w-full h-full rounded-full"
+                      src={
+                        selectedToken.metadata.symbol === "QASH"
+                          ? "/q3x-icon.png"
+                          : blo(turnBechToHex(selectedToken.faucetId))
+                      }
                     />
                     <img alt="" className="absolute bottom-0 right-0 w-5 h-5" src="/chain/miden.svg" />
                   </div>

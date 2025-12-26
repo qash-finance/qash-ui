@@ -51,29 +51,25 @@ export function MidenProvider({ children }: { children: ReactNode }) {
 
   const [balances, setBalances] = useState<BalanceData | null>(null);
   const [balancesLoading, setBalancesLoading] = useState<boolean>(false);
-  const isConsumingRef = useRef<boolean>(false);
 
   const fetchBalances = useCallback(async () => {
     if (!address || !client) return;
 
     try {
       setBalancesLoading(true);
-      // Sync client state to ensure we have the latest account data
-      await client.syncState();
+      console.log("Fetching balances for address:", address);
       const fetchedBalances = await getBalance(client, address);
-      console.log("fetchedBalances", fetchedBalances);
+      console.log("Fetched balances", fetchedBalances);
 
-      // Convert and normalize the balances
+      // Normalize the balances (fetchedBalances is already resolved)
       const normalizedBalances = fetchedBalances.map(asset => ({
         assetId: asset.assetId,
         balance: asset.balance,
         decimals: asset.decimals,
-        maxSupply:
-          typeof asset.maxSupply === "object" && asset.maxSupply !== null
-            ? Number(asset.maxSupply.toString())
-            : asset.maxSupply,
-        symbol: typeof asset.symbol === "object" && asset.symbol !== null ? asset.symbol.toString() : asset.symbol,
+        symbol: asset.symbol,
       }));
+
+      console.log("Normalized balances", normalizedBalances);
 
       // Calculate total USD (assuming 1 token = 1 USD)
       const totalUsd = normalizedBalances.reduce((sum, asset) => {
@@ -87,6 +83,11 @@ export function MidenProvider({ children }: { children: ReactNode }) {
       });
     } catch (err) {
       console.error("Failed to fetch balances:", err);
+      // Set empty balances on error to prevent UI from being stuck
+      setBalances({
+        balances: [],
+        totalUsd: 0,
+      });
     } finally {
       setBalancesLoading(false);
     }
@@ -99,51 +100,51 @@ export function MidenProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, address, client, fetchBalances]);
 
-  useEffect(() => {
-    if (!client) return;
+  // useEffect(() => {
+  //   if (!client) return;
 
-    const interval = setInterval(async () => {
-      // Skip if consuming process is already running
-      if (isConsumingRef.current) {
-        return;
-      }
+  //   const interval = setInterval(async () => {
+  //     // Skip if consuming process is already running
+  //     if (isConsumingRef.current) {
+  //       return;
+  //     }
 
-      const { Address } = await import("@demox-labs/miden-sdk");
-      const to = await client.getAccount(Address.fromBech32(address).accountId());
+  //     const { Address } = await import("@demox-labs/miden-sdk");
+  //     const to = await client.getAccount(Address.fromBech32(address).accountId());
 
-      if (!to) {
-        console.error("Destination account not found");
-        return;
-      }
+  //     if (!to) {
+  //       console.error("Destination account not found");
+  //       return;
+  //     }
 
-      const mintedNotes = await client.getConsumableNotes(Address.fromBech32(address).accountId());
+  //     const mintedNotes = await client.getConsumableNotes(Address.fromBech32(address).accountId());
 
-      if (mintedNotes.length === 0) return;
+  //     if (mintedNotes.length === 0) return;
 
-      // Set lock to prevent concurrent execution
-      isConsumingRef.current = true;
+  //     // Set lock to prevent concurrent execution
+  //     isConsumingRef.current = true;
 
-      try {
-        // toast
-        toast.loading(`Found ${mintedNotes.length} consumable notes, consuming...`);
-        const mintedNoteIds = mintedNotes.map(n => n.inputNoteRecord().id().toString());
-        const consumeTxRequest = client.newConsumeTransactionRequest(mintedNoteIds);
-        const consumeTxHash = await client.submitNewTransaction(to.id(), consumeTxRequest);
-        await client.syncState();
-        toast.dismiss();
-        toast.success(`Consumed ${mintedNotes.length} consumable notes`);
-      } catch (error) {
-        console.error("Failed to consume notes:", error);
-        toast.dismiss();
-        toast.error("Failed to consume notes");
-      } finally {
-        // Release lock
-        isConsumingRef.current = false;
-      }
-    }, 10000); // 10 seconds
+  //     try {
+  //       // toast
+  //       toast.loading(`Found ${mintedNotes.length} consumable notes, consuming...`);
+  //       const mintedNoteIds = mintedNotes.map(n => n.inputNoteRecord().id().toString());
+  //       const consumeTxRequest = client.newConsumeTransactionRequest(mintedNoteIds);
+  //       const consumeTxHash = await client.submitNewTransaction(to.id(), consumeTxRequest);
+  //       await client.syncState();
+  //       toast.dismiss();
+  //       toast.success(`Consumed ${mintedNotes.length} consumable notes`);
+  //     } catch (error) {
+  //       console.error("Failed to consume notes:", error);
+  //       toast.dismiss();
+  //       toast.error("Failed to consume notes");
+  //     } finally {
+  //       // Release lock
+  //       isConsumingRef.current = false;
+  //     }
+  //   }, 10000); // 10 seconds
 
-    return () => clearInterval(interval);
-  }, [client, address]);
+  //   return () => clearInterval(interval);
+  // }, [client, address]);
 
   const value: MidenContextType = {
     isLoading,

@@ -215,7 +215,7 @@ const BillReviewContainer = () => {
         totalAmount += Number(paymentAmount);
 
         // build p2id note
-        const p2idNote = Note.createP2IDENote(
+        const p2idNote = Note.createP2IDNote(
           Address.fromBech32(address).accountId(),
           Address.fromBech32(recipientAddress).accountId(),
           new NoteAssets([
@@ -224,8 +224,6 @@ const BillReviewContainer = () => {
               BigInt(paymentAmount! * 10 ** faucetMetadata.decimals() || 8),
             ),
           ]),
-          null,
-          null,
           NoteType.Private,
           new Felt(BigInt(0)),
         );

@@ -64,7 +64,11 @@ export function TokenList({ balances: propBalances, onTokenSelect, searchQuery }
     if (!searchQuery) return balances;
     const query = searchQuery.toLowerCase();
     return balances.filter(asset => {
-      const symbol = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "";
+      // Use symbol from asset directly, fallback to supportedTokens lookup
+      const symbol =
+        asset.symbol && asset.symbol !== "UNKNOWN"
+          ? asset.symbol
+          : supportedTokens.find(t => t.faucetId === asset.assetId)?.symbol || "";
       return symbol.toLowerCase().includes(query) || asset.assetId.toLowerCase().includes(query);
     });
   }, [balances, searchQuery]);
@@ -76,9 +80,14 @@ export function TokenList({ balances: propBalances, onTokenSelect, searchQuery }
         {filteredBalances.length > 0 ? (
           <div className="flex flex-col gap-2 items-center self-stretch rounded-lg w-full">
             {filteredBalances.map((asset, index: number) => {
-              const symbol = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW";
-              const decimals = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8;
-              const maxSupply = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0;
+              // Use symbol from asset directly, fallback to supportedTokens lookup
+              const symbol =
+                asset.symbol && asset.symbol !== "UNKNOWN"
+                  ? asset.symbol
+                  : supportedTokens.find(t => t.faucetId === asset.assetId)?.symbol || "UNKW";
+              const supportedToken = supportedTokens.find(t => t.faucetId === asset.assetId);
+              const decimals = asset.decimals || supportedToken?.decimals || 8;
+              const maxSupply = asset.maxSupply || supportedToken?.maxSupply || 0;
 
               const assetWithMetadata: AssetWithMetadata = {
                 faucetId: asset.assetId,
@@ -108,7 +117,7 @@ export function TokenList({ balances: propBalances, onTokenSelect, searchQuery }
           </div>
         ) : (
           <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1 py-8">
-            <span className="text-text-secondary">No tokens found</span>
+            <span className="text-text-secondary">Fetching tokens... </span>
           </div>
         )}
       </div>
@@ -145,19 +154,23 @@ export function TokenList({ balances: propBalances, onTokenSelect, searchQuery }
                     </div>
                     <div className="flex flex-col items-center self-stretch rounded-lg">
                       {balances.map((asset, index: number) => {
+                        // Use symbol from asset directly, fallback to supportedTokens lookup
+                        const symbol =
+                          asset.symbol && asset.symbol !== "UNKNOWN"
+                            ? asset.symbol
+                            : supportedTokens.find(t => t.faucetId === asset.assetId)?.symbol || "UNKW";
+                        const supportedToken = supportedTokens.find(t => t.faucetId === asset.assetId);
+
                         const token = {
                           faucetId: asset.assetId,
                           metadata: {
-                            symbol: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW",
-                            decimals: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8,
-                            maxSupply: supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0,
+                            symbol: symbol,
+                            decimals: asset.decimals || supportedToken?.decimals || 8,
+                            maxSupply: asset.maxSupply || supportedToken?.maxSupply || 0,
                           },
                           amount: asset.balance,
                           value: "1",
-                          icon:
-                            supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol === "QASH"
-                              ? "/q3x-icon.png"
-                              : blo(turnBechToHex(asset.assetId)),
+                          icon: symbol === "QASH" ? "/q3x-icon.png" : blo(turnBechToHex(asset.assetId)),
                           chain: "Miden",
                         };
 
