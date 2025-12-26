@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  transpilePackages: ["@getpara/web-sdk", "@getpara/react-sdk", "miden-para", "miden-para-react"],
+  transpilePackages: ["@getpara/react-sdk", "miden-para", "miden-para-react"],
   // async headers() {
   //   return [
   //     {
