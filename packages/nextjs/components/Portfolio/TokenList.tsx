@@ -10,10 +10,7 @@ import { TabContainer } from "../Common/TabContainer";
 import { Select } from "../Common/Select";
 import { FilterButton } from "../Common/FilterButton";
 import { PrimaryButton } from "../Common/PrimaryButton";
-import { WalletMultiButton } from "@demox-labs/miden-wallet-adapter-reactui";
-import { AllowedPrivateData, PrivateDataPermission } from "@demox-labs/miden-wallet-adapter-base";
 import { useAccount, useLogout, useModal, useWallet } from "@getpara/react-sdk";
-import { useMiden } from "@/hooks/web3/useMiden";
 import { getBalance } from "@/services/utils/getBalance";
 import { supportedTokens } from "@/services/utils/supportedToken";
 import { useMidenProvider } from "@/contexts/MidenProvider";
@@ -110,7 +107,8 @@ export function TokenList() {
                   </>
                 ) : (
                   <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1">
-                    <img src="/portfolio/blue-square-wallet-icon.svg" alt="No tokens" className="w-20 h-20" />
+                    <img src="/modal/coin-icon.gif" alt="No tokens" className="w-20 h-20" />
+
                     <span className="text-text-secondary">Loading assets...</span>
                   </div>
                 )}

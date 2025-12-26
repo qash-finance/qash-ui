@@ -4,7 +4,7 @@ import React, { createContext, useContext, ReactNode, useState, useEffect } from
 import { useAccount, useLogout, useModal, useWallet, Wallet } from "@getpara/react-sdk";
 import { useMiden } from "@/hooks/web3/useMiden";
 import { getBalance } from "@/services/utils/getBalance";
-import { Address } from "@demox-labs/miden-sdk";
+import { UseMutateAsyncFunction, UseMutateFunction } from "@tanstack/react-query";
 
 // Type definition for the context
 interface MidenContextType {
@@ -12,7 +12,14 @@ interface MidenContextType {
   isLoading: boolean;
   wallet: Omit<Wallet, "signer"> | null | undefined;
   openModal: (config?: any) => void;
-  logoutAsync: () => Promise<void>;
+  logoutAsync: UseMutateAsyncFunction<
+    void,
+    Error,
+    void | {
+      clearPregenWallets?: boolean | undefined;
+    },
+    unknown
+  >;
   client: any;
   address: string | undefined;
   balances: Array<{
@@ -30,7 +37,7 @@ export function MidenProvider({ children }: { children: ReactNode }) {
   const { data: wallet } = useWallet();
   const { openModal } = useModal();
   const { logoutAsync } = useLogout();
-  const { client, accountId: address } = useMiden();
+  const { client, accountId: address } = useMiden("https://rpc.testnet.miden.io");
   const [balances, setBalances] = useState<Array<{
     assetId: string;
     balance: string;
@@ -56,6 +63,7 @@ export function MidenProvider({ children }: { children: ReactNode }) {
     if (!client) return;
 
     const interval = setInterval(async () => {
+      const { Address } = await import("@demox-labs/miden-sdk");
       const to = await client.getAccount(Address.fromBech32(address).accountId());
 
       if (!to) {
@@ -67,7 +75,6 @@ export function MidenProvider({ children }: { children: ReactNode }) {
 
       if (mintedNotes.length === 0) return;
 
-      console.log("🚀 ~ MidenProvider ~ mintedNotes:", mintedNotes);
       const mintedNoteIds = mintedNotes.map(n => n.inputNoteRecord().id().toString());
       const consumeTxRequest = client.newConsumeTransactionRequest(mintedNoteIds);
       const consumeTxHash = await client.submitNewTransaction(to.id(), consumeTxRequest);

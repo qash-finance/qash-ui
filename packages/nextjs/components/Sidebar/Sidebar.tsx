@@ -125,7 +125,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showMoveCryptoSidebar, setShowMoveCryptoSidebar] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { logoutAsync } = useMidenProvider();
   // **************** Effect ****************
   useEffect(() => {
@@ -280,7 +280,14 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
             opacity={1}
             render={({ content }) => {
               if (!content) return null;
-              return <AccountTooltip onLogout={() => logoutAsync()} />;
+              return (
+                <AccountTooltip
+                  onLogout={async () => {
+                    await logoutAsync();
+                    await logout();
+                  }}
+                />
+              );
             }}
           />
         </div>

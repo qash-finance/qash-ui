@@ -12,13 +12,12 @@ import { mintToken } from "@/services/utils/miden/faucet";
 import toast from "react-hot-toast";
 import { useConsumableNotes } from "@/hooks/server/useConsumableNotes";
 import { PrimaryButton } from "../Common/PrimaryButton";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { useMiden } from "@/hooks/web3/useMiden";
 import { createFaucetMintAndConsume } from "@/services/utils/mint";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalProps>) {
   // **************** Custom Hooks *******************
-  const { client, accountId: address } = useMiden();
+  const { client, address } = useMidenProvider();
   const { forceFetch: forceRefetchConsumableNotes } = useConsumableNotes();
   const router = useRouter();
   const pathname = usePathname();

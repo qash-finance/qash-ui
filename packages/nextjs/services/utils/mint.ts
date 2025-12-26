@@ -1,7 +1,4 @@
-import type React from "react";
-
 export async function createFaucetMintAndConsume(
-  // client from useMiden hook
   client: import("@demox-labs/miden-sdk").WebClient,
   address: string,
   faucet: string

@@ -2,7 +2,6 @@
 import { getFaucetMetadata } from "./faucet";
 import { AssetWithMetadata } from "@/types/faucet";
 import { NODE_ENDPOINT } from "../constant";
-import { FungibleAsset } from "@demox-labs/miden-sdk";
 
 export async function deployAccount(isPublic: boolean) {
   const { AccountStorageMode, WebClient } = await import("@demox-labs/miden-sdk");
@@ -45,7 +44,7 @@ export const getAccountAssets = async (address: string): Promise<AssetWithMetada
 
     let account = await importAndGetAccount(address);
 
-    const accountAssets: FungibleAsset[] = account.vault().fungibleAssets();
+    const accountAssets: any[] = account.vault().fungibleAssets();
     // Process assets sequentially to avoid Rust memory aliasing issues
     const assetsWithMetadata = [];
     for (let index = 0; index < accountAssets.length; index++) {

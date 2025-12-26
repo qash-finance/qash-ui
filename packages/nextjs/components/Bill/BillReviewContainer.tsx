@@ -10,15 +10,7 @@ import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { CategoryShapeEnum } from "@/types/employee";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { InvoiceModalProps, TransactionOverviewModalProps } from "@/types/modal";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { PrimaryButton } from "../Common/PrimaryButton";
-import {
-  Transaction,
-  MidenTransaction,
-  TransactionType,
-  WalletNotConnectedError,
-} from "@demox-labs/miden-wallet-adapter-base";
-import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import toast from "react-hot-toast";
 import { QASH_TOKEN_ADDRESS, QASH_TOKEN_DECIMALS, QASH_TOKEN_SYMBOL } from "@/services/utils/constant";
 import { usePayBills } from "@/services/api/bill";

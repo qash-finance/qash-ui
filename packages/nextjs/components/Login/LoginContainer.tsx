@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { debounce, DebouncedFunc } from "lodash";
 import LoginButton from "./LoginButton";
 import Welcome from "../Common/Welcome";
-import OtpInput from "react-otp-input";
 import InputOutlined from "../Common/Input/InputOutlined";
 import { useAuth } from "@/services/auth/context";
 import toast from "react-hot-toast";

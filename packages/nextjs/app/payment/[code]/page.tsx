@@ -23,9 +23,6 @@ import { sendSingleTransaction } from "@/services/api/transaction";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { PaymentLinkPreview } from "@/components/PaymentLink/PaymentLinkPreview";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
-import { SendTransaction } from "@demox-labs/miden-wallet-adapter-base";
-import { MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 
 const SubIcon = ({
@@ -194,13 +191,13 @@ const PaymentLinkDetailPage = () => {
       // // submit transaction to miden
       // const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
 
-      const midenTransaction = new SendTransaction(
-        walletAddress,
-        recipientAccountId,
-        QASH_TOKEN_ADDRESS,
-        "public",
-        amount! * 10 ** QASH_TOKEN_DECIMALS,
-      );
+      // const midenTransaction = new SendTransaction(
+      //   walletAddress,
+      //   recipientAccountId,
+      //   QASH_TOKEN_ADDRESS,
+      //   "public",
+      //   amount! * 10 ** QASH_TOKEN_DECIMALS,
+      // );
 
       // const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
       // toast.success(`Transaction ${txId} submitted`);

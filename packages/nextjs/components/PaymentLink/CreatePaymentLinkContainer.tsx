@@ -16,7 +16,6 @@ import { useCreatePaymentLink } from "@/services/api/payment-link";
 import { CreatePaymentLink, TokenMetadata } from "@/types/payment-link";
 import { useRouter } from "next/navigation";
 import { PaymentLinkPreview } from "./PaymentLinkPreview";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 
 interface CreatePaymentLinkFormData {

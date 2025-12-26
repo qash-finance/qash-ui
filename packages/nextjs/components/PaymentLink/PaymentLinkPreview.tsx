@@ -10,7 +10,6 @@ import { toast } from "react-hot-toast";
 import { AssetWithMetadata } from "@/types/faucet";
 import { useWalletState } from "@/services/store";
 import { QASH_TOKEN_ADDRESS } from "@/services/utils/constant";
-import { useWallet } from "@demox-labs/miden-wallet-adapter-react";
 import { useAuth } from "@/services/auth/context";
 import { AuthMeResponse } from "@/services/auth/api";
 import { useMidenProvider } from "@/contexts/MidenProvider";

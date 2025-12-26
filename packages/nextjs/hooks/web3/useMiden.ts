@@ -33,14 +33,12 @@ export function useMiden(nodeUrl?: string) {
 
         const { client: midenParaClient, accountId: aId } =
           await createParaMidenClient(
-            //@ts-ignore
             para,
             evmWallets as Wallet[],
             {
               endpoint: nodeUrl,
               type: AccountType.RegularAccountImmutableCode,
               storageMode: "public",
-              accountSeed: "hello world",
               noteTransportUrl: "https://transport.miden.io",
             },
             false

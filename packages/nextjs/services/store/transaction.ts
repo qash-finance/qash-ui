@@ -1,5 +1,6 @@
 /// the transaction store
-import { FungibleAsset } from "@demox-labs/miden-sdk";
+"use client";
+
 import { QASH_TOKEN_ADDRESS as FAUCET_ID } from "../utils/constant";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
@@ -45,8 +46,8 @@ async function transactionRecordToUITransaction({
       .notes()
       .map((note: any) => note.intoFull());
     outputNotes.forEach((note: any) => {
-      const fungibleAssets: FungibleAsset[] = note.assets().fungibleAssets();
-      fungibleAssets.forEach((asset: FungibleAsset) => {
+      const fungibleAssets: any[] = note.assets().fungibleAssets();
+      fungibleAssets.forEach((asset: any) => {
         assets.push({
           assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet),
           amount: asset.amount(),
@@ -80,7 +81,7 @@ async function transactionRecordToUITransaction({
 
     inputNote.forEach((note: any) => {
       const fungibleAssets = note.details().assets().fungibleAssets();
-      fungibleAssets.forEach((asset: FungibleAsset) => {
+      fungibleAssets.forEach((asset: any) => {
         assets.push({
           assetId: asset.faucetId().toBech32(NetworkId.Testnet, AccountInterface.BasicWallet),
           amount: asset.amount(),

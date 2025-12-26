@@ -1,9 +1,7 @@
 "use client";
 
 import { ReactNode, useRef, useEffect, useMemo } from "react";
-import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
@@ -20,7 +18,6 @@ import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
 // import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
-import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import { usePathname, useRouter } from "next/navigation";
 import { TransactionProviderC } from "@/contexts/TransactionProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
@@ -73,6 +70,21 @@ const TestnetBanner = () => (
   </div>
 );
 
+const paraClientConfig = {
+  env: Environment.BETA,
+  apiKey: "beta_cc45a1c8bbfbeb71c1ce2d51c44ba512",
+};
+
+const paraConfig = { appName: "Qash x Para" };
+
+const paraModalConfig = {
+  oAuthMethods: ["GOOGLE"] as "GOOGLE"[],
+  disablePhoneLogin: true,
+  recoverySecretStepEnabled: true,
+  onRampTestMode: true,
+  logo: "/logo/qash-icon.svg",
+};
+
 // Inner component that uses auth guard (must be inside AuthProvider)
 function ProtectedContent({ children }: { children: ReactNode }) {
   useAuthGuard();
@@ -91,20 +103,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     }
   }, [pathname, router]);
 
-  const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
-
-  const handleError = (error: WalletError) => {
-    console.error(error);
-    switch (error.error.name) {
-      case "NotGrantedMidenWalletError":
-        toast.error("User denied access to their wallet");
-        break;
-      default:
-        toast.error("An error occurred while connecting to your wallet");
-        break;
-    }
-  };
-
   const isFullscreen = useMemo(() => {
     if (!pathname) return false;
     return Array.from(fullscreenPages).some(p => (p.endsWith("/") ? pathname.startsWith(p) : pathname === p));
@@ -112,20 +110,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ParaProvider
-        paraClientConfig={{
-          env: Environment.BETA,
-          apiKey: "beta_cc45a1c8bbfbeb71c1ce2d51c44ba512",
-        }}
-        config={{ appName: "Qash x Para" }}
-        paraModalConfig={{
-          oAuthMethods: ["GOOGLE"],
-          disablePhoneLogin: true,
-          recoverySecretStepEnabled: true,
-          onRampTestMode: true,
-          logo: "/logo/qash-icon.svg",
-        }}
-      >
+      <ParaProvider paraClientConfig={paraClientConfig} config={paraConfig} paraModalConfig={paraModalConfig}>
         <MidenProvider>
           <Toaster
             position="top-right"
