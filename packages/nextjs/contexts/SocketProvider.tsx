@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { connectWebSocket, joinWalletRoom, leaveWalletRoom } from "../services/utils/websocketUtils";
 import { Socket } from "socket.io-client";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
@@ -20,6 +20,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [socketUrl, setSocketUrl] = useState<string>(socketDefaultUrl);
   const { walletAddress } = useWalletConnect();
+  const socketRef = useRef<Socket | null>(null);
+  const isConnectingRef = useRef(false);
 
   // You would call this function when you need to change the URL
   const changeSocketUrl = (newUrl: string) => {
@@ -27,20 +29,38 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Prevent multiple connection attempts
+    if (isConnectingRef.current || socketRef.current?.connected) {
+      return;
+    }
+
+    isConnectingRef.current = true;
+
     const setupSocket = async () => {
       try {
+        // Disconnect existing socket if any
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+        }
+
         const newSocket = await connectWebSocket(socketUrl ?? socketDefaultUrl);
+        socketRef.current = newSocket;
         setSocket(newSocket);
+        isConnectingRef.current = false;
       } catch (error) {
         console.error("Failed to connect to WebSocket:", error);
+        isConnectingRef.current = false;
       }
     };
 
     setupSocket();
 
     return () => {
-      if (socket) {
-        socket.disconnect();
+      // Clean up on unmount or URL change
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
       }
     };
   }, [socketUrl]);

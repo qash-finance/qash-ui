@@ -1,16 +1,14 @@
 "use client";
 
-import { ReactNode, useMemo, useState, useEffect, useRef } from "react";
+import { ReactNode, useRef, useEffect, useMemo } from "react";
 import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
-import { TridentWalletAdapter } from "@demox-labs/miden-wallet-adapter-trident";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
 import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
-import { ModalProvider, useModal } from "@/contexts/ModalManagerProvider";
+import { ModalProvider } from "@/contexts/ModalManagerProvider";
 import { ModalManager } from "./Common/ModalManager";
-import { shouldShowMigrationModal } from "./Modal/MigratingModal";
 import { AuthProvider } from "@/services/auth/context";
 import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
@@ -19,19 +17,18 @@ import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
 import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
-import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
+// import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
 import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
-import DashboardMenu from "./Dashboard/DashboardMenu";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { TransactionProviderC } from "@/contexts/TransactionProvider";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { ActionButton } from "./Common/ActionButton";
-import { MODAL_IDS } from "@/types/modal";
-import { ModalTrigger, ModalTriggerRef } from "./Common/ModalTrigger";
-import { PrimaryButton } from "./Common/PrimaryButton";
+import { ModalTriggerRef } from "./Common/ModalTrigger";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
+import { Environment, ParaProvider } from "@getpara/react-sdk";
+import "@getpara/react-sdk/styles.css";
+import { MidenProvider } from "@/contexts/MidenProvider";
 
 const SIDEBAR_WIDTH = 280;
 
@@ -85,6 +82,14 @@ function ProtectedContent({ children }: { children: ReactNode }) {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Redirect from "/" to "/payroll"
+  useEffect(() => {
+    if (pathname === "/") {
+      router.replace("/payroll");
+    }
+  }, [pathname, router]);
 
   const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
 
@@ -107,102 +112,107 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MidenSdkProvider>
-        <WalletProvider wallets={wallets as unknown as Adapter[]} autoConnect onError={handleError}>
-          <WalletModalProvider>
-            <TransactionProviderC>
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  style: {
-                    padding: "6px",
-                    background: "var(--toast-background) !important",
-                    border: "4px solid var(--toast-border) !important",
-                    width: "full",
-                    maxWidth: "900px",
-                    borderRadius: "9999px",
-                  },
-                  success: {
-                    icon: <img src="/toast/success.svg" alt="success" />,
-                  },
-                  error: {
-                    icon: <img src="/toast/error.svg" alt="error" />,
-                  },
-                  loading: {
-                    icon: <img src="/toast/loading.gif" alt="loading" className="w-10.5" />,
-                  },
+      <ParaProvider
+        paraClientConfig={{
+          env: Environment.BETA,
+          apiKey: "beta_cc45a1c8bbfbeb71c1ce2d51c44ba512",
+        }}
+        config={{ appName: "Qash x Para" }}
+        paraModalConfig={{
+          oAuthMethods: ["GOOGLE"],
+          disablePhoneLogin: true,
+          recoverySecretStepEnabled: true,
+          onRampTestMode: true,
+          logo: "/logo/qash-icon.svg",
+        }}
+      >
+        <MidenProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                padding: "6px",
+                background: "var(--toast-background) !important",
+                border: "4px solid var(--toast-border) !important",
+                width: "full",
+                maxWidth: "900px",
+                borderRadius: "9999px",
+              },
+              success: {
+                icon: <img src="/toast/success.svg" alt="success" />,
+              },
+              error: {
+                icon: <img src="/toast/error.svg" alt="error" />,
+              },
+              loading: {
+                icon: <img src="/toast/loading.gif" alt="loading" className="w-10.5" />,
+              },
+            }}
+            children={t => (
+              <ToastBar
+                toast={t}
+                style={{
+                  ...t.style,
                 }}
-                children={t => (
-                  <ToastBar
-                    toast={t}
-                    style={{
-                      ...t.style,
-                    }}
-                  >
-                    {({ icon, message }) => (
-                      <div className="flex items-center justify-between gap-8 pr-3">
-                        <div className="flex items-center">
-                          {icon}
-                          <span className="text-toast-text leading-none">{message}</span>
-                        </div>
-                        <img
-                          src="/toast/close-icon.svg"
-                          alt="close"
-                          className="w-5 cursor-pointer"
-                          onClick={() => toast.dismiss(t.id)}
-                        />
-                      </div>
-                    )}
-                  </ToastBar>
+              >
+                {({ icon, message }) => (
+                  <div className="flex items-center justify-between gap-8 pr-3">
+                    <div className="flex items-center">
+                      {icon}
+                      <span className="text-toast-text leading-none">{message}</span>
+                    </div>
+                    <img
+                      src="/toast/close-icon.svg"
+                      alt="close"
+                      className="w-5 cursor-pointer"
+                      onClick={() => toast.dismiss(t.id)}
+                    />
+                  </div>
                 )}
-              />
-              <TourProviderWrapper>
-                <SocketProvider>
-                  <ModalProvider>
-                    <AnalyticsProvider config={analyticsConfig}>
-                      <AuthProvider
-                        apiBaseUrl={process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001"}
-                        autoRefresh={true}
-                        refreshInterval={AUTH_REFRESH_INTERVAL}
-                      >
-                        <ProtectedContent>
-                          <AccountProvider>
-                            <TitleProvider>
-                              {/* <ConnectWalletButton /> */}
-                              <ModalManager />
-                              {isFullscreen ? (
-                                <div className="h-screen w-screen">{children}</div>
-                              ) : (
-                                <div className="flex flex-col h-screen overflow-hidden">
-                                  <TestnetBanner />
-                                  <div className="flex flex-row gap-2">
-                                    <div className="top-0" style={{ width: SIDEBAR_WIDTH }}>
-                                      <Sidebar />
-                                    </div>
-                                    {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
-                                    <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
-                                      <Title />
-                                      <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
-                                        {children}
-                                      </div>
-                                    </div>
+              </ToastBar>
+            )}
+          />
+          <TourProviderWrapper>
+            <SocketProvider>
+              <ModalProvider>
+                <AnalyticsProvider config={analyticsConfig}>
+                  <AuthProvider>
+                    <ProtectedContent>
+                      <AccountProvider>
+                        <TitleProvider>
+                          {/* <ConnectWalletButton /> */}
+                          <ModalManager />
+                          {isFullscreen ? (
+                            <div className="h-screen w-screen">{children}</div>
+                          ) : (
+                            <div className="flex flex-col h-screen overflow-hidden">
+                              <TestnetBanner />
+                              <div className="flex flex-row gap-2">
+                                <div className="top-0" style={{ width: SIDEBAR_WIDTH }}>
+                                  <Sidebar />
+                                </div>
+                                {/* {pathname.includes("dashboard") && <DashboardMenu />} */}
+                                <div className="flex-1 h-screen flex flex-col overflow-hidden gap-2">
+                                  <Title />
+                                  <div className="mx-[8px] mb-[24px] rounded-[12px] flex justify-center items-center flex-1 overflow-auto relative bg-background">
+                                    {children}
                                   </div>
                                 </div>
-                              )}
-                              {!isFullscreen && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                              {!isFullscreen && <Background />}
-                            </TitleProvider>
-                          </AccountProvider>
-                        </ProtectedContent>
-                      </AuthProvider>
-                    </AnalyticsProvider>
-                  </ModalProvider>
-                </SocketProvider>
-              </TourProviderWrapper>
-            </TransactionProviderC>
-          </WalletModalProvider>
-        </WalletProvider>
-      </MidenSdkProvider>
+                              </div>
+                            </div>
+                          )}
+                          {!isFullscreen && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                          {!isFullscreen && <Background />}
+                        </TitleProvider>
+                      </AccountProvider>
+                    </ProtectedContent>
+                  </AuthProvider>
+                </AnalyticsProvider>
+              </ModalProvider>
+            </SocketProvider>
+          </TourProviderWrapper>
+        </MidenProvider>
+      </ParaProvider>
     </QueryClientProvider>
   );
 }

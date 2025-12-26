@@ -176,7 +176,7 @@ export const PaymentLink: React.FC<PaymentLinkProps> = ({ checkedRows, setChecke
         </span>
       ),
       Title: link.title,
-      Timestamp: new Date(link.createdAt).toLocaleString("sv-SE", { hour12: false }).replace(" ", " "),
+      Timestamp: new Date(link.createdAt).toLocaleString("sv-SE", { hour12: false }),
       Amount: (
         <div className="flex justify-center items-center gap-1">
           <span className="text-text-primary leading-none">{link.amount}</span>

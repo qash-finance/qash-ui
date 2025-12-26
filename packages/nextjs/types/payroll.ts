@@ -32,19 +32,34 @@ export interface CreatePayrollDto {
   payStartDate: string;
   joiningDate: string;
   payEndDate: string;
-  description?: string;
+  description: string;
+  note?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface CreatePayroll {
+  employeeId: number;
+  network: NetworkDto;
+  token: TokenDto;
+  contractTerm: ContractTermEnum;
+  payrollCycle: number;
+  amount: string;
+  joiningDate: string;
+  payday: string;
+  generateDaysBefore: number;
+  description: string;
   note?: string;
   metadata?: Record<string, any>;
 }
 
 export interface UpdatePayrollDto {
-  payday?: number;
+  description?: string;
+  paydayDay?: number;
   network?: NetworkDto;
   token?: TokenDto;
   contractTerm?: ContractTermEnum;
   payrollCycle?: number;
   amount?: string;
-  payStartDate?: string;
   note?: string;
   metadata?: Record<string, any>;
 }
@@ -87,7 +102,7 @@ export interface PayrollModel {
     token: {
       address: string;
       symbol: string;
-    }
+    };
     uuid: string;
     network: NetworkDto;
     order: number;
@@ -99,6 +114,7 @@ export interface PayrollModel {
   status: string;
   createdAt: string;
   updatedAt: string;
+  paydayDay: number;
 }
 
 export interface PaginatedPayrollsResponseDto {
@@ -109,4 +125,10 @@ export interface PaginatedPayrollsResponseDto {
     total: number;
     totalPages: number;
   };
+}
+
+export interface PendingInvoiceReviewsDto {
+  hasPendingReviews: boolean;
+  pendingCount?: number;
+  pendingInvoiceUuids?: string[];
 }

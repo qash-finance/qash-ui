@@ -1,102 +1,58 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
-import { ApiError, AuthMeResponse, EmailAuthApi, VerifyOtpResponse } from "./api";
-import { AuthStorage } from "./storage";
-import { AUTH_REFRESH_INTERVAL } from "../utils/constant";
+import { ApiError, AuthMeResponse, ParaAuthApi } from "./api";
 
-type UserData = AuthMeResponse["user"] | VerifyOtpResponse["user"] | null;
+type UserData = AuthMeResponse["user"] | null;
 
 export interface AuthState {
   isAuthenticated: boolean;
-  email: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   user: UserData;
   isLoading: boolean;
   error: string | null;
 }
 
 export interface AuthContextValue extends AuthState {
-  sendOtp: (email: string) => Promise<void>;
-  verifyOtp: (email: string, otp: string) => Promise<AuthMeResponse["user"] | null>;
+  loginWithPara: (paraJwtToken: string) => Promise<AuthMeResponse["user"] | null>;
   logout: () => Promise<void>;
-  refreshSession: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   clearError: () => void;
-  isSessionValid: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export interface AuthProviderProps {
   children: ReactNode;
-  apiBaseUrl?: string;
-  autoRefresh?: boolean;
-  refreshInterval?: number;
 }
 
-export function AuthProvider({
-  children,
-  apiBaseUrl,
-  autoRefresh = true,
-  refreshInterval = AUTH_REFRESH_INTERVAL,
-}: AuthProviderProps) {
+export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
-    email: null,
-    accessToken: null,
-    refreshToken: null,
     user: null,
     isLoading: true,
     error: null,
   });
 
-  const [api] = useState(() => new EmailAuthApi());
+  const [api] = useState(() => new ParaAuthApi());
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedAccessToken = AuthStorage.getAccessToken();
-        const storedRefreshToken = AuthStorage.getRefreshToken();
-        const storedEmail = AuthStorage.getEmail();
-
-        if (!storedRefreshToken) {
+        // Check for Para cookie-based auth
+        const me = await api.getMe();
+        if (me.authenticated && me.user) {
+          setState(prev => ({
+            ...prev,
+            isAuthenticated: true,
+            user: me.user ?? null,
+            isLoading: false,
+            error: null,
+          }));
+        } else {
           setState(prev => ({ ...prev, isLoading: false }));
-          return;
         }
-
-        let accessToken = storedAccessToken;
-        let refreshToken = storedRefreshToken;
-
-        if (!accessToken) {
-          const refreshed = await api.refreshToken(storedRefreshToken);
-          accessToken = refreshed.accessToken;
-          refreshToken = refreshed.refreshToken;
-          AuthStorage.storeAccessToken(accessToken);
-          AuthStorage.storeRefreshToken(refreshToken);
-        }
-
-        const me = await api.getMe(accessToken);
-
-        if (!me.authenticated) {
-          AuthStorage.clearAuth();
-          setState(prev => ({ ...prev, isLoading: false }));
-          return;
-        }
-
-        setState(prev => ({
-          ...prev,
-          isAuthenticated: true,
-          email: storedEmail,
-          accessToken,
-          refreshToken,
-          user: me.user ?? null,
-          isLoading: false,
-          error: null,
-        }));
       } catch (error) {
         console.error("Failed to initialize auth:", error);
-        AuthStorage.clearAuth();
         setState(prev => ({ ...prev, isLoading: false }));
       }
     };
@@ -112,56 +68,18 @@ export function AuthProvider({
     setError(null);
   };
 
-  const isSessionValid = (): boolean => {
-    const refreshToken = AuthStorage.getRefreshToken();
-    return !!refreshToken;
-  };
-
-  const sendOtp = async (email: string): Promise<void> => {
+  const loginWithPara = async (paraJwtToken: string): Promise<AuthMeResponse["user"] | null> => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      await api.sendOtp(email);
-      AuthStorage.storeEmail(email);
-      setState(prev => ({ ...prev, email, isLoading: false }));
-    } catch (error) {
-      console.error("Send OTP failed:", error);
-      const errorMessage = (error as ApiError).message || "Failed to send OTP";
-      setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
-      throw error;
-    }
-  };
+      // Send Para JWT to backend to set cookie
+      const response = await api.setParaJwtCookie(paraJwtToken);
 
-  const verifyOtp = async (email: string, otp: string): Promise<AuthMeResponse["user"] | null> => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    try {
-      const response = await api.verifyOtp(email, otp);
-      const accessToken = (response as any).accessToken ?? (response as any).access_token;
-      const refreshToken = (response as any).refreshToken ?? (response as any).refresh_token;
+      const userData: UserData = response.user ?? null;
 
-      // Store tokens and email first (synchronously) to ensure they persist
-      AuthStorage.storeEmail(email);
-      if (accessToken) AuthStorage.storeAccessToken(accessToken);
-      if (refreshToken) AuthStorage.storeRefreshToken(refreshToken);
-
-      let meUser: AuthMeResponse["user"] | null = null;
-      if (accessToken) {
-        try {
-          const me = await api.getMe(accessToken);
-          meUser = me.user ?? null;
-        } catch (err) {
-          console.error("verifyOtp getMe failed:", err);
-        }
-      }
-
-      const userData: UserData = meUser ?? (response.user as UserData) ?? null;
-
-      // Update state with complete user data
+      // Update state with user data from backend
       setState(prev => ({
         ...prev,
         isAuthenticated: true,
-        email,
-        accessToken: accessToken ?? null,
-        refreshToken: refreshToken ?? null,
         user: userData,
         isLoading: false,
         error: null,
@@ -170,8 +88,8 @@ export function AuthProvider({
       // Return user data to component
       return (userData as AuthMeResponse["user"]) ?? null;
     } catch (error) {
-      console.error("Verify OTP failed:", error);
-      const errorMessage = (error as ApiError).message || "Failed to verify OTP";
+      console.error("Para login failed:", error);
+      const errorMessage = (error as ApiError).message || "Failed to authenticate with Para";
       setState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
       throw error;
     }
@@ -179,69 +97,39 @@ export function AuthProvider({
 
   const logout = useCallback(async (): Promise<void> => {
     try {
-      const refreshToken = state.refreshToken || AuthStorage.getRefreshToken();
-      if (refreshToken) {
-        await api.logout(refreshToken);
-      }
+      await api.logout();
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {
-      AuthStorage.clearAuth();
       setState({
         isAuthenticated: false,
-        email: null,
-        accessToken: null,
-        refreshToken: null,
         user: null,
         isLoading: false,
         error: null,
       });
     }
-  }, [api, state.refreshToken]);
+  }, [api]);
 
-  const refreshSession = useCallback(async (): Promise<void> => {
-    const storedRefreshToken = AuthStorage.getRefreshToken();
-    if (!storedRefreshToken) return;
-
+  const refreshUser = useCallback(async (): Promise<void> => {
     try {
-      const response = await api.refreshToken(storedRefreshToken);
-      const accessToken = (response as any).accessToken ?? (response as any).access_token;
-      const newRefreshToken = (response as any).refreshToken ?? (response as any).refresh_token;
-
-      if (accessToken) AuthStorage.storeAccessToken(accessToken);
-      if (newRefreshToken) AuthStorage.storeRefreshToken(newRefreshToken);
-
+      const me = await api.getMe();
       setState(prev => ({
         ...prev,
-        accessToken: accessToken ?? prev.accessToken,
-        refreshToken: newRefreshToken ?? prev.refreshToken,
+        user: me.user ?? null,
         error: null,
       }));
     } catch (error) {
-      console.error("Token refresh failed:", error);
-      await logout();
+      console.error("Failed to refresh user data:", error);
       throw error;
     }
-  }, [api, logout]);
-
-  useEffect(() => {
-    if (!autoRefresh || !state.isAuthenticated) return;
-
-    const interval = setInterval(() => {
-      refreshSession().catch(error => console.error("Auto-refresh failed:", error));
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, state.isAuthenticated, refreshSession]);
+  }, [api]);
 
   const value: AuthContextValue = {
     ...state,
-    sendOtp,
-    verifyOtp,
+    loginWithPara,
     logout,
-    refreshSession,
+    refreshUser,
     clearError,
-    isSessionValid,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -20,10 +20,10 @@ const PreviewCard = ({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-2xl font-semibold text-text-primary">{name}</p>
-          {isFrom && <p className="text-xs font-normal text-text-secondary">{email}</p>}
+          <p className="text-xs font-normal text-text-secondary">{email}</p>
         </div>
       </div>
-      <div className="mt-auto flex flex-col gap-1">
+      <div className="flex flex-col gap-1">
         <p className="text-xs font-medium text-primary-blue">{company}</p>
         <p className="text-xs font-medium text-text-secondary">{address}</p>
       </div>
@@ -75,8 +75,8 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
             />
 
             <PreviewCard
-              name={invoiceData.billTo.name}
-              email={invoiceData.billTo.email || ""}
+              name={invoiceData.billTo.company}
+              email={invoiceData.billTo.email}
               company={invoiceData.billTo.company}
               address={invoiceData.billTo.address}
               isFrom={false}
@@ -119,7 +119,7 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
               <div className="border-t border-primary-divider pt-2"></div>
               <div className="text-right border-t border-primary-divider pt-2">
                 <p className="text-base font-semibold text-text-primary">
-                  {invoiceData.total.toFixed(2)} {invoiceData.currency}
+                  {invoiceData.total.toFixed(2)} {invoiceData.from.token.toUpperCase()}
                 </p>
               </div>
             </div>

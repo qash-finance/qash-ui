@@ -2,7 +2,7 @@ import { useInitAndPollSyncState } from "@/contexts/MidenSdkProvider";
 
 const Background = () => {
   // background process
-  useInitAndPollSyncState();
+  // useInitAndPollSyncState();
 
   return null;
 };

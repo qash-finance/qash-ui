@@ -28,94 +28,48 @@ const useGetCategories = () => {
   });
 };
 
-const useGetAllAddressBooks = () => {
-  return useQuery({
-    queryKey: ["address-book", "all"],
-    queryFn: async () => {
-      return apiServerWithAuth.getData<AddressBook[]>(`/address-book`);
-    },
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
-};
-
 const useGetAddressBooks = () => {
   return useQuery({
     queryKey: ["address-book"],
     queryFn: async () => {
-      // API returns AddressBook items with `categories` field; normalize to Category[]
-      type AddressBookApi = AddressBook & {
-        categories?: { id?: number; name?: string } | null;
-        categoryId?: number | null;
-      };
+      // // API returns AddressBook items with `categories` field; normalize to Category[]
+      // type AddressBookApi = AddressBook & {
+      //   categories?: { id?: number; name?: string } | null;
+      //   categoryId?: number | null;
+      // };
 
-      const list = await apiServerWithAuth.getData<AddressBookApi[]>(`/address-book`);
+      // const list = await apiServerWithAuth.getData<AddressBookApi[]>(`/address-book`);
 
-      const categoryNameToBooks: Record<string, AddressBook[]> = {};
-      for (const item of list) {
-        const categoryName: string = item?.categories?.name || "Uncategorized";
-        if (!categoryNameToBooks[categoryName]) categoryNameToBooks[categoryName] = [];
+      // const categoryNameToBooks: Record<string, AddressBook[]> = {};
+      // for (const item of list) {
+      //   const categoryName: string = item?.categories?.name || "Uncategorized";
+      //   if (!categoryNameToBooks[categoryName]) categoryNameToBooks[categoryName] = [];
 
-        categoryNameToBooks[categoryName].push({
-          id: item.id,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-          userAddress: item.userAddress,
-          name: item.name,
-          address: item.address,
-          token: item.token ?? undefined,
-        });
-      }
+      //   categoryNameToBooks[categoryName].push({
+      //     id: item.id,
+      //     createdAt: item.createdAt,
+      //     updatedAt: item.updatedAt,
+      //     userAddress: item.userAddress,
+      //     name: item.name,
+      //     address: item.address,
+      //     token: item.token ?? undefined,
+      //   });
+      // }
 
-      const categories: Category[] = Object.keys(categoryNameToBooks)
-        .sort()
-        .map((name, idx) => ({
-          id: idx + 1,
-          name,
-          addressBooks: categoryNameToBooks[name],
-          shape: CategoryShape.CIRCLE, // Default shape since API doesn't provide it
-          color: "#000000", // Default color since API doesn't provide it
-        }));
+      // const categories: Category[] = Object.keys(categoryNameToBooks)
+      //   .sort()
+      //   .map((name, idx) => ({
+      //     id: idx + 1,
+      //     name,
+      //     addressBooks: categoryNameToBooks[name],
+      //     shape: CategoryShape.CIRCLE, // Default shape since API doesn't provide it
+      //     color: "#000000", // Default color since API doesn't provide it
+      //   }));
 
-      return categories;
+      // return categories;
+      return [];
     },
     staleTime: 0, // Always consider data stale
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
-};
-
-const useCheckNameDuplicate = (name: string, category: string) => {
-  return useQuery({
-    queryKey: ["address-book", "check-name-duplicate", name, category],
-    queryFn: async () => {
-      return apiServerWithAuth.getData(`/address-book/check-name-duplicate?name=${name}&category=${category}`);
-    },
-    enabled: !!name && !!category,
-  });
-};
-
-// const useCheckCategoryExists = (category: string) => {
-//   return useQuery({
-//     queryKey: ["address-book", "check-category-exists", category],
-//     queryFn: async () => {
-//       return apiServerWithAuth.getData<boolean>(`/address-book/check-category-exists?category=${category}`);
-//     },
-//     enabled: !!category,
-//   });
-// };
-
-const useGetAddressBooksByCategory = (categoryId: number | null) => {
-  return useQuery({
-    queryKey: ["address-book", "by-category", categoryId],
-    queryFn: async () => {
-      return apiServerWithAuth.getData<AddressBook[]>(`/address-book/by-category?categoryId=${categoryId}`);
-    },
-    enabled: categoryId !== null,
-    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
@@ -228,14 +182,11 @@ const useUpdateAddressBookOrder = () => {
 
 export {
   useGetAddressBooks,
-  useGetAllAddressBooks,
   useCreateAddressBook,
   useUpdateAddressBook,
   useDeleteAddressBook,
   useUpdateAddressBookOrder,
-  useCheckNameDuplicate,
   useCreateCategory,
   useGetCategories,
   useUpdateCategoryOrder,
-  useGetAddressBooksByCategory,
 };

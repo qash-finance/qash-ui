@@ -54,6 +54,7 @@ import InvoiceModal from "@/components/Modal/Invoice/InvoiceModal";
 import RemoveInvoiceModal from "@/components/Modal/Invoice/RemoveInvoiceModal";
 import ConnectMidenWallet from "@/components/Modal/Wallet/ConnectMidenWallet";
 import RemovePayrollModal from "@/components/Modal/Payroll/RemovePayrollModal";
+import ConfirmAndReviewInvoiceModal from "@/components/Modal/Invoice/ConfirmAndReviewInvoiceModal";
 import { Group } from "./group-payment";
 import { CompanyGroupResponseDto } from "./employee";
 import { BatchTransaction } from "@/services/store/batchTransactions";
@@ -119,6 +120,7 @@ export const MODAL_IDS = {
   CONNECT_MIDEN_WALLET: "CONNECT_MIDEN_WALLET",
   REMOVE_PAYROLL: "REMOVE_PAYROLL",
   REMOVE_INVOICE: "REMOVE_INVOICE",
+  CONFIRM_AND_REVIEW_INVOICE: "CONFIRM_AND_REVIEW_INVOICE",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -357,7 +359,6 @@ export interface RemoveTransactionConfirmationModalProps extends BaseModalProps 
   onRemove?: () => Promise<void>;
 }
 
-
 // Allow passing a callback when a group is created so callers can react (e.g., auto-select)
 export interface CreateGroupModalProps extends BaseModalProps {
   onGroupCreated?: (group: CompanyGroupResponseDto) => void;
@@ -404,34 +405,37 @@ export interface InvoiceModalProps extends BaseModalProps {
   // Add any specific props for InvoiceModal here
   invoice: {
     invoiceNumber: string;
-      from: {
-        name: string;
-        company: string;
-        address: string;
-        email: string;
-      };
-      billTo: {
-        name: string;
-        company: string;
-        address: string;
-        email: string;
-      };
-      date: string;
-      dueDate: string;
-      network: string;
-      currency: string;
-      items: Array<{
-        name: string;
-        rate: number;
-        qty: number;
-        amount: number;
-      }>;
-      subtotal: number;
-      tax: number;
-      total: number;
-      walletAddress: string;
-      amountDue: string;
-  }
+    from: {
+      name: string;
+      company: string;
+      address: string;
+      email: string;
+    };
+    billTo: {
+      name: string;
+      company: string;
+      address: string;
+      email: string;
+    };
+    date: string;
+    dueDate: string;
+    network: string;
+    paymentToken: {
+      name: string;
+    };
+    currency: string;
+    items: Array<{
+      name: string;
+      rate: number;
+      qty: number;
+      amount: number;
+    }>;
+    subtotal: number;
+    tax: number;
+    total: number;
+    walletAddress: string;
+    amountDue: string;
+  };
 }
 
 export interface ConnectMidenWalletProps extends BaseModalProps {
@@ -441,11 +445,16 @@ export interface ConnectMidenWalletProps extends BaseModalProps {
 export interface RemovePayrollModalProps extends BaseModalProps {
   onRemove: () => Promise<void>;
   payrollOwnerName?: string;
+  payrollId?: number;
 }
 
 export interface RemoveInvoiceModalProps extends BaseModalProps {
   onRemove: () => Promise<void>;
   invoiceOwnerName?: string;
+}
+
+export interface ConfirmAndReviewInvoiceModalProps extends BaseModalProps {
+  onConfirm: () => Promise<void>;
 }
 
 export type ModalPropsMap = {
@@ -503,6 +512,7 @@ export type ModalPropsMap = {
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWalletProps;
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModalProps;
   [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModalProps;
+  [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -562,4 +572,5 @@ export const modalRegistry = {
   [MODAL_IDS.CONNECT_MIDEN_WALLET]: ConnectMidenWallet,
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModal,
   [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModal,
+  [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModal
 } as const;

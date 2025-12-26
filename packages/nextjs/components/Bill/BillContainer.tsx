@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BaseContainer } from "../Common/BaseContainer";
 import { TabContainer } from "../Common/TabContainer";
 import { SecondaryButton } from "../Common/SecondaryButton";
@@ -30,7 +30,7 @@ const billActionRenderer = (rowData: Record<string, any>, index: number) => (
       alt="three dot icon"
       className="w-6 h-6 cursor-pointer"
       data-tooltip-id="bill-action-tooltip"
-      data-tooltip-content={rowData.__id?.toString()}
+      data-tooltip-content={rowData.__billId?.toString()}
     />
   </div>
 );
@@ -59,25 +59,25 @@ const renderTabHeader = (activeTab: Tab) => {
         <div className="flex flex-col gap-2">
           <span className="text-text-primary text-2xl font-medium leading-none">Overview</span>
           <span className="text-text-secondary text-[14px] font-medium leading-none">
-            Manage all the invoices you received from vendors
+            Manage all the invoices you received from vendors, clients and employees
           </span>
         </div>
       );
     case "paid":
       return (
         <div className="flex flex-col gap-2">
-          <span className="text-text-primary text-2xl font-medium leading-none">Pending bills</span>
+          <span className="text-text-primary text-2xl font-medium leading-none">Paid bills</span>
           <span className="text-text-secondary text-[14px] font-medium leading-none">
-            Waiting for vendor to review and confirm their invoices.
+            All bills that have been fully paid.
           </span>
         </div>
       );
     case "pending":
       return (
         <div className="flex flex-col gap-2">
-          <span className="text-text-primary text-2xl font-medium leading-none">Paid bills</span>
+          <span className="text-text-primary text-2xl font-medium leading-none">Pending bills</span>
           <span className="text-text-secondary text-[14px] font-medium leading-none">
-            All bills that have been fully paid.
+            All bills that pending to be paid.
           </span>
         </div>
       );
@@ -95,15 +95,64 @@ const BillContainer = () => {
   const { data: billStats } = useGetBillStats();
   const { openModal } = useModal();
 
+  const billActionRenderer = (rowData: Record<string, any>, index: number) => {
+    const bill = bills.find(b => b.id === rowData.__billId);
+    // Hide action icon if bill is paid
+    if (bill?.status === BillStatusEnum.PAID) {
+      return <div>None</div>;
+    }
+    return (
+      <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
+        <img
+          src="/misc/three-dot-icon.svg"
+          alt="three dot icon"
+          className="w-6 h-6 cursor-pointer"
+          data-tooltip-id="bill-action-tooltip"
+          data-tooltip-content={rowData.__id?.toString()}
+        />
+      </div>
+    );
+  };
+
   const handleCheckRow = (idx: number) => {
+    const bill = bills[idx];
+    // Only allow checking if bill is pending
+    if (bill?.status !== BillStatusEnum.PENDING) {
+      const statusMessage =
+        bill?.status === BillStatusEnum.PAID
+          ? "This bill cannot be checked because it has already been paid"
+          : bill?.status === BillStatusEnum.CANCELLED
+            ? "This bill cannot be checked because it has been cancelled"
+            : `This bill cannot be checked because it is ${bill?.status?.toLowerCase()}`;
+      toast.error(statusMessage);
+      return;
+    }
     setCheckedRows(prev => (prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]));
   };
 
   const handleCheckAll = () => {
-    if (checkedRows.length === (billDatas?.length || 0)) {
-      setCheckedRows([]);
+    // Only get indices of pending bills
+    const pendingIndices = bills
+      .map((bill, idx) => (bill.status === BillStatusEnum.PENDING ? idx : null))
+      .filter((idx): idx is number => idx !== null);
+
+    // If there are no pending bills, show a warning
+    if (pendingIndices.length === 0) {
+      toast.error("No pending bills available to check");
+      return;
+    }
+
+    const allPendingChecked = pendingIndices.every(idx => checkedRows.includes(idx));
+
+    if (allPendingChecked) {
+      // Uncheck all pending bills
+      setCheckedRows(prev => prev.filter(idx => !pendingIndices.includes(idx)));
     } else {
-      setCheckedRows(billDatas?.map((_, idx) => idx) || []);
+      // Check all pending bills (keep existing checked rows that aren't pending)
+      setCheckedRows(prev => {
+        const nonPendingChecked = prev.filter(idx => bills[idx]?.status !== BillStatusEnum.PENDING);
+        return [...nonPendingChecked, ...pendingIndices];
+      });
     }
   };
 
@@ -119,9 +168,14 @@ const BillContainer = () => {
     return billsResponse?.bills ?? [];
   }, [billsResponse?.bills]);
 
+  // Clean up checked rows when bills change - remove any checked rows for non-pending bills
+  useEffect(() => {
+    setCheckedRows(prev => prev.filter(idx => bills[idx]?.status === BillStatusEnum.PENDING));
+  }, [bills]);
+
   const payBillsMutation = usePayBills();
   const deleteBill = useDeleteBill();
-  const { downloadPdf } = useInvoice();
+  const { downloadPdf, cancelInvoiceData } = useInvoice();
   const router = useRouter();
 
   const billDatas = bills.map((b, idx) => {
@@ -147,9 +201,15 @@ const BillContainer = () => {
 
     return {
       __id: b.invoice?.uuid,
+      __billId: b.id,
+      __invoiceUuid: b.invoice?.uuid,
       "header-0": (
         <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
-          <CustomCheckbox checked={checkedRows.includes(idx)} onChange={() => handleCheckRow(idx)} />
+          <CustomCheckbox
+            checked={checkedRows.includes(idx)}
+            onChange={() => handleCheckRow(idx)}
+            disabled={b.status !== BillStatusEnum.PENDING}
+          />
         </div>
       ),
       "Creation date": createdDate,
@@ -167,11 +227,13 @@ const BillContainer = () => {
       Amount: (
         <div className="flex items-center gap-2 justify-center">
           <span>{b.invoice?.total || "0"}</span>
-          <img
+          {/* TODO: Add token icon and network */}
+          <div className="flex items-center gap-2">{b.invoice?.paymentToken?.name?.toUpperCase()}</div>
+          {/* <img
             alt={`${b.invoice?.paymentNetwork?.name?.toLowerCase()}`}
             className="w-4"
             src={`/token/${b.invoice?.paymentToken?.name?.toLowerCase()}.svg` || "USDT"}
-          />
+          /> */}
         </div>
       ),
       "Due Date": dueDate,
@@ -183,7 +245,10 @@ const BillContainer = () => {
     };
   });
 
-  const isAllChecked = checkedRows.length === billDatas?.length;
+  // Only consider pending bills for "check all" functionality
+  const pendingBillsCount = bills.filter(b => b.status === BillStatusEnum.PENDING).length;
+  const checkedPendingCount = checkedRows.filter(idx => bills[idx]?.status === BillStatusEnum.PENDING).length;
+  const isAllChecked = pendingBillsCount > 0 && checkedPendingCount === pendingBillsCount;
 
   return (
     <div className="flex flex-col w-full h-full justify-start items-start p-5 gap-5">
@@ -245,22 +310,23 @@ const BillContainer = () => {
 
           {/* Filter Button */}
           <div className="flex items-center gap-2">
-            <SecondaryButton
+            {/* TODO: IMPLEMENT SORT AND FILTER */}
+            {/* <SecondaryButton
               text="Sort"
               icon="/misc/sort-icon.svg"
               onClick={() => console.log("Sort button clicked")}
               iconPosition="left"
               variant="light"
               buttonClassName="px-2"
-            />
-            <SecondaryButton
+            /> */}
+            {/* <SecondaryButton
               text="Filter"
               icon="/wallet-analytics/setting-icon.gif"
               onClick={() => console.log("Filter button clicked")}
               iconPosition="left"
               variant="light"
               buttonClassName="px-2"
-            />
+            /> */}
           </div>
         </div>
         <Table
@@ -288,7 +354,7 @@ const BillContainer = () => {
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={setRowsPerPage}
           onRowClick={rowData => {
-            const invoiceUUID = (rowData as any).__id;
+            const invoiceUUID = (rowData as any).__invoiceUuid;
             router.push(`/bill/detail?uuid=${invoiceUUID}`);
           }}
         />
@@ -331,19 +397,22 @@ const BillContainer = () => {
             openModal("REMOVE_INVOICE", {
               invoiceOwnerName: bill.invoice?.fromDetails?.name || "",
               onRemove: async () => {
-                deleteBill.mutate(bill.uuid, {
-                  onError: err => {
-                    console.error("Delete invoice failed", err);
-                    toast.error("Failed to delete invoice");
-                  },
-                });
+                await cancelInvoiceData(bill.invoice?.uuid || "");
+                toast.success("Invoice cancelled successfully");
+                // deleteBill.mutate(bill.uuid, {
+                //   onError: err => {
+                //     console.error("Delete invoice failed", err);
+                //     toast.error("Failed to delete invoice");
+                //   },
+                // });
               },
             });
           };
 
           const handleDownload = async () => {
             try {
-              const blob = await downloadPdf(bill.uuid);
+              if (!bill.invoice?.uuid) throw new Error("Invoice UUID not found");
+              const blob = await downloadPdf(bill.invoice?.uuid);
               const url = window.URL.createObjectURL(blob);
               const link = document.createElement("a");
               link.href = url;
@@ -374,6 +443,7 @@ const BillContainer = () => {
               onDeleteInvoice={handleDelete}
               onDownloadPDF={handleDownload}
               onPay={handlePay}
+              billStatus={bill.status}
             />
           );
         }}

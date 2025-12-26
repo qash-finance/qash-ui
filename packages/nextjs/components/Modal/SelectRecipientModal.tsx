@@ -18,11 +18,12 @@ import { useAuth } from "@/services/auth/context";
 interface AddressItemProps {
   name: string;
   address: string;
+  email: string;
   isSelected?: boolean;
   onSelect?: () => void;
 }
 
-function AddressItem({ name, address, isSelected = false, onSelect }: AddressItemProps) {
+function AddressItem({ name, address, email, isSelected = false, onSelect }: AddressItemProps) {
   return (
     <div
       className="flex gap-2.5 items-center self-stretch p-3.5 rounded-lg cursor-pointer hover:bg-app-background w-full"
@@ -30,7 +31,9 @@ function AddressItem({ name, address, isSelected = false, onSelect }: AddressIte
     >
       <img src={blo(turnBechToHex(address))} alt="address" className="w-9 h-9 rounded-full" />
       <div className="flex flex-col gap-1">
-        <p className=" leading-5 text-text-primary font-semibold">{name}</p>
+        <p className=" leading-5 text-text-primary font-semibold">
+          {name} <span className="text-text-secondary text-sm">({email})</span>
+        </p>
         <span className="text-sm tracking-tight leading-5 text-text-secondary">{formatAddress(address)}</span>
       </div>
     </div>
@@ -191,6 +194,7 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
                   key={`${employee.walletAddress}-${employee.name}`}
                   name={employee.name}
                   address={employee.walletAddress}
+                  email={employee.email || ""}
                   isSelected={selectedAddress === employee.walletAddress}
                   onSelect={() => handleSelectAddress(employee)}
                 />

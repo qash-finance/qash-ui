@@ -8,6 +8,7 @@ interface FixedAmountProps {
   setSelectedPayDay: (day: number) => void;
   register: any;
   errors: Record<string, any>;
+  setValue: any;
   inputContainerClass?: string;
   labelClass?: string;
 }
@@ -18,11 +19,16 @@ export const ContractTerm = ({
   setSelectedPayDay,
   register,
   errors,
+  setValue,
   inputContainerClass,
   labelClass,
 }: FixedAmountProps) => {
   const [durationUnit, setDurationUnit] = useState<"month" | "year">("month");
-  const handleToggleUnit = () => setDurationUnit(prev => (prev === "month" ? "year" : "month"));
+  const handleToggleUnit = () => {
+    const newUnit = durationUnit === "month" ? "year" : "month";
+    setDurationUnit(newUnit);
+    setValue("durationUnit", newUnit, { shouldValidate: true });
+  };
 
   return (
     <div className="bg-payroll-sub-background border-t-2 border-background rounded-3xl overflow-hidden">
@@ -52,6 +58,8 @@ export const ContractTerm = ({
               <img src="/arrow/chevron-up-down.svg" alt="chevron-down" className="w-4" />
             </button>
           </div>
+          {/* Hidden input to register durationUnit in the form */}
+          <input type="hidden" {...register("durationUnit")} />
           {errors.duration && (
             <div className="flex items-center gap-1 pl-2">
               <img src="/misc/red-circle-warning.svg" alt="warning" className="w-4 h-4" />

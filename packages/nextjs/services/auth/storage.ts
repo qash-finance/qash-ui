@@ -5,12 +5,16 @@ const REFRESH_TOKEN_KEY = "refresh_token";
 export class AuthStorage {
   /**
    * Store user email
+   *
+   * NOTE: To avoid clear-text storage of potentially sensitive information,
+   * this implementation intentionally does not persist the email in
+   * localStorage. The email should be kept only in memory via React state.
    */
   static storeEmail(email: string): void {
     try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(EMAIL_STORAGE_KEY, email);
-      }
+      // Intentionally left as a no-op to prevent persisting email in localStorage.
+      // The EMAIL_STORAGE_KEY constant is retained only to avoid breaking references.
+      void email;
     } catch (error) {
       console.error("Failed to store email:", error);
     }
@@ -18,12 +22,12 @@ export class AuthStorage {
 
   /**
    * Retrieve user email
+   *
+   * NOTE: Since we no longer persist email in localStorage for security reasons,
+   * this method always returns null.
    */
   static getEmail(): string | null {
     try {
-      if (typeof window !== "undefined") {
-        return localStorage.getItem(EMAIL_STORAGE_KEY);
-      }
       return null;
     } catch (error) {
       console.error("Failed to retrieve email:", error);

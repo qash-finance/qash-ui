@@ -48,7 +48,7 @@ const mapCompanyTypeToEnum = (displayName: string): CompanyTypeEnum => {
 
 export default function OnboardingContainer() {
   const router = useRouter();
-  const { isAuthenticated, accessToken, user } = useAuth();
+  const { isAuthenticated, user, refreshUser } = useAuth();
   const createCompanyMutation = useCreateCompany();
   const [step, setStep] = useState<Step>("company");
   const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
@@ -81,7 +81,7 @@ export default function OnboardingContainer() {
     const destination = hasCompany ? "/bill" : "/onboarding";
 
     router.push(destination);
-  }, [isAuthenticated, accessToken, user, router]);
+  }, [isAuthenticated, user, router]);
 
   // Redirect unauthenticated users away from onboarding
   useEffect(() => {
@@ -110,6 +110,8 @@ export default function OnboardingContainer() {
           postalCode: data.postalCode,
         });
         toast.success("Company registered successfully");
+        // Refresh the user data to get updated company info
+        await refreshUser?.();
         setStep("complete");
       } catch (error) {
         toast.error("Failed to create company");
@@ -178,7 +180,13 @@ export default function OnboardingContainer() {
               <InputOutlined
                 label="Address 1"
                 placeholder="Enter address 1"
-                {...register("address1", { required: true })}
+                {...register("address1", {
+                  required: true,
+                  minLength: {
+                    value: 10,
+                    message: "Address must be at least 10 characters",
+                  },
+                })}
               />
 
               {/* Address 2 */}
@@ -197,7 +205,13 @@ export default function OnboardingContainer() {
                   <InputOutlined
                     label="Company registration number"
                     placeholder="e.g. 8683949"
-                    {...register("registrationNumber", { required: true })}
+                    {...register("registrationNumber", {
+                      required: true,
+                      minLength: {
+                        value: 8,
+                        message: "Registration number must be at least 8 characters",
+                      },
+                    })}
                   />
                 </div>
               </div>

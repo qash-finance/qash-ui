@@ -15,11 +15,11 @@ interface ShapeSelectionTooltipProps {
 export const createShapeElement = (shapeValue: CategoryShapeEnum, color: string): React.ReactElement => {
   switch (shapeValue) {
     case CategoryShapeEnum.CIRCLE:
-      return <div className="w-5 h-5 rounded-full" style={{ backgroundColor: color }} />;
+      return <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />;
     case CategoryShapeEnum.DIAMOND:
-      return <div className="w-4 h-4 rotate-45 rounded-sm" style={{ backgroundColor: color }} />;
+      return <div className="w-3 h-3 rotate-45 rounded-sm" style={{ backgroundColor: color }} />;
     case CategoryShapeEnum.SQUARE:
-      return <div className="w-5 h-5 rounded-sm" style={{ backgroundColor: color }} />;
+      return <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: color }} />;
     case CategoryShapeEnum.TRIANGLE:
       return (
         <div

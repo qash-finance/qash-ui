@@ -7,6 +7,8 @@ import {
   PayrollStatsDto,
   PayrollModel,
   PaginatedPayrollsResponseDto,
+  PendingInvoiceReviewsDto,
+  CreatePayroll,
 } from "@/types/payroll";
 
 // *************************************************
@@ -20,18 +22,14 @@ const useGetPayrolls = (query?: PayrollQueryDto) => {
   const queryParams = new URLSearchParams();
   if (query?.page) queryParams.append("page", query.page.toString());
   if (query?.limit) queryParams.append("limit", query.limit.toString());
-  if (query?.employeeId)
-    queryParams.append("employeeId", query.employeeId.toString());
-  if (query?.contractTerm)
-    queryParams.append("contractTerm", query.contractTerm);
+  if (query?.employeeId) queryParams.append("employeeId", query.employeeId.toString());
+  if (query?.contractTerm) queryParams.append("contractTerm", query.contractTerm);
   if (query?.search) queryParams.append("search", query.search);
 
   return useQuery({
     queryKey: ["payrolls", "all", query],
     queryFn: async () => {
-      return apiServerWithAuth.getData<PaginatedPayrollsResponseDto>(
-        `/api/v1/payroll?${queryParams.toString()}`
-      );
+      return apiServerWithAuth.getData<PaginatedPayrollsResponseDto>(`/api/v1/payroll?${queryParams.toString()}`);
     },
     staleTime: 0,
     refetchOnMount: true,
@@ -73,6 +71,23 @@ const useGetPayrollDetails = (id: number) => {
   });
 };
 
+/**
+ * Hook to check if payroll has pending invoice reviews from employee
+ */
+const useGetPayrollPendingReviews = (id: number) => {
+  return useQuery({
+    queryKey: ["payrolls", "pending-reviews", id],
+    queryFn: async () => {
+      return apiServerWithAuth.getData<PendingInvoiceReviewsDto>(`/api/v1/payroll/${id}/pending-reviews`);
+    },
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
+};
+
 // *************************************************
 // **************** POST METHODS *******************
 // *************************************************
@@ -85,10 +100,7 @@ const useCreateSandboxPayroll = () => {
 
   return useMutation({
     mutationFn: async (data: { employeeId: number; amount?: number }) => {
-      return apiServerWithAuth.postData<PayrollModel>(
-        "/api/v1/payroll/sandbox",
-        data
-      );
+      return apiServerWithAuth.postData<PayrollModel>("/api/v1/payroll/sandbox", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payrolls"] });
@@ -103,7 +115,7 @@ const useCreatePayroll = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreatePayrollDto) => {
+    mutationFn: async (data: CreatePayroll) => {
       return apiServerWithAuth.postData<PayrollModel>("/api/v1/payroll", data);
     },
     onSuccess: () => {
@@ -123,13 +135,7 @@ const useUpdatePayroll = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: UpdatePayrollDto;
-    }) => {
+    mutationFn: async ({ id, data }: { id: number; data: UpdatePayrollDto }) => {
       return apiServerWithAuth.putData<PayrollModel>(`/api/v1/payroll/${id}`, data);
     },
     onSuccess: (_, variables) => {
@@ -153,10 +159,7 @@ const usePausePayroll = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiServerWithAuth.patchData<PayrollModel>(
-        `/api/v1/payroll/${id}/pause`,
-        {}
-      );
+      return apiServerWithAuth.patchData<PayrollModel>(`/api/v1/payroll/${id}/pause`, {});
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["payrolls"] });
@@ -173,10 +176,7 @@ const useResumePayroll = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      return apiServerWithAuth.patchData<PayrollModel>(
-        `/api/v1/payroll/${id}/resume`,
-        {}
-      );
+      return apiServerWithAuth.patchData<PayrollModel>(`/api/v1/payroll/${id}/resume`, {});
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["payrolls"] });
@@ -214,6 +214,7 @@ export {
   useGetPayrolls,
   useGetPayrollStats,
   useGetPayrollDetails,
+  useGetPayrollPendingReviews,
   // POST
   useCreatePayroll,
   useCreateSandboxPayroll,

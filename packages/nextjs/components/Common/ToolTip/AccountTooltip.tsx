@@ -37,10 +37,10 @@ const TooltipItem = ({
 export const AccountTooltip = ({ onLogout }: AccountTooltipProps) => {
   return (
     <div className="bg-white border border-primary-divider rounded-2xl shadow-lg w-[185px]">
-        {/* Support Button */}
-        <TooltipItem onClick={() => window.open("https://support.qash.io", "_blank")}>
-            <span className={`text-sm text-text-primary`}>Support</span>
-        </TooltipItem>
+      {/* Support Button */}
+      <TooltipItem onClick={() => window.open("https://forms.gle/gtvo66cQux4a7BCe9", "_blank")}>
+        <span className={`text-sm text-text-primary`}>Support</span>
+      </TooltipItem>
 
       {/* Logout Button */}
       <div className="border-t w-full border-primary-divider">

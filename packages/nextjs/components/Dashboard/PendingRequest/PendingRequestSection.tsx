@@ -91,8 +91,8 @@ export const PendingRequestSection: React.FC<PendingRequestSectionProps> = ({ pe
     if (!addressBooks) return new Map<string, string>();
 
     const map = new Map<string, string>();
-    addressBooks.forEach(category => {
-      category.addressBooks?.forEach(book => {
+    addressBooks.forEach((category: any) => {
+      category.addressBooks?.forEach((book: any) => {
         map.set(book.address, book.name);
       });
     });

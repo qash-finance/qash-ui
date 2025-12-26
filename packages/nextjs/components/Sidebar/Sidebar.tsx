@@ -124,7 +124,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showMoveCryptoSidebar, setShowMoveCryptoSidebar] = useState(false);
-  const { isAuthenticated, email, user, isLoading, logout } = useAuth();
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
   // **************** Effect ****************
   useEffect(() => {
     // Check if any submenu is currently open
@@ -219,7 +219,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
             {/* Logo */}
             <header
               className={`flex max-w-full leading-6 justify-items-start gap-2 cursor-pointer items-center px-3`}
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/payroll")}
             >
               <div className="flex items-center justify-center">
                 <img src="/logo/qash-icon.svg" alt="Qash Logo" />
@@ -249,7 +249,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
                     {(user as AuthMeResponse["user"])?.teamMembership?.firstName}{" "}
                     {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
                   </span>
-                  <span className="text-text-secondary leading-none">{email}</span>
+                  <span className="text-text-secondary leading-none">{(user as AuthMeResponse["user"])?.email}</span>
                 </div>
                 <img
                   src="/misc/three-dot-icon.svg"

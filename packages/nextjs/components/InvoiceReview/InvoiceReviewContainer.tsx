@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { PrimaryButton } from "../Common/PrimaryButton";
 import InvoiceDetail from "./InvoiceDetail";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
@@ -11,6 +10,8 @@ import toast from "react-hot-toast";
 import Welcome from "../Common/Welcome";
 import LoginButton from "../Login/LoginButton";
 import { useAuth } from "@/services/auth/context";
+import { useModal } from "@/contexts/ModalManagerProvider";
+import { ConfirmAndReviewInvoiceModalProps } from "@/types/modal";
 
 type Step = "verify" | "review" | "success";
 
@@ -49,6 +50,22 @@ export interface InvoiceData {
   status: string;
 }
 
+const Header = () => {
+  return (
+    <div className="w-full flex justify-between items-center p-2 pt-1">
+      <div className="flex items-center justify-center">
+        <img src="/logo/qash-icon.svg" alt="Qash Logo" />
+        <img
+          src="/logo/ash-text-icon.svg"
+          alt="Qash Logo"
+          className="w-12"
+          style={{ transition: "width 200ms ease" }}
+        />
+      </div>
+    </div>
+  );
+};
+
 const InvoiceSuccess = ({ message }: { message: string }) => {
   return (
     <div className="flex flex-col w-full h-full justify-center items-center gap-3 ">
@@ -60,13 +77,16 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 };
 
 export const InvoiceReviewContainer = () => {
-  const { isAuthenticated, email, isLoading: authIsLoading, sendOtp, verifyOtp } = useAuth();
+  const { openModal, closeModal } = useModal();
+
+  const { isAuthenticated, isLoading: authIsLoading, sendOtp, verifyOtp, user } = useAuth();
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const employeeEmail = searchParams.get("email") || "";
 
   const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [originalAddress, setOriginalAddress] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [otp, setOtp] = useState("");
@@ -79,7 +99,7 @@ export const InvoiceReviewContainer = () => {
   const { isLoading, fetchInvoiceByUUID, confirmInvoiceData, downloadPdf } = useInvoice();
 
   const normalizedEmployeeEmail = useMemo(() => employeeEmail.trim().toLowerCase(), [employeeEmail]);
-  const normalizedUserEmail = useMemo(() => (email || "").trim().toLowerCase(), [email]);
+  const normalizedUserEmail = useMemo(() => (user?.email || "").trim().toLowerCase(), [user?.email]);
 
   const isEmployeeEmailMatch = useMemo(() => {
     if (!isAuthenticated) return false;
@@ -106,7 +126,9 @@ export const InvoiceReviewContainer = () => {
         (async () => {
           try {
             const data = await fetchInvoiceByUUID(invoiceUUID);
-            setInvoiceData(mapApiResponseToInvoiceData(data));
+            const mappedData = mapApiResponseToInvoiceData(data);
+            setInvoiceData(mappedData);
+            setOriginalAddress(mappedData.from.address);
             setStep("review");
           } catch (err) {
             console.error("Failed to load invoice:", err);
@@ -146,7 +168,9 @@ export const InvoiceReviewContainer = () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
       console.log("🚀 ~ loadInvoice ~ data:", data);
-      setInvoiceData(mapApiResponseToInvoiceData(data));
+      const mappedData = mapApiResponseToInvoiceData(data);
+      setInvoiceData(mappedData);
+      setOriginalAddress(mappedData.from.address);
     } catch (err) {
       console.error("Failed to load invoice:", err);
     }
@@ -190,11 +214,13 @@ export const InvoiceReviewContainer = () => {
 
   const mapApiResponseToInvoiceData = (apiData: any): InvoiceData => {
     // Map API response to InvoiceData interface
-    const toDetails = apiData.toDetails || apiData.toCompany || {};
+    const invoiceNumber = apiData.invoiceNumber;
+
     const fromDetails = apiData.fromDetails || {};
+    const toDetails = apiData.toDetails || apiData.toCompany || {};
 
     return {
-      invoiceNumber: apiData.invoiceNumber || "",
+      invoiceNumber: invoiceNumber,
       date: apiData.issueDate ? new Date(apiData.issueDate).toLocaleDateString() : "",
       dueDate: apiData.dueDate ? new Date(apiData.dueDate).toLocaleDateString() : "",
       from: {
@@ -207,8 +233,8 @@ export const InvoiceReviewContainer = () => {
         walletAddress: fromDetails.walletAddress || apiData.employee?.walletAddress || "",
       },
       billTo: {
-        name: apiData.toCompany?.companyName || apiData.toCompanyName || "",
-        email: apiData.toCompanyEmail || apiData.emailTo || "",
+        name: apiData.toCompany?.companyName + " " + apiData.toCompany?.companyType,
+        email: toDetails.email,
         company: apiData.toCompany?.companyName || apiData.toCompanyName || "",
         address: [toDetails.address1, toDetails.address2, toDetails.city, toDetails.country, toDetails.postalCode]
           .filter(Boolean)
@@ -232,6 +258,7 @@ export const InvoiceReviewContainer = () => {
   const handleDownloadPdf = async () => {
     try {
       const blob = await downloadPdf(invoiceUUID);
+      console.log("🚀 ~ handleDownloadPdf ~ blob:", blob);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -246,12 +273,25 @@ export const InvoiceReviewContainer = () => {
   };
 
   const handleConfirmInvoice = async () => {
+    // Check if address has been updated
+    if (invoiceData && !invoiceData.from.address) {
+      toast.error("Please update the address before confirming the invoice");
+      return;
+    }
+
     try {
-      await confirmInvoiceData(invoiceUUID);
-      setSuccessMessage("Invoice confirmed successfully");
-      setShowSuccess(true);
-      // Reload invoice data
-      loadInvoice();
+      openModal<ConfirmAndReviewInvoiceModalProps>("CONFIRM_AND_REVIEW_INVOICE", {
+        onConfirm: async () => {
+          await confirmInvoiceData(invoiceUUID);
+          // close modal
+          closeModal("CONFIRM_AND_REVIEW_INVOICE");
+
+          setSuccessMessage("Invoice confirmed successfully");
+          setShowSuccess(true);
+          // Reload invoice data
+          loadInvoice();
+        },
+      });
     } catch (err) {
       console.error("Failed to confirm invoice:", err);
     }
@@ -282,8 +322,6 @@ export const InvoiceReviewContainer = () => {
       });
     }
   };
-
-  console.log(invoiceData);
 
   return (
     <div className="flex flex-col w-full h-full bg-background overflow-y-auto">
@@ -356,8 +394,36 @@ export const InvoiceReviewContainer = () => {
         </div>
       )}
 
+      {/* if invoice is deleted, show its not active anymore */}
+      {invoiceData?.status === "DELETED" && (
+        <div className="flex flex-col w-full h-full bg-app-background p-2 gap-2">
+          <Header />
+          <div
+            className="w-full h-full relative flex justify-center items-center flex-col rounded-lg"
+            style={{
+              background: "linear-gradient(180deg, #D7D7D7 0%, #FFF 60.33%)",
+            }}
+          >
+            <div className="w-fit h-fit relative flex justify-center items-center flex-col gap-4 z-2">
+              <span className="text-text-primary text-7xl font-bold anton-regular leading-none uppercase">
+                Oops, this invoice isn’t available anymore.
+              </span>
+              <span className="text-text-primary text-lg">
+                Looks like the employer has deleted the invoice. You can reach out to your employer if anything wrong.
+              </span>
+            </div>
+          </div>
+
+          <img
+            src="/gift/background-qash-text.svg"
+            alt="background-qash-text"
+            className="w-[1050px] absolute top-100 left-1/2 -translate-x-1/2 -translate-y-1/2 z-1"
+          />
+        </div>
+      )}
+
       {/* Review Step */}
-      {step === "review" && invoiceData && !showSuccess && (
+      {step === "review" && invoiceData && !showSuccess && invoiceData.status !== "DELETED" && (
         <>
           <div className="flex flex-row w-full justify-between items-center px-4 py-3 border-b border-primary-divider">
             <div className="flex flex-row items-center gap-2">
@@ -366,7 +432,8 @@ export const InvoiceReviewContainer = () => {
             </div>
 
             <div className="flex flex-row items-center gap-2">
-              <SecondaryButton
+              {/* TODO: Add download PDF button */}
+              {/* <SecondaryButton
                 text="Download PDF"
                 onClick={handleDownloadPdf}
                 variant="light"
@@ -374,8 +441,8 @@ export const InvoiceReviewContainer = () => {
                 icon="/invoice/download-invoice-icon.svg"
                 iconPosition="left"
                 disabled={isLoading}
-              />
-              {invoiceData.status === "REVIEWED" && (
+              /> */}
+              {(invoiceData.status === "REVIEWED" || invoiceData.status === "SENT") && (
                 <PrimaryButton
                   text="Confirm"
                   onClick={handleConfirmInvoice}
