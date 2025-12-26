@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { useBalanceVisibility } from "@/contexts/BalanceVisibilityProvider";
-import { useModal } from "@/contexts/ModalManagerProvider";
 import { useMidenSdkStore } from "@/contexts/MidenSdkProvider";
 import { useTransactionStore } from "@/contexts/TransactionProvider";
 import { useAccountContext } from "@/contexts/AccountProvider";
@@ -35,7 +33,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
     const blocksFromStartOfMonth = Math.floor(blocksPerDay * daysFromStartOfMonth);
     const monthStartBlock = blockNumber - blocksFromStartOfMonth;
 
-    filteredTransactions = transactions.filter(tx => {
+    filteredTransactions = transactions.filter((tx: any) => {
       const txBlockNumber = parseInt(tx.blockNumber);
       return txBlockNumber >= monthStartBlock && txBlockNumber <= blockNumber;
     });
@@ -43,9 +41,9 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
     let moneyIn = 0;
     let moneyOut = 0;
 
-    filteredTransactions.forEach(tx => {
+    filteredTransactions.forEach((tx: any) => {
       // Process all assets in the transaction, not just QASH
-      tx.assets.forEach(asset => {
+      tx.assets.forEach((asset: any) => {
         // Find the asset metadata to get the correct decimals
         const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
         if (assetMetadata) {
@@ -94,7 +92,7 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
     const previousMonthStartBlock =
       blockNumber - Math.floor(blocksPerDay * (daysFromStartOfCurrentMonth + daysFromStartOfPreviousMonth));
 
-    previousPeriodTransactions = transactions.filter(tx => {
+    previousPeriodTransactions = transactions.filter((tx: any) => {
       const txBlockNumber = parseInt(tx.blockNumber);
       return txBlockNumber >= previousMonthStartBlock && txBlockNumber <= previousMonthEndBlock;
     });
@@ -102,9 +100,9 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
     let previousMoneyIn = 0;
     let previousMoneyOut = 0;
 
-    previousPeriodTransactions.forEach(tx => {
+    previousPeriodTransactions.forEach((tx: any) => {
       // Process all assets in the transaction, not just QASH
-      tx.assets.forEach(asset => {
+      tx.assets.forEach((asset: any) => {
         // Find the asset metadata to get the correct decimals
         const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
         if (assetMetadata) {

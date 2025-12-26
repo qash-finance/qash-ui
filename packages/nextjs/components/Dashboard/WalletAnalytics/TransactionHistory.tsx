@@ -59,7 +59,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
       const startBlockNumber = blockNumber - Math.floor(blocksPerDay * (daysAgoStartDate + 1));
       const endBlockNumber = blockNumber - Math.floor(blocksPerDay * daysAgoEndDate);
 
-      filtered = filtered.filter(transaction => {
+      filtered = filtered.filter((transaction: any) => {
         const txBlockNumber = parseInt(transaction.blockNumber);
         const isInRange = txBlockNumber >= startBlockNumber && txBlockNumber <= endBlockNumber;
 
@@ -70,7 +70,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
     // Apply search filter
     if (searchQuery.trim()) {
       const queryLower = searchQuery.toLowerCase();
-      filtered = filtered.filter(transaction => {
+      filtered = filtered.filter((transaction: any) => {
         if (transaction.id.toLowerCase().includes(queryLower)) return true;
         if (transaction.sender.toLowerCase().includes(queryLower)) return true;
         if (transaction.recipient.toLowerCase().includes(queryLower)) return true;
@@ -263,7 +263,7 @@ const TransactionHistory = ({ onTransactionClick }: { onTransactionClick: (trans
 
       <div className="px-2 w-full cursor-pointer overflow-y-auto h-full">
         {/* Transaction Rows */}
-        {filteredTransactions.map((transaction, index) => (
+        {filteredTransactions.map((transaction: any, index: number) => (
           <div
             key={index}
             className="grid grid-cols-12 gap-2.5 items-center px-2 py-0 rounded-lg w-full h-15 hover:bg-[#292929]"

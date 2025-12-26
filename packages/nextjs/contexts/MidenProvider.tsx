@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo } from "react";
 import { useAccount, useLogout, useModal, useWallet, Wallet } from "@getpara/react-sdk";
 import { useMiden } from "@/hooks/web3/useMiden";
 import { getBalance } from "@/services/utils/getBalance";

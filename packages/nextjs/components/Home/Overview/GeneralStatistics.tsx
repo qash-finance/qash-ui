@@ -119,7 +119,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
         Math.floor((currentDate.getTime() - startOfMonth.getTime()) / (1000 * 60 * 60 * 24)) * blocksPerDay;
 
       // Filter transactions for this month
-      const monthTransactions = transactions.filter(transaction => {
+      const monthTransactions = transactions.filter((transaction: any) => {
         const txBlockNumber = parseInt(transaction.blockNumber);
         return txBlockNumber >= monthStartBlock && txBlockNumber <= monthEndBlock;
       });
@@ -128,9 +128,9 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       let monthIncoming = 0;
       let monthExpense = 0;
 
-      monthTransactions.forEach(transaction => {
+      monthTransactions.forEach((transaction: any) => {
         // Process all assets in the transaction, not just QASH
-        transaction.assets.forEach(asset => {
+        transaction.assets.forEach((asset: any) => {
           // Find the asset metadata to get the correct decimals
           const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
           if (assetMetadata) {
@@ -171,7 +171,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       const blocksFromStartOfMonth = Math.floor(blocksPerDay * daysFromStartOfMonth);
       const monthStartBlock = blockNumber - blocksFromStartOfMonth;
 
-      filteredTransactions = transactions.filter(tx => {
+      filteredTransactions = transactions.filter((tx: any) => {
         const txBlockNumber = parseInt(tx.blockNumber);
         return txBlockNumber >= monthStartBlock && txBlockNumber <= blockNumber;
       });
@@ -182,7 +182,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       const blocksFromStartOfYear = Math.floor(blocksPerDay * daysFromStartOfYear);
       const yearStartBlock = blockNumber - blocksFromStartOfYear;
 
-      filteredTransactions = transactions.filter(tx => {
+      filteredTransactions = transactions.filter((tx: any) => {
         const txBlockNumber = parseInt(tx.blockNumber);
         return txBlockNumber >= yearStartBlock && txBlockNumber <= blockNumber;
       });
@@ -191,9 +191,9 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
     let moneyIn = 0;
     let moneyOut = 0;
 
-    filteredTransactions.forEach(tx => {
+    filteredTransactions.forEach((tx: any) => {
       // Process all assets in the transaction, not just QASH
-      tx.assets.forEach(asset => {
+      tx.assets.forEach((asset: any) => {
         // Find the asset metadata to get the correct decimals
         const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
         if (assetMetadata) {
@@ -243,7 +243,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       const previousMonthStartBlock =
         blockNumber - Math.floor(blocksPerDay * (daysFromStartOfCurrentMonth + daysFromStartOfPreviousMonth));
 
-      previousPeriodTransactions = transactions.filter(tx => {
+      previousPeriodTransactions = transactions.filter((tx: any) => {
         const txBlockNumber = parseInt(tx.blockNumber);
         return txBlockNumber >= previousMonthStartBlock && txBlockNumber <= previousMonthEndBlock;
       });
@@ -263,7 +263,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
       const previousYearStartBlock =
         blockNumber - Math.floor(blocksPerDay * (daysFromStartOfCurrentYear + daysInPreviousYear));
 
-      previousPeriodTransactions = transactions.filter(tx => {
+      previousPeriodTransactions = transactions.filter((tx: any) => {
         const txBlockNumber = parseInt(tx.blockNumber);
         return txBlockNumber >= previousYearStartBlock && txBlockNumber <= previousYearEndBlock;
       });
@@ -272,9 +272,9 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
     let previousMoneyIn = 0;
     let previousMoneyOut = 0;
 
-    previousPeriodTransactions.forEach(tx => {
+    previousPeriodTransactions.forEach((tx: any) => {
       // Process all assets in the transaction, not just QASH
-      tx.assets.forEach(asset => {
+      tx.assets.forEach((asset: any) => {
         // Find the asset metadata to get the correct decimals
         const assetMetadata = assets.find(accAsset => accAsset.faucetId === asset.assetId);
         if (assetMetadata) {
