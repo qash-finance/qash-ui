@@ -390,8 +390,6 @@ function createInvoiceDataFromPayroll(
   const billToName = company?.companyName;
   const billToEmail = owner?.email;
 
-  console.log(invoiceDate.toISOString().split("T")[0], payroll.payStartDate.split("T")[0]);
-
   return {
     invoiceNumber: `INV0001`,
     date: invoiceDate.toISOString().split("T")[0],
@@ -475,7 +473,7 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: 
   }
 
   return (
-    <>
+    <div className="flex flex-col w-full h-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-row items-center justify-start gap-3 w-full">
         <img src="/sidebar/payroll.svg" alt="Qash" className="w-6 h-6" />
@@ -524,7 +522,7 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: 
         </div>
         <InvoicePreview {...invoiceData} />
       </div>
-    </>
+    </div>
   );
 };
 

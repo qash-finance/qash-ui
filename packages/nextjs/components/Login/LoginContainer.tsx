@@ -92,75 +92,27 @@ export default function LoginContainer() {
     router.push(destination);
   }, [isAuthenticated, user, router]);
 
-  const renderStep = () => {
-    switch (step) {
-      case "email":
-        return (
-          <>
-            <Welcome />
+  return (
+    <div className="flex flex-row w-full h-full p-5 bg-background">
+      <Welcome />
 
-            <div className="flex flex-col justify-center items-center w-1/2 h-full px-50 relative">
-              <div className="flex flex-col w-full items-center justify-center mb-10">
-                <img src="/logo/qash-icon.svg" alt="logo" className="w-15" />
-                <p className="font-barlow font-medium text-[32px] text-text-primary text-center w-full">
-                  Get started now
-                </p>
-                <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
-                  Welcome to Qash - Let get started
-                </p>
-              </div>
-              {/* <InputOutlined
-                label="Email"
-                placeholder="@mail.com"
-                error={!!errors.email || !!validationError}
-                {...register("email", {
-                  required: "Please enter a valid email address",
-                  onChange: e => {
-                    debouncedValidateRef.current?.(e.target.value);
-                  },
-                })}
-              />
-              {validationError && <span className="text-[16px] text-[#E93544] mt-2 self-start">{validationError}</span>}
-              {error && <span className="text-[16px] text-[#E93544] mt-2 self-start">{error}</span>}
-              <div
-                onClick={() => {
-                  openParaModal?.();
-                }}
-                className="p-10 bg-red-500 text-xl text-white"
-              >
-                CONNECT WITH PARA
-              </div>
-              <div className="p-10 bg-red-500 text-xl text-white">{isConnected ? "CONNECTED" : "NOT CONNECTED"}</div>
-              <div
-                onClick={async () => {
-                  const jwt = await para?.issueJwt();
-                  console.log(jwt);
-                }}
-                className="p-10 bg-red-500 text-xl text-white"
-              >
-                LOG JWT TOKEN WITH LOGGED IN USER
-              </div>
-              <LoginButton
-                onClick={handleSendOtp}
-                loading={sendingOtp || isLoading}
-                disabled={!isValid || sendingOtp || isLoading || !!validationError}
-              /> */}
-              <PrimaryButton
-                onClick={() => {
-                  openParaModal?.();
-                }}
-                text={authenticatingWithPara ? "Authenticating..." : "Connect Wallet"}
-                disabled={authenticatingWithPara || isLoading}
-              />
-            </div>
-          </>
-        );
-      case "otp":
-        return <></>;
-      default:
-        return null;
-    }
-  };
+      <div className="flex flex-col justify-center items-center w-1/2 h-full px-50 relative">
+        <div className="flex flex-col w-full items-center justify-center mb-10">
+          <img src="/logo/qash-icon.svg" alt="logo" className="w-15" />
+          <p className="font-barlow font-medium text-[32px] text-text-primary text-center w-full">Get started now</p>
+          <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
+            Welcome to Qash - Let get started
+          </p>
+        </div>
 
-  return <div className="flex flex-row w-full h-full p-5 bg-background">{renderStep()}</div>;
+        <PrimaryButton
+          onClick={() => {
+            openParaModal?.();
+          }}
+          text={authenticatingWithPara ? "Authenticating..." : "Connect Wallet"}
+          disabled={authenticatingWithPara || isLoading}
+        />
+      </div>
+    </div>
+  );
 }

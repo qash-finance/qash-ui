@@ -9,6 +9,7 @@ import { useAuth } from "@/services/auth/context";
 import { Tooltip } from "react-tooltip";
 import { AccountTooltip } from "../Common/ToolTip/AccountTooltip";
 import { AuthMeResponse } from "@/services/auth/api";
+import { useMidenProvider } from "@/contexts/MidenProvider";
 
 export const MOVE_CRYPTO_SIDEBAR_OFFSET = 230;
 
@@ -83,7 +84,7 @@ export const actionItems = [
     label: "Payment Link",
     isActive: false,
     link: SidebarLink.PaymentLink,
-    disabled: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/payroll.svg",
@@ -124,7 +125,8 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [showMoveCryptoSidebar, setShowMoveCryptoSidebar] = useState(false);
-  const { isAuthenticated, user, isLoading, logout } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { logoutAsync } = useMidenProvider();
   // **************** Effect ****************
   useEffect(() => {
     // Check if any submenu is currently open
@@ -278,7 +280,7 @@ export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
             opacity={1}
             render={({ content }) => {
               if (!content) return null;
-              return <AccountTooltip onLogout={() => logout()} />;
+              return <AccountTooltip onLogout={() => logoutAsync()} />;
             }}
           />
         </div>

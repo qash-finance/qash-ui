@@ -9,6 +9,7 @@ import { Address } from "@demox-labs/miden-sdk";
 // Type definition for the context
 interface MidenContextType {
   isConnected: boolean;
+  isLoading: boolean;
   wallet: Omit<Wallet, "signer"> | null | undefined;
   openModal: (config?: any) => void;
   logoutAsync: () => Promise<void>;
@@ -25,7 +26,7 @@ const MidenContext = createContext<MidenContextType | undefined>(undefined);
 
 // Provider component
 export function MidenProvider({ children }: { children: ReactNode }) {
-  const { isConnected } = useAccount();
+  const { isConnected, isLoading } = useAccount();
   const { data: wallet } = useWallet();
   const { openModal } = useModal();
   const { logoutAsync } = useLogout();
@@ -77,6 +78,7 @@ export function MidenProvider({ children }: { children: ReactNode }) {
   }, [client, address]);
 
   const value: MidenContextType = {
+    isLoading,
     isConnected,
     wallet,
     openModal,
