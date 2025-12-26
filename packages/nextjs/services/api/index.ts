@@ -1,59 +1,48 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { AuthStorage } from "../auth/storage";
 
 export class AuthenticatedApiClient {
   private axiosInstance: AxiosInstance;
-  private getToken: () => string | null;
-  private refreshToken: () => Promise<void>;
   private onUnauthenticated: () => void;
 
   constructor(
     baseURL: string,
-    getToken: () => string | null,
-    refreshToken: () => Promise<void>,
     onUnauthenticated: () => void,
   ) {
-    this.axiosInstance = axios.create({ baseURL });
-    this.getToken = getToken;
-    this.refreshToken = refreshToken;
+    // ✅ CRITICAL: withCredentials enables cookie-based auth (para-jwt)
+    this.axiosInstance = axios.create({ 
+      baseURL,
+      withCredentials: true, // Send cookies with every request
+    });
     this.onUnauthenticated = onUnauthenticated;
 
     this.setupInterceptors();
   }
 
   private setupInterceptors() {
-    // Request interceptor - Add Authorization header
+    // Request interceptor - Log requests for debugging
     this.axiosInstance.interceptors.request.use(
       config => {
-        const token = this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
         return config;
       },
       error => Promise.reject(error),
     );
 
-    // Response interceptor - Handle token refresh and 401 errors
+    // Response interceptor - Handle 401 errors
     this.axiosInstance.interceptors.response.use(
-      response => response,
+      response => {
+        return response;
+      },
       async error => {
-        const originalRequest = error.config;
+        const status = error.response?.status;
+        const url = error.config?.url;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
+        console.error(`❌ API Error ${status} on ${url}:`, error.response?.data);
 
-          try {
-            await this.refreshToken();
-            const newToken = this.getToken();
-            if (newToken) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-              return this.axiosInstance(originalRequest);
-            }
-          } catch (refreshError) {
-            this.onUnauthenticated();
-            return Promise.reject(refreshError);
-          }
+        // Handle unauthorized errors
+        if (status === 401) {
+          console.warn("🔐 Unauthorized (401) - Cookie may be expired, redirecting to login...");
+          this.onUnauthenticated();
+          return Promise.reject(error);
         }
 
         return Promise.reject(error);
@@ -111,35 +100,13 @@ export class AuthenticatedApiClient {
 
 const apiServer = axios.create({
   baseURL: process.env.NEXT_PUBLIC_SERVER_URL,
+  // ✅ CRITICAL: Enable cookies for Para JWT auth
+  withCredentials: true,
 });
 
-// Create a single shared API client instance
+// Create a single shared API client instance with cookie-based auth
 const apiServerWithAuth = new AuthenticatedApiClient(
   process.env.NEXT_PUBLIC_SERVER_URL || "",
-  () => AuthStorage.getAccessToken(),
-  async () => {
-    // Refresh token via API route
-    const refreshToken = AuthStorage.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error("No refresh token available");
-    }
-
-    const response = await fetch("/api/auth/refresh", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to refresh token");
-    }
-
-    const data = await response.json();
-    AuthStorage.storeAccessToken(data.accessToken);
-    AuthStorage.storeRefreshToken(data.refreshToken);
-  },
   () => {
     if (typeof window === "undefined") return;
     const currentPath = window.location.pathname || "";
@@ -147,8 +114,10 @@ const apiServerWithAuth = new AuthenticatedApiClient(
       currentPath.startsWith("/login") ||
       currentPath.startsWith("/onboarding") ||
       currentPath.startsWith("/payment") ||
-      currentPath.startsWith("/invoice-review");
+      currentPath.startsWith("/invoice-review") ||
+      currentPath.startsWith("/mobile");
     if (!isPublic) {
+      console.log("🔐 Redirecting to login due to 401 error");
       window.location.href = "/login";
     }
   },

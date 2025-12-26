@@ -4,26 +4,6 @@ export interface ApiError {
   error?: string;
 }
 
-export interface SendOtpResponse {
-  message: string;
-}
-
-export interface VerifyOtpResponse {
-  user: {
-    id: number;
-    email: string;
-    isActive: boolean;
-    createdAt: Date;
-    lastLogin: Date | null;
-  };
-  message: string;
-}
-
-export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
 export interface AuthMeResponse {
   authenticated: boolean;
   user?: {
@@ -62,7 +42,12 @@ export interface AuthMeResponse {
   };
 }
 
-export class EmailAuthApi {
+export interface SetParaJwtCookieResponse {
+  message: string;
+  user: AuthMeResponse["user"];
+}
+
+export class ParaAuthApi {
   private backendUrl: string;
 
   constructor() {
@@ -70,20 +55,21 @@ export class EmailAuthApi {
   }
 
   /**
-   * Send OTP to email
+   * Set Para JWT cookie on backend
    */
-  async sendOtp(email: string): Promise<SendOtpResponse> {
-    const response = await fetch(`${this.backendUrl}/auth/send-otp`, {
+  async setParaJwtCookie(paraJwtToken: string): Promise<SetParaJwtCookieResponse> {
+    const response = await fetch(`${this.backendUrl}/auth/set-cookie`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ token: paraJwtToken }),
+      credentials: "include", // Important for cookies
     });
 
     if (!response.ok) {
       const error: ApiError = await response.json().catch(() => ({
-        message: "Failed to send OTP",
+        message: "Failed to set Para JWT cookie",
         statusCode: response.status,
       }));
       throw error;
@@ -93,84 +79,15 @@ export class EmailAuthApi {
   }
 
   /**
-   * Verify OTP and authenticate
+   * Check authentication status (cookie-based)
    */
-  async verifyOtp(email: string, otp: string): Promise<VerifyOtpResponse & { accessToken: string; refreshToken: string }> {
-    const response = await fetch(`${this.backendUrl}/auth/verify-otp`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, otp }),
-    });
-
-    if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        message: "Failed to verify OTP",
-        statusCode: response.status,
-      }));
-      throw error;
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Refresh access token
-   */
-  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
-    const response = await fetch(`${this.backendUrl}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        message: "Failed to refresh token",
-        statusCode: response.status,
-      }));
-      throw error;
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Logout
-   */
-  async logout(refreshToken: string): Promise<{ message: string }> {
-    const response = await fetch(`${this.backendUrl}/auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        message: "Failed to logout",
-        statusCode: response.status,
-      }));
-      throw error;
-    }
-
-    return response.json();
-}
-
-/**
-   * Check authentication status
-   */
-  async getMe(accessToken: string): Promise<AuthMeResponse> {
+  async getMe(): Promise<AuthMeResponse> {
     const response = await fetch(`${this.backendUrl}/auth/me`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
+      credentials: "include", // Include cookies for Para auth
     });
 
     if (!response.ok) {
@@ -183,5 +100,28 @@ export class EmailAuthApi {
       authenticated: true,
       user,
     };
+  }
+
+  /**
+   * Logout (cookie-based for Para auth)
+   */
+  async logout(): Promise<{ message: string }> {
+    const response = await fetch(`${this.backendUrl}/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Include cookies
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json().catch(() => ({
+        message: "Failed to logout",
+        statusCode: response.status,
+      }));
+      throw error;
+    }
+
+    return response.json();
   }
 }

@@ -14,21 +14,17 @@ export interface Props {
 }
 
 export const TransactionProviderC = ({ children }: Props) => {
-  const storeRef = useRef<TransactionStoreV | null>(null);
-
-  if (storeRef.current === null) {
-    storeRef.current = createTransactionStore();
-  }
-
-  return <MidenSdkStoreContext.Provider value={storeRef.current}>{children}</MidenSdkStoreContext.Provider>;
+  // const storeRef = useRef<TransactionStoreV | null>(null);
+  // if (storeRef.current === null) {
+  //   storeRef.current = createTransactionStore();
+  // }
+  // return <MidenSdkStoreContext.Provider value={storeRef.current}>{children}</MidenSdkStoreContext.Provider>;
 };
 
 export const useTransactionStore = <T,>(selector: (store: TransactionStore) => T): T => {
-  const midenSdkStoreContext = useContext(MidenSdkStoreContext);
-
-  if (!midenSdkStoreContext) {
-    throw new Error(`useCounterStore must be used within CounterStoreProvider`);
-  }
-
-  return useStore(midenSdkStoreContext, selector);
+  // const midenSdkStoreContext = useContext(MidenSdkStoreContext);
+  // if (!midenSdkStoreContext) {
+  //   throw new Error(`useCounterStore must be used within CounterStoreProvider`);
+  // }
+  // return useStore(midenSdkStoreContext, selector);
 };

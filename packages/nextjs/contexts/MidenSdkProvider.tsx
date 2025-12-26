@@ -25,41 +25,35 @@ export const MidenSdkProvider = ({ children }: MidenSdkProviderProps) => {
 };
 
 export const useMidenSdkStore = <T,>(selector: (store: MidenSdkStore) => T): T => {
-  const midenSdkStoreContext = useContext(MidenSdkStoreContext);
-
-  if (!midenSdkStoreContext) {
-    throw new Error(`useCounterStore must be used within CounterStoreProvider`);
-  }
-
-  return useStore(midenSdkStoreContext, selector);
+  // const midenSdkStoreContext = useContext(MidenSdkStoreContext);
+  // if (!midenSdkStoreContext) {
+  //   throw new Error(`useCounterStore must be used within CounterStoreProvider`);
+  // }
+  // return useStore(midenSdkStoreContext, selector);
 };
 
 export const tickInterval = SYNC_STATE_INTERVAL; // 1 second
 export function useInitAndPollSyncState() {
-  const [tick, setTick] = useState(0);
-  const syncState = useMidenSdkStore(state => state.syncState);
-  const initializeSdk = useMidenSdkStore(state => state.initializeSdk);
-  const [client, setClient] = useState<any | null>(null);
-
-  useEffect(() => {
-    initializeSdk({});
-
-    const initClient = async () => {
-      const { WebClient } = await import("@demox-labs/miden-sdk");
-      const clientInstance = await WebClient.createClient(NODE_ENDPOINT);
-      setClient(clientInstance);
-    };
-    initClient();
-  }, []);
-
-  useEffect(() => {
-    if (client) {
-      syncState(client);
-    }
-  }, [tick, client, syncState]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => setTick(tick => tick + 1), tickInterval);
-    return () => clearInterval(intervalId);
-  }, []);
+  // const [tick, setTick] = useState(0);
+  // const syncState = useMidenSdkStore(state => state.syncState);
+  // const initializeSdk = useMidenSdkStore(state => state.initializeSdk);
+  // const [client, setClient] = useState<any | null>(null);
+  // useEffect(() => {
+  //   initializeSdk({});
+  //   const initClient = async () => {
+  //     const { WebClient } = await import("@demox-labs/miden-sdk");
+  //     const clientInstance = await WebClient.createClient(NODE_ENDPOINT);
+  //     setClient(clientInstance);
+  //   };
+  //   initClient();
+  // }, []);
+  // useEffect(() => {
+  //   if (client) {
+  //     syncState(client);
+  //   }
+  // }, [tick, client, syncState]);
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => setTick(tick => tick + 1), tickInterval);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 }
