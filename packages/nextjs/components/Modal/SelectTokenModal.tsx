@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { TokenList } from "../Common/TokenList";
 import { SelectTokenModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import BaseModal from "./BaseModal";
-import { useAccountContext } from "@/contexts/AccountProvider";
 import { AssetWithMetadata } from "@/types/faucet";
 import { ModalHeader } from "../Common/ModalHeader";
 import { useMidenProvider } from "@/contexts/MidenProvider";
@@ -44,6 +43,8 @@ export function SelectTokenModal({
             <input
               type="text"
               placeholder="Search token"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               className="font-medium text-sm text-text-secondary bg-transparent border-none outline-none w-full"
             />
           </div>
@@ -54,7 +55,7 @@ export function SelectTokenModal({
             <img src="/wallet-analytics/finder.svg" alt="search" className="w-4 h-4" />
           </button>
         </div>
-        <TokenList balances={balances || []} onTokenSelect={handleTokenSelect} searchQuery={searchQuery} />
+        <TokenList balances={balances?.balances || []} onTokenSelect={handleTokenSelect} searchQuery={searchQuery} />
       </main>
     </BaseModal>
   );

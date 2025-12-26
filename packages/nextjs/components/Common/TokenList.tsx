@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { blo } from "blo";
 import { TokenItem } from "./TokenItem";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
@@ -9,6 +9,7 @@ import { Select } from "../Common/Select";
 import { FilterButton } from "../Common/FilterButton";
 import { supportedTokens } from "@/services/utils/supportedToken";
 import { useMidenProvider } from "@/contexts/MidenProvider";
+import { AssetWithMetadata } from "@/types/faucet";
 
 const tokenSortOptions = [
   // { value: "bitcoin", label: "Bitcoin", icon: "/token/btc.svg" },
@@ -36,13 +37,85 @@ const tabs = [
   { id: "nfts", label: "NFTs" },
 ];
 
-export function TokenList() {
+interface TokenListProps {
+  balances?: Array<{
+    assetId: string;
+    balance: string;
+    decimals?: number;
+    maxSupply?: number;
+    symbol?: string;
+  }>;
+  onTokenSelect?: (token: AssetWithMetadata | null) => void;
+  searchQuery?: string;
+}
+
+export function TokenList({ balances: propBalances, onTokenSelect, searchQuery }: TokenListProps = {}) {
   // **************** Custom Hooks *******************
-  const { address, balances } = useMidenProvider();
+  const { address, balances: contextBalances } = useMidenProvider();
+
+  // Use provided balances or fall back to context balances
+  const balances = propBalances || contextBalances?.balances || [];
 
   // **************** Local State *******************
   const [activeTab, setActiveTab] = useState<"tokens" | "nfts">("tokens");
 
+  // Filter tokens based on search query
+  const filteredBalances = useMemo(() => {
+    if (!searchQuery) return balances;
+    const query = searchQuery.toLowerCase();
+    return balances.filter(asset => {
+      const symbol = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "";
+      return symbol.toLowerCase().includes(query) || asset.assetId.toLowerCase().includes(query);
+    });
+  }, [balances, searchQuery]);
+
+  // Render simplified version for modal selection
+  if (onTokenSelect) {
+    return (
+      <div className="flex flex-col gap-2 items-center self-stretch">
+        {filteredBalances.length > 0 ? (
+          <div className="flex flex-col gap-2 items-center self-stretch rounded-lg w-full">
+            {filteredBalances.map((asset, index: number) => {
+              const symbol = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.symbol || "UNKW";
+              const decimals = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.decimals || 8;
+              const maxSupply = supportedTokens.find(t => t.faucetId.includes(asset.assetId))?.maxSupply || 0;
+
+              const assetWithMetadata: AssetWithMetadata = {
+                faucetId: asset.assetId,
+                metadata: {
+                  symbol,
+                  decimals,
+                  maxSupply,
+                },
+                amount: asset.balance,
+              };
+
+              const tokenForDisplay = {
+                faucetId: asset.assetId,
+                metadata: {
+                  symbol,
+                  decimals,
+                  maxSupply,
+                },
+                amount: asset.balance,
+                value: "1",
+                icon: symbol === "QASH" ? "/q3x-icon.png" : blo(turnBechToHex(asset.assetId)),
+                chain: "Miden",
+              };
+
+              return <TokenItem key={index} token={tokenForDisplay} onClick={() => onTokenSelect(assetWithMetadata)} />;
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 justify-center items-center self-stretch flex-1 py-8">
+            <span className="text-text-secondary">No tokens found</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Original full version with tabs and filters
   return (
     <section className="flex flex-col gap-3 items-center self-stretch p-3 rounded-2xl bg-background flex-[1_0_0] max-sm:p-2">
       <div className="w-full">
@@ -61,7 +134,7 @@ export function TokenList() {
           case "tokens":
             return (
               <>
-                {address && balances && balances.balances?.length > 0 ? (
+                {address && balances && balances.length > 0 ? (
                   <div className="flex flex-col justify-start">
                     <div className="w-full flex justify-between items-center">
                       <div className="flex gap-2">
@@ -71,7 +144,7 @@ export function TokenList() {
                       <FilterButton options={filterOptions} />
                     </div>
                     <div className="flex flex-col items-center self-stretch rounded-lg">
-                      {balances.balances.map((asset, index: number) => {
+                      {balances.map((asset, index: number) => {
                         const token = {
                           faucetId: asset.assetId,
                           metadata: {
