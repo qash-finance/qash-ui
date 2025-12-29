@@ -16,9 +16,8 @@ const config = {
   favicon: "img/logo-qash.png",
 
   // Set the production url of your site here
-  url: "https://app.qash.finance/",
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
+  url: process.env.SITE_URL || "https://app.qash.finance",
+
   baseUrl: "/docs/",
 
   // GitHub pages deployment config.
@@ -78,14 +77,14 @@ const config = {
       // Replace with your project's social card
       colorMode: {
         defaultMode: "light",
-        disableSwitch: true,
+        disableSwitch: false,
         respectPrefersColorScheme: false,
       },
       image: "img/logo-qash.png",
       navbar: {
         title: "Qash Documentation",
         logo: {
-          alt: "q3x-logo",
+          alt: "qash-logo",
           src: "img/logo-qash.png",
         },
         items: [

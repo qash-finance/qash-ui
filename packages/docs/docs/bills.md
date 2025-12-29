@@ -5,13 +5,13 @@ slug: /bills
 
 # Bills
 
-Qash allow you to manage and pay invoices received from vendors, clients, and employees. This guide covers everything you need to know about viewing, managing, and paying bills.
+Qash allows you to manage and pay invoices received from vendors, clients, and employees. This guide covers everything you need to know about viewing, managing, and paying bills.
 
 ## Bills Overview
 
 The Bills page provides a comprehensive view of all invoices you've received.
 
-![Claim Faucet](/img/bills/bill-overview.png)
+![Bills Overview Page](/img/bills/bill-overview.png)
 
 ### Bill Tabs
 
@@ -25,21 +25,22 @@ The Bills page is organized into three tabs:
 
 Click on any bill row to navigate to the detailed bill view, where you can see complete invoice information and timeline.
 
-![Claim Faucet](/img/bills/bill-detail.png)
+![Bill Detail Page](/img/bills/bill-detail.png)
 
-## Pay Bill Page
+## Pay Bill Review Page
 
 The Pay Bill Review page allows you to review and pay one or multiple bills at once.
 
-![Claim Faucet](/img/bills/bill-pay.png)
+![Pay Bill Review Page](/img/bills/bill-pay.png)
 
-You can also review invoice here before making the final payment
-![Claim Faucet](/img/bills/bill-invoice.png)
+You can also review the invoice here before making the final payment.
 
-By clicking the `Pay Now` button, it will start processing the payment.
+![Invoice Review Modal](/img/bills/bill-invoice.png)
 
-![Claim Faucet](/img/bills/bill-processing.png)
+Clicking the **`Pay Invoice`** button will start processing the payment.
 
-And finally showing an overview of the payment including transaction hash, link to explorer etc.
+![Payment Processing](/img/bills/bill-processing.png)
 
-![Claim Faucet](/img/bills/bill-paid.png)
+Finally, an overview of the payment is shown, including the transaction hash, link to explorer, and other transaction details.
+
+![Payment Overview](/img/bills/bill-paid.png)
