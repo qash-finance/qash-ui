@@ -223,7 +223,7 @@ const EditPayroll = () => {
   };
 
   const handleChooseRecipient = () => {
-    openModal(MODAL_IDS.SELECT_RECIPIENT, {
+    openModal(MODAL_IDS.SELECT_EMPLOYEE, {
       onSave: (employee: CompanyContactResponseDto) => {
         setValue("employee", employee.name, { shouldValidate: true });
         setValue("employeeId", employee.id, { shouldValidate: true });

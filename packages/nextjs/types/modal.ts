@@ -1,6 +1,7 @@
 import SelectTokenModal from "@/components/Modal/SelectTokenModal";
 import EditTransactionModal from "@/components/Modal/EditTransactionModal";
-import SelectRecipientModal from "@/components/Modal/SelectRecipientModal";
+import SelectEmployeeModal from "@/components/Modal/Contact/SelecteEmployeeModal";
+import SelectClientModal from "@/components/Modal/Contact/SelectClientModal";
 import SetupModulesModal from "@/components/Modal/SetupModulesModal";
 import TransactionDetailModal from "@/components/Modal/TransactionDetailModal";
 import CreateNewGroupModal from "@/components/Modal/Group/CreateNewGroupModal";
@@ -71,7 +72,8 @@ import { ClientResponseDto } from "@/types/client";
 export const MODAL_IDS = {
   SELECT_TOKEN: "SELECT_TOKEN",
   EDIT_TRANSACTION: "EDIT_TRANSACTION",
-  SELECT_RECIPIENT: "SELECT_RECIPIENT",
+  SELECT_EMPLOYEE: "SELECT_EMPLOYEE",
+  SELECT_CLIENT: "SELECT_CLIENT",
   MODULES_SETUP: "MODULES_SETUP",
   TRANSACTION_DETAIL: "TRANSACTION_DETAIL",
   CREATE_NEW_GROUP: "CREATE_NEW_GROUP",
@@ -161,8 +163,12 @@ export interface EditTransactionModalProps extends BaseModalProps {
   }) => void;
 }
 
-export interface SelectRecipientModalProps extends BaseModalProps {
+export interface SelectEmployeeModalProps extends BaseModalProps {
   onSave?: (employee: CompanyContactResponseDto) => void;
+}
+
+export interface SelectClientModalProps extends BaseModalProps {
+  onSave?: (client: ClientResponseDto) => void;
 }
 
 export interface ModulesSetupProps extends BaseModalProps {
@@ -483,7 +489,7 @@ export interface CreateClientContactModalProps extends BaseModalProps {
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
-  [MODAL_IDS.SELECT_RECIPIENT]: SelectRecipientModalProps;
+  [MODAL_IDS.SELECT_EMPLOYEE]: SelectEmployeeModalProps;
   [MODAL_IDS.MODULES_SETUP]: ModulesSetupProps;
   [MODAL_IDS.TRANSACTION_DETAIL]: TransactionDetailModalProps;
   [MODAL_IDS.CREATE_NEW_GROUP]: CreateNewGroupModalProps;
@@ -546,7 +552,8 @@ export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
 export const modalRegistry = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModal,
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModal,
-  [MODAL_IDS.SELECT_RECIPIENT]: SelectRecipientModal,
+  [MODAL_IDS.SELECT_EMPLOYEE]: SelectEmployeeModal,
+  [MODAL_IDS.SELECT_CLIENT]: SelectClientModal,
   [MODAL_IDS.MODULES_SETUP]: SetupModulesModal,
   [MODAL_IDS.TRANSACTION_DETAIL]: TransactionDetailModal,
   [MODAL_IDS.CREATE_NEW_GROUP]: CreateNewGroupModal,

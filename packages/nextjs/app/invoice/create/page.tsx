@@ -1,8 +1,8 @@
 import React from "react";
-import CreateInvoice from "@/components/Invoice/CreateInvoice";
+import CreateClientInvoice from "@/components/Invoice/CreateClientInvoice";
 
 const CreateInvoicePage = () => {
-  return <CreateInvoice />;
+  return <CreateClientInvoice />;
 };
 
 export default CreateInvoicePage;
