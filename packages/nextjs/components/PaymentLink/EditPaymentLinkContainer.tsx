@@ -158,7 +158,7 @@ const EditPaymentLinkContainer = () => {
         const token = paymentLink.acceptedTokens[0];
         // Create a mock AssetWithMetadata object for the selected token
         const mockAsset: AssetWithMetadata = {
-          faucetId: token.faucetId,
+          faucetId: token.address,
           amount: "0", // Default amount for display purposes
           metadata: {
             symbol: token.symbol,
@@ -185,9 +185,10 @@ const EditPaymentLinkContainer = () => {
     try {
       const acceptedTokens: TokenMetadata[] = [
         {
+          name: selectedToken.metadata.symbol,
           symbol: selectedToken.metadata.symbol,
           decimals: selectedToken.metadata.decimals,
-          faucetId: selectedToken.faucetId,
+          address: selectedToken.faucetId,
         },
       ];
 

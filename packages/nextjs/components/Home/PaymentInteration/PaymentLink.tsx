@@ -184,7 +184,7 @@ export const PaymentLink: React.FC<PaymentLinkProps> = ({ checkedRows, setChecke
             src={
               link.acceptedTokens?.[0]?.symbol === "QASH"
                 ? "/token/qash.svg"
-                : blo(turnBechToHex(link.acceptedTokens?.[0]?.faucetId || ""))
+                : blo(turnBechToHex(link.acceptedTokens?.[0]?.address || ""))
             }
             alt={link.acceptedTokens?.[0]?.symbol}
             className="w-4 h-4"

@@ -14,7 +14,7 @@ export const CURRENT_MIGRATION_VERSION = "0.11.0";
 export const MIDEN_DB_NAME = "MidenClientDB";
 
 // **************** QASH TOKEN *******************
-export const QASH_TOKEN_ADDRESS = "mtst1ar600d6s8uwwjgznqtxqt085qs9a50ej_qruqqypuyph";
+export const QASH_TOKEN_ADDRESS = "mtst1ar600d6s8uwwjgznqtxqt085qs9a50ej";
 export const QASH_TOKEN_SYMBOL = "QASH";
 export const QASH_TOKEN_DECIMALS = 8;
 export const QASH_TOKEN_MAX_SUPPLY = 1000000000000000000;

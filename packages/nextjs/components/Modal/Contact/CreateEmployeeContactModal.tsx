@@ -27,6 +27,8 @@ import {
   QASH_TOKEN_MAX_SUPPLY,
   QASH_TOKEN_SYMBOL,
 } from "@/services/utils/constant";
+import { blo } from "blo";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
 
 interface CreateContactFormData {
   name: string;
@@ -339,14 +341,12 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
               {selectedToken && (
                 <img
                   src={
-                    selectedToken?.faucetId === "0x07394cbe418daa16e42b87ba67372d4ab4a5df0b05c6e554d158458ce245bc10"
-                      ? "/token/qash.svg"
-                      : selectedToken?.metadata.symbol
-                        ? `/token/${selectedToken.metadata.symbol.toLowerCase()}.svg`
-                        : "/token/qash.svg"
+                    selectedToken.metadata.symbol === "QASH"
+                      ? "/q3x-icon.png"
+                      : blo(turnBechToHex(selectedToken.faucetId))
                   }
                   alt="token"
-                  className="w-8 h-8"
+                  className="w-8 h-8 rounded-full"
                 />
               )}
               <div className="flex-1">

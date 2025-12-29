@@ -17,6 +17,8 @@ import { SecondaryButton } from "../Common/SecondaryButton";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
 import { useAuth } from "@/services/auth/context";
 import { AuthMeResponse } from "@/services/auth/api";
+import { blo } from "blo";
+import { turnBechToHex } from "@/services/utils/turnBechToHex";
 
 interface CreatePayrollFormData {
   employee: string;
@@ -304,8 +306,12 @@ const CreatePayroll = ({
                   <div className="relative w-10 h-10">
                     <img
                       alt=""
-                      className="w-full h-full"
-                      src={selectedToken.metadata.symbol === "QASH" ? "/token/qash.svg" : "/token/eth.svg"}
+                      className="w-full h-full rounded-full"
+                      src={
+                        selectedToken.metadata.symbol === "QASH"
+                          ? "/q3x-icon.png"
+                          : blo(turnBechToHex(selectedToken.faucetId))
+                      }
                     />
                     <img alt="" className="absolute bottom-0 right-0 w-5 h-5" src="/chain/miden.svg" />
                   </div>
@@ -390,8 +396,6 @@ function createInvoiceDataFromPayroll(
   const billToName = company?.companyName;
   const billToEmail = owner?.email;
 
-  console.log(invoiceDate.toISOString().split("T")[0], payroll.payStartDate.split("T")[0]);
-
   return {
     invoiceNumber: `INV0001`,
     date: invoiceDate.toISOString().split("T")[0],
@@ -475,7 +479,7 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: 
   }
 
   return (
-    <>
+    <div className="flex flex-col w-full h-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-row items-center justify-start gap-3 w-full">
         <img src="/sidebar/payroll.svg" alt="Qash" className="w-6 h-6" />
@@ -524,7 +528,7 @@ const ReviewPayroll = ({ onBackAndEdit, payrollDto, employee, owner, company }: 
         </div>
         <InvoicePreview {...invoiceData} />
       </div>
-    </>
+    </div>
   );
 };
 

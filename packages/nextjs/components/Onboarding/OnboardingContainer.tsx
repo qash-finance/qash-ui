@@ -78,7 +78,7 @@ export default function OnboardingContainer() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const hasCompany = !!(user as User)?.teamMembership?.companyId || !!(user as User)?.teamMembership?.company;
-    const destination = hasCompany ? "/bill" : "/onboarding";
+    const destination = hasCompany ? "/payroll" : "/onboarding";
 
     router.push(destination);
   }, [isAuthenticated, user, router]);

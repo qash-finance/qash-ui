@@ -72,7 +72,7 @@ const GeneralStatistics = ({ timePeriod, onTimePeriodChange }: GeneralStatistics
   const { assets } = useAccountContext();
   const transactions = useTransactionStore(state => state.transactions);
   const loading = useTransactionStore(state => state.loading);
-  const blockNumber = useMidenSdkStore(state => state.blockNum);
+  const blockNumber = 0;
 
   // Generate monthly data for the chart based on block numbers
   const chartData = useMemo(() => {

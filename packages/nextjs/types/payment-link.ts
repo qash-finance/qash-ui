@@ -6,7 +6,8 @@ export enum PaymentLinkStatus {
 export interface TokenMetadata {
   symbol: string;
   decimals: number;
-  faucetId: string;
+  address: string;
+  name: string;
 }
 
 export interface ChainMetadata {
@@ -18,7 +19,7 @@ export interface CreatePaymentLink {
   title: string;
   description: string;
   amount: string;
-  payee: string;
+  paymentWalletAddress: string;
   acceptedTokens?: TokenMetadata[];
   acceptedChains?: ChainMetadata[];
 }
@@ -55,7 +56,7 @@ export interface PaymentLink {
   title: string;
   description: string;
   amount: string;
-  payee: string;
+  paymentWalletAddress: string;
   status: PaymentLinkStatus;
   order: number;
   acceptedTokens?: TokenMetadata[];

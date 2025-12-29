@@ -1,5 +1,6 @@
+"use client";
+
 import { NODE_ENDPOINT } from "@/services/utils/constant";
-import { WebClient } from "@demox-labs/miden-sdk";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
@@ -75,7 +76,7 @@ export const createMidenSdkStore = () =>
         }
       },
 
-      syncState: async (client: WebClient) => {
+      syncState: async (client: any) => {
         if (!client) {
           console.warn("Cannot sync state: client not initialized");
           return;

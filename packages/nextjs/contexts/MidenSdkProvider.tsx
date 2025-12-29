@@ -24,7 +24,7 @@ export const MidenSdkProvider = ({ children }: MidenSdkProviderProps) => {
   return <MidenSdkStoreContext.Provider value={storeRef.current}>{children}</MidenSdkStoreContext.Provider>;
 };
 
-export const useMidenSdkStore = <T,>(selector: (store: MidenSdkStore) => T): T => {
+export const useMidenSdkStore = <T,>(selector: (store: MidenSdkStore) => T) => {
   // const midenSdkStoreContext = useContext(MidenSdkStoreContext);
   // if (!midenSdkStoreContext) {
   //   throw new Error(`useCounterStore must be used within CounterStoreProvider`);

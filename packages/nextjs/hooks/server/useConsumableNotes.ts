@@ -112,7 +112,7 @@ export function useConsumableNotes() {
       // return filteredNotes;
       return [];
     },
-    enabled: !!walletAddress && !!blockNum,
+    enabled: !!walletAddress,
     staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
     refetchInterval: 25000, // Refetch every 25 seconds

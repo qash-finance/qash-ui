@@ -1,48 +1,33 @@
 "use client";
 
-import { ReactNode, useRef, useEffect } from "react";
-import { WalletProvider, WalletModalProvider, MidenWalletAdapter } from "@demox-labs/miden-wallet-adapter";
+import { ReactNode, useEffect, useMemo } from "react";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
-import { Adapter, WalletError } from "@demox-labs/miden-wallet-adapter-base";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Title } from "./Common/Title";
 import { ModalProvider } from "@/contexts/ModalManagerProvider";
 import { ModalManager } from "./Common/ModalManager";
 import { AuthProvider } from "@/services/auth/context";
-import { AnalyticsProvider } from "@/contexts/AnalyticsProvider";
 import { AccountProvider } from "@/contexts/AccountProvider";
 import { TitleProvider } from "@/contexts/TitleProvider";
 import { useMobileDetection } from "@/hooks/web3/useMobileDetection";
 import { FloatingActionButton } from "./Common/FloatingActionButton";
 import { TourProviderWrapper } from "@/contexts/TourProvider";
-import { AUTH_REFRESH_INTERVAL } from "@/services/utils/constant";
 // import { MidenSdkProvider } from "@/contexts/MidenSdkProvider";
 import Background from "./Common/Background";
 import { SocketProvider } from "@/contexts/SocketProvider";
-import "@demox-labs/miden-wallet-adapter-reactui/styles.css";
 import { usePathname, useRouter } from "next/navigation";
 import { TransactionProviderC } from "@/contexts/TransactionProvider";
-import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
-import { ModalTriggerRef } from "./Common/ModalTrigger";
 import { useAuthGuard } from "@/hooks/server/useAuthGuard";
 import { Environment, ParaProvider } from "@getpara/react-sdk";
-import "@getpara/react-sdk/styles.css";
 import { MidenProvider } from "@/contexts/MidenProvider";
+import "@getpara/react-sdk/styles.css";
 
 const SIDEBAR_WIDTH = 280;
 
 interface ClientLayoutProps {
   children: ReactNode;
 }
-
-const analyticsConfig = {
-  baseUrl: process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000",
-  enableAutoTracking: true,
-  enablePageTracking: true,
-  enableErrorTracking: true,
-  sessionTimeout: 30, // 30 minutes
-};
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -74,6 +59,21 @@ const TestnetBanner = () => (
   </div>
 );
 
+const paraClientConfig = {
+  env: Environment.BETA,
+  apiKey: "beta_cc45a1c8bbfbeb71c1ce2d51c44ba512",
+};
+
+const paraConfig = { appName: "Qash x Para" };
+
+const paraModalConfig = {
+  oAuthMethods: ["GOOGLE"] as "GOOGLE"[],
+  disablePhoneLogin: true,
+  recoverySecretStepEnabled: true,
+  onRampTestMode: true,
+  logo: "/logo/qash-icon.svg",
+};
+
 // Inner component that uses auth guard (must be inside AuthProvider)
 function ProtectedContent({ children }: { children: ReactNode }) {
   useAuthGuard();
@@ -84,8 +84,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
   const router = useRouter();
-  const { isConnected } = useWalletConnect();
-  const modalRef = useRef<ModalTriggerRef | null>(null);
 
   // Redirect from "/" to "/payroll"
   useEffect(() => {
@@ -94,36 +92,14 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     }
   }, [pathname, router]);
 
-  const wallets = [new MidenWalletAdapter({ appName: "Your Miden App" })];
-
-  const handleError = (error: WalletError) => {
-    console.error(error);
-    switch (error.error.name) {
-      case "NotGrantedMidenWalletError":
-        toast.error("User denied access to their wallet");
-        break;
-      default:
-        toast.error("An error occurred while connecting to your wallet");
-        break;
-    }
-  };
+  const isFullscreen = useMemo(() => {
+    if (!pathname) return false;
+    return Array.from(fullscreenPages).some(p => (p.endsWith("/") ? pathname.startsWith(p) : pathname === p));
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ParaProvider
-        paraClientConfig={{
-          env: Environment.BETA,
-          apiKey: "beta_cc45a1c8bbfbeb71c1ce2d51c44ba512",
-        }}
-        config={{ appName: "Qash x Para" }}
-        paraModalConfig={{
-          oAuthMethods: ["GOOGLE"],
-          disablePhoneLogin: true,
-          recoverySecretStepEnabled: true,
-          onRampTestMode: true,
-          logo: "/logo/qash-icon.svg",
-        }}
-      >
+      <ParaProvider paraClientConfig={paraClientConfig} config={paraConfig} paraModalConfig={paraModalConfig}>
         <MidenProvider>
           <Toaster
             position="top-right"
@@ -173,14 +149,14 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <TourProviderWrapper>
             <SocketProvider>
               <ModalProvider>
-                <AnalyticsProvider config={analyticsConfig}>
-                  <AuthProvider>
-                    <ProtectedContent>
-                      <AccountProvider>
+                <AuthProvider>
+                  <ProtectedContent>
+                    <AccountProvider>
+                      <TransactionProviderC>
                         <TitleProvider>
                           {/* <ConnectWalletButton /> */}
                           <ModalManager />
-                          {fullscreenPages.has(pathname) ? (
+                          {isFullscreen ? (
                             <div className="h-screen w-screen">{children}</div>
                           ) : (
                             <div className="flex flex-col h-screen overflow-hidden">
@@ -199,13 +175,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                               </div>
                             </div>
                           )}
-                          {!fullscreenPages.has(pathname) && <FloatingActionButton imgSrc="/token/qash.svg" />}
-                          {!fullscreenPages.has(pathname) && <Background />}
+                          {!isFullscreen && <FloatingActionButton imgSrc="/token/qash.svg" />}
+                          {!isFullscreen && <Background />}
                         </TitleProvider>
-                      </AccountProvider>
-                    </ProtectedContent>
-                  </AuthProvider>
-                </AnalyticsProvider>
+                      </TransactionProviderC>
+                    </AccountProvider>
+                  </ProtectedContent>
+                </AuthProvider>
               </ModalProvider>
             </SocketProvider>
           </TourProviderWrapper>
