@@ -119,7 +119,7 @@ const PayrollContainer = () => {
         </div>
       ),
       Payday: payroll.paydayDay ? `${payroll.paydayDay}th every month` : "-",
-      "Contract Term": <span className="font-bold text-primary-blue">{payroll.contractTerm}</span>,
+      "Contract Term": <span className="font-bold text-primary-blue">{payroll.payrollCycle} Months</span>,
       " ": null, // Placeholder for action column
     };
   });

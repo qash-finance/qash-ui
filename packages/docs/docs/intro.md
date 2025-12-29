@@ -5,37 +5,37 @@ slug: /
 
 # What is Qash
 
-[Qash](https://qash.finance) is an end-to-end private global payroll solution with flexible payment solutions like batch payment, recurring payment and milestone based payment. The platform addresses critical pain points in current blockchain payments where every transaction is publicly transparent, exposing salaries, vendor payments, and spending habits to the world.
-
-The "end-to-end" has dual meaning: seamlessly bridging fiat-to-crypto conversions and covering the complete payment lifecycle from sending to receiving. For example, a Singapore company can pay a freelancer by sending SGD. On the receiving side, the receiver and choose to receive in stablecoin, fiat or any token and can customize receive logic by split salary payments, for example: 50% to on-chain savings and 50% for bank off-ramping.
+Qash is a neobank for global teams to run payroll, earn yield, and spend across chains and currencies while preserving on-chain privacy. It allows companies to pay their team through payroll or handle client invoicing regardless of which chain and currency they are using. Earn stable yield for idle funds and spend funds with corporate cards for team members on business trips—all in one dashboard.
 
 ## Why Qash?
 
-### Private everywhere
+### On-chain privacy
 
-Qash preserves privacy without sacrificing compliance. Using zkKYC and zkKYB, transactions remain compliant while hiding sensitive details, with no on-chain exposure of balances, senders, or receivers.
+Blockchain transparency adds extra time costs to Web3 companies running payroll, where data reveals who was paid, how much, and when, forcing teams to rely on CEXs. Instead, they can manage everything in Qash, which also serves as an all-in-one platform for Web3 companies, offering lightweight accounting, tax calculation, and more.
 
-Payroll is team-based, thus Qash also supports private multisig: signers, balances, transactions, recipients, and amounts are all hidden. Your company wallet stays secure—without leaking information to the public.
+### All in one financial platform
 
-### Flexible payroll solution
+We remove the operational friction that crypto companies currently face by relying on fragmented tools (Safe + Excel + CEX) and managing multiple wallets across chains.
 
-Qash adapts to every payment need. We support recurring payments, batch payments, bonus payments, and milestone-based payments. Whether it’s fixed payroll or project-based work, Qash gives teams full flexibility in how they pay.
+### Cross chain payout
 
-### Receiver-first payroll
+Qash allows you to pay your team on any chain (EVM, Starknet, Solana, etc.) without manual bridging or handling multiple wallets across multiple chains.
 
-Unlike traditional payroll tools that stop at sending funds, Qash is built for how people actually want to receive. Employees and contractors can define receive logic—split income across on-chain savings, off-ramping to a bank, or forwarding to other accounts.
+### Simple onboarding
 
-### AI Payroll Copilot
+Qash is integrated with AI, allowing you to upload your current setup and spreadsheets. The AI will help you set up your payroll and client contacts, removing the friction of migrating to a new product.
 
-Qash comes with an AI-powered copilot that learns your team’s spending patterns to keep payroll safe. It detects anomalies, flags suspicious activity, and prevents mistakes or fraud before they happen and tell you why, giving you peace of mind with every payment.
+### Integrated with third-party applications
 
-### Programmable Payment Logic
+You will receive real-time notifications on your daily applications like Slack, receiving reminders such as when the next payroll is coming, when you've received a new invoice from a client, or when someone from the team spends the team treasury via corporate cards.
 
-Qash supports cancellable payments, time-locked transfers, “swap-and-pay,” and other custom logic so teams can tailor payroll to fit any agreement or condition.
+### Corporate credit card
+
+Handling reimbursements, especially for Web3 companies, is a nightmare, from currency conversion to collecting receipts and reimbursing in crypto. With corporate credit cards, you can let your team members spend with rules and limits, and pay at the end of the month together with payroll.
 
 ## Get Started
 
-- Launch product: [Open Qash](https://app.qash.finance)
+- Launch the product: [Open Qash](https://app.qash.finance)
 - Connect with the team: [Connect with the team on Telegram](https://t.me/ngjupeng) — connect with the team, provide feedback/suggestions, or explore partnerships.
 
 ## Join Our Community
