@@ -8,6 +8,7 @@ import { CountryDropdown } from "../Common/Dropdown/CountryDropdown";
 import { CompanyInfo } from "@/types/company";
 import toast from "react-hot-toast";
 import SettingHeader from "./SettingHeader";
+import { useUpdateCompany } from "@/services/api/company";
 
 interface CompanyFormData {
   companyName: string;
@@ -27,6 +28,7 @@ export default function CompanySettings() {
   const [selectedCompanyType, setSelectedCompanyType] = useState<string>("");
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [hasChanges, setHasChanges] = useState(false);
+  const { mutate: updateCompany, isPending: isUpdating } = useUpdateCompany();
 
   const {
     register,
@@ -78,10 +80,27 @@ export default function CompanySettings() {
 
   const onSubmit = async (data: CompanyFormData) => {
     try {
-      // TODO: Implement API call to update company
-      console.log("Updating company:", data);
-      toast.success("Company settings updated successfully");
-      setHasChanges(false);
+      updateCompany(
+        {
+          companyName: data.companyName,
+          companyType: data.companyType as any,
+          country: data.country,
+          address1: data.address1,
+          address2: data.address2 || undefined,
+          city: data.city,
+          postalCode: data.postalCode,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Company settings updated successfully");
+            setHasChanges(false);
+          },
+          onError: (error: any) => {
+            const errorMessage = error?.message || "Failed to update company settings";
+            toast.error(errorMessage);
+          },
+        },
+      );
     } catch (error) {
       toast.error("Failed to update company settings");
     }
@@ -94,7 +113,7 @@ export default function CompanySettings() {
         title="Company"
         buttonText="Save Changes"
         onButtonClick={handleSubmit(onSubmit)}
-        buttonDisabled={!hasChanges}
+        buttonDisabled={!hasChanges || isUpdating}
         buttonClassName="w-30"
       />
 
