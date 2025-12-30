@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import InputOutlined from "@/components/Common/Input/InputOutlined";
 import { PrimaryButton } from "@/components/Common/PrimaryButton";
 import { SecondaryButton } from "@/components/Common/SecondaryButton";
@@ -8,8 +9,21 @@ import { RecurringIntervalDropdown } from "@/components/Common/Dropdown/Recurrin
 import { DatePickerDropdown } from "@/components/Common/Dropdown/DatePickerDropdown";
 import { DueDateDropdown } from "@/components/Common/Dropdown/DueDateDropdown";
 import InvoicePreview from "../Common/Invoice/InvoicePreview";
-import { set } from "lodash";
 import { useModal } from "@/contexts/ModalManagerProvider";
+import { createB2BInvoice, sendB2BInvoice, createB2BSchedule } from "@/services/api/invoice";
+import {
+  CreateB2BInvoiceDto,
+  CreateB2BScheduleDto,
+  Currency,
+  InvoiceItemDto,
+  NetworkDto,
+  TokenDto,
+  B2BFromDetailsDto,
+  UnregisteredCompanyDto,
+  InvoiceModel,
+} from "@/types/invoice";
+import { ClientResponseDto } from "@/types/client";
+import { AssetWithMetadata } from "@/types/faucet";
 
 interface PaymentMethod {
   id: string;
@@ -19,29 +33,66 @@ interface PaymentMethod {
   icon?: string;
 }
 
+// UI-friendly item structure
+interface FormItem {
+  description: string;
+  price: string;
+  qty: string;
+  amount: string;
+}
+
+// Extended FormData interface matching both UI needs and backend requirements
 interface FormData {
+  // From details (sender)
   name: string;
   companyName: string;
   email: string;
   address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
   taxId: string;
+
+  // Invoice details
   invoiceNumber: string;
-  date: string;
+  issueDate: string;
   dueDate: string;
-  billToName: string;
+  currency: Currency;
+
+  // Bill to details (recipient - unregistered company)
+  clientId: string; // UUID of existing client (optional)
+  billToCompanyName: string;
+  billToContactName: string;
   billToEmail: string;
   billToAddress: string;
-  token: string;
-  network: string;
+  billToCcEmails: string[];
+  billToTaxId: string;
+
+  // Payment details
+  token: TokenDto | null;
+  network: NetworkDto | null;
   walletAddress: string;
-  amountDue: number;
-  currency: string;
-  status: string;
+
+  // Invoice items
+  items: FormItem[];
+
+  // Additional fields
+  taxRate: string;
+  discount: string;
+  note: string;
+
+  // Email customization
+  emailSubject: string;
+  emailBody: string;
+  emailBcc: string[];
+
+  // Payment collection type
   paymentCollectionType: "one-time" | "recurring";
   recurringInterval: string;
   recurringStartDate: string;
-  items: { description: string; price: string; qty: string; amount: string }[];
-  note: string;
+
+  // Internal UI state
   paymentMethodId: string;
 }
 
@@ -51,31 +102,174 @@ const CreateClientInvoice = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [invoiceSent, setInvoiceSent] = useState(false);
   const [expandAdditionalDetails, setExpandAdditionalDetails] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [createdInvoice, setCreatedInvoice] = useState<InvoiceModel | null>(null);
+
   const [formData, setFormData] = useState<FormData>({
+    // From details (sender)
     name: "",
     companyName: "",
     email: "",
     address: "",
+    city: "",
+    state: "",
+    country: "",
+    postalCode: "",
     taxId: "",
+
+    // Invoice details
     invoiceNumber: "",
-    date: "",
+    issueDate: new Date().toISOString(),
     dueDate: "",
-    billToName: "",
+    currency: Currency.USD,
+
+    // Bill to details (recipient)
+    clientId: "",
+    billToCompanyName: "",
+    billToContactName: "",
     billToEmail: "",
     billToAddress: "",
-    token: "USDT",
-    network: "",
+    billToCcEmails: [],
+    billToTaxId: "",
+
+    // Payment details - default to Miden network
+    token: {
+      address: "0x0",
+      symbol: "USDT",
+      decimals: 6,
+      name: "Tether USD",
+    },
+    network: {
+      name: "Miden",
+      chainId: 1,
+    },
     walletAddress: "",
-    amountDue: 0,
-    currency: "",
-    status: "",
-    paymentCollectionType: "one-time",
-    recurringInterval: "Monthly",
-    recurringStartDate: "",
+
+    // Invoice items
     items: [],
+
+    // Additional fields
+    taxRate: "0",
+    discount: "0",
     note: "",
+
+    // Email customization
+    emailSubject: "",
+    emailBody: "",
+    emailBcc: [],
+
+    // Payment collection type
+    paymentCollectionType: "one-time",
+    recurringInterval: "MONTHLY",
+    recurringStartDate: "",
+
+    // Internal UI state
     paymentMethodId: "payroll",
   });
+
+  // Calculate totals
+  const { subtotal, taxAmount, total } = useMemo(() => {
+    const subtotal = formData.items.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      const qty = parseInt(item.qty) || 0;
+      return sum + price * qty;
+    }, 0);
+
+    const taxRate = parseFloat(formData.taxRate) || 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const discount = parseFloat(formData.discount) || 0;
+    const total = subtotal + taxAmount - discount;
+
+    return { subtotal, taxAmount, total };
+  }, [formData.items, formData.taxRate, formData.discount]);
+
+  // Convert form data to API DTO
+  const buildCreateInvoiceDto = (): CreateB2BInvoiceDto => {
+    // Map form items to API items
+    const items: InvoiceItemDto[] = formData.items.map((item, index) => ({
+      description: item.description,
+      quantity: item.qty,
+      unitPrice: item.price,
+      total: item.amount || String(parseFloat(item.price) * parseInt(item.qty)),
+      order: index,
+    }));
+
+    // Build from details
+    const fromDetails: B2BFromDetailsDto = {
+      companyName: formData.companyName,
+      contactName: formData.name,
+      email: formData.email,
+      address1: formData.address,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      postalCode: formData.postalCode,
+      taxId: formData.taxId,
+    };
+
+    // Build unregistered company details (bill to)
+    const unregisteredCompany: UnregisteredCompanyDto | undefined = formData.clientId
+      ? undefined
+      : {
+          companyName: formData.billToCompanyName,
+          email: formData.billToEmail,
+          ccEmails: formData.billToCcEmails.filter(Boolean),
+          contactName: formData.billToContactName,
+          address: formData.billToAddress,
+          taxId: formData.billToTaxId,
+        };
+
+    const dto: CreateB2BInvoiceDto = {
+      clientId: formData.clientId || undefined,
+      unregisteredCompany,
+      issueDate: formData.issueDate || new Date().toISOString(),
+      dueDate: formData.dueDate,
+      currency: formData.currency,
+      items,
+      network: formData.network!,
+      token: formData.token!,
+      walletAddress: formData.walletAddress,
+      fromDetails,
+      emailSubject: formData.emailSubject || undefined,
+      emailBody: formData.emailBody || undefined,
+      emailBcc: formData.emailBcc.filter(Boolean),
+      taxRate: formData.taxRate,
+      discount: formData.discount,
+      memo: formData.note ? { text: formData.note } : undefined,
+    };
+
+    return dto;
+  };
+
+  // Build schedule DTO for recurring invoices
+  const buildCreateScheduleDto = (invoiceUUID: string): CreateB2BScheduleDto => {
+    return {
+      clientId: formData.clientId || invoiceUUID, // Use invoice UUID as reference
+      frequency: formData.recurringInterval,
+      generateDaysBefore: 7,
+      dueDaysAfterGeneration: 30,
+      autoSend: true,
+      invoiceTemplate: {
+        items: formData.items.map((item, index) => ({
+          description: item.description,
+          quantity: item.qty,
+          unitPrice: item.price,
+          total: item.amount,
+          order: index,
+        })),
+        currency: formData.currency,
+        network: formData.network!,
+        token: formData.token!,
+        walletAddress: formData.walletAddress,
+        taxRate: formData.taxRate,
+        discount: formData.discount,
+        memo: formData.note ? { text: formData.note } : undefined,
+        emailSubject: formData.emailSubject,
+        emailBody: formData.emailBody,
+      },
+    };
+  };
 
   const paymentMethods: PaymentMethod[] = [
     { id: "payroll", name: "Payroll", balance: "$125,545.00", color: "bg-blue-500", icon: "payroll" },
@@ -105,17 +299,158 @@ const CreateClientInvoice = () => {
     }));
   };
 
-  const handleSaveDraft = () => {
-    // TODO: Implement save draft functionality
-    console.log("Saving draft:", formData);
+  // Handle client selection from modal
+  const handleClientSelect = (client: ClientResponseDto) => {
+    setFormData(prev => ({
+      ...prev,
+      clientId: client.uuid,
+      billToCompanyName: client.companyName,
+      billToEmail: client.email,
+      billToContactName: "", // Client doesn't have contact name, user can add manually
+      billToAddress: [client.address1, client.address2, client.city, client.state, client.postalCode, client.country]
+        .filter(Boolean)
+        .join(", "),
+      billToTaxId: client.taxId || "",
+    }));
+  };
+
+  // Handle token selection from modal
+  const handleTokenSelect = (token: AssetWithMetadata | null) => {
+    if (!token) return;
+
+    setFormData(prev => ({
+      ...prev,
+      token: {
+        address: token.faucetId,
+        symbol: token.metadata.symbol,
+        decimals: token.metadata.decimals,
+        name: token.metadata.symbol,
+      },
+    }));
+  };
+
+  const handleSaveDraft = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const dto = buildCreateInvoiceDto();
+      const response = await createB2BInvoice(dto);
+
+      if (response.data) {
+        setCreatedInvoice(response.data);
+        toast.success("Draft saved successfully");
+        console.log("Draft saved:", response.data);
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to save draft";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error("Error saving draft:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const validateInvoiceData = (): string | null => {
+    // Validate dueDate for one-time payments
+    if (formData.paymentCollectionType === "one-time" && !formData.dueDate) {
+      return "Please select a due date for the invoice.";
+    }
+
+    // Validate walletAddress
+    if (!formData.walletAddress || formData.walletAddress.trim() === "") {
+      return "Please enter a wallet address to receive payment.";
+    }
+
+    // Validate items
+    if (formData.items.length === 0) {
+      return "Please add at least one item to the invoice.";
+    }
+
+    // Validate recipient information
+    if (!formData.clientId && !formData.billToCompanyName) {
+      return "Please select a client or enter company information.";
+    }
+
+    if (!formData.clientId && !formData.billToEmail) {
+      return "Please enter recipient email address.";
+    }
+
+    return null;
+  };
+
+  const handleSendInvoice = async () => {
+    // Validate before sending
+    const validationError = validateInvoiceData();
+    if (validationError) {
+      setError(validationError);
+      toast.error(validationError);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // First create the invoice if not already created
+      let invoice = createdInvoice;
+
+      if (!invoice) {
+        const dto = buildCreateInvoiceDto();
+        const createResponse = await createB2BInvoice(dto);
+        invoice = createResponse;
+        setCreatedInvoice(invoice);
+      }
+
+      if (!invoice?.uuid) {
+        throw new Error("Failed to create invoice");
+      }
+
+      // Send the invoice
+      await sendB2BInvoice(invoice.uuid);
+
+      // If recurring, create a schedule
+      if (formData.paymentCollectionType === "recurring") {
+        const scheduleDto = buildCreateScheduleDto(invoice.uuid);
+        await createB2BSchedule(scheduleDto);
+      }
+
+      setInvoiceSent(true);
+      toast.success("Invoice sent successfully!");
+    } catch (err: any) {
+      console.log("🚀 ~ handleSendInvoice ~ err:", err);
+      // Handle validation errors from backend
+      let errorMessage: string;
+      if (err.response?.data?.message) {
+        const messages = Array.isArray(err.response.data.message)
+          ? err.response.data.message
+              .map((m: any) => {
+                if (typeof m === "object" && m.constraints) {
+                  return Object.values(m.constraints).join(", ");
+                }
+                return m;
+              })
+              .join("; ")
+          : err.response.data.message;
+        errorMessage = messages;
+      } else {
+        errorMessage = err.message || "Failed to send invoice";
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error("Error sending invoice:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNext = () => {
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else if (currentStep === 5) {
-      // Send invoice and show success screen
-      setInvoiceSent(true);
+      // Send invoice
+      handleSendInvoice();
     }
   };
 
@@ -131,19 +466,21 @@ const CreateClientInvoice = () => {
   const handleAddItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { description: "", price: "", qty: "1", amount: "" }],
+      items: [...prev.items, { description: "", price: "", qty: "1", amount: "0" }],
     }));
   };
 
-  const handleItemChange = (index: number, field: string, value: string | number) => {
+  const handleItemChange = (index: number, field: keyof FormItem, value: string) => {
     setFormData(prev => {
       const newItems = [...prev.items];
-      const item = { ...newItems[index] } as any;
+      const item = { ...newItems[index] };
       item[field] = value;
 
       // Calculate amount if price or qty changes
       if (field === "price" || field === "qty") {
-        item.amount = (item.price || 0) * (item.qty || 0);
+        const price = parseFloat(item.price) || 0;
+        const qty = parseInt(item.qty) || 0;
+        item.amount = String(price * qty);
       }
 
       newItems[index] = item;
@@ -296,8 +633,8 @@ const CreateClientInvoice = () => {
               <InputOutlined
                 label="Company name"
                 placeholder="Enter company name"
-                name="billToName"
-                value={formData.billToName}
+                name="billToCompanyName"
+                value={formData.billToCompanyName}
                 onChange={handleInputChange}
               />
 
@@ -327,15 +664,15 @@ const CreateClientInvoice = () => {
               {/* Additional Fields */}
               {expandAdditionalDetails && (
                 <>
-                  {/* Bill To Name Input */}
+                  {/* Bill To Contact Name Input */}
                   <InputOutlined
-                    label="Name"
-                    placeholder="Enter name"
-                    name="billToName"
-                    value={formData.billToName}
+                    label="Contact Name"
+                    placeholder="Enter contact name"
+                    name="billToContactName"
+                    value={formData.billToContactName}
                     onChange={handleInputChange}
                     icon="/misc/address-book-icon.svg"
-                    iconOnClick={() => openModal("SELECT_CLIENT")}
+                    iconOnClick={() => openModal("SELECT_CLIENT", { onSave: handleClientSelect })}
                   />
 
                   {/* Bill To Address Input */}
@@ -347,12 +684,12 @@ const CreateClientInvoice = () => {
                     onChange={handleInputChange}
                   />
 
-                  {/* Bill To Address Input */}
+                  {/* Bill To Tax ID Input */}
                   <InputOutlined
                     label="Tax ID"
                     placeholder="Enter tax ID..."
                     name="billToTaxId"
-                    // value={formData.billToTaxId}
+                    value={formData.billToTaxId}
                     onChange={handleInputChange}
                   />
                 </>
@@ -375,10 +712,11 @@ const CreateClientInvoice = () => {
                 <div className="flex-1">
                   <InputOutlined
                     label="Invoice number"
-                    placeholder="INV0001"
+                    placeholder="Auto-generated"
                     name="invoiceNumber"
                     value={formData.invoiceNumber}
                     onChange={handleInputChange}
+                    disabled
                   />
                 </div>
                 {formData.paymentCollectionType === "one-time" && (
@@ -399,10 +737,23 @@ const CreateClientInvoice = () => {
               {/* Token Selection */}
               <InputOutlined
                 label="Receive payment in"
-                placeholder="USDT"
-                name="token"
-                value={formData.token}
+                placeholder="Select token"
+                name="tokenSymbol"
+                value={formData.token?.symbol || ""}
+                onChange={() => {}} // Read-only, click icon to select
+                readOnly
+                icon="/arrow/chevron-down.svg"
+                iconOnClick={() => openModal("SELECT_TOKEN", { onTokenSelect: handleTokenSelect })}
+              />
+
+              {/* Wallet Address */}
+              <InputOutlined
+                label="Wallet address to receive payment"
+                placeholder="Enter wallet address"
+                name="walletAddress"
+                value={formData.walletAddress}
                 onChange={handleInputChange}
+                required
               />
 
               {/* Payment Collection Type */}
@@ -511,7 +862,7 @@ const CreateClientInvoice = () => {
                     name="price"
                     type="number"
                     value={item.price}
-                    onChange={e => handleItemChange(index, "price", parseFloat(e.target.value) || 0)}
+                    onChange={e => handleItemChange(index, "price", e.target.value)}
                     containerClassName="w-40"
                   />
                   <InputOutlined
@@ -520,7 +871,7 @@ const CreateClientInvoice = () => {
                     name="qty"
                     type="number"
                     value={item.qty}
-                    onChange={e => handleItemChange(index, "qty", parseInt(e.target.value) || 0)}
+                    onChange={e => handleItemChange(index, "qty", e.target.value)}
                     containerClassName="w-20"
                   />
                   <InputOutlined
@@ -558,7 +909,7 @@ const CreateClientInvoice = () => {
                 placeholder="Add note"
                 value={formData.note}
                 onChange={e => setFormData(prev => ({ ...prev, note: e.target.value }))}
-                className="w-full h-28 border border-primary-divider rounded-lg p-4 bg-transparent text-white placeholder-text-secondary focus:outline-none focus:border-primary-blue"
+                className="w-full h-28 border border-primary-divider rounded-lg p-4 placeholder-text-secondary focus:outline-none focus:border-primary-blue"
               />
             </div>
           </div>
@@ -629,13 +980,10 @@ const CreateClientInvoice = () => {
               <p className="text-base font-semibold text-text-secondary">Send invoice for</p>
               <h1 className="text-4xl font-semibold leading-tight">
                 <span className="text-primary-blue">
-                  {formData.items
-                    .reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty) || 0), 0)
-                    .toFixed(2)}{" "}
-                  {formData.token}
+                  {total.toFixed(2)} {formData.token?.symbol || "USDT"}
                 </span>
                 {` to `}
-                {formData.billToName || "recipient"}
+                {formData.billToCompanyName || "recipient"}
               </h1>
               <p className="text-base font-medium text-text-secondary">
                 Take one last look before sending. After you send the invoice, it can't be edited.
@@ -659,10 +1007,16 @@ const CreateClientInvoice = () => {
               <div className="w-full border border-primary-divider rounded-xl p-3 flex flex-col gap-2">
                 <label className="text-sm font-medium text-text-secondary">Cc:</label>
 
-                <div className="bg-primary-divider rounded-lg w-fit px-3 py-0.5">
-                  <p className="text-base font-medium text-text-primary">
-                    {formData.billToEmail || "recipient@example.com"}
-                  </p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.billToCcEmails.length > 0 ? (
+                    formData.billToCcEmails.map((email, index) => (
+                      <div key={index} className="bg-primary-divider rounded-lg px-3 py-0.5">
+                        <p className="text-base font-medium text-text-primary">{email}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-base font-medium text-text-secondary">No CC recipients</p>
+                  )}
                 </div>
               </div>
               <span className="text-sm font-medium text-text-secondary">Optional</span>
@@ -694,10 +1048,7 @@ const CreateClientInvoice = () => {
           <p className="text-base font-medium">
             Send invoice of{" "}
             <span className="font-bold text-text-primary">
-              {formData.items
-                .reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty) || 0), 0)
-                .toFixed(2)}{" "}
-              {formData.token}
+              {total.toFixed(2)} {formData.token?.symbol || "USDT"}
             </span>
             {" has been sent to "}
             <span className="text-primary-blue">{formData.billToEmail}</span>
@@ -711,7 +1062,11 @@ const CreateClientInvoice = () => {
         {/* View Invoice Button */}
         <SecondaryButton
           text="View Invoice"
-          onClick={() => {}}
+          onClick={() => {
+            if (createdInvoice?.uuid) {
+              router.push(`/invoice/${createdInvoice.uuid}`);
+            }
+          }}
           buttonClassName="w-auto px-4"
           variant="light"
           iconPosition="left"
@@ -721,7 +1076,12 @@ const CreateClientInvoice = () => {
         {/* Copy Link Button */}
         <PrimaryButton
           text="Copy Link"
-          onClick={() => {}}
+          onClick={() => {
+            if (createdInvoice?.uuid) {
+              const invoiceUrl = `${window.location.origin}/invoice/${createdInvoice.uuid}/public`;
+              navigator.clipboard.writeText(invoiceUrl);
+            }
+          }}
           iconPosition="left"
           icon="/misc/thin-copy-icon.svg"
           containerClassName="w-35"
@@ -755,8 +1115,8 @@ const CreateClientInvoice = () => {
           ) : (
             <>
               <button
-                onClick={handleBack}
-                className="flex gap-1 items-start text-[#066eff] hover:opacity-80 transition-opacity"
+                onClick={() => router.push("/invoice")}
+                className="flex gap-1 items-start text-[#066eff] hover:opacity-80 transition-opacity cursor-pointer"
               >
                 <img src="/arrow/chevron-left.svg" alt="back" className="w-6 h-6" />
                 <span className="font-medium text-base">Back to Dashboard</span>
@@ -772,42 +1132,55 @@ const CreateClientInvoice = () => {
         </div>
 
         <InvoicePreview
-          invoiceNumber={formData.invoiceNumber || ""}
-          date={formData.date || ""}
+          invoiceNumber={createdInvoice?.invoiceNumber || formData.invoiceNumber || ""}
+          date={formData.issueDate || ""}
           dueDate={formData.dueDate || ""}
           from={{
             name: formData.name || "",
             email: formData.email || "",
             company: formData.companyName || "",
             address: formData.address || "",
-            token: formData.token || "",
-            network: formData.network || "",
+            token: formData.token?.symbol || "",
+            network: formData.network?.name || "",
             walletAddress: formData.walletAddress || "",
           }}
           billTo={{
-            name: formData.billToName || "",
-            company: formData.companyName || "",
+            name: formData.billToContactName || "",
+            company: formData.billToCompanyName || "",
             email: formData.billToEmail || "",
             address: formData.billToAddress || "",
           }}
-          items={[]}
-          subtotal={0}
-          total={0}
-          amountDue={formData.amountDue || 0}
-          currency={formData.currency || ""}
-          status={formData.status || ""}
+          items={formData.items.map(item => ({
+            description: item.description,
+            qty: parseInt(item.qty) || 0,
+            price: parseFloat(item.price) || 0,
+            amount: parseFloat(item.amount) || 0,
+            currency: formData.currency || "USD",
+          }))}
+          subtotal={subtotal}
+          total={total}
+          amountDue={total}
+          currency={formData.currency || "USD"}
+          status={createdInvoice?.status || "DRAFT"}
         />
 
         <div className="fixed bottom-0 left-0 right-0 backdrop-blur-md bg-white/70 border-t border-primary-divider flex items-center justify-between px-10 py-4">
-          <SecondaryButton text="Save Draft" onClick={handleSaveDraft} buttonClassName="w-auto px-4" variant="light" />
+          <SecondaryButton
+            text={isLoading ? "Saving..." : "Save Draft"}
+            onClick={handleSaveDraft}
+            buttonClassName="w-auto px-4"
+            variant="light"
+            disabled={isLoading}
+          />
           <div className="flex gap-4 items-center">
             <span className=" font-medium cursor-pointer" onClick={handleBack}>
               Back
             </span>
             <PrimaryButton
-              text={currentStep === 5 ? "Send Invoice" : "Next"}
+              text={isLoading ? "Processing..." : currentStep === 5 ? "Send Invoice" : "Next"}
               onClick={handleNext}
               containerClassName="w-28"
+              disabled={isLoading}
             />
           </div>
         </div>

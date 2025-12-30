@@ -10,17 +10,21 @@ import { FloatingFooter } from "../Common/FloatingFooter";
 import { FloatingAction } from "./FloatingAction";
 import { BillStatusEnum } from "@/types/bill";
 import { useGetBills, usePayBills, useGetBillStats } from "@/services/api/bill";
+import { getB2BInvoices, getB2BInvoiceStats, downloadB2BInvoicePdf, deleteB2BInvoice } from "@/services/api/invoice";
+import { InvoiceStatusEnum, B2BInvoiceQueryDto } from "@/types/invoice";
 import { CategoryShapeEnum } from "@/types/employee";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
 import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { Tooltip } from "react-tooltip";
-import BillActionTooltip from "../Common/ToolTip/BillActionTooltip";
+import ClientActionTooltip from "../Common/ToolTip/ClientActionTooltip";
 import { useDeleteBill } from "@/services/api/bill";
 import { useInvoice } from "@/hooks/server/useInvoice";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { PrimaryButton } from "../Common/PrimaryButton";
+import { cancelB2BInvoice } from "@/services/api/invoice";
 
 type Tab = "all" | "sent" | "paid";
 
@@ -71,14 +75,20 @@ const renderTabHeader = (activeTab: Tab) => {
   }
 };
 
-const InvoiceContainer = () => {
+const ClientInvoiceContainer = () => {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [checkedRows, setCheckedRows] = React.useState<number[]>([]);
   const { data: groups } = useGetAllEmployeeGroups();
-  const { data: billStats } = useGetBillStats();
+  const queryClient = useQueryClient();
   const { openModal } = useModal();
+
+  // Fetch B2B invoice statistics
+  const { data: invoiceStats } = useQuery({
+    queryKey: ["b2b-invoice-stats"],
+    queryFn: getB2BInvoiceStats,
+  });
 
   const billActionRenderer = (rowData: Record<string, any>, index: number) => (
     <div className="flex items-center justify-center w-full" onClick={e => e.stopPropagation()}>
@@ -97,91 +107,120 @@ const InvoiceContainer = () => {
   };
 
   const handleCheckAll = () => {
-    if (checkedRows.length === (billDatas?.length || 0)) {
+    if (checkedRows.length === (invoiceDatas?.length || 0)) {
       setCheckedRows([]);
     } else {
-      setCheckedRows(billDatas?.map((_, idx) => idx) || []);
+      setCheckedRows(invoiceDatas?.map((_: any, idx: number) => idx) || []);
     }
   };
 
-  // Fetch bills from API
-  const { data: billsResponse, isLoading } = useGetBills({
-    page: currentPage,
-    limit: rowsPerPage,
-    status: activeTab === "all" ? undefined : activeTab === "sent" ? BillStatusEnum.PENDING : BillStatusEnum.PAID,
+  // Fetch B2B invoices from API
+  const { data: invoicesResponse, isLoading } = useQuery({
+    queryKey: ["b2b-invoices", currentPage, rowsPerPage, activeTab],
+    queryFn: () =>
+      getB2BInvoices({
+        page: currentPage,
+        limit: rowsPerPage,
+        direction: "sent",
+        status:
+          activeTab === "all" ? undefined : activeTab === "sent" ? InvoiceStatusEnum.SENT : InvoiceStatusEnum.PAID,
+      }),
   });
 
-  // Show all bills when "all" tab is active, otherwise show filtered bills from API
-  const bills = React.useMemo(() => {
-    return billsResponse?.bills ?? [];
-  }, [billsResponse?.bills]);
+  // Show all invoices when "all" tab is active, otherwise show filtered invoices from API
+  const invoices = React.useMemo(() => {
+    return invoicesResponse?.invoices ?? [];
+  }, [invoicesResponse]);
 
-  const payBillsMutation = usePayBills();
-  const deleteBill = useDeleteBill();
-  const { downloadPdf } = useInvoice();
   const router = useRouter();
 
-  const billDatas = bills.map((b, idx) => {
-    const createdDate = b.createdAt
-      ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  // Delete invoice mutation
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: (invoiceUUID: string) => deleteB2BInvoice(invoiceUUID),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["b2b-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["b2b-invoice-stats"] });
+      toast.success("Invoice deleted successfully");
+    },
+    onError: (err: any) => {
+      console.error("Delete invoice failed", err);
+      toast.error("Failed to delete invoice");
+    },
+  });
+
+  // Void invoice mutation
+  const voidInvoiceMutation = useMutation({
+    mutationFn: (invoiceUUID: string) => cancelB2BInvoice(invoiceUUID),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["b2b-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["b2b-invoice-stats"] });
+      toast.success("Invoice voided successfully");
+    },
+    onError: (err: any) => {
+      console.error("Void invoice failed", err);
+      toast.error("Failed to void invoice");
+    },
+  });
+
+  const invoiceDatas = invoices.map((invoice: any, idx: number) => {
+    const createdDate = invoice.createdAt
+      ? new Date(invoice.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       : "";
-    const dueDate = b.invoice?.dueDate
-      ? new Date(b.invoice.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    const dueDate = invoice.dueDate
+      ? new Date(invoice.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       : "";
 
     const badgeStatus = (() => {
-      switch (b.status) {
-        case "PAID":
+      switch (invoice.status) {
+        case InvoiceStatusEnum.PAID:
           return BadgeStatus.SUCCESS;
-        case "PENDING":
+        case InvoiceStatusEnum.SENT:
+        case InvoiceStatusEnum.CONFIRMED:
           return BadgeStatus.AWAITING;
-        case "OVERDUE":
+        case InvoiceStatusEnum.CANCELLED:
           return BadgeStatus.FAIL;
+        case InvoiceStatusEnum.DRAFT:
+          return BadgeStatus.NEUTRAL;
         default:
           return BadgeStatus.NEUTRAL;
       }
     })();
 
     return {
-      __id: b.id,
-      __invoiceUuid: b.invoice?.uuid,
+      __id: invoice.id,
+      __invoiceUuid: invoice.uuid,
       "header-0": (
         <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
           <CustomCheckbox checked={checkedRows.includes(idx)} onChange={() => handleCheckRow(idx)} />
         </div>
       ),
       "Creation date": createdDate,
-      Invoice: b.invoice?.invoiceNumber || b.uuid,
-      Name: b.invoice?.fromDetails?.name,
-      Group: (
-        <div className="flex justify-center items-center">
-          <CategoryBadge
-            shape={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-            color={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.color || "#35ADE9"}
-            name={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.name || "-"}
-          />
-        </div>
-      ),
+      Invoice: invoice.invoiceNumber || invoice.uuid,
+      Name: invoice.toCompanyName || invoice.toCompany?.companyName || invoice.fromDetails?.companyName || "-",
+      Email: invoice.toCompanyEmail || invoice.emailTo || "-",
       Amount: (
         <div className="flex items-center gap-2 justify-center">
-          <span>{b.invoice?.total || "0"}</span>
+          <span>{invoice.total || "0"}</span>
           <img
-            alt={`${b.invoice?.paymentNetwork?.name?.toLowerCase()}`}
+            alt={`${invoice.paymentToken?.symbol?.toLowerCase()}`}
             className="w-4"
-            src={`/token/${b.invoice?.paymentToken?.name?.toLowerCase()}.svg` || "USDT"}
+            src={`/token/${invoice.paymentToken?.symbol?.toLowerCase()}.svg`}
+            onError={e => {
+              (e.target as HTMLImageElement).src = "/token/usdt.svg";
+            }}
           />
         </div>
       ),
       "Due Date": dueDate,
       Status: (
         <div className="w-full flex justify-center items-center">
-          <Badge text={b.status} status={badgeStatus} className="px-5" />
+          <Badge text={invoice.status} status={badgeStatus} className="px-5" />
         </div>
       ),
     };
   });
 
-  const isAllChecked = checkedRows.length === billDatas?.length;
+  const isAllChecked = checkedRows.length === invoiceDatas?.length;
 
   return (
     <div className="flex flex-col w-full h-full justify-start items-start p-5 gap-5">
@@ -207,25 +246,36 @@ const InvoiceContainer = () => {
           <Card
             title="All invoices"
             text={
-              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalBills ?? 0}</span>
+              <span className="text-text-primary text-2xl font-bold leading-none">
+                {(invoiceStats?.sent?.totalDraft ?? 0) +
+                  (invoiceStats?.sent?.totalSent ?? 0) +
+                  (invoiceStats?.sent?.totalConfirmed ?? 0) +
+                  (invoiceStats?.sent?.totalPaid ?? 0)}
+              </span>
             }
           />
           <Card
             title="Sent"
             text={
-              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalPending ?? 0}</span>
+              <span className="text-text-primary text-2xl font-bold leading-none">
+                {invoiceStats?.sent?.totalSent ?? 0}
+              </span>
             }
           />
           <Card
             title="Draft"
             text={
-              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalPaid ?? 0}</span>
+              <span className="text-text-primary text-2xl font-bold leading-none">
+                {invoiceStats?.sent?.totalDraft ?? 0}
+              </span>
             }
           />
           <Card
             title="Paid"
             text={
-              <span className="text-text-primary text-2xl font-bold leading-none">{billStats?.totalOverdue ?? 0}</span>
+              <span className="text-text-primary text-2xl font-bold leading-none">
+                {invoiceStats?.sent?.totalPaid ?? 0}
+              </span>
             }
           />
         </div>
@@ -282,12 +332,12 @@ const InvoiceContainer = () => {
             "Creation date",
             "Invoice",
             "Name",
-            "Group",
+            "Email",
             "Amount",
             "Due Date",
             "Status",
           ]}
-          data={billDatas}
+          data={invoiceDatas}
           className="w-full"
           rowClassName="py-5"
           headerClassName="py-3"
@@ -300,7 +350,7 @@ const InvoiceContainer = () => {
           onRowsPerPageChange={setRowsPerPage}
           onRowClick={rowData => {
             const invoiceUUID = (rowData as any).__invoiceUuid;
-            router.push(`/bill/detail?uuid=${invoiceUUID}`);
+            router.push(`/invoice/detail?id=${invoiceUUID}`);
           }}
         />
       </BaseContainer>
@@ -321,72 +371,68 @@ const InvoiceContainer = () => {
         render={({ content }) => {
           if (!content) return null;
           const id = parseInt(content, 10);
-          const bill = bills?.find(b => b.id === id);
-          if (!bill) return null;
+          const invoice = invoices?.find((inv: any) => inv.id === id);
+          if (!invoice) return null;
 
           const handlePay = async () => {
-            // Collect uuids: include the clicked bill and any selected rows
-            const selectedUUIDs = checkedRows.map(i => bills[i]?.invoice?.uuid).filter(Boolean) as string[];
-            const uuids = Array.from(new Set([bill.invoice?.uuid, ...selectedUUIDs]));
-
-            if (uuids.length === 0) return;
-
-            const params = new URLSearchParams();
-
-            //@ts-ignore
-            uuids.forEach(u => params.append("invoiceUUID", u));
-            router.push(`/bill/review?${params.toString()}`);
+            // Navigate to invoice detail/payment page
+            router.push(`/invoice/detail?id=${invoice.uuid}`);
           };
 
           const handleDelete = () => {
             openModal("REMOVE_INVOICE", {
-              invoiceOwnerName: bill.invoice?.fromDetails?.name || "",
+              invoiceOwnerName: invoice.toCompanyName || invoice.fromDetails?.companyName || "",
               onRemove: async () => {
-                deleteBill.mutate(bill.uuid, {
-                  onError: err => {
-                    console.error("Delete invoice failed", err);
-                    toast.error("Failed to delete invoice");
-                  },
-                });
+                deleteInvoiceMutation.mutate(invoice.uuid);
               },
             });
           };
 
           const handleDownload = async () => {
             try {
-              if (!bill.invoice?.uuid) throw new Error("Invoice UUID not found");
-              const blob = await downloadPdf(bill.invoice?.uuid);
+              if (!invoice.uuid) throw new Error("Invoice UUID not found");
+              const blob = await downloadB2BInvoicePdf(invoice.uuid);
               const url = window.URL.createObjectURL(blob);
               const link = document.createElement("a");
               link.href = url;
-              link.download = `invoice-${bill.invoice?.invoiceNumber || bill.uuid}.pdf`;
+              link.download = `invoice-${invoice.invoiceNumber || invoice.uuid}.pdf`;
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
               window.URL.revokeObjectURL(url);
+              toast.success("Invoice downloaded successfully");
             } catch (err) {
               console.error("Failed to download PDF:", err);
+              toast.error("Failed to download invoice");
             }
           };
 
           const handleCopyInvoiceLink = async () => {
             try {
-              const link = `${window.location.origin}/invoice-review?invoiceUUID=${bill.uuid}`;
+              const link = `${window.location.origin}/invoice/b2b/${invoice.uuid}/public`;
               await navigator.clipboard.writeText(link);
-              // Lightweight confirmation
               toast.success("Invoice link copied to clipboard");
             } catch (err) {
               console.error("Failed to copy invoice link", err);
+              toast.error("Failed to copy invoice link");
+            }
+          };
+
+          const handleVoid = async () => {
+            try {
+              await voidInvoiceMutation.mutateAsync(invoice.uuid);
+            } catch (err) {
+              console.error("Failed to void invoice:", err);
             }
           };
 
           return (
-            <BillActionTooltip
+            <ClientActionTooltip
               onCopyInvoiceLink={handleCopyInvoiceLink}
               onDeleteInvoice={handleDelete}
               onDownloadPDF={handleDownload}
-              onPay={handlePay}
-              billStatus={bill.status}
+              onVoidInvoice={handleVoid}
+              invoiceStatus={invoice.status}
             />
           );
         }}
@@ -402,12 +448,16 @@ const InvoiceContainer = () => {
               text="Pay all"
               buttonClassName="w-40 rounded-full"
               onClick={async () => {
-                const uuids = checkedRows.map(i => bills[i]?.invoice?.uuid).filter(Boolean) as string[];
+                const uuids = checkedRows.map(i => invoices[i]?.uuid).filter(Boolean) as string[];
                 if (uuids.length === 0) return;
-                // Navigate to review page with multiple invoiceUUID query params
-                const params = new URLSearchParams();
-                uuids.forEach(u => params.append("invoiceUUID", u));
-                router.push(`/bill/review?${params.toString()}`);
+                // Navigate to first invoice payment page (or implement batch payment)
+                if (uuids.length === 1) {
+                  router.push(`/invoice/detail?id=${uuids[0]}`);
+                } else {
+                  // For multiple invoices, navigate to first one or implement batch payment flow
+                  toast.success(`Opening first of ${uuids.length} selected invoices`);
+                  router.push(`/invoice/detail?id=${uuids[0]}`);
+                }
               }}
             />
           }
@@ -417,4 +467,4 @@ const InvoiceContainer = () => {
   );
 };
 
-export default InvoiceContainer;
+export default ClientInvoiceContainer;

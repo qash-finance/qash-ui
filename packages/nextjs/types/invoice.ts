@@ -205,3 +205,178 @@ export interface InvoiceModel {
 	footer?: string | null;
 	terms?: string | null;
 }
+
+// =============================================================================
+// B2B INVOICE TYPES
+// =============================================================================
+
+export interface NetworkDto {
+	name: string;
+	chainId: number;
+	rpcUrl?: string;
+	metadata?: Record<string, any>;
+}
+
+export interface TokenDto {
+	address: string;
+	symbol: string;
+	decimals: number;
+	name: string;
+	metadata?: Record<string, any>;
+}
+
+export interface UnregisteredCompanyDto {
+	companyName: string;
+	email: string;
+	ccEmails?: string[];
+	contactName?: string;
+	address?: string;
+	taxId?: string;
+	metadata?: Record<string, any>;
+}
+
+export interface B2BFromDetailsDto {
+	companyName: string;
+	contactName?: string;
+	email: string;
+	address1?: string;
+	address2?: string;
+	city?: string;
+	state?: string;
+	country?: string;
+	postalCode?: string;
+	taxId?: string;
+}
+
+export interface CreateB2BInvoiceDto {
+	clientId?: string;
+	unregisteredCompany?: UnregisteredCompanyDto;
+	issueDate: string;
+	dueDate: string;
+	currency: Currency;
+	items: InvoiceItemDto[];
+	network: NetworkDto;
+	token: TokenDto;
+	walletAddress: string;
+	fromDetails?: B2BFromDetailsDto;
+	emailSubject?: string;
+	emailBody?: string;
+	emailBcc?: string[];
+	taxRate?: string;
+	discount?: string;
+	memo?: Record<string, any>;
+	footer?: Record<string, any>;
+	terms?: Record<string, any>;
+	metadata?: Record<string, any>;
+}
+
+export interface UpdateB2BInvoiceDto {
+	dueDate?: string;
+	items?: InvoiceItemDto[];
+	fromDetails?: B2BFromDetailsDto;
+	network?: NetworkDto;
+	token?: TokenDto;
+	walletAddress?: string;
+	emailSubject?: string;
+	emailBody?: string;
+	taxRate?: string;
+	discount?: string;
+	memo?: Record<string, any>;
+	footer?: Record<string, any>;
+	terms?: Record<string, any>;
+	metadata?: Record<string, any>;
+}
+
+export interface B2BInvoiceQueryDto {
+	page?: number;
+	limit?: number;
+	direction?: 'sent' | 'received' | 'both';
+	status?: InvoiceStatusEnum;
+	clientId?: string;
+	currency?: Currency;
+	search?: string;
+}
+
+export interface B2BInvoiceStatsDto {
+	sent: {
+		totalDraft: number;
+		totalSent: number;
+		totalConfirmed: number;
+		totalPaid: number;
+		totalOverdue: number;
+		totalAmount: string;
+		totalAmountByCurrency: Record<string, string>;
+	};
+	received: {
+		totalSent: number;
+		totalConfirmed: number;
+		totalPaid: number;
+		totalOverdue: number;
+		totalAmount: string;
+		totalAmountByCurrency: Record<string, string>;
+	};
+}
+
+// =============================================================================
+// B2B INVOICE SCHEDULE TYPES
+// =============================================================================
+
+export interface B2BInvoiceTemplateDto {
+	items: InvoiceItemDto[];
+	currency: Currency;
+	network: NetworkDto;
+	token: TokenDto;
+	walletAddress: string;
+	taxRate?: string;
+	discount?: string;
+	memo?: Record<string, any>;
+	footer?: Record<string, any>;
+	terms?: Record<string, any>;
+	emailSubject?: string;
+	emailBody?: string;
+}
+
+export interface CreateB2BScheduleDto {
+	clientId: string;
+	frequency: string;
+	dayOfMonth?: number;
+	dayOfWeek?: number;
+	generateDaysBefore: number;
+	dueDaysAfterGeneration?: number;
+	autoSend?: boolean;
+	invoiceTemplate: B2BInvoiceTemplateDto;
+	metadata?: Record<string, any>;
+}
+
+export interface UpdateB2BScheduleDto {
+	frequency?: string;
+	dayOfMonth?: number;
+	dayOfWeek?: number;
+	generateDaysBefore?: number;
+	dueDaysAfterGeneration?: number;
+	autoSend?: boolean;
+	invoiceTemplate?: B2BInvoiceTemplateDto;
+	metadata?: Record<string, any>;
+}
+
+export interface B2BScheduleResponseDto {
+	id: number;
+	uuid: string;
+	clientId: number;
+	client?: {
+		uuid: string;
+		companyName: string;
+		email: string;
+	};
+	frequency: string;
+	dayOfMonth?: number;
+	dayOfWeek?: number;
+	generateDaysBefore: number;
+	autoSend: boolean;
+	isActive: boolean;
+	nextGenerateDate?: Date;
+	lastGeneratedAt?: Date;
+	invoiceTemplate?: B2BInvoiceTemplateDto;
+	createdAt: Date;
+	updatedAt: Date;
+}

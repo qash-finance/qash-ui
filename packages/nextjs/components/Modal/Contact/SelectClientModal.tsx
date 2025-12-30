@@ -10,6 +10,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClientResponseDto } from "@/types/client";
 import { useAuth } from "@/services/auth/context";
+import toast from "react-hot-toast";
 
 interface ClientItemProps {
   name: string;
@@ -39,7 +40,11 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
   // **************** Custom Hooks *******************
   const { isAuthenticated } = useAuth();
   const { register, watch, reset } = useForm();
-  const { data: clientsData } = useGetClients({ page: 1, limit: 1000 }, { enabled: isAuthenticated });
+  const {
+    data: clientsData,
+    isLoading,
+    error,
+  } = useGetClients({ page: 1, limit: 1000 }, { enabled: isAuthenticated && isOpen });
   const { isConnected } = useWalletConnect();
   const queryClient = useQueryClient();
 
@@ -81,6 +86,14 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
     reset(); // Clear search form
   }, [isConnected, queryClient, reset]);
 
+  // Handle API errors
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load clients. Please try again.");
+      console.error("Error loading clients:", error);
+    }
+  }, [error]);
+
   //*******************************************************
   //******************* Handlers ***************************
   //*******************************************************
@@ -97,6 +110,37 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
   };
 
   if (!isOpen) return null;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <BaseModal isOpen={isOpen} onClose={onClose}>
+        <ModalHeader title="Select client from contact" onClose={onClose} />
+        <div className="flex flex-col items-center justify-center rounded-b-2xl border-2 bg-background border-primary-divider h-[580px] w-[650px] p-5">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-4 border-primary-divider border-t-accent rounded-full animate-spin" />
+            <p className="text-text-secondary">Loading clients...</p>
+          </div>
+        </div>
+      </BaseModal>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <BaseModal isOpen={isOpen} onClose={onClose}>
+        <ModalHeader title="Select client from contact" onClose={onClose} />
+        <div className="flex flex-col items-center justify-center rounded-b-2xl border-2 bg-background border-primary-divider h-[580px] w-[650px] p-5">
+          <div className="flex flex-col items-center gap-3">
+            <img src="/misc/red-circle-warning.svg" alt="error" className="w-8 h-8" />
+            <p className="text-text-primary font-semibold">Failed to load clients</p>
+            <p className="text-text-secondary text-sm">Please try again later.</p>
+          </div>
+        </div>
+      </BaseModal>
+    );
+  }
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose}>
@@ -115,7 +159,9 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
 
         {/* Client List */}
         <section className="overflow-y-auto flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0] w-full">
-          <h2 className="leading-5 text-text-secondary">{filteredClients?.length || 0} contacts</h2>
+          <h2 className="leading-5 text-text-secondary">
+            {filteredClients?.length || 0} contact{filteredClients?.length !== 1 ? "s" : ""}
+          </h2>
 
           {filteredClients && filteredClients.length > 0 ? (
             <div className="flex flex-col items-start h-full w-full">
@@ -130,8 +176,17 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
                 />
               ))}
             </div>
+          ) : search ? (
+            <div className="flex items-center justify-center h-full w-full">
+              <div className="flex flex-col items-center gap-2">
+                <img src="/misc/blue-search-icon.svg" alt="no results" className="w-8 h-8 opacity-50" />
+                <p className="text-text-secondary">No contacts match "{search}"</p>
+              </div>
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full w-full">No contacts found</div>
+            <div className="flex items-center justify-center h-full w-full">
+              <p className="text-text-secondary">No contacts available</p>
+            </div>
           )}
         </section>
       </div>

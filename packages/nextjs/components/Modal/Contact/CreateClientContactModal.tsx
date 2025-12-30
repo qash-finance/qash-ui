@@ -106,6 +106,7 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
       setSelectedCompanyType("");
       setSelectedCountry("");
       onClose();
+      closeModal("CHOOSE_CONTACT_TYPE");
     } catch (error) {
       console.error("Failed to create client:", error);
       toast.error("Failed to create client");

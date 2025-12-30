@@ -1,8 +1,8 @@
 import React from "react";
-import InvoiceContainer from "@/components/Invoice/InvoiceContainer";
+import ClientInvoiceContainer from "@/components/Invoice/ClientInvoiceContainer";
 
-const InvoicePage: React.FC = () => {
-  return <InvoiceContainer />;
+const ClientInvoicePage: React.FC = () => {
+  return <ClientInvoiceContainer />;
 };
 
-export default InvoicePage;
+export default ClientInvoicePage;
