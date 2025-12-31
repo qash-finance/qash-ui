@@ -107,7 +107,12 @@ export function MidenProvider({ children }: { children: ReactNode }) {
     if (!client) return;
 
     const interval = setInterval(async () => {
-      // Skip if consuming process is already running
+      // Skip if consuming process is already running or if on invoice-review page
+      const isOnInvoiceReview = typeof window !== "undefined" && window.location.pathname.includes("/invoice-review");
+
+      if (isConsumingRef.current || isOnInvoiceReview) {
+        return;
+      }
       if (isConsumingRef.current) {
         return;
       }
