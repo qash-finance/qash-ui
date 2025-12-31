@@ -6,6 +6,7 @@ import { useMiden } from "@/hooks/web3/useMiden";
 import { getBalance } from "@/services/utils/getBalance";
 import { UseMutateAsyncFunction } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import FullScreenLoading from "@/components/Loading/FullScreenLoading";
 
 interface BalanceData {
   balances: Array<{
@@ -48,6 +49,8 @@ export function MidenProvider({ children }: { children: ReactNode }) {
   const { openModal } = useModal();
   const { logoutAsync } = useLogout();
   const { client, accountId: address } = useMiden("https://rpc.testnet.miden.io");
+
+  const isConsumingRef = useRef(false);
 
   const [balances, setBalances] = useState<BalanceData | null>(null);
   const [balancesLoading, setBalancesLoading] = useState<boolean>(false);
@@ -100,51 +103,51 @@ export function MidenProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, address, client, fetchBalances]);
 
-  // useEffect(() => {
-  //   if (!client) return;
+  useEffect(() => {
+    if (!client) return;
 
-  //   const interval = setInterval(async () => {
-  //     // Skip if consuming process is already running
-  //     if (isConsumingRef.current) {
-  //       return;
-  //     }
+    const interval = setInterval(async () => {
+      // Skip if consuming process is already running
+      if (isConsumingRef.current) {
+        return;
+      }
 
-  //     const { Address } = await import("@demox-labs/miden-sdk");
-  //     const to = await client.getAccount(Address.fromBech32(address).accountId());
+      const { Address } = await import("@demox-labs/miden-sdk");
+      const to = await client.getAccount(Address.fromBech32(address).accountId());
 
-  //     if (!to) {
-  //       console.error("Destination account not found");
-  //       return;
-  //     }
+      if (!to) {
+        console.error("Destination account not found");
+        return;
+      }
 
-  //     const mintedNotes = await client.getConsumableNotes(Address.fromBech32(address).accountId());
+      const mintedNotes = await client.getConsumableNotes(Address.fromBech32(address).accountId());
 
-  //     if (mintedNotes.length === 0) return;
+      if (mintedNotes.length === 0) return;
 
-  //     // Set lock to prevent concurrent execution
-  //     isConsumingRef.current = true;
+      // Set lock to prevent concurrent execution
+      isConsumingRef.current = true;
 
-  //     try {
-  //       // toast
-  //       toast.loading(`Found ${mintedNotes.length} consumable notes, consuming...`);
-  //       const mintedNoteIds = mintedNotes.map(n => n.inputNoteRecord().id().toString());
-  //       const consumeTxRequest = client.newConsumeTransactionRequest(mintedNoteIds);
-  //       const consumeTxHash = await client.submitNewTransaction(to.id(), consumeTxRequest);
-  //       await client.syncState();
-  //       toast.dismiss();
-  //       toast.success(`Consumed ${mintedNotes.length} consumable notes`);
-  //     } catch (error) {
-  //       console.error("Failed to consume notes:", error);
-  //       toast.dismiss();
-  //       toast.error("Failed to consume notes");
-  //     } finally {
-  //       // Release lock
-  //       isConsumingRef.current = false;
-  //     }
-  //   }, 10000); // 10 seconds
+      try {
+        // toast
+        toast.loading(`Found ${mintedNotes.length} consumable notes, consuming...`);
+        const mintedNoteIds = mintedNotes.map(n => n.inputNoteRecord().id().toString());
+        const consumeTxRequest = client.newConsumeTransactionRequest(mintedNoteIds);
+        const consumeTxHash = await client.submitNewTransaction(to.id(), consumeTxRequest);
+        await client.syncState();
+        toast.dismiss();
+        toast.success(`Consumed ${mintedNotes.length} consumable notes`);
+      } catch (error) {
+        console.error("Failed to consume notes:", error);
+        toast.dismiss();
+        toast.error("Failed to consume notes");
+      } finally {
+        // Release lock
+        isConsumingRef.current = false;
+      }
+    }, 10000); // 10 seconds
 
-  //   return () => clearInterval(interval);
-  // }, [client, address]);
+    return () => clearInterval(interval);
+  }, [client, address]);
 
   const value: MidenContextType = {
     isLoading,
@@ -159,7 +162,7 @@ export function MidenProvider({ children }: { children: ReactNode }) {
     fetchBalances,
   };
 
-  return <MidenContext.Provider value={value}>{children}</MidenContext.Provider>;
+  return <MidenContext.Provider value={value}>{isLoading ? <FullScreenLoading /> : children}</MidenContext.Provider>;
 }
 
 // Custom hook to use the context

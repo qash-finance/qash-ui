@@ -257,9 +257,7 @@ const PayrollDetail = () => {
               <img
                 className="w-5"
                 alt={payrollData.network.name}
-                src={`/chain/${
-                  payrollData.network.name.charAt(0).toUpperCase() + payrollData.network.name.slice(1).toLowerCase()
-                }.svg`}
+                src={`/chain/${payrollData.network.name.toLowerCase().replace(" ", "-")}.svg`}
               />
               <span className="text-base font-medium text-text-primary">
                 {payrollData.network.name.charAt(0).toUpperCase() + payrollData.network.name.slice(1)}
