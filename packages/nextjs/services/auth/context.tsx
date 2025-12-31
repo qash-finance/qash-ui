@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from "react";
 import { ApiError, AuthMeResponse, ParaAuthApi } from "./api";
 
 type UserData = AuthMeResponse["user"] | null;
@@ -33,9 +33,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error: null,
   });
 
-  const [api] = useState(() => new ParaAuthApi());
+  const api = useRef(new ParaAuthApi()).current;
+  const initializeRef = useRef(false);
 
   useEffect(() => {
+    if (initializeRef.current) return; // Skip if already initialized
+    initializeRef.current = true;
+
     const initializeAuth = async () => {
       try {
         // Check for Para cookie-based auth

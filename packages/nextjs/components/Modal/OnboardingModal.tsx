@@ -60,9 +60,15 @@ export function OnboardingModal({ isOpen, onClose }: ModalProp<OnboardingModalPr
         setSuccess(false);
       }}
     >
-      <div className="flex flex-col items-center border-2 border-primary-divider bg-background w-[550px] rounded-2xl">
-        {/* Blue glow effect at the top */}
-        <main className="flex flex-col gap-6 items-center self-stretch p-3 pt-10 z-10">
+      <div className="flex flex-col items-center border-2 border-primary-divider bg-background w-[550px] rounded-2xl ">
+        <main className="flex flex-col gap-6 items-center self-stretch p-3 pt-5 z-10 relative">
+          {/* Close icon */}
+          <div
+            className="w-[28px] h-[28px] bg-app-background rounded-lg flex justify-center items-center border-b-2 border-secondary-divider cursor-pointer absolute top-4 right-4"
+            onClick={onClose}
+          >
+            <img src="/misc/close-icon.svg" alt="close icon" />
+          </div>
           {/* Token Icon and Info */}
           <div className="flex flex-col gap-4 items-center">
             <img src="/token/qash.svg" alt="QASH Token" className="w-16 h-16" />
