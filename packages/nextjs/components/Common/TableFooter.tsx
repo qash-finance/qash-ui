@@ -64,7 +64,7 @@ export function TableFooter({
       <div className="flex gap-2 items-start">
         {/* First Button */}
         <button
-          disabled={currentPage === 1}
+          disabled={totalPages === 0 || currentPage === 1}
           onClick={() => onPageChange?.(1)}
           className="flex flex-col h-8 items-center justify-center overflow-clip px-3 py-2 relative rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
         >
@@ -73,7 +73,7 @@ export function TableFooter({
 
         {/* Previous Button */}
         <button
-          disabled={currentPage === 1}
+          disabled={totalPages === 0 || currentPage === 1}
           onClick={() => onPageChange?.(currentPage - 1)}
           className="flex flex-col h-8 items-center justify-center overflow-clip px-3 py-2 relative rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
         >
@@ -100,7 +100,7 @@ export function TableFooter({
 
         {/* Next Button */}
         <button
-          disabled={currentPage === totalPages}
+          disabled={totalPages === 0 || currentPage === totalPages}
           onClick={() => onPageChange?.(currentPage + 1)}
           className="flex flex-col h-8 items-center justify-center overflow-clip px-3 py-2 relative rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
         >
@@ -109,7 +109,7 @@ export function TableFooter({
 
         {/* Last Button */}
         <button
-          disabled={currentPage === totalPages}
+          disabled={totalPages === 0 || currentPage === totalPages}
           onClick={() => onPageChange?.(totalPages)}
           className="flex flex-col h-8 items-center justify-center overflow-clip px-3 py-2 relative rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
         >

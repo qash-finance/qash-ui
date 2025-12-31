@@ -3,43 +3,17 @@ import React, { useState, useEffect } from "react";
 import { useGetPayrolls, useDeletePayroll } from "@/services/api/payroll";
 import { Header } from "./Header";
 import { BaseContainer } from "../Common/BaseContainer";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { Table } from "../Common/Table";
 import PayrollActionTooltip from "../Common/ToolTip/PayrollActionTooltip";
 import { Tooltip } from "react-tooltip";
 import { CategoryBadge } from "../ContactBook/ContactBookContainer";
-import { useAuth } from "@/services/auth/context";
 import { useGetAllEmployeeGroups } from "@/services/api/employee";
 import { CategoryShapeEnum } from "@/types/employee";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/contexts/ModalManagerProvider";
 
-const getTabs = () => [
-  {
-    id: "manage-payrolls",
-    label: "Manage Payroll",
-    description:
-      "Create payroll for your employees and wait for them to review auto sent invoices then pay the bills in one click.",
-    displayLabel: "Payroll management",
-  },
-  {
-    id: "milestone",
-    label: "Milestone",
-    description: "View all assigned tasks here",
-    displayLabel: "Milestone",
-  },
-  {
-    id: "pending",
-    label: "Pending",
-    description: "Upcoming payrolls to be paid",
-    displayLabel: "Pending Payrolls",
-  },
-];
-
 const PayrollContainer = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(() => getTabs()[0]);
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -120,23 +94,8 @@ const PayrollContainer = () => {
       ),
       Payday: payroll.paydayDay ? `${payroll.paydayDay}th every month` : "-",
       "Contract Term": <span className="font-bold text-primary-blue">{payroll.contractTerm}</span>,
-      " ": null, // Placeholder for action column
     };
   });
-
-  // Main content renderer based on active tab
-  const renderTabContent = () => {
-    switch (activeTab.id) {
-      case "active-payrolls":
-        return <div>Active Payrolls Content</div>;
-      case "payroll-history":
-        return <div>Payroll History Content</div>;
-      case "employee-management":
-        return <div>Employee Management Content</div>;
-      default:
-        return <div>Default Content</div>;
-    }
-  };
 
   return (
     <div className="w-full h-full p-5 flex flex-col items-start gap-4">
@@ -217,7 +176,6 @@ const PayrollContainer = () => {
             data={payrollData}
             actionColumn={true}
             actionRenderer={payrollActionRenderer}
-            selectedRows={selectedRows}
             className="w-full"
             columnWidths={{
               0: "200px",
