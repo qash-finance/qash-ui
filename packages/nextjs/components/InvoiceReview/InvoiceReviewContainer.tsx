@@ -82,10 +82,8 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
 
 export const InvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
-  const router = useRouter();
 
   const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser, logout } = useAuth();
-  console.log("🚀 ~ InvoiceReviewContainer ~ user:", user);
   const searchParams = useSearchParams();
   const invoiceUUID = searchParams.get("id") || "";
   const employeeEmail = searchParams.get("email") || "";
@@ -96,7 +94,6 @@ export const InvoiceReviewContainer = () => {
 
   const [step, setStep] = useState<Step>("verify");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
-  const [originalAddress, setOriginalAddress] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [authenticatingWithPara, setAuthenticatingWithPara] = useState(false);
@@ -180,7 +177,6 @@ export const InvoiceReviewContainer = () => {
           const data = await fetchInvoiceByUUID(invoiceUUID);
           const mappedData = mapApiResponseToInvoiceData(data);
           setInvoiceData(mappedData);
-          setOriginalAddress(mappedData.from.address);
           setStep("review");
         } catch (err) {
           console.error("Failed to load invoice:", err);
@@ -192,10 +188,8 @@ export const InvoiceReviewContainer = () => {
   const loadInvoice = async () => {
     try {
       const data = await fetchInvoiceByUUID(invoiceUUID);
-      console.log("🚀 ~ loadInvoice ~ data:", data);
       const mappedData = mapApiResponseToInvoiceData(data);
       setInvoiceData(mappedData);
-      setOriginalAddress(mappedData.from.address);
     } catch (err) {
       console.error("Failed to load invoice:", err);
     }

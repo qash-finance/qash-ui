@@ -175,7 +175,7 @@ const InvoiceDetail = (
               <p className={labelClass}>Network</p>
               <div className={tokenRow}>
                 <img
-                  src={`/chain/${invoiceData.from.network.toLowerCase()}.svg`}
+                  src={`/chain/${invoiceData.from.network.toLowerCase().replace(" ", "-")}.svg`}
                   alt={invoiceData.from.network}
                   className="w-6 h-6 rounded-full"
                 />
