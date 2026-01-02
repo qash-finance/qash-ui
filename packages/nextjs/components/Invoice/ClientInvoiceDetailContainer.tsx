@@ -142,17 +142,6 @@ const ClientInvoiceDetailContainer = () => {
         </div>
 
         <div className="flex flex-row gap-2">
-          {invoice.status !== InvoiceStatusEnum.PAID && invoice.status !== InvoiceStatusEnum.CANCELLED && (
-            <SecondaryButton
-              text="Pay Invoice"
-              buttonClassName="w-[150px]"
-              icon="/misc/coin-icon.svg"
-              iconPosition="left"
-              onClick={() => {
-                router.push(`/invoice/detail?id=${invoiceUUID}/pay`);
-              }}
-            />
-          )}
           <SecondaryButton
             text="View invoice PDF"
             variant="light"

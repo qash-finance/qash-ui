@@ -103,13 +103,22 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
               </div>
             ))}
 
-            {/* Totals Rows - Part of Table */}
             <div className="grid grid-cols-[1fr_80px_80px_120px] py-3">
-              <div></div>
+              {invoiceData.note ? <p className="text-xs font-semibold text-text-secondary">Note</p> : <div></div>}
               <p className="text-xs font-semibold text-text-secondary text-left">SUBTOTAL</p>
               <div></div>
               <p className="text-xs font-semibold text-text-primary text-right">{invoiceData.subtotal.toFixed(2)}</p>
             </div>
+
+            {/* Totals Rows - Part of Table */}
+            {invoiceData.note && (
+              <div className="grid grid-cols-[1fr_80px_80px_120px] flex-wrap break-words">
+                <p className="text-xs font-medium text-text-primary w-60">{invoiceData.note}</p>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            )}
 
             <div className="grid grid-cols-[1fr_80px_80px_120px]">
               <div></div>
@@ -129,7 +138,15 @@ const InvoicePreview = (invoiceData: InvoiceData) => {
           <div className="border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 w-75">
             <p className="text-xs font-semibold text-text-secondary">Payment method</p>
             <div className="flex flex-row gap-2 items-center">
-              <img src="/token/qash.svg" alt="USDT" className="w-8 h-8 rounded-full" />
+              {invoiceData.from.token.toLowerCase() === "qash" ? (
+                <img src="/logo/qash-icon.svg" alt="Qash" className="w-6" />
+              ) : (
+                <img
+                  src={`/token/${invoiceData.from.token.toLowerCase()}.svg`}
+                  alt={invoiceData.from.token}
+                  className="w-6"
+                />
+              )}
               <div className="flex flex-col">
                 <p className="text-sm font-semibold text-text-primary">{invoiceData.from.token}</p>
                 <p className="text-xs font-medium text-text-secondary">{invoiceData.from.network}</p>

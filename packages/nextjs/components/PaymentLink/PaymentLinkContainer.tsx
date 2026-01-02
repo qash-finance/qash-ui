@@ -143,14 +143,15 @@ const PaymentLinkContainer = () => {
   const handleToggleStatus = (linkIndex: number, isActive: boolean) => {
     const link = displayedLinks[linkIndex];
     if (link) {
-      const mutation = isActive ? deactivatePaymentLinkMutation : activatePaymentLinkMutation;
+      // `isActive` is the new state coming from the ToggleSwitch: true => activate, false => deactivate
+      const mutation = isActive ? activatePaymentLinkMutation : deactivatePaymentLinkMutation;
       mutation.mutate(link.code, {
         onSuccess: () => {
-          toast.success(`Payment link ${isActive ? "deactivated" : "activated"} successfully`);
+          toast.success(`Payment link ${isActive ? "activated" : "deactivated"} successfully`);
           setActiveTooltipId(null);
         },
         onError: (error: any) => {
-          toast.error(error?.message || `Failed to ${isActive ? "deactivate" : "activate"} payment link`);
+          toast.error(error?.message || `Failed to ${isActive ? "activate" : "deactivate"} payment link`);
         },
       });
     }
@@ -348,7 +349,7 @@ const PaymentLinkContainer = () => {
 
         {selectedRows.length > 0 && (
           <div
-            className="flex flex-row items-center justify-between absolute bottom-5 right-5 bg-background rounded-lg p-3 border border-primary-divider gap-2 cursor-pointer hover:bg-red-50 transition-colors"
+            className="flex flex-row items-center justify-between absolute bottom-20 right-5 bg-background rounded-lg p-3 border border-primary-divider gap-2 cursor-pointer hover:bg-red-50 transition-colors"
             onClick={handleBulkDelete}
           >
             <img src="/misc/trashcan-icon.svg" alt="trash" className="w-5 h-5" />

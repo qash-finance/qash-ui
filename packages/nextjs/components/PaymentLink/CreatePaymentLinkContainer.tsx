@@ -51,7 +51,7 @@ const ChainItem = ({ text, icon, isSelected, onClick }: ChainItemProps) => {
     >
       {icon && <img src={icon} alt="icon" className="w-5 h-5 rounded-full" />}
       <span className="text-text-primary leading-none">{text}</span>
-      <img src="/misc/circle-close-icon.svg" alt="Selected" className="w-5 h-5" />
+      {/* <img src="/misc/circle-close-icon.svg" alt="Selected" className="w-5 h-5" /> */}
     </div>
   );
 };
@@ -183,6 +183,7 @@ const CreatePaymentLinkContainer = () => {
                   <p className="text-text-secondary text-sm">Description</p>
                   <textarea
                     {...register("description", {
+                      required: "Description is required",
                       maxLength: { value: 250, message: "Description cannot exceed 250 characters" },
                     })}
                     className={`w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-secondary h-full resize-none`}
@@ -193,7 +194,6 @@ const CreatePaymentLinkContainer = () => {
                 </div>
               </div>
               <div className="flex justify-between px-3">
-                <p className="text-xs text-text-secondary">(Optional)</p>
                 <p className="text-xs text-text-secondary">{watch("description")?.length || 0}/250</p>
               </div>
               {errors.description && (

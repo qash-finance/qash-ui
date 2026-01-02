@@ -87,14 +87,7 @@ export const actionItems = [
     label: "Payment Link",
     isActive: false,
     link: SidebarLink.PaymentLink,
-    disabled: true,
-  },
-  {
-    icon: "/sidebar/payroll.svg",
-    filledIcon: "/sidebar/filled-payroll.svg",
-    label: "Earn",
-    isActive: false,
-    disabled: true,
+    disabled: false,
   },
   {
     icon: "/sidebar/invoice.svg",
@@ -103,6 +96,13 @@ export const actionItems = [
     isActive: false,
     link: SidebarLink.Invoice,
     disabled: false,
+  },
+  {
+    icon: "/sidebar/payroll.svg",
+    filledIcon: "/sidebar/filled-payroll.svg",
+    label: "Earn",
+    isActive: false,
+    disabled: true,
   },
   {
     icon: "/sidebar/move-crypto.svg",

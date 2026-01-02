@@ -305,7 +305,7 @@ const ClientInvoiceContainer = () => {
           {renderTabHeader(activeTab)}
 
           {/* Filter Button */}
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <SecondaryButton
               text="Sort"
               icon="/misc/sort-icon.svg"
@@ -322,7 +322,7 @@ const ClientInvoiceContainer = () => {
               variant="light"
               buttonClassName="px-2"
             />
-          </div>
+          </div> */}
         </div>
         <Table
           headers={[

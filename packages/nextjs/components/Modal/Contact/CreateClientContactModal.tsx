@@ -197,7 +197,7 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
 
           <div className="flex gap-2 w-full">
             <SecondaryButton variant="light" text="Cancel" onClick={handleCancel} />
-            <PrimaryButton text="Save changes" onClick={handleSubmit(onSubmit)} />
+            <PrimaryButton text="Save changes" onClick={handleSubmit(onSubmit)} disabled={!isValid} />
           </div>
         </form>
       </div>

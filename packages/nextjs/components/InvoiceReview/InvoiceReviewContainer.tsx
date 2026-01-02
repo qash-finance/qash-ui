@@ -46,6 +46,7 @@ export interface InvoiceData {
     company: string;
     address: string;
   };
+  note?: string;
   items: InvoiceItem[];
   subtotal: number;
   total: number;
