@@ -23,14 +23,7 @@ type EmailForm = {
 export default function LoginContainer() {
   const router = useRouter();
   const { loginWithPara, isLoading, error, isAuthenticated, user, refreshUser } = useAuth();
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<Step>("email");
-  const [otpError, setOtpError] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [authenticatingWithPara, setAuthenticatingWithPara] = useState(false);
-  const debouncedValidateRef = useRef<DebouncedFunc<(value: string) => void> | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
   const { openModal: openParaModal } = useParaModal();
   const { para } = useParaMiden("https://rpc.testnet.miden.io");
   const { isConnected } = useParaAccount();
@@ -117,7 +110,7 @@ export default function LoginContainer() {
             openParaModal?.();
           }}
           text={authenticatingWithPara ? "Authenticating..." : "Continue by email"}
-          disabled={authenticatingWithPara || isLoading}
+          disabled={authenticatingWithPara || isLoading || isAuthenticated}
         />
       </div>
     </div>

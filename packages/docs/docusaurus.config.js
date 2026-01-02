@@ -10,19 +10,19 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 // @ts-ignore
 const config = {
-  title: "Qash | Docs",
-  tagline: "Open-source toolkit for building dapps",
-  favicon: "img/icon-starknet.svg",
+  title: "Qash Business",
+  tagline:
+    "Private neobank for global teams to run payroll, earn yield, and spend across chains and currencies without exposing sensitive information onchain.",
+  favicon: "img/logo-qash.png",
 
   // Set the production url of your site here
-  url: "https://app.qash.finance/",
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
+  url: process.env.SITE_URL || "https://app.qash.finance",
+
   baseUrl: "/docs/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "q3x-finance",
+  organizationName: "qash-finance",
   projectName: "Qash",
 
   scripts: [
@@ -76,13 +76,15 @@ const config = {
     ({
       // Replace with your project's social card
       colorMode: {
-        respectPrefersColorScheme: true,
+        defaultMode: "light",
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
       },
-      image: "img/icon-starknet.svg",
+      image: "img/logo-qash.png",
       navbar: {
-        title: "Qash | Docs",
+        title: "Qash Documentation",
         logo: {
-          alt: "q3x-logo",
+          alt: "qash-logo",
           src: "img/logo-qash.png",
         },
         items: [
@@ -91,21 +93,26 @@ const config = {
             label: "Website",
             position: "right",
           },
+          {
+            href: "https://x.com/0xQash",
+            label: "X",
+            position: "right",
+          },
         ],
       },
       footer: {
-        style: "dark",
+        style: "light",
         links: [
           {
             title: "GitHub",
             items: [
               {
-                label: "Qash GitHub",
-                href: "https://github.com/q3x-finance",
+                label: "Organization",
+                href: "https://github.com/qash-finance",
               },
               {
-                label: "Docs GitHub",
-                href: "https://github.com/q3x-finance/qash-ui/tree/main/packages/docs",
+                label: "Docs",
+                href: "https://github.com/qash-finance/qash-ui/tree/main/packages/docs",
               },
             ],
           },
@@ -113,8 +120,8 @@ const config = {
             title: "Social",
             items: [
               {
-                label: "Twitter",
-                href: "https://x.com/qash_finance",
+                label: "X",
+                href: "https://x.com/0xQash",
               },
               {
                 label: "Telegram",
