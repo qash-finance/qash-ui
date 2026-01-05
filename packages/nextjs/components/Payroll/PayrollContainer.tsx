@@ -15,7 +15,7 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 const PayrollContainer = () => {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const { data: groups } = useGetAllEmployeeGroups();

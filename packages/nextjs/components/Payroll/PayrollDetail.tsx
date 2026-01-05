@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BaseContainer } from "../Common/BaseContainer";
 import { Table } from "../Common/Table";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { TabContainer } from "../Common/TabContainer";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { useTitle } from "@/contexts/TitleProvider";
@@ -33,7 +32,7 @@ const PayrollDetail = () => {
 
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Filter invoices based on active tab
   const getFilteredInvoices = () => {

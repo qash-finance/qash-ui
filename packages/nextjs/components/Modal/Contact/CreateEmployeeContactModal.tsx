@@ -97,7 +97,7 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
     DEFAULT_NETWORK,
   );
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
-  const { openModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
   const networkChainIds: Record<string, number> = useMemo(
     () => ({
@@ -121,6 +121,8 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
     setValue,
     watch,
   } = useForm<CreateContactFormData>({
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "",
       walletAddress: "",
@@ -194,7 +196,9 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
 
   const emailRegister = register("email", {
     pattern: {
-      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      // User-provided RFC-like email regex (escaped '/' for JS regex literal)
+      value:
+        /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
       message: "Email must be a valid email address",
     },
     maxLength: {
@@ -253,6 +257,7 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
       setSelectedNetwork(DEFAULT_NETWORK);
       setSelectedGroup(undefined);
       onClose();
+      closeModal("CHOOSE_CONTACT_TYPE");
     } catch (error) {
       console.error("Failed to create contact:", error);
       toast.error("Failed to create contact");
@@ -299,7 +304,6 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
             register={emailRegister}
             error={errors.email?.message}
             disabled={createEmployee.isPending}
-            required
           />
 
           <FormInput
@@ -313,7 +317,7 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
 
           <input type="hidden" {...groupIdRegister} value={selectedGroup?.id ?? ""} />
 
-          {/* Token Selection */}
+          {/* Network Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">
             <button
               type="button"

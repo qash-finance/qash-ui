@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { SelectClientModalProps } from "@/types/modal";
-import { ModalProp } from "@/contexts/ModalManagerProvider";
+import { ModalProp, useModal } from "@/contexts/ModalManagerProvider";
 import { ModalHeader } from "../../Common/ModalHeader";
 import BaseModal from "../BaseModal";
 import { useGetClients } from "@/services/api/client";
@@ -11,6 +11,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ClientResponseDto } from "@/types/client";
 import { useAuth } from "@/services/auth/context";
 import toast from "react-hot-toast";
+import { PrimaryButton } from "@/components/Common/PrimaryButton";
+import { useRouter } from "next/navigation";
 
 interface ClientItemProps {
   name: string;
@@ -47,7 +49,7 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
   } = useGetClients({ page: 1, limit: 1000 }, { enabled: isAuthenticated && isOpen });
   const { isConnected } = useWalletConnect();
   const queryClient = useQueryClient();
-
+  const router = useRouter();
   // **************** Local State *******************
   const [selectedId, setSelectedId] = useState<string>("");
   const [selectedName, setSelectedName] = useState<string>("");
@@ -159,7 +161,7 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
 
         {/* Client List */}
         <section className="overflow-y-auto flex flex-col gap-2.5 items-start self-stretch flex-[1_0_0] w-full">
-          <h2 className="leading-5 text-text-secondary">
+          <h2 className="leading-5 text-text-secondary mt-1">
             {filteredClients?.length || 0} contact{filteredClients?.length !== 1 ? "s" : ""}
           </h2>
 
@@ -184,8 +186,15 @@ export function SelectClientModal({ isOpen, onClose, onSave }: ModalProp<SelectC
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full w-full">
-              <p className="text-text-secondary">No contacts available</p>
+            <div className="flex items-center justify-center h-full w-full flex-col gap-2">
+              <p className="text-text-secondary text-xl">No contacts available. Create your first client</p>
+              <PrimaryButton
+                text="Create Client"
+                onClick={() => {
+                  router.push("/contact-book");
+                }}
+                containerClassName="w-40"
+              />
             </div>
           )}
         </section>

@@ -17,6 +17,7 @@ import { CreatePaymentLink, TokenMetadata } from "@/types/payment-link";
 import { useRouter } from "next/navigation";
 import { PaymentLinkPreview } from "./PaymentLinkPreview";
 import { useMidenProvider } from "@/contexts/MidenProvider";
+import { useAuth } from "@/services/auth/context";
 
 interface CreatePaymentLinkFormData {
   title: string;
@@ -93,6 +94,7 @@ const NetworkBadge = ({ networkId }: { networkId: string }) => {
 
 const CreatePaymentLinkContainer = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const { address: walletAddress } = useMidenProvider();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(null);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
@@ -280,6 +282,8 @@ const CreatePaymentLinkContainer = () => {
           </div>
 
           <PaymentLinkPreview
+            recipient={user?.teamMembership?.company?.companyName || "Your Company"}
+            paymentWalletAddress={walletAddress || ""}
             amount={watch("amount") || ""}
             title={watch("title") || ""}
             description={watch("description") || ""}

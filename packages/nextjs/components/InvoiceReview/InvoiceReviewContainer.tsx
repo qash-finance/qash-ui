@@ -86,7 +86,7 @@ export const InvoiceReviewContainer = () => {
 
   const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser, logout } = useAuth();
   const searchParams = useSearchParams();
-  const invoiceUUID = searchParams.get("id") || "";
+  const invoiceUUID = searchParams.get("uuid") || "";
   const employeeEmail = searchParams.get("email") || "";
   const { openModal: openParaModal } = useParaModal();
   const { para } = useParaMiden("https://rpc.testnet.miden.io");
@@ -132,7 +132,9 @@ export const InvoiceReviewContainer = () => {
         return;
       }
 
-      toast.success("Successfully authenticated with Para");
+      toast.success("Successfully authenticated with Para", {
+        id: "para-auth-success",
+      });
 
       // Load invoice data
       await loadInvoice();

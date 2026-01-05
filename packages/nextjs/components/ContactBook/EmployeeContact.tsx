@@ -449,7 +449,7 @@ export const EmployeeContact = () => {
           onDragEnd={handleReorder}
           selectedRows={checkedRows}
           showFooter={false}
-          showPagination={tableData.length !== 0}
+          showPagination={true}
           currentPage={currentPage}
           rowsPerPage={rowsPerPage}
           onPageChange={setCurrentPage}

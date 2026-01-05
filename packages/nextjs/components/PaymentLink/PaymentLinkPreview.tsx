@@ -42,6 +42,8 @@ const SubIcon = ({
 };
 
 interface PaymentLinkPreviewProps {
+  recipient: string;
+  paymentWalletAddress: string;
   amount: string;
   title: string;
   description: string;
@@ -52,6 +54,8 @@ interface PaymentLinkPreviewProps {
 }
 
 export const PaymentLinkPreview = ({
+  recipient,
+  paymentWalletAddress,
   amount,
   title,
   description,
@@ -77,14 +81,12 @@ export const PaymentLinkPreview = ({
               />
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm truncate text-text-primary leading-none">
-                    {(user as AuthMeResponse["user"])?.teamMembership?.company?.companyName}
-                  </span>
+                  <span className="text-sm truncate text-text-primary leading-none">{recipient}</span>
                   <img src="/logo/miden.svg" className="w-4" alt="miden logo icon" />
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm truncate text-text-secondary leading-none">
-                    {formatAddress(walletAddress?.toString() || "0x")}
+                    {formatAddress(paymentWalletAddress || "0x")}
                   </span>
                   <img
                     src="/misc/copy-icon.svg"

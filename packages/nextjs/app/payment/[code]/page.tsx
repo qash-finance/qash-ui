@@ -25,6 +25,7 @@ import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { PaymentLinkPreview } from "@/components/PaymentLink/PaymentLinkPreview";
 import { useMidenProvider } from "@/contexts/MidenProvider";
+import { useAuth } from "@/services/auth/context";
 
 const SubIcon = ({
   icon,
@@ -52,10 +53,14 @@ const SubIcon = ({
 };
 
 const Header = () => {
+  const { user } = useAuth();
   const { openModal } = useModal();
   const { address: walletAddress } = useMidenProvider();
 
   const router = useRouter();
+
+  // Simplified behavior: show setup when there is no user, otherwise show home
+  const hasUser = !!user;
 
   return (
     <div className="w-full flex justify-between items-center p-2 pt-1">
@@ -80,13 +85,24 @@ const Header = () => {
           </div>
         )}
 
-        <div
-          className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
-          onClick={() => router.push("/")}
-        >
-          <img src="/sidebar/filled-home.svg" alt="Qash Logo" />
-          <span className="text-text-primary text-lg font-semibold">Go to Home</span>
-        </div>
+        {/* If user is null show setup, otherwise show go home */}
+        {hasUser ? (
+          <div
+            className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
+            onClick={() => router.push("/")}
+          >
+            <img src="/sidebar/filled-home.svg" alt="Qash Logo" />
+            <span className="text-text-primary text-lg font-semibold">Go to Home</span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
+            onClick={() => router.push("/onboarding")}
+          >
+            <img src="/sidebar/filled-home.svg" alt="Setup" />
+            <span className="text-text-primary text-lg font-semibold">Set up your account</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -126,6 +142,8 @@ const PaymentLinkDetailPage = () => {
     }
 
     try {
+      setIsSending(true);
+
       openModal("PROCESSING_TRANSACTION");
       // prepare an array of p2id note
       const p2idNotes: any[] = [];
@@ -218,6 +236,7 @@ const PaymentLinkDetailPage = () => {
       console.error(error);
       toast.error("Failed to process the transaction");
     } finally {
+      setIsSending(false);
       closeModal("PROCESSING_TRANSACTION");
     }
   };
@@ -273,6 +292,8 @@ const PaymentLinkDetailPage = () => {
 
         <div className="flex flex-col gap-5 py-5 w-[80%]">
           <PaymentLinkPreview
+            recipient={paymentLink.company.companyName}
+            paymentWalletAddress={paymentLink.paymentWalletAddress}
             amount={paymentLink.amount}
             title={paymentLink.title}
             description={paymentLink.description}

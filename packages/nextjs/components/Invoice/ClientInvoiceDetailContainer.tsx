@@ -26,7 +26,7 @@ const ClientInvoiceDetailContainer = () => {
   // Action handlers for invoice menu
   const handleCopyInvoiceLink = async () => {
     try {
-      const link = `${window.location.origin}/invoice/detail?id=${invoiceUUID}/public`;
+      const link = `${window.location.origin}/invoice-review/b2b?id=${invoiceUUID}`;
       await navigator.clipboard.writeText(link);
       toast.success("Invoice link copied to clipboard");
     } catch (err) {

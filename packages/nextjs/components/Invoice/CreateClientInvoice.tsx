@@ -26,6 +26,9 @@ import {
 } from "@/types/invoice";
 import { ClientResponseDto } from "@/types/client";
 import { AssetWithMetadata } from "@/types/faucet";
+import { useAuth } from "@/services/auth/context";
+import { AuthMeResponse } from "@/services/auth/api";
+import { InvoiceModalProps } from "@/types/modal";
 
 const LAST_STEP = 4;
 
@@ -103,6 +106,7 @@ interface FormData {
 const CreateClientInvoice = () => {
   const { openModal } = useModal();
   const router = useRouter();
+  const { user } = useAuth();
   const { data: myCompany, isLoading: companyLoading } = useGetMyCompany();
   const [currentStep, setCurrentStep] = useState(1);
   const [invoiceSent, setInvoiceSent] = useState(false);
@@ -110,7 +114,7 @@ const CreateClientInvoice = () => {
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [createdInvoice, setCreatedInvoice] = useState<InvoiceModel | null>(null);
+  const [createdInvoice, setCreatedInvoice] = useState<any>(null);
   const [ccEmailInput, setCcEmailInput] = useState("");
 
   const {
@@ -125,10 +129,7 @@ const CreateClientInvoice = () => {
     defaultValues: {
       // From details (sender)
       name: "",
-      companyName: "",
       email: "",
-      address: "",
-      city: "",
       state: "",
       country: "",
       postalCode: "",
@@ -199,6 +200,21 @@ const CreateClientInvoice = () => {
       setValue("address", address);
     }
   }, [myCompany]);
+
+  useEffect(() => {
+    if (user) {
+      const first = (user as AuthMeResponse["user"])?.teamMembership?.firstName ?? "";
+      const last = (user as AuthMeResponse["user"])?.teamMembership?.lastName ?? "";
+      const fullName = [first, last].filter(Boolean).join(" ");
+      const email = (user as AuthMeResponse["user"])?.email ?? "";
+      if (fullName) {
+        setValue("name", fullName);
+      }
+      if (email) {
+        setValue("email", email);
+      }
+    }
+  }, [user]);
 
   // Calculate totals
   const { subtotal, taxAmount, total } = useMemo(() => {
@@ -480,10 +496,10 @@ const CreateClientInvoice = () => {
       await sendB2BInvoice(invoice.uuid);
 
       // If recurring, create a schedule
-      if (formData.paymentCollectionType === "recurring") {
-        const scheduleDto = buildCreateScheduleDto(invoice.uuid);
-        await createB2BSchedule(scheduleDto);
-      }
+      // if (formData.paymentCollectionType === "recurring") {
+      //   const scheduleDto = buildCreateScheduleDto(invoice.uuid);
+      //   await createB2BSchedule(scheduleDto);
+      // }
 
       setInvoiceSent(true);
       toast.success("Invoice sent successfully!");
@@ -515,12 +531,62 @@ const CreateClientInvoice = () => {
   };
 
   const handleNext = () => {
-    // Prevent advancing from Invoice details (step 3) if there are no items
-    if (currentStep === 3 && formData.items.length === 0) {
-      const msg = "Please add at least one item to the invoice.";
+    // Prevent advancing from Step 2 if recipient info is missing
+    if (currentStep === 2 && !formData.billToCompanyName && !formData.billToEmail) {
+      const msg = "Please select a client or enter recipient company or email.";
       setError(msg);
       toast.error(msg);
       return;
+    }
+
+    // Validate Step 3 fields: token, network, wallet address, and item details
+    if (currentStep === 3) {
+      // Require due date for one-time payments
+      if (formData.paymentCollectionType === "one-time" && (!formData.dueDate || formData.dueDate.trim() === "")) {
+        const msg = "Please select a due date for the invoice.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!formData.token || !formData.token.symbol) {
+        const msg = "Please select a token to receive payment.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!formData.network || !formData.network.name) {
+        const msg = "Please select a network.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!formData.walletAddress || formData.walletAddress.trim() === "") {
+        const msg = "Please enter a wallet address to receive payment.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (formData.items.length === 0) {
+        const msg = "Please add at least one item to the invoice.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      const invalidItem = formData.items.find(
+        item => !item.description || item.description.trim() === "" || !item.price || item.price.trim() === "",
+      );
+
+      if (invalidItem) {
+        const msg = "Please make sure each item has a description and price.";
+        setError(msg);
+        toast.error(msg);
+        return;
+      }
     }
 
     if (currentStep < LAST_STEP) {
@@ -1101,15 +1167,65 @@ const CreateClientInvoice = () => {
         {/* View Invoice Button */}
         <SecondaryButton
           text="View Invoice"
-          onClick={() => {
-            if (createdInvoice?.uuid) {
-              router.push(`/invoice/${createdInvoice.uuid}`);
-            }
-          }}
-          buttonClassName="w-auto px-4"
           variant="light"
-          iconPosition="left"
+          buttonClassName="w-[130px]"
           icon="/misc/eye-icon.svg"
+          iconPosition="left"
+          onClick={() => {
+            openModal<InvoiceModalProps>("INVOICE_MODAL", {
+              invoice: {
+                amountDue: createdInvoice?.total!,
+                billTo: {
+                  address:
+                    createdInvoice?.toCompanyAddress ||
+                    [
+                      createdInvoice?.toDetails?.address1,
+                      createdInvoice?.toDetails?.address2,
+                      createdInvoice?.toDetails?.city,
+                      createdInvoice?.toDetails?.country,
+                    ]
+                      .filter(Boolean)
+                      .join(", "),
+                  email: createdInvoice?.toCompanyEmail || createdInvoice?.emailTo,
+                  name: createdInvoice?.toCompanyContactName || createdInvoice?.toCompanyName,
+                  company: createdInvoice?.toCompanyName || "",
+                },
+                paymentToken: {
+                  name: createdInvoice?.paymentToken?.symbol?.toUpperCase() || "USDT",
+                },
+                currency: createdInvoice?.currency || "USD",
+                date: createdInvoice?.issueDate!,
+                dueDate: createdInvoice?.dueDate!,
+                from: {
+                  name: createdInvoice?.fromDetails?.contactName || createdInvoice?.fromDetails?.companyName || "",
+                  address: [
+                    createdInvoice?.fromDetails?.address1,
+                    createdInvoice?.fromDetails?.city,
+                    createdInvoice?.fromDetails?.state,
+                    createdInvoice?.fromDetails?.country,
+                    createdInvoice?.fromDetails?.postalCode,
+                  ]
+                    .filter(Boolean)
+                    .join(", "),
+                  email: createdInvoice?.fromDetails?.email || "",
+                  company: createdInvoice?.fromDetails?.companyName || "",
+                },
+                invoiceNumber: createdInvoice?.invoiceNumber!,
+                items:
+                  formData.items?.map((item: FormItem) => ({
+                    name: item.description,
+                    rate: parseFloat(item.price) || 0,
+                    qty: parseFloat(item.qty) || 0,
+                    amount: parseFloat(item.amount) || 0,
+                  })) || [],
+                subtotal: parseFloat(createdInvoice?.subtotal?.toString() || "0"),
+                tax: 0,
+                total: parseFloat(createdInvoice?.total?.toString() || "0"),
+                walletAddress: createdInvoice?.paymentWalletAddress || createdInvoice?.walletAddress || "",
+                network: createdInvoice?.paymentNetwork?.name || "Miden",
+              },
+            });
+          }}
         />
 
         {/* Copy Link Button */}
@@ -1117,7 +1233,7 @@ const CreateClientInvoice = () => {
           text="Copy Link"
           onClick={() => {
             if (createdInvoice?.uuid) {
-              const invoiceUrl = `${window.location.origin}/invoice/${createdInvoice.uuid}/public`;
+              const invoiceUrl = `${window.location.origin}/invoice-review/b2b?id=${createdInvoice.uuid}`;
               navigator.clipboard.writeText(invoiceUrl);
             }
           }}
@@ -1136,8 +1252,8 @@ const CreateClientInvoice = () => {
 
       {/* Go to Dashboard Button */}
       <button
-        onClick={() => router.push("/dashboard")}
-        className="flex gap-2 items-center px-4 py-2.5 text-primary-blue font-medium text-sm hover:opacity-80 transition-opacity"
+        onClick={() => router.push("/invoice")}
+        className="flex gap-2 items-center px-4 py-2.5 text-primary-blue font-medium text-sm hover:opacity-80 transition-opacity cursor-pointer"
       >
         <img src="/misc/blue-home-icon.svg" alt="back" className="w-5 h-5" />
         Go to dashboard
@@ -1165,7 +1281,9 @@ const CreateClientInvoice = () => {
               <StepIndicator />
 
               {/* Form Content */}
-              {renderStepContent()}
+              <div key={currentStep} className="w-full">
+                {renderStepContent()}
+              </div>
             </>
           )}
         </div>
@@ -1204,7 +1322,7 @@ const CreateClientInvoice = () => {
           status={createdInvoice?.status || "DRAFT"}
         />
 
-        <div className="fixed bottom-0 left-0 right-0 backdrop-blur-md bg-white/70 border-t border-primary-divider flex items-center justify-end px-10 py-4">
+        <div className="fixed bottom-0 left-0 right-0 backdrop-blur-md bg-white/70 border-t border-primary-divider flex items-center justify-end px-10 py-4 z-10">
           {/* <SecondaryButton
             text={isLoading ? "Saving..." : "Save Draft"}
             onClick={handleSaveDraft}
@@ -1222,7 +1340,7 @@ const CreateClientInvoice = () => {
               text={isLoading ? "Processing..." : currentStep === LAST_STEP ? "Send Invoice" : "Next"}
               onClick={handleNext}
               containerClassName="w-28"
-              disabled={isLoading || (currentStep === 3 && formData.items.length === 0)}
+              disabled={isLoading}
             />
           </div>
         </div>

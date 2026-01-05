@@ -255,7 +255,7 @@ const BillReviewContainer = () => {
       console.log("Start mutating bills");
       payBillsMutate.mutate({
         billUUIDs: selectedInvoices.map(inv => inv.bill?.uuid),
-        transactionHash: "",
+        transactionHash: executedTx.executedTransaction().id().toHex(),
       });
       closeModal("PROCESSING_TRANSACTION");
       openModal<TransactionOverviewModalProps>("TRANSACTION_OVERVIEW", {

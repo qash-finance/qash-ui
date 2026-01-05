@@ -94,7 +94,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   const isFullscreen = useMemo(() => {
     if (!pathname) return false;
-    return Array.from(fullscreenPages).some(p => (p.endsWith("/") ? pathname.startsWith(p) : pathname === p));
+    return Array.from(fullscreenPages).some(
+      p =>
+        // Fullscreen when the pathname equals the page or is a subpath (e.g. "/invoice-review/b2b")
+        pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`),
+    );
   }, [pathname]);
 
   return (

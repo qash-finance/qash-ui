@@ -409,7 +409,7 @@ const ClientInvoiceContainer = () => {
 
           const handleCopyInvoiceLink = async () => {
             try {
-              const link = `${window.location.origin}/invoice/b2b/${invoice.uuid}/public`;
+              const link = `${window.location.origin}/invoice-review/b2b?id=${invoice.uuid}`;
               await navigator.clipboard.writeText(link);
               toast.success("Invoice link copied to clipboard");
             } catch (err) {
