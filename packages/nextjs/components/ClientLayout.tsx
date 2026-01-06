@@ -47,6 +47,7 @@ const fullscreenPages = new Set([
   "/onboarding",
   "/payment/",
   "/invoice-review",
+  "/invoice/create",
 ]);
 
 const TestnetBanner = () => (
@@ -60,7 +61,7 @@ const TestnetBanner = () => (
 
 const paraClientConfig = {
   env: Environment.BETA,
-  apiKey: "beta_cc45a1c8bbfbeb71c1ce2d51c44ba512",
+  apiKey: process.env.NEXT_PUBLIC_PARA_API_KEY || "",
 };
 
 const paraConfig = { appName: "Qash x Para" };
