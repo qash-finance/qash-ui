@@ -158,7 +158,7 @@ const EditPayroll = () => {
       employee,
     } = formData;
 
-    if (!selectedNetwork || !selectedToken.metadata.symbol || !employeeId) {
+    if (!selectedNetwork || !selectedToken.metadata.symbol || !employeeId || !payrollId) {
       toast.error("Missing required fields");
       return;
     }
@@ -210,7 +210,14 @@ const EditPayroll = () => {
 
     setIsSubmitting(true);
     try {
-      await updatePayroll({ id: employeeId, data: updatePayrollDto });
+      const payrollIdNum = payrollId ? parseInt(payrollId) : payrollData?.id;
+      if (!payrollIdNum) {
+        toast.error("Missing payroll id");
+        setIsSubmitting(false);
+        return;
+      }
+
+      await updatePayroll({ id: payrollIdNum, data: updatePayrollDto });
 
       toast.success("Payroll updated successfully");
 
