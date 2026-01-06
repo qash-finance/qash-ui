@@ -1,5 +1,5 @@
 import React from "react";
-import { InvoiceData } from "../../InvoiceReview/InvoiceReviewContainer";
+import { InvoiceData } from "../../InvoiceReview/EmployeeInvoiceReviewContainer";
 
 const PreviewCard = ({
   name,

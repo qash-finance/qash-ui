@@ -81,7 +81,7 @@ const InvoiceSuccess = ({ message }: { message: string }) => {
   );
 };
 
-export const InvoiceReviewContainer = () => {
+export const EmployeeInvoiceReviewContainer = () => {
   const { openModal, closeModal } = useModal();
 
   const { isAuthenticated, isLoading: authIsLoading, user, loginWithPara, refreshUser, logout } = useAuth();

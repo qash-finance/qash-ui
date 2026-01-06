@@ -1322,28 +1322,30 @@ const CreateClientInvoice = () => {
           status={createdInvoice?.status || "DRAFT"}
         />
 
-        <div className="fixed bottom-0 left-0 right-0 backdrop-blur-md bg-white/70 border-t border-primary-divider flex items-center justify-end px-10 py-4 z-10">
-          {/* <SecondaryButton
+        {!invoiceSent && (
+          <div className="fixed bottom-0 left-0 right-0 backdrop-blur-md bg-white/70 border-t border-primary-divider flex items-center justify-end px-10 py-4 z-10">
+            {/* <SecondaryButton
             text={isLoading ? "Saving..." : "Save Draft"}
             onClick={handleSaveDraft}
             buttonClassName="w-auto px-4"
             variant="light"
             disabled={isLoading}
           /> */}
-          <div className="flex gap-4 items-center">
-            {currentStep > 1 && (
-              <span className=" font-medium cursor-pointer" onClick={handleBack}>
-                Back
-              </span>
-            )}
-            <PrimaryButton
-              text={isLoading ? "Processing..." : currentStep === LAST_STEP ? "Send Invoice" : "Next"}
-              onClick={handleNext}
-              containerClassName="w-28"
-              disabled={isLoading}
-            />
+            <div className="flex gap-4 items-center">
+              {currentStep > 1 && (
+                <span className=" font-medium cursor-pointer" onClick={handleBack}>
+                  Back
+                </span>
+              )}
+              <PrimaryButton
+                text={isLoading ? "Processing..." : currentStep === LAST_STEP ? "Send Invoice" : "Next"}
+                onClick={handleNext}
+                containerClassName="w-28"
+                disabled={isLoading}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

@@ -195,7 +195,7 @@ const BillContainer = () => {
       ),
       "Creation date": createdDate,
       Invoice: b.invoice?.invoiceNumber || b.uuid,
-      Name: b.invoice?.fromDetails?.name,
+      Name: b.invoice?.fromDetails?.name || (b.invoice?.fromDetails as any).companyName,
       Group: (
         <div className="flex justify-center items-center">
           <CategoryBadge

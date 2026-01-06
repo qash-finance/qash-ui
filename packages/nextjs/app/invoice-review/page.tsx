@@ -1,4 +1,4 @@
-import { InvoiceReviewContainer } from "@/components/InvoiceReview/InvoiceReviewContainer";
+import { EmployeeInvoiceReviewContainer } from "@/components/InvoiceReview/EmployeeInvoiceReviewContainer";
 import React, { Suspense } from "react";
 
 export default function InvoiceReviewPage() {
@@ -10,7 +10,7 @@ export default function InvoiceReviewPage() {
         </div>
       }
     >
-      <InvoiceReviewContainer />
+      <EmployeeInvoiceReviewContainer />
     </Suspense>
   );
 }
