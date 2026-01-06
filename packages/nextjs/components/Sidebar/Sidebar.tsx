@@ -38,6 +38,7 @@ export enum SidebarLink {
   Transactions = "transactions",
   Bill = "bill",
   Invoice = "invoice",
+  Setting = "setting",
 }
 
 // Enum for submenu types
@@ -114,14 +115,14 @@ export const actionItems = [
     hasSubmenu: true,
     submenuType: SubmenuType.MoveCrypto,
   },
-  // {
-  //   icon: "/sidebar/setting.svg",
-  //   filledIcon: "/sidebar/filled-setting.svg",
-  //   label: "Setting",
-  //   isActive: false,
-  //   link: SidebarLink.Transactions,
-  //   disabled: true,
-  // },
+  {
+    icon: "/sidebar/setting.svg",
+    filledIcon: "/sidebar/filled-setting.svg",
+    label: "Setting",
+    isActive: false,
+    link: SidebarLink.Setting,
+    disabled: false,
+  },
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {
