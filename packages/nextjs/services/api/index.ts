@@ -1,5 +1,26 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
+// Extract user-friendly error message from API response
+function extractErrorMessage(errorData: any): string {
+  let message = "";
+  
+  if (Array.isArray(errorData?.message)) {
+    // NestJS validation error array - extract first constraint message
+    const firstError = errorData.message[0];
+    if (firstError?.constraints) {
+      const constraintKey = Object.keys(firstError.constraints)[0];
+      message = firstError.constraints[constraintKey];
+    }
+  } else if (errorData?.message) {
+    message = errorData.message;
+  } else {
+    return "An Unexpected Error Occurred";
+  }
+
+  // Capitalize first letter for formal tone
+  return message.charAt(0).toUpperCase() + message.slice(1);
+}
+
 export class AuthenticatedApiClient {
   private axiosInstance: AxiosInstance;
   private onUnauthenticated: () => void;
@@ -35,8 +56,29 @@ export class AuthenticatedApiClient {
       async error => {
         const status = error.response?.status;
         const url = error.config?.url;
+        const errorData = error.response?.data;
 
-        console.error(`❌ API Error ${status} on ${url}:`, error.response?.data);
+        // Log validation errors with constraints or fall back to error message
+        let errorLog = errorData;
+        if (Array.isArray(errorData?.message)) {
+          // NestJS validation error array - extract constraints
+          const validationErrors = errorData.message.map((err: any) => ({
+            property: err.property,
+            constraints: err.constraints,
+          }));
+          errorLog = { validationErrors, statusCode: errorData.statusCode };
+        } else if (errorData?.target && errorData?.constraints) {
+          // Single validation error object
+          errorLog = { constraints: errorData.constraints, statusCode: errorData.statusCode };
+        } else if (typeof errorData === 'object' && errorData?.message) {
+          // Fall back to message if available
+          errorLog = errorData.message;
+        }
+
+        console.error(`❌ API Error ${status} on ${url}:`, errorLog);
+
+        // Attach user-friendly error message to error for components to use
+        (error as any).userMessage = extractErrorMessage(errorData);
 
         // Handle unauthorized errors
         if (status === 401) {

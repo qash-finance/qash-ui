@@ -330,9 +330,9 @@ export function EditEmployeeContactModal({
       setSelectedGroup(undefined);
       setSelectedNetwork(null);
       onClose();
-    } catch (error) {
-      console.error("Failed to update contact:", error);
-      toast.error("Failed to update contact");
+    } catch (error: any) {
+      const errorMessage = error.userMessage || error.message || "An unexpected error occurred";
+      toast.error(errorMessage);
     }
   };
 

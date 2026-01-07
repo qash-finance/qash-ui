@@ -1,7 +1,8 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiServerWithAuth } from "./index";
-import { TeamMembership } from "@/types/team-member";
+import { TeamMembership, UpdateTeamMemberDto } from "@/types/team-member";
+import { useAuth } from "../auth/context";
 
 // Query params for filtering team members
 export interface TeamMemberSearchQuery {
@@ -48,5 +49,38 @@ export function useGetCompanyTeamMembers(
 		refetchOnMount: true,
 		refetchOnWindowFocus: false,
 		refetchOnReconnect: true,
+	});
+}
+
+/**
+ * Update a team member
+ * @param teamMemberId Team member ID
+ * @param updateDto Update data
+ */
+export async function updateTeamMember(
+	teamMemberId: number,
+	updateDto: UpdateTeamMemberDto
+): Promise<TeamMembership> {
+	const url = `/kyb/team-members/${teamMemberId}`;
+	return apiServerWithAuth.putData<TeamMembership>(url, updateDto);
+}
+
+/**
+ * React Query hook to update a team member
+ */
+export function useUpdateTeamMember() {
+    const { refreshUser } = useAuth();
+
+
+	return useMutation<
+		TeamMembership,
+		Error,
+		{ teamMemberId: number; updateDto: UpdateTeamMemberDto }
+	>({
+		mutationFn: ({ teamMemberId, updateDto }) =>
+			updateTeamMember(teamMemberId, updateDto),
+		onSuccess: () => {
+			refreshUser();
+		},
 	});
 }

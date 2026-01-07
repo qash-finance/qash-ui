@@ -315,7 +315,7 @@ const EmptyRow = ({
     <tr>
       <td
         colSpan={headers.length + (actionColumn ? 1 : 0) + (draggable ? 1 : 0)}
-        className="px-3 py-[155px] text-center"
+        className="m-auto pt-[50px] text-center"
         style={{
           backgroundColor: "var(--color-table-row-background)",
           color: "var(--color-table-row-text)",
@@ -377,7 +377,6 @@ export function Table({
       const newIndex = items.findIndex((_, index) => `row-${index}` === over?.id);
 
       const newItems = arrayMove(items, oldIndex, newIndex);
-      console.log("🚀 ~ handleDragEnd ~ newItems:", newItems);
 
       setItems(newItems);
       onDragEnd?.(newItems);
@@ -386,7 +385,10 @@ export function Table({
 
   if (draggable) {
     return (
-      <div className="flex flex-col h-full">
+      <div
+        className="flex flex-col h-full rounded-2xl"
+        style={{ backgroundColor: paginatedData.length > 0 ? "" : "var(--color-background)" }}
+      >
         <div className={getTableClass(headerClassName, className, showPagination)} style={tableStyle}>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <table className="w-full table-auto">
@@ -461,7 +463,10 @@ export function Table({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div
+      className="flex flex-col h-full rounded-2xl"
+      style={{ backgroundColor: paginatedData.length > 0 ? "" : "var(--color-background)" }}
+    >
       <div className={getTableClass(headerClassName, className, showPagination)} style={tableStyle}>
         <table className="w-full table-auto relative">
           <TableHeader

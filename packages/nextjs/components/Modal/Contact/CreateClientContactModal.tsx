@@ -109,9 +109,9 @@ export function CreateClientContactModal({ isOpen, onClose, zIndex }: ModalProp<
       setShowAdditionalDetails(false);
       onClose();
       closeModal("CHOOSE_CONTACT_TYPE");
-    } catch (error) {
-      console.error("Failed to create client:", error);
-      toast.error("Failed to create client");
+    } catch (error: any) {
+      const errorMessage = error.userMessage || error.message || "An unexpected error occurred";
+      toast.error(errorMessage);
     }
   };
 

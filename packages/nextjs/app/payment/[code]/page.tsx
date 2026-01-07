@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetPaymentLinkByCode, useRecordPayment } from "@/services/api/payment-link";
 import { BaseContainer } from "@/components/Common/BaseContainer";
 import { PrimaryButton } from "@/components/Common/PrimaryButton";
@@ -26,6 +26,8 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { PaymentLinkPreview } from "@/components/PaymentLink/PaymentLinkPreview";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 import { useAuth } from "@/services/auth/context";
+import { useAccount as useParaAccount } from "@getpara/react-sdk";
+import { useParaMiden } from "miden-para-react";
 
 const SubIcon = ({
   icon,
@@ -60,7 +62,7 @@ const Header = () => {
   const router = useRouter();
 
   // Simplified behavior: show setup when there is no user, otherwise show home
-  const hasUser = !!user;
+  const hasCompany = !!user?.teamMembership?.companyId || !!user?.teamMembership?.company;
 
   return (
     <div className="w-full flex justify-between items-center p-2 pt-1">
@@ -85,24 +87,25 @@ const Header = () => {
           </div>
         )}
 
-        {/* If user is null show setup, otherwise show go home */}
-        {hasUser ? (
-          <div
-            className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
-            onClick={() => router.push("/")}
-          >
-            <img src="/sidebar/filled-home.svg" alt="Qash Logo" />
-            <span className="text-text-primary text-lg font-semibold">Go to Home</span>
-          </div>
-        ) : (
-          <div
-            className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
-            onClick={() => router.push("/onboarding")}
-          >
-            <img src="/sidebar/filled-home.svg" alt="Setup" />
-            <span className="text-text-primary text-lg font-semibold">Set up your account</span>
-          </div>
-        )}
+        {/* Only show setup/home button after wallet is connected */}
+        {walletAddress &&
+          (hasCompany ? (
+            <div
+              className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
+              onClick={() => router.push("/")}
+            >
+              <img src="/sidebar/filled-home.svg" alt="Qash Logo" />
+              <span className="text-text-primary text-lg font-semibold">Go to Home</span>
+            </div>
+          ) : (
+            <div
+              className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
+              onClick={() => router.push("/onboarding")}
+            >
+              <img src="/sidebar/filled-home.svg" alt="Setup" />
+              <span className="text-text-primary text-lg font-semibold">Set up your account</span>
+            </div>
+          ))}
       </div>
     </div>
   );
@@ -111,15 +114,62 @@ const Header = () => {
 const PaymentLinkDetailPage = () => {
   const params = useParams();
   const code = params.code as string;
-  const { address: walletAddress, openModal: openParaModal } = useMidenProvider();
+  const { loginWithPara, isAuthenticated, user, refreshUser } = useAuth();
+  const { address: walletAddress, openModal: openParaModal, client: midenClient } = useMidenProvider();
   const { data: paymentLink, isLoading, error } = useGetPaymentLinkByCode(code);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
   const recordPaymentMutation = useRecordPayment();
   const { openModal, closeModal } = useModal();
   const [isSending, setIsSending] = useState(false);
-  const { client: midenClient } = useMidenProvider();
+  const [authenticatingWithPara, setAuthenticatingWithPara] = useState(false);
   const router = useRouter();
+  const isAuthenticatingRef = useRef(false);
+  const { isConnected } = useParaAccount();
+  const { para } = useParaMiden("https://rpc.testnet.miden.io");
+
+  // Handle Para authentication after connection
+  const handleParaAuthentication = async () => {
+    // Prevent duplicate authentication attempts
+    if (isAuthenticatingRef.current) {
+      return;
+    }
+
+    if (!isConnected || !para) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    isAuthenticatingRef.current = true;
+    setAuthenticatingWithPara(true);
+    try {
+      // Issue JWT from Para
+      const jwtResult = await para.issueJwt();
+
+      if (!jwtResult?.token) {
+        throw new Error("Failed to get JWT token from Para");
+      }
+
+      await loginWithPara(jwtResult.token);
+
+      toast.success("Successfully authenticated");
+
+      await refreshUser();
+    } catch (error) {
+      console.error("Para authentication failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to authenticate with Para");
+    } finally {
+      isAuthenticatingRef.current = false;
+      setAuthenticatingWithPara(false);
+    }
+  };
+
+  // Auto-authenticate when Para connection is established
+  useEffect(() => {
+    if (isConnected && !isAuthenticated && !authenticatingWithPara && !isAuthenticatingRef.current) {
+      handleParaAuthentication();
+    }
+  }, [isConnected, isAuthenticated, authenticatingWithPara]);
 
   const handleSubmitPayment = async () => {
     const midenSdk = await import("@demox-labs/miden-sdk");

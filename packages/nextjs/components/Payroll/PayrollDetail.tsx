@@ -317,9 +317,11 @@ const PayrollDetail = () => {
             <div className=" py-1 text-base font-medium text-text-primary">{payrollData.paydayDay}th every month</div>
             <div className="flex justify-start items-center">
               <CategoryBadge
-                shape={groups?.find(cat => cat.id === payrollData.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-                color={groups?.find(cat => cat.id === payrollData.employee.groupId)?.color || "#35ADE9"}
-                name={groups?.find(cat => cat.id === payrollData.employee.groupId)?.name || "-"}
+                shape={
+                  groups?.find(cat => cat.id === payrollData?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE
+                }
+                color={groups?.find(cat => cat.id === payrollData?.employee?.groupId)?.color || "#35ADE9"}
+                name={groups?.find(cat => cat.id === payrollData?.employee?.groupId)?.name || "-"}
               />
             </div>
           </div>

@@ -123,7 +123,7 @@ export function TableFooter({
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-background border border-primary-divider border-solid flex gap-2 items-center px-4 py-2 relative rounded-lg"
+            className="bg-background border border-primary-divider border-solid flex gap-2 items-center px-4 py-2 relative rounded-lg cursor-pointer"
           >
             <p className="font-medium leading-6 text-base text-text-primary">{rowsPerPageState}</p>
             <img alt="dropdown" className="w-4" src="/arrow/chevron-down.svg" />

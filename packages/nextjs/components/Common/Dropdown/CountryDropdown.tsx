@@ -2,11 +2,31 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 
 const COUNTRY = [
+  // North America / Europe
   { value: "US", label: "United States", icon: "/flag/us.svg" },
   { value: "UK", label: "United Kingdom", icon: "/flag/uk.svg" },
+
+  // Southeast Asia (SEA)
   { value: "VN", label: "Vietnam", icon: "/flag/vn.svg" },
   { value: "SG", label: "Singapore", icon: "/flag/sg.svg" },
   { value: "MY", label: "Malaysia", icon: "/flag/my.svg" },
+  { value: "ID", label: "Indonesia", icon: "" },
+  { value: "PH", label: "Philippines", icon: "" },
+  { value: "TH", label: "Thailand", icon: "" },
+
+  // Latin America (LATAM)
+  { value: "MX", label: "Mexico", icon: "" },
+  { value: "BR", label: "Brazil", icon: "" },
+  { value: "AR", label: "Argentina", icon: "" },
+  { value: "CO", label: "Colombia", icon: "" },
+  { value: "CL", label: "Chile", icon: "" },
+
+  // Africa
+  { value: "ZA", label: "South Africa", icon: "" },
+  { value: "NG", label: "Nigeria", icon: "" },
+  { value: "KE", label: "Kenya", icon: "" },
+  { value: "GH", label: "Ghana", icon: "" },
+  { value: "EG", label: "Egypt", icon: "" },
 ];
 
 interface CountryDropdownProps {

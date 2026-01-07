@@ -58,6 +58,8 @@ const PaymentLinkContainer = () => {
   const updateOrderMutation = useUpdatePaymentLinkOrder();
   const activatePaymentLinkMutation = useActivatePaymentLink();
   const deactivatePaymentLinkMutation = useDeactivatePaymentLink();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Close tooltip when clicking outside
   useEffect(() => {
@@ -312,40 +314,44 @@ const PaymentLinkContainer = () => {
             />
           </div>
         }
+        childrenClassName="p-5 gap-5"
         containerClassName="w-full h-full relative"
       >
-        <div className="flex flex-col gap-4 p-5">
-          <div className="flex flex-col gap-2">
-            <span className="text-text-primary text-2xl leading-none">{activeTab.title}</span>
-            <span className="text-text-secondary text-sm leading-none">{activeTab.description}</span>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <img src="/loading-square.gif" alt="loading" className="w-12 h-12" />
-            </div>
-          ) : error ? (
-            <div className="flex justify-center items-center h-64">
-              <span className="text-text-secondary">Failed to load payment links</span>
-            </div>
-          ) : (
-            <Table
-              headers={tableHeaders}
-              data={tableData}
-              draggable={activeTab.id === "all"}
-              onDragEnd={handleDragEnd}
-              actionColumn={false}
-              showFooter={false}
-              selectedRows={selectedRows}
-              columnWidths={{
-                "1": "330px",
-                "3": "180px",
-                "6": "80px",
-                "7": "50px",
-              }}
-            />
-          )}
+        <div className="flex flex-col gap-2">
+          <span className="text-text-primary text-2xl leading-none">{activeTab.title}</span>
+          <span className="text-text-secondary text-sm leading-none">{activeTab.description}</span>
         </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <img src="/loading-square.gif" alt="loading" className="w-12 h-12" />
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-64">
+            <span className="text-text-secondary">Failed to load payment links</span>
+          </div>
+        ) : (
+          <Table
+            headers={tableHeaders}
+            data={tableData}
+            draggable={activeTab.id === "all"}
+            onDragEnd={handleDragEnd}
+            actionColumn={false}
+            showFooter={false}
+            showPagination={true}
+            selectedRows={selectedRows}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={setRowsPerPage}
+            columnWidths={{
+              "1": "330px",
+              "3": "180px",
+              "6": "80px",
+              "7": "50px",
+            }}
+          />
+        )}
 
         {selectedRows.length > 0 && (
           <div

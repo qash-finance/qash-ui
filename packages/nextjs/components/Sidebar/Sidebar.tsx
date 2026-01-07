@@ -39,6 +39,7 @@ export enum SidebarLink {
   Bill = "bill",
   Invoice = "invoice",
   Setting = "setting",
+  CreditCard = "credit-card",
 }
 
 // Enum for submenu types
@@ -114,6 +115,14 @@ export const actionItems = [
     disabled: true,
     hasSubmenu: true,
     submenuType: SubmenuType.MoveCrypto,
+  },
+  {
+    icon: "/sidebar/credit-card.svg",
+    filledIcon: "/sidebar/filled-credit-card.svg",
+    label: "Credit Card",
+    isActive: false,
+    link: SidebarLink.CreditCard,
+    disabled: true,
   },
   {
     icon: "/sidebar/setting.svg",

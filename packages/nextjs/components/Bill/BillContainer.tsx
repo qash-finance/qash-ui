@@ -199,9 +199,9 @@ const BillContainer = () => {
       Group: (
         <div className="flex justify-center items-center">
           <CategoryBadge
-            shape={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-            color={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.color || "#35ADE9"}
-            name={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.name || "-"}
+            shape={groups?.find(grp => grp.id === b.invoice?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === b.invoice?.employee?.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === b.invoice?.employee?.groupId)?.name || "Client"}
           />
         </div>
       ),

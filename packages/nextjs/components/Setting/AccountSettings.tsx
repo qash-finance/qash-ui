@@ -1,11 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { useAuth } from "@/services/auth/context";
+import { useUpdateTeamMember } from "@/services/api/team-member";
 import { SecondaryButton } from "../Common/SecondaryButton";
 import SettingHeader from "./SettingHeader";
 
 export default function AccountSettings() {
   const { user } = useAuth();
+  const updateMutation = useUpdateTeamMember();
   const [isEditingName, setIsEditingName] = useState(false);
   const [name, setName] = useState("");
 
@@ -18,9 +20,28 @@ export default function AccountSettings() {
   };
 
   const handleUpdateName = async () => {
-    // TODO: Implement API call to update name
-    console.log("Updating name to:", name);
-    setIsEditingName(false);
+    if (!user?.teamMembership?.id) {
+      console.error("Missing user information");
+      return;
+    }
+
+    // Split name into firstName and lastName
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    try {
+      await updateMutation.mutateAsync({
+        teamMemberId: user.teamMembership.id,
+        updateDto: {
+          firstName,
+          lastName,
+        },
+      });
+      setIsEditingName(false);
+    } catch (error) {
+      console.error("Failed to update name:", error);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -61,7 +82,12 @@ export default function AccountSettings() {
               <div className="flex justify-end">
                 <div className="flex gap-2">
                   <SecondaryButton onClick={handleCancelEdit} text="Cancel" variant="light" buttonClassName="px-4" />
-                  <SecondaryButton onClick={handleUpdateName} text="Update" buttonClassName="px-4" />
+                  <SecondaryButton
+                    onClick={handleUpdateName}
+                    text={updateMutation.isPending ? "Updating..." : "Update"}
+                    buttonClassName="px-4"
+                    disabled={updateMutation.isPending}
+                  />
                 </div>
               </div>
             </div>

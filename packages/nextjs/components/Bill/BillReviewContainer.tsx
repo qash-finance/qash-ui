@@ -334,7 +334,7 @@ const BillReviewContainer = () => {
                   group={{
                     shape: groupData?.shape || CategoryShapeEnum.CIRCLE,
                     color: groupData?.color || "#35ADE9",
-                    groupName: groupData?.name || "-",
+                    groupName: groupData?.name || "Client",
                   }}
                   onViewClick={() => {
                     openModal<InvoiceModalProps>("INVOICE_MODAL", {

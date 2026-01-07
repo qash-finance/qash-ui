@@ -137,9 +137,10 @@ export function EditClientContactModal({
       setSelectedCompanyType("");
       setSelectedCountry("");
       onClose();
-    } catch (error) {
-      console.error("Failed to update client:", error);
-      toast.error("Failed to update client");
+    } catch (error: any) {
+      // Use user-friendly error message from API client
+      const errorMessage = error.userMessage || error.message || "An unexpected error occurred";
+      toast.error(errorMessage);
     }
   };
 

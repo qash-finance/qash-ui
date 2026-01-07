@@ -15,3 +15,12 @@ export interface TeamMembership {
     joinedAt?: Date | null;
     company?: CompanyInfo;
   }
+
+export interface UpdateTeamMemberDto {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  position?: string;
+  profilePicture?: string;
+  metadata?: Record<string, any>;
+}

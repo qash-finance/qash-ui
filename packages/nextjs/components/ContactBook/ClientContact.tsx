@@ -281,7 +281,7 @@ export const ClientContact = () => {
           data={tableData}
           headers={tableHeaders}
           draggable={false}
-          columnWidths={{ "0": "40px", "3": "20px" }}
+          columnWidths={{ "0": "40px", "30px": "20px" }}
           onDragEnd={handleReorder}
           selectedRows={checkedRows}
           showFooter={false}

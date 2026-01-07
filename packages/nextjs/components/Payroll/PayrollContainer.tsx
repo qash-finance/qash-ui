@@ -78,9 +78,9 @@ const PayrollContainer = () => {
       Group: (
         <div className="flex justify-center items-center">
           <CategoryBadge
-            shape={groups?.find(grp => grp.id === payroll.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-            color={groups?.find(grp => grp.id === payroll.employee.groupId)?.color || "#35ADE9"}
-            name={groups?.find(grp => grp.id === payroll.employee.groupId)?.name || "-"}
+            shape={groups?.find(grp => grp.id === payroll?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === payroll?.employee?.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === payroll?.employee?.groupId)?.name || "-"}
           />
         </div>
       ),

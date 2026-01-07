@@ -64,7 +64,8 @@ export const PaymentLinkPreview = ({
   handleConnectWallet,
   isSending,
 }: PaymentLinkPreviewProps) => {
-  const { user } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
+  console.log("🚀 ~ PaymentLinkPreview ~ isAuthenticated:", isAuthenticated);
   const { address: walletAddress } = useMidenProvider();
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
@@ -265,10 +266,14 @@ export const PaymentLinkPreview = ({
 
                   {/* Connect Wallet Button */}
                   <div className="flex justify-center">
-                    {walletAddress && handleSubmitPayment ? (
+                    {user && handleSubmitPayment ? (
                       <PrimaryButton text="Pay now" onClick={handleSubmitPayment} loading={isSending} />
                     ) : (
-                      <PrimaryButton text="Connect Wallet" onClick={() => handleConnectWallet?.()} />
+                      <PrimaryButton
+                        text="Connect Wallet"
+                        onClick={() => handleConnectWallet?.()}
+                        loading={isLoading}
+                      />
                     )}
                   </div>
                 </div>
