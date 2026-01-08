@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import Image from "next/image";
 import AccountSettings from "./AccountSettings";
 import CompanySettings from "./CompanySettings";
 import NotificationSettings from "./NotificationSettings";
+import TeamSettings from "./TeamSettings";
 
-type TabType = "account" | "notifications" | "company";
+type TabType = "account" | "notifications" | "company" | "team";
 
 interface SettingTab {
   id: TabType;
@@ -13,11 +13,13 @@ interface SettingTab {
   label: string;
 }
 
-const settingTabs: SettingTab[] = [
+const generalSettingTabs: SettingTab[] = [
   { id: "account", icon: "/misc/user-hexagon-icon.svg", label: "Account" },
   { id: "notifications", icon: "/misc/notification-icon.svg", label: "Notifications" },
   { id: "company", icon: "/misc/company-icon.svg", label: "Company" },
 ];
+
+const teamSettingTabs: SettingTab[] = [{ id: "team", icon: "/misc/team-icon.svg", label: "My team" }];
 
 export default function SettingContainer() {
   const [activeTab, setActiveTab] = useState<TabType>("account");
@@ -42,7 +44,28 @@ export default function SettingContainer() {
             </div>
 
             {/* Tabs */}
-            {settingTabs.map(tab => (
+            {generalSettingTabs.map(tab => (
+              <div
+                key={tab.id}
+                className={`flex gap-4 items-center px-5 py-3 rounded-lg w-full cursor-pointer transition-colors ${
+                  activeTab === tab.id ? "bg-app-background" : "hover:bg-app-background/50"
+                }`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <div className="flex gap-2 items-center">
+                  <img src={tab.icon} alt={tab.label} className="w-5" />
+                  <p className="font-medium text-sm text-text-primary tracking-[-0.56px] leading-5">{tab.label}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* General Label */}
+            <div className="flex items-center px-4 py-0 w-full">
+              <p className="font-medium text-sm text-text-secondary tracking-[-0.56px] leading-5">Team</p>
+            </div>
+
+            {/* Tabs */}
+            {teamSettingTabs.map(tab => (
               <div
                 key={tab.id}
                 className={`flex gap-4 items-center px-5 py-3 rounded-lg w-full cursor-pointer transition-colors ${
@@ -62,11 +85,12 @@ export default function SettingContainer() {
 
       {/* Main Content Area */}
       <div className="flex-1 p-6 bg-background flex justify-center items-start overflow-y-auto">
-        <div className="w-[800px]">
+        <div className="w-[900px]">
           {/* Content based on active tab */}
           {activeTab === "account" && <AccountSettings />}
           {activeTab === "notifications" && <NotificationSettings />}
           {activeTab === "company" && <CompanySettings />}
+          {activeTab === "team" && <TeamSettings />}
         </div>
       </div>
     </div>
