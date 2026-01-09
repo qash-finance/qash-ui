@@ -171,7 +171,7 @@ const CreatePaymentLinkContainer = () => {
             <span className="text-text-primary text-lg font-semibold leading-none">Informations</span>
             <FormInput
               label="Title"
-              placeholder="i.e XYZ Donation"
+              placeholder="i.e Q3 Consulting Services"
               register={register("title", {
                 required: "Title is required",
                 maxLength: { value: 100, message: "Title cannot exceed 100 characters" },
@@ -190,7 +190,7 @@ const CreatePaymentLinkContainer = () => {
                     })}
                     className={`w-full bg-transparent border-none outline-none text-text-primary placeholder:text-text-secondary h-full resize-none`}
                     autoComplete="off"
-                    placeholder="Hey there! Just a quick note to confirm your cryptocurrency transfer."
+                    placeholder="Payment for software development services as per contract agreement."
                     maxLength={250}
                   />
                 </div>
