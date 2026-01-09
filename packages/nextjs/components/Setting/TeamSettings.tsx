@@ -83,7 +83,7 @@ const TeamSettings = () => {
       {/* Stats Cards */}
       <div className="flex gap-4 w-full">
         {/* Account Stats Card */}
-        <Card title="Accounts" amount="3" />
+        <Card title="Accounts" amount="3" info="Admins can submit proposals and cast votes." />
 
         {/* Member Stats Card */}
         <Card title="Members" amount="30" />

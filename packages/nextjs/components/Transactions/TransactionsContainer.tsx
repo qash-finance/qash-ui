@@ -1,118 +1,164 @@
 "use client";
-import React from "react";
-import { StatusBadge } from "../Common/StatusBadge";
-import { ActionButton } from "../Common/ActionButton";
-import { Table } from "../Common/Table";
-import { useModal } from "@/contexts/ModalManagerProvider";
-import { MODAL_IDS } from "@/types/modal";
+import React, { useState } from "react";
+import { BaseContainer } from "../Common/BaseContainer";
+import { TransactionRow } from "./TransactionRow";
 
-const mockData = [
+interface PayrollTransaction {
+  id: string;
+  type: "Pay";
+  description: string;
+  transactionCount: number;
+  tokens: string[];
+  status: "pending" | "completed";
+  completionCount?: number;
+  totalConfirmations?: number;
+  dateTime: string;
+}
+
+const mockTransactions: PayrollTransaction[] = [
   {
-    type: "Send",
-    amount: "120,000",
-    message: "Hello, remember me? I lend you 12,000 few months ago. Can you send me back?",
-    requestFrom: "0xd...s78",
-    to: "0xd...s78",
-    confirmAt: "25/11/2024, 07:15",
-    status: "succeed" as const,
+    id: "1",
+    type: "Pay",
+    description: "Monthly payroll for December 2025",
+    transactionCount: 50,
+    tokens: ["token1", "token2", "token3"],
+    status: "pending",
+    completionCount: 1,
+    totalConfirmations: 2,
+    dateTime: "2025-12-05 08:00 AM",
   },
   {
-    type: "Send",
-    amount: "120,000",
-    message: "Hello, remember me? I lend you 12,000 few months ago. Can you send me back?",
-    requestFrom: "0xd...s78",
-    to: "0xd...s78",
-    confirmAt: "25/11/2024, 07:15",
-    status: "succeed" as const,
-  },
-  {
-    type: "Send",
-    amount: "120,000",
-    message: "Hello, remember me? I lend you 12,000 few months ago. Can you send me back?",
-    requestFrom: "0xd...s78",
-    to: "0xd...s78",
-    confirmAt: "25/11/2024, 07:15",
-    status: "failed" as const,
+    id: "2",
+    type: "Pay",
+    description: "Monthly payroll for November 2025",
+    transactionCount: 50,
+    tokens: ["token1", "token2", "token3"],
+    status: "completed",
+    dateTime: "2025-12-05 08:00 AM",
   },
 ];
 
+type TabType = "payroll" | "earning" | "accounting" | "marketing";
+type SubTabType = "pending" | "history";
+
 export function TransactionsContainer() {
-  const headers = ["Type", "Amount", "Request From", "To", "Date/Time"];
+  const [activeTab, setActiveTab] = useState<TabType>("payroll");
+  const [activeSubTab, setActiveSubTab] = useState<SubTabType>("pending");
+  const [underlineStyle, setUnderlineStyle] = useState({ left: "0px", width: "200px" });
+  const [subTabUnderlineStyle, setSubTabUnderlineStyle] = useState({ left: "0px", width: "180px" });
 
-  // Transform data to include React components for complex cells
-  const tableData = mockData.map(item => ({
-    Type: (
-      <div className="flex items-center gap-2">
-        <span className="text-white font-medium truncate">{item.type}</span>
-      </div>
-    ),
-    Amount: (
-      <div className="flex justify-center items-center gap-2">
-        <img src="/token/usdt.svg" alt="Token" className="w-4 h-4 flex-shrink-0" />
-        <p className="text-stone-300 truncate">{item.amount}</p>
-      </div>
-    ),
-    "Request From": (
-      <div className="inline-flex items-center justify-center bg-[#363636] rounded-full px-3 py-1">
-        <span className="text-white font-medium">{item.requestFrom}</span>
-      </div>
-    ),
-    To: (
-      <div className="inline-flex items-center justify-center bg-[#363636] rounded-full px-3 py-1">
-        <span className="text-white font-medium">{item.to}</span>
-      </div>
-    ),
-    "Date/Time": item.confirmAt,
-    status: item.status, // Keep for action renderer
-  }));
+  const tabs: { id: TabType; label: string }[] = [
+    { id: "payroll", label: "Payroll Account" },
+    { id: "earning", label: "Earning Account" },
+    { id: "accounting", label: "Accounting Account" },
+    { id: "marketing", label: "Marketing Account" },
+  ];
 
-  const pendingActionRenderer = () => {
-    const { openModal } = useModal();
+  const subTabs: { id: SubTabType; label: string }[] = [
+    { id: "pending", label: "Pending to approve" },
+    { id: "history", label: "History" },
+  ];
 
-    return (
-      <div className="flex items-center justify-center gap-2">
-        <ActionButton text="Deny" type="deny" onClick={() => {}} />
-        <ActionButton
-          text="Accept"
-          onClick={() => {
-            openModal(MODAL_IDS.TRANSACTION_DETAIL);
+  return (
+    <div className="flex flex-col w-full gap-6 px-4 py-2 items-start h-full">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-8 py-4">
+        <img src="/sidebar/transactions.svg" alt="Transactions" className="w-6" />
+        <h1 className="text-2xl font-semibold text-text-primary">Transactions</h1>
+      </div>
+
+      {/* Main Tabs */}
+      <div className="w-full flex flex-row border-b border-primary-divider relative">
+        {tabs.map((tab, index) => (
+          <div
+            key={tab.id}
+            className="flex items-center justify-center w-[200px] py-3 cursor-pointer group transition-colors duration-300"
+            onClick={() => {
+              setActiveTab(tab.id);
+              setActiveSubTab("pending");
+              // Calculate underline position based on tab index
+              setUnderlineStyle({
+                left: `${index * 200}px`,
+                width: "200px",
+              });
+            }}
+          >
+            <p
+              className={`font-medium text-base leading-6 transition-colors duration-300 ${
+                activeTab === tab.id ? "text-text-strong-950" : "text-text-soft-400 group-hover:text-text-soft-500"
+              }`}
+            >
+              {tab.label}
+            </p>
+          </div>
+        ))}
+        <div
+          className="absolute bottom-0 h-[3px] bg-primary-blue transition-all duration-300"
+          style={{
+            width: underlineStyle.width,
+            left: underlineStyle.left,
           }}
         />
       </div>
-    );
-  };
 
-  const historyActionRenderer = (rowData: any) => (
-    <div className="flex items-center justify-center gap-2">
-      <StatusBadge status={rowData.status} text={rowData.status} />
-    </div>
-  );
-
-  return (
-    <div className="w-full h-full bg-black rounded-xl text-white p-6 space-y-6">
-      {/* Pending Section */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Pending to approve</h2>
-          <p className="text-sm text-gray-400">
-            Since you are a signer in the list of signers of the account{" "}
-            <span className="font-bold text-white">Jessie02</span>, below are the transactions that need to be confirmed
-            by you
-          </p>
+      <BaseContainer
+        header={
+          <div className="flex w-full justify-center items-start py-3 px-5 flex-col">
+            <span className="text-2xl">Payroll</span>
+            <p className="text-xs font-medium text-text-secondary max-w-2xl">
+              Since you are a member in this account, below are the transactions that need to be confirmed by you
+            </p>
+          </div>
+        }
+        childrenClassName="!bg-background"
+        containerClassName="w-full h-full bg-[#F6F6F6]"
+      >
+        {/* Sub Tabs */}
+        <div className="px-6 flex gap-8 border-b border-primary-divider relative">
+          {subTabs.map((tab, index) => (
+            <div
+              key={tab.id}
+              onClick={() => {
+                setActiveSubTab(tab.id);
+                setSubTabUnderlineStyle({
+                  left: `${index * 180}px`,
+                  width: "180px",
+                });
+              }}
+              className={` py-4 text-base w-[180px] font-medium cursor-pointer transition-colors ${
+                activeSubTab === tab.id ? "text-text-primary" : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {tab.label}
+            </div>
+          ))}
+          <div
+            className="absolute bottom-0 h-[3px] bg-primary-blue transition-all duration-300"
+            style={{
+              width: subTabUnderlineStyle.width,
+              left: subTabUnderlineStyle.left,
+            }}
+          />
         </div>
 
-        <Table headers={headers} data={tableData} actionColumn={true} actionRenderer={pendingActionRenderer} />
-      </div>
-
-      {/* History Section */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold mb-2">History</h2>
-          <p className="text-sm text-gray-400">Below are the transactions you have confirmed</p>
+        {/* Transactions List */}
+        <div className="p-4 flex flex-col w-full h-full overflow-y-auto">
+          {mockTransactions.map(transaction => (
+            <TransactionRow
+              key={transaction.id}
+              transaction={transaction}
+              onApprove={id => {
+                // Handle approve logic
+                console.log("Approve transaction:", id);
+              }}
+              onDeny={id => {
+                // Handle deny logic
+                console.log("Deny transaction:", id);
+              }}
+            />
+          ))}
         </div>
-
-        <Table headers={headers} data={tableData} actionColumn={true} actionRenderer={historyActionRenderer} />
-      </div>
+      </BaseContainer>
     </div>
   );
 }

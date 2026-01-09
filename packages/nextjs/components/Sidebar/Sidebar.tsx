@@ -126,6 +126,14 @@ export const actionItems = [
     disabled: true,
   },
   {
+    icon: "/sidebar/transactions.svg",
+    filledIcon: "/sidebar/filled-transactions.svg",
+    label: "Transactions",
+    isActive: false,
+    link: SidebarLink.Transactions,
+    disabled: false,
+  },
+  {
     icon: "/sidebar/setting.svg",
     filledIcon: "/sidebar/filled-setting.svg",
     label: "Setting",
