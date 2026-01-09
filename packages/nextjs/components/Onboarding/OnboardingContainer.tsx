@@ -58,8 +58,9 @@ export default function OnboardingContainer() {
     handleSubmit,
     watch,
     setValue,
-    formState: { isValid },
+    formState: { isValid, errors },
   } = useForm<OnboardingFormData>({
+    mode: "onSubmit",
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -126,18 +127,21 @@ export default function OnboardingContainer() {
     switch (step) {
       case "company":
         return (
-          <div className="flex flex-col gap-8 w-full animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4 w-full animate-in fade-in duration-500">
             {/* Title */}
-            <h1 className="text-[32px] font-medium text-text-primary tracking-tight">Tell us about your company</h1>
+            <h1 className="text-[22px] md:text-[28px] font-medium text-text-primary tracking-tight">Tell us about your company</h1>
 
             {/* Form Fields */}
-            <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit(onSubmit)}>
+            <form className="flex flex-col gap-3 w-full" onSubmit={handleSubmit(onSubmit)}>
               {/* First and Last Name Row */}
-              <div className="flex gap-4 w-full">
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
                 <div className="flex-1">
                   <InputOutlined
                     label="First name"
                     placeholder="Enter your first name"
+                    size="compact"
+                    error={!!errors.firstName}
+                    errorMessage={errors.firstName ? "First name is required" : undefined}
                     {...register("firstName", { required: true })}
                   />
                 </div>
@@ -145,6 +149,9 @@ export default function OnboardingContainer() {
                   <InputOutlined
                     label="Last name"
                     placeholder="Enter your last name"
+                    size="compact"
+                    error={!!errors.lastName}
+                    errorMessage={errors.lastName ? "Last name is required" : undefined}
                     {...register("lastName", { required: true })}
                   />
                 </div>
@@ -154,6 +161,9 @@ export default function OnboardingContainer() {
               <InputOutlined
                 label="Company name"
                 placeholder="Enter your company name"
+                size="compact"
+                error={!!errors.companyName}
+                errorMessage={errors.companyName ? "Company name is required" : undefined}
                 {...register("companyName", { required: true })}
               />
 
@@ -163,6 +173,7 @@ export default function OnboardingContainer() {
                   setSelectedCompanyType(value);
                   setValue("companyType", value);
                 }}
+                size="compact"
               />
 
               <CountryDropdown
@@ -171,15 +182,32 @@ export default function OnboardingContainer() {
                   setSelectedCountry(value);
                   setValue("country", value);
                 }}
+                size="compact"
               />
 
               {/* City */}
-              <InputOutlined label="City" placeholder="Enter city" {...register("city", { required: true })} />
+              <InputOutlined
+                label="City"
+                placeholder="Enter city"
+                size="compact"
+                error={!!errors.city}
+                errorMessage={errors.city ? "City is required" : undefined}
+                {...register("city", { required: true })}
+              />
 
               {/* Address 1 */}
               <InputOutlined
                 label="Address 1"
-                placeholder="Enter address 1"
+                placeholder="Enter full address (min 10 characters)"
+                size="compact"
+                error={!!errors.address1}
+                errorMessage={
+                  errors.address1?.type === "minLength"
+                    ? "Address must be at least 10 characters"
+                    : errors.address1
+                      ? "Address is required"
+                      : undefined
+                }
                 {...register("address1", {
                   required: true,
                   minLength: {
@@ -190,21 +218,38 @@ export default function OnboardingContainer() {
               />
 
               {/* Address 2 */}
-              <InputOutlined label="Address 2 (optional)" placeholder="Enter address 2" {...register("address2")} />
+              <InputOutlined
+                label="Address 2 (optional)"
+                placeholder="Enter address 2"
+                size="compact"
+                {...register("address2")}
+              />
 
               {/* Postal Code and Registration Number Row */}
-              <div className="flex gap-4 w-full">
-                <div className="w-40">
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <div className="w-full sm:w-36">
                   <InputOutlined
                     label="Postal code"
                     placeholder="e.g. 70000"
+                    size="compact"
+                    error={!!errors.postalCode}
+                    errorMessage={errors.postalCode ? "Required" : undefined}
                     {...register("postalCode", { required: true })}
                   />
                 </div>
                 <div className="flex-1">
                   <InputOutlined
-                    label="Company registration number"
-                    placeholder="e.g. 8683949"
+                    label="Registration number"
+                    placeholder="e.g. 8683949 (min 8 chars)"
+                    size="compact"
+                    error={!!errors.registrationNumber}
+                    errorMessage={
+                      errors.registrationNumber?.type === "minLength"
+                        ? "Must be at least 8 characters"
+                        : errors.registrationNumber
+                          ? "Required"
+                          : undefined
+                    }
                     {...register("registrationNumber", {
                       required: true,
                       minLength: {
@@ -220,19 +265,19 @@ export default function OnboardingContainer() {
         );
       case "team":
         return (
-          <div className="flex flex-col gap-8 w-full animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4 md:gap-8 w-full animate-in fade-in duration-500">
             {/* Title */}
-            <h1 className="text-[32px] font-medium text-text-primary tracking-tight">Add your Team</h1>
+            <h1 className="text-[22px] md:text-[32px] font-medium text-text-primary tracking-tight">Add your Team</h1>
             {/* Form Fields */}
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-3 md:gap-4 w-full">
               {Array.from({ length: 3 }).map((_, index) => (
-                <div className="flex gap-2 w-full" key={index}>
-                  <InputOutlined label={`Member ${index + 1}`} placeholder="Enter name" {...register("firstName")} />
-                  <InputOutlined label="Email" placeholder="@mail" {...register("lastName")} />
+                <div className="flex flex-col sm:flex-row gap-2 w-full" key={index}>
+                  <InputOutlined label={`Member ${index + 1}`} placeholder="Enter name" size="compact" {...register("firstName")} />
+                  <InputOutlined label="Email" placeholder="@mail" size="compact" {...register("lastName")} />
                 </div>
               ))}
             </div>
-            <span className="text-text-secondary text-[16px] w-[450px]">
+            <span className="text-text-secondary text-[14px] md:text-[16px] max-w-[450px]">
               or you can upload a spreadsheet — our AI will automatically fill in your team details for you.
             </span>
             <FileUpload
@@ -245,7 +290,7 @@ export default function OnboardingContainer() {
         );
       case "complete":
         return (
-          <div className="flex justify-center items-center flex-col h-[530px] rounded-3xl border border-primary-divider relative overflow-hidden">
+          <div className="flex justify-center items-center flex-col h-full min-h-[400px] md:min-h-[530px] rounded-3xl border border-primary-divider relative overflow-hidden">
             <div
               className="absolute inset-0 w-full h-full z-0"
               style={{
@@ -254,10 +299,10 @@ export default function OnboardingContainer() {
                 filter: "blur(12px)",
               }}
             />
-            <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
-              <img src="/onboarding/hexagon-avatar.svg" alt="Onboarding Complete" className="w-[220px] h-[220px]" />
-              <span className="font-bold text-2xl">Congratulations</span>
-              <span className="text-lg text-text-secondary">Your new account is ready to accept payments</span>
+            <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-4 text-center">
+              <img src="/onboarding/hexagon-avatar.svg" alt="Onboarding Complete" className="w-[150px] h-[150px] md:w-[220px] md:h-[220px]" />
+              <span className="font-bold text-xl md:text-2xl">Congratulations</span>
+              <span className="text-base md:text-lg text-text-secondary">Your new account is ready to accept payments</span>
               <PrimaryButton
                 text="Go to app"
                 containerClassName="w-[180px] mt-6"
@@ -274,37 +319,37 @@ export default function OnboardingContainer() {
   };
 
   return (
-    <div className="flex flex-row w-full h-full p-5 bg-background">
-      <div className="flex flex-col items-start w-1/2 p-[60px] h-full justify-between">
-        {/* Header with progress and skip button */}
-
-        <div className="w-full flex flex-col h-full">
-          <div className="flex gap-[19px] items-center w-full mb-8">
-            <div className="flex gap-[4px] items-start flex-1">
-              <div
-                className={`h-1 rounded transition-all duration-500 ease-out ${
-                  step === "company" ? "w-7 bg-primary-blue" : "w-2.5 bg-[#D7D7D7]"
-                }`}
-              />
-              <div
-                className={`h-1 rounded transition-all duration-500 ease-out ${
-                  step === "team" ? "w-7 bg-primary-blue" : "w-2.5 bg-[#D7D7D7]"
-                }`}
-              />
-              <div
-                className={`h-1 rounded transition-all duration-500 ease-out ${
-                  step === "complete" ? "w-7 bg-primary-blue" : "w-2.5 bg-[#D7D7D7]"
-                }`}
-              />
-            </div>
+    <div className="flex flex-row w-full h-full p-3 md:p-5 bg-background overflow-hidden">
+      <div className="flex flex-col items-start w-full lg:w-1/2 px-4 py-6 md:px-8 md:py-8 lg:p-[60px] h-full overflow-hidden">
+        {/* Header with progress indicator */}
+        <div className="flex gap-[19px] items-center w-full mb-4 md:mb-8 flex-shrink-0">
+          <div className="flex gap-[4px] items-start flex-1">
+            <div
+              className={`h-1 rounded transition-all duration-500 ease-out ${
+                step === "company" ? "w-7 bg-primary-blue" : "w-2.5 bg-[#D7D7D7]"
+              }`}
+            />
+            <div
+              className={`h-1 rounded transition-all duration-500 ease-out ${
+                step === "team" ? "w-7 bg-primary-blue" : "w-2.5 bg-[#D7D7D7]"
+              }`}
+            />
+            <div
+              className={`h-1 rounded transition-all duration-500 ease-out ${
+                step === "complete" ? "w-7 bg-primary-blue" : "w-2.5 bg-[#D7D7D7]"
+              }`}
+            />
           </div>
+        </div>
 
+        {/* Form content - scrollable */}
+        <div className="w-full flex-1 overflow-y-auto min-h-0">
           {renderStep()}
         </div>
 
         {step !== "complete" && (
           <div
-            className="w-full flex items-center mt-5"
+            className="w-full flex items-center pt-4 md:pt-5 flex-shrink-0"
             style={{
               justifyContent: step === "company" ? "flex-end" : "space-between",
             }}
@@ -330,7 +375,9 @@ export default function OnboardingContainer() {
         )}
       </div>
 
-      <Welcome />
+      <div className="hidden lg:block lg:w-1/2">
+        <Welcome />
+      </div>
     </div>
   );
 }

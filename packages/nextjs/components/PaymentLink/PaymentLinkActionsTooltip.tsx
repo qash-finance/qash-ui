@@ -6,7 +6,6 @@ import { PaymentLink, PaymentLinkStatus } from "@/types/payment-link";
 interface PaymentLinkActionsTooltipProps {
   link: PaymentLink;
   onEdit?: () => void;
-  onViewDetail?: () => void;
   onToggleStatus?: (isActive: boolean) => void;
   onRemove?: () => void;
 }
@@ -44,7 +43,6 @@ const TooltipItem = ({
 export const PaymentLinkActionsTooltip = ({
   link,
   onEdit,
-  onViewDetail,
   onToggleStatus,
   onRemove,
 }: PaymentLinkActionsTooltipProps) => {
@@ -56,12 +54,6 @@ export const PaymentLinkActionsTooltip = ({
       <TooltipItem onClick={onEdit} isFirst>
         <img src="/misc/edit-icon.svg" alt="edit" className="w-5 h-5" />
         <span className="text-sm text-text-primary">Edit payment link</span>
-      </TooltipItem>
-
-      {/* View Detail Button */}
-      <TooltipItem onClick={onViewDetail}>
-        <img src="/misc/blue-eye-icon.svg" alt="view" className="w-5 h-5 grayscale" />
-        <span className="text-sm text-text-primary">View detail</span>
       </TooltipItem>
 
       {/* Toggle Status */}

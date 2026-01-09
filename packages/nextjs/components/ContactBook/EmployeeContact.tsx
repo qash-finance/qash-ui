@@ -3,7 +3,7 @@ import { Tooltip } from "react-tooltip";
 import { useRouter } from "next/navigation";
 import { BaseContainer } from "../Common/BaseContainer";
 import { TabContainer } from "../Common/TabContainer";
-import { Table, CellContent } from "../Common/Table";
+import { Table } from "../Common/Table";
 import { MoreActionsTooltip } from "../Common/ToolTip/MoreActionsTooltip";
 import { MultipleContactActionsTooltip } from "../Common/ToolTip/MultipleContactActionsTooltip";
 import {
@@ -11,7 +11,6 @@ import {
   useGetEmployeesByGroup,
   useGetAllEmployees,
   useBulkDeleteEmployees,
-  useUpdateEmployeesOrder,
 } from "@/services/api/employee";
 import { MODAL_IDS } from "@/types/modal";
 import { useModal } from "@/contexts/ModalManagerProvider";
@@ -48,8 +47,7 @@ export const EmployeeContact = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const { data: groups } = useGetAllEmployeeGroups();
-  const { mutate: deleteEmployees, isPending: isDeleting } = useBulkDeleteEmployees();
-  const { mutate: updateEmployeesOrder, isPending: isReordering } = useUpdateEmployeesOrder();
+  const { mutate: deleteEmployees } = useBulkDeleteEmployees();
   const { data: allAddressBooksData, isLoading: isLoadingAllAddressBooks } = useGetAllEmployees(1, 1000, {
     enabled: isAuthenticated,
   });
@@ -214,6 +212,7 @@ export const EmployeeContact = () => {
           email: contact.email || "",
           group: group?.name || "",
           token: contact.token,
+          network: contact.network,
         },
       });
       setActiveTooltipId(null);
@@ -286,44 +285,7 @@ export const EmployeeContact = () => {
     }
   };
 
-  const handleReorder = (reorderedData: Record<string, CellContent>[]) => {
-    if (!addressBooks) return;
-
-    // Get the current category ID
-    const currentCategoryId = getCategoryId();
-    if (currentCategoryId === null) {
-      toast.error("Cannot reorder contacts in 'All groups' view");
-      return;
-    }
-
-    // Extract the IDs in the new order by matching the Name field
-    const entryIds = reorderedData
-      .map(rowData => {
-        const name = rowData.Name as string;
-        const contact = addressBooks.find(contact => contact.name === name);
-        return contact?.id;
-      })
-      .filter((id): id is number => id !== undefined);
-
-    if (entryIds.length > 0) {
-      // Assuming AddressBookOrderDto is { id: number, order: number }
-      const orderDtos = entryIds.map((id, idx) => ({
-        id,
-        order: idx,
-      }));
-      updateEmployeesOrder(orderDtos, {
-        onSuccess: () => {
-          toast.success("Contact order updated successfully");
-        },
-        onError: error => {
-          console.error("Failed to update contact order:", error);
-          toast.error("Failed to update contact order");
-        },
-      });
-    }
-  };
-
-  // Format address book data for table
+// Format address book data for table
   const tableHeaders = [
     <div className="flex justify-center items-center">
       <CustomCheckbox checked={isAllChecked as boolean} onChange={handleCheckAll} />
@@ -444,9 +406,7 @@ export const EmployeeContact = () => {
         <Table
           data={tableData}
           headers={tableHeaders}
-          draggable={activeTab !== "all"}
           columnWidths={{ "0": "40px", "3": "20px" }}
-          onDragEnd={handleReorder}
           selectedRows={checkedRows}
           showFooter={false}
           showPagination={true}
