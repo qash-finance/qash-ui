@@ -26,6 +26,15 @@ import { useAuth } from "@/services/auth/context";
 import { CategoryTab } from "./ContactBookContainer";
 
 export const CategoryBadge = ({ shape, color, name }: { shape: CategoryShapeEnum; color: string; name: string }) => {
+  // Special design for "Client" - just orange text without background or icon
+  if (name === "Client") {
+    return (
+      <span className="font-semibold text-[#F5A623]">
+        {name}
+      </span>
+    );
+  }
+
   return (
     <div
       className={`flex flex-row items-center justify-center gap-3 px-5 py-1 rounded-full border w-fit`}

@@ -414,6 +414,26 @@ const CreateClientInvoice = () => {
     }
   };
 
+  // Handle CC email input blur - add email when clicking outside
+  const handleCcEmailBlur = () => {
+    const email = ccEmailInput.trim();
+    if (!email) return; // Silently skip empty input on blur
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (formData.billToCcEmails.includes(email)) {
+      toast.error("Email already added");
+      return;
+    }
+
+    setValue("billToCcEmails", [...formData.billToCcEmails, email]);
+    setCcEmailInput("");
+  };
+
   const handleSaveDraft = async () => {
     setIsLoading(true);
     setError(null);
@@ -1120,6 +1140,7 @@ const CreateClientInvoice = () => {
                     value={ccEmailInput}
                     onChange={e => setCcEmailInput(e.target.value)}
                     onKeyPress={handleCcEmailKeyPress}
+                    onBlur={handleCcEmailBlur}
                     className="text-base placeholder-text-secondary w-fit outline-none"
                   />
                 </div>
