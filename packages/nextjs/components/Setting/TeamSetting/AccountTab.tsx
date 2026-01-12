@@ -1,7 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { SecondaryButton } from "../../Common/SecondaryButton";
 import { PrimaryButton } from "../../Common/PrimaryButton";
+import AccountCard from "./AccountCard";
 
 export interface Account {
   id: string;
@@ -20,6 +22,11 @@ interface AccountTabProps {
 
 const AccountTab: React.FC<AccountTabProps> = ({ onCreateNewAccount, onMenuClick, accounts }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleAccountClick = (accountId: string) => {
+    router.push(`/setting?team-account=${accountId}`);
+  };
 
   // Empty State Component
   if (accounts.length === 0) {
@@ -82,38 +89,12 @@ const AccountTab: React.FC<AccountTabProps> = ({ onCreateNewAccount, onMenuClick
       {/* Account Cards Grid */}
       <div className="grid grid-cols-3 gap-2 w-full">
         {accounts.map(account => (
-          <div
+          <AccountCard
             key={account.id}
-            className="border border-primary-divider rounded-[16px] p-4 flex flex-col gap-4 bg-app-background"
-          >
-            {/* Card Header */}
-            <div className="flex items-start justify-between">
-              {/* Account Info */}
-              <div className="flex flex-col gap-4 flex-1">
-                {/* Avatar */}
-                <img src={account.icon} alt={account.name} className="w-10" />
-
-                {/* Account Details */}
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-xl font-medium ">{account.name}</h3>
-                  <p className="text-sm font-normal text-text-secondary leading-5">{account.description}</p>
-                </div>
-
-                {/* Team Members */}
-                <div className="flex gap-2 items-center">
-                  <span className="text-xs font-medium text-text-secondary">{account.memberCount} members</span>
-                </div>
-              </div>
-
-              {/* Menu Button */}
-              <img
-                src="/misc/vertical-three-dot-icon.svg"
-                alt="Menu"
-                className="w-6 cursor-pointer"
-                onClick={() => onMenuClick(account.id)}
-              />
-            </div>
-          </div>
+            account={account}
+            onClick={handleAccountClick}
+            onMenuClick={onMenuClick}
+          />
         ))}
       </div>
     </div>

@@ -7,30 +7,30 @@ import MemberTab from "./TeamSetting/MemberTab";
 import { useModal } from "@/contexts/ModalManagerProvider";
 
 const accounts: Account[] = [
-  // {
-  //   id: "payroll",
-  //   name: "Payroll",
-  //   description: "Handles salary distribution and automates payroll transactions.",
-  //   backgroundColor: "#6895ff",
-  //   memberCount: 30,
-  //   icon: "/client-invoice/payroll-icon.svg",
-  // },
-  // {
-  //   id: "earning",
-  //   name: "Earning",
-  //   description: "Tracks all income, including bonuses and commissions.",
-  //   backgroundColor: "#ff9a68",
-  //   memberCount: 4,
-  //   icon: "/client-invoice/earning-icon.svg",
-  // },
-  // {
-  //   id: "accounting",
-  //   name: "Accounting",
-  //   description: "Handles salary distribution and automates payroll transactions.",
-  //   backgroundColor: "#7d52f4",
-  //   memberCount: 4,
-  //   icon: "/client-invoice/accounting-icon.svg",
-  // },
+  {
+    id: "payroll",
+    name: "Payroll",
+    description: "Handles salary distribution and automates payroll transactions.",
+    backgroundColor: "#6895ff",
+    memberCount: 30,
+    icon: "/client-invoice/payroll-icon.svg",
+  },
+  {
+    id: "earning",
+    name: "Earning",
+    description: "Tracks all income, including bonuses and commissions.",
+    backgroundColor: "#ff9a68",
+    memberCount: 4,
+    icon: "/client-invoice/earning-icon.svg",
+  },
+  {
+    id: "accounting",
+    name: "Accounting",
+    description: "Handles salary distribution and automates payroll transactions.",
+    backgroundColor: "#7d52f4",
+    memberCount: 4,
+    icon: "/client-invoice/accounting-icon.svg",
+  },
 ];
 
 const TeamSettings = () => {

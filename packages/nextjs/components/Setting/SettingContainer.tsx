@@ -1,9 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import AccountSettings from "./AccountSettings";
 import CompanySettings from "./CompanySettings";
 import NotificationSettings from "./NotificationSettings";
 import TeamSettings from "./TeamSettings";
+import TeamAccountContainer from "./TeamSetting/TeamAccountContainer";
 
 type TabType = "account" | "notifications" | "company" | "team";
 
@@ -23,6 +25,15 @@ const teamSettingTabs: SettingTab[] = [{ id: "team", icon: "/misc/team-icon.svg"
 
 export default function SettingContainer() {
   const [activeTab, setActiveTab] = useState<TabType>("account");
+  const searchParams = useSearchParams();
+  const teamAccountParam = searchParams.get("team-account");
+  console.log("🚀 ~ SettingContainer ~ teamAccountParam:", teamAccountParam);
+
+  useEffect(() => {
+    if (teamAccountParam) {
+      setActiveTab("team");
+    }
+  }, [teamAccountParam]);
 
   return (
     <div className="flex flex-row w-full h-full bg-app-background gap-2">
@@ -90,7 +101,7 @@ export default function SettingContainer() {
           {activeTab === "account" && <AccountSettings />}
           {activeTab === "notifications" && <NotificationSettings />}
           {activeTab === "company" && <CompanySettings />}
-          {activeTab === "team" && <TeamSettings />}
+          {activeTab === "team" && (teamAccountParam ? <TeamAccountContainer /> : <TeamSettings />)}
         </div>
       </div>
     </div>

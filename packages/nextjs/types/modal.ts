@@ -61,6 +61,8 @@ import ConfirmAndReviewInvoiceModal from "@/components/Modal/Invoice/ConfirmAndR
 import ChooseContactTypeModal from "@/components/Modal/Contact/ChooseContactTypeModal";
 import CreateAccountModal from "@/components/Modal/Account/CreateAccountModal";
 import AddMemberModal from "@/components/Modal/Account/AddMemberModal";
+import DepositModal from "@/components/Modal/DepositModal";
+import InviteTeamMemberModal from "@/components/Modal/TeamMember/InviteTeamMemberModal";
 import { Group } from "./group-payment";
 import { CompanyGroupResponseDto } from "./employee";
 import { BatchTransaction } from "@/services/store/batchTransactions";
@@ -134,6 +136,8 @@ export const MODAL_IDS = {
   CHOOSE_CONTACT_TYPE: "CHOOSE_CONTACT_TYPE",
   CREATE_ACCOUNT: "CREATE_ACCOUNT",
   ADD_MEMBER: "ADD_MEMBER",
+  DEPOSIT: "DEPOSIT",
+  INVITE_TEAM_MEMBER: "INVITE_TEAM_MEMBER",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -497,6 +501,10 @@ export interface AddMemberModalProps extends BaseModalProps {
   onMembersSelected?: (members: any[]) => void;
 }
 
+export interface DepositModalProps extends BaseModalProps {}
+
+export interface InviteTeamMemberModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -558,6 +566,8 @@ export type ModalPropsMap = {
   [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModalProps;
   [MODAL_IDS.CREATE_ACCOUNT]: CreateAccountModalProps;
   [MODAL_IDS.ADD_MEMBER]: AddMemberModalProps;
+  [MODAL_IDS.DEPOSIT]: DepositModalProps;
+  [MODAL_IDS.INVITE_TEAM_MEMBER]: InviteTeamMemberModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -624,4 +634,6 @@ export const modalRegistry = {
   [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModal,
   [MODAL_IDS.CREATE_ACCOUNT]: CreateAccountModal,
   [MODAL_IDS.ADD_MEMBER]: AddMemberModal,
+  [MODAL_IDS.DEPOSIT]: DepositModal,
+  [MODAL_IDS.INVITE_TEAM_MEMBER]: InviteTeamMemberModal,
 } as const;
