@@ -94,7 +94,7 @@ export function NewRequestModal({ isOpen, onClose, zIndex, recipient }: ModalPro
   };
 
   const handleChooseRecipient = () => {
-    openModal(MODAL_IDS.SELECT_RECIPIENT, {
+    openModal(MODAL_IDS.SELECT_EMPLOYEE, {
       onSave: (address: string, name: string) => {
         setValue("recipientAddress", address, { shouldValidate: true });
         setRecipientName(name);

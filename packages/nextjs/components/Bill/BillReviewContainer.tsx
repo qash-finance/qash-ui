@@ -255,7 +255,7 @@ const BillReviewContainer = () => {
       console.log("Start mutating bills");
       payBillsMutate.mutate({
         billUUIDs: selectedInvoices.map(inv => inv.bill?.uuid),
-        transactionHash: "",
+        transactionHash: executedTx.executedTransaction().id().toHex(),
       });
       closeModal("PROCESSING_TRANSACTION");
       openModal<TransactionOverviewModalProps>("TRANSACTION_OVERVIEW", {
@@ -327,14 +327,14 @@ const BillReviewContainer = () => {
                 <InvoiceItem
                   key={inv.uuid || inv.invoiceNumber}
                   invoiceId={inv.invoiceNumber || inv.uuid}
-                  name={inv.fromDetails?.name || "-"}
+                  name={inv.fromDetails?.name || (inv.fromDetails as any).companyName}
                   amount={`${inv.total || 0} ${inv.paymentToken.symbol.toUpperCase() || "USDT"}`}
                   token={inv.paymentToken.name.toLowerCase()}
                   amountUsd={inv.totalUsd ? `$${inv.totalUsd}` : ""}
                   group={{
                     shape: groupData?.shape || CategoryShapeEnum.CIRCLE,
                     color: groupData?.color || "#35ADE9",
-                    groupName: groupData?.name || "-",
+                    groupName: groupData?.name || "Client",
                   }}
                   onViewClick={() => {
                     openModal<InvoiceModalProps>("INVOICE_MODAL", {

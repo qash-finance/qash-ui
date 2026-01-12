@@ -13,7 +13,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
     <DayPicker
       classNames={{
         month: "text-text-secondary",
-        today: `text-[#1E8FFF]`,
+        today: `!text-[#1E8FFF] relative`,
         chevron: `fill-black`,
         caption_label: `text-text-primary font-medium flex items-center justify-center`,
       }}
@@ -55,6 +55,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
           const { day, modifiers, ...buttonProps } = props;
           const dayDate = new Date(day.date);
           const isSelected = !!selected && selected.toDateString() === dayDate.toDateString();
+          const isToday = modifiers.today;
           const selectedStyle = isSelected
             ? {
                 backgroundColor: "var(--primary-blue)",
@@ -63,8 +64,30 @@ const DatePicker: React.FC<DatePickerProps> = ({ defaultSelected, onSelect }) =>
                 border: "none",
                 fontSize: "20px",
               }
-            : {};
-          return <DayButton {...buttonProps} day={day} modifiers={modifiers} style={selectedStyle} />;
+            : {
+                color: "var(--text-primary)",
+              };
+          const containerStyle = isToday ? { position: "relative" as const } : {};
+          return (
+            <div style={containerStyle}>
+              <DayButton {...buttonProps} day={day} modifiers={modifiers} style={selectedStyle} />
+              {isToday && (
+                <div
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    backgroundColor: "red",
+                    margin: "0 auto",
+                    position: "absolute",
+                    bottom: "4px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                  }}
+                />
+              )}
+            </div>
+          );
         },
         Chevron: props => {
           const { className, ...buttonProps } = props;

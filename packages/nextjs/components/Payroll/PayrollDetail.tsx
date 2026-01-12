@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BaseContainer } from "../Common/BaseContainer";
 import { Table } from "../Common/Table";
-import { SecondaryButton } from "../Common/SecondaryButton";
 import { TabContainer } from "../Common/TabContainer";
 import { Badge, BadgeStatus } from "../Common/Badge";
 import { useTitle } from "@/contexts/TitleProvider";
@@ -33,7 +32,7 @@ const PayrollDetail = () => {
 
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Filter invoices based on active tab
   const getFilteredInvoices = () => {
@@ -318,9 +317,11 @@ const PayrollDetail = () => {
             <div className=" py-1 text-base font-medium text-text-primary">{payrollData.paydayDay}th every month</div>
             <div className="flex justify-start items-center">
               <CategoryBadge
-                shape={groups?.find(cat => cat.id === payrollData.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-                color={groups?.find(cat => cat.id === payrollData.employee.groupId)?.color || "#35ADE9"}
-                name={groups?.find(cat => cat.id === payrollData.employee.groupId)?.name || "-"}
+                shape={
+                  groups?.find(cat => cat.id === payrollData?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE
+                }
+                color={groups?.find(cat => cat.id === payrollData?.employee?.groupId)?.color || "#35ADE9"}
+                name={groups?.find(cat => cat.id === payrollData?.employee?.groupId)?.name || "-"}
               />
             </div>
           </div>

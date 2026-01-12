@@ -206,7 +206,7 @@ export function CreateGroupModal({ isOpen, onClose, zIndex, onGroupCreated }: Mo
             />
             <PrimaryButton
               text="Create"
-              onClick={handleSubmit(onSubmit)}
+              type="submit"
               containerClassName="flex-1"
               loading={isLoading}
               disabled={watch("name") === "" || categoryExists}

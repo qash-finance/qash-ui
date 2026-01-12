@@ -195,13 +195,13 @@ const BillContainer = () => {
       ),
       "Creation date": createdDate,
       Invoice: b.invoice?.invoiceNumber || b.uuid,
-      Name: b.invoice?.fromDetails?.name,
+      Name: b.invoice?.fromDetails?.name || (b.invoice?.fromDetails as any).companyName,
       Group: (
         <div className="flex justify-center items-center">
           <CategoryBadge
-            shape={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-            color={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.color || "#35ADE9"}
-            name={groups?.find(grp => grp.id === b.invoice?.employee.groupId)?.name || "-"}
+            shape={groups?.find(grp => grp.id === b.invoice?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === b.invoice?.employee?.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === b.invoice?.employee?.groupId)?.name || "Client"}
           />
         </div>
       ),

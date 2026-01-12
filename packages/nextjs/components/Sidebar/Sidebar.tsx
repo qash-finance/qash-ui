@@ -37,6 +37,9 @@ export enum SidebarLink {
   AccountManagement = "account-management",
   Transactions = "transactions",
   Bill = "bill",
+  Invoice = "invoice",
+  Setting = "setting",
+  CreditCard = "credit-card",
 }
 
 // Enum for submenu types
@@ -86,19 +89,20 @@ export const actionItems = [
     label: "Payment Link",
     isActive: false,
     link: SidebarLink.PaymentLink,
-    disabled: true,
-  },
-  {
-    icon: "/sidebar/payroll.svg",
-    filledIcon: "/sidebar/filled-payroll.svg",
-    label: "Earn",
-    isActive: false,
-    disabled: true,
+    disabled: false,
   },
   {
     icon: "/sidebar/invoice.svg",
     filledIcon: "/sidebar/filled-invoice.svg",
     label: "Invoice",
+    isActive: false,
+    link: SidebarLink.Invoice,
+    disabled: false,
+  },
+  {
+    icon: "/sidebar/payroll.svg",
+    filledIcon: "/sidebar/filled-payroll.svg",
+    label: "Earn",
     isActive: false,
     disabled: true,
   },
@@ -112,14 +116,22 @@ export const actionItems = [
     hasSubmenu: true,
     submenuType: SubmenuType.MoveCrypto,
   },
-  // {
-  //   icon: "/sidebar/setting.svg",
-  //   filledIcon: "/sidebar/filled-setting.svg",
-  //   label: "Setting",
-  //   isActive: false,
-  //   link: SidebarLink.Transactions,
-  //   disabled: true,
-  // },
+  {
+    icon: "/sidebar/credit-card.svg",
+    filledIcon: "/sidebar/filled-credit-card.svg",
+    label: "Credit Card",
+    isActive: false,
+    link: SidebarLink.CreditCard,
+    disabled: true,
+  },
+  {
+    icon: "/sidebar/setting.svg",
+    filledIcon: "/sidebar/filled-setting.svg",
+    label: "Setting",
+    isActive: false,
+    link: SidebarLink.Setting,
+    disabled: false,
+  },
 ];
 
 export const Sidebar: React.FC<NavProps> = ({ onActionItemClick }) => {

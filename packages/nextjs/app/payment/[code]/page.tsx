@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGetPaymentLinkByCode, useRecordPayment } from "@/services/api/payment-link";
 import { BaseContainer } from "@/components/Common/BaseContainer";
 import { PrimaryButton } from "@/components/Common/PrimaryButton";
@@ -19,11 +19,15 @@ import { useRecallableNotes } from "@/hooks/server/useRecallableNotes";
 import { createP2IDENote } from "@/services/utils/miden/note";
 import { CustomNoteType, WrappedNoteType } from "@/types/note";
 import { submitTransactionWithOwnOutputNotes } from "@/services/utils/miden/transactions";
+import { importAndGetAccount } from "@/services/utils/miden/account";
 import { sendSingleTransaction } from "@/services/api/transaction";
 import { useAccount } from "@/hooks/web3/useAccount";
 import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { PaymentLinkPreview } from "@/components/PaymentLink/PaymentLinkPreview";
 import { useMidenProvider } from "@/contexts/MidenProvider";
+import { useAuth } from "@/services/auth/context";
+import { useAccount as useParaAccount } from "@getpara/react-sdk";
+import { useParaMiden } from "miden-para-react";
 
 const SubIcon = ({
   icon,
@@ -51,10 +55,14 @@ const SubIcon = ({
 };
 
 const Header = () => {
+  const { user } = useAuth();
   const { openModal } = useModal();
   const { address: walletAddress } = useMidenProvider();
 
   const router = useRouter();
+
+  // Simplified behavior: show setup when there is no user, otherwise show home
+  const hasCompany = !!user?.teamMembership?.companyId || !!user?.teamMembership?.company;
 
   return (
     <div className="w-full flex justify-between items-center p-2 pt-1">
@@ -79,13 +87,25 @@ const Header = () => {
           </div>
         )}
 
-        <div
-          className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
-          onClick={() => router.push("/")}
-        >
-          <img src="/sidebar/filled-home.svg" alt="Qash Logo" />
-          <span className="text-text-primary text-lg font-semibold">Go to Home</span>
-        </div>
+        {/* Only show setup/home button after wallet is connected */}
+        {walletAddress &&
+          (hasCompany ? (
+            <div
+              className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
+              onClick={() => router.push("/")}
+            >
+              <img src="/sidebar/filled-home.svg" alt="Qash Logo" />
+              <span className="text-text-primary text-lg font-semibold">Go to Home</span>
+            </div>
+          ) : (
+            <div
+              className="flex items-center justify-center gap-2 cursor-pointer bg-background rounded-lg p-2 py-1.5 border-t-2 border-primary-divider"
+              onClick={() => router.push("/onboarding")}
+            >
+              <img src="/sidebar/filled-home.svg" alt="Setup" />
+              <span className="text-text-primary text-lg font-semibold">Set up your account</span>
+            </div>
+          ))}
       </div>
     </div>
   );
@@ -94,200 +114,180 @@ const Header = () => {
 const PaymentLinkDetailPage = () => {
   const params = useParams();
   const code = params.code as string;
-  const { address: walletAddress, openModal: openParaModal } = useMidenProvider();
+  const { loginWithPara, isAuthenticated, user, refreshUser } = useAuth();
+  const { address: walletAddress, openModal: openParaModal, client: midenClient } = useMidenProvider();
   const { data: paymentLink, isLoading, error } = useGetPaymentLinkByCode(code);
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
   const recordPaymentMutation = useRecordPayment();
   const { openModal, closeModal } = useModal();
-  const { assets, accountId: walletAddressFromContext, forceFetch: forceRefetchAssets } = useAccountContext();
-  const { forceFetch: forceRefetchRecallablePayment } = useRecallableNotes();
   const [isSending, setIsSending] = useState(false);
+  const [authenticatingWithPara, setAuthenticatingWithPara] = useState(false);
   const router = useRouter();
+  const isAuthenticatingRef = useRef(false);
+  const { isConnected } = useParaAccount();
+  const { para } = useParaMiden("https://rpc.testnet.miden.io");
 
-  const handleSubmitPayment = async () => {
-    // if (Number(accountBalance) < parseFloat(paymentLink?.amount || "0")) {
-    //   toast.error("Insufficient balance");
-    //   return;
-    // }
-
-    if (!walletAddress) {
-      toast.error("Please connect your wallet");
+  // Handle Para authentication after connection
+  const handleParaAuthentication = async () => {
+    // Prevent duplicate authentication attempts
+    if (isAuthenticatingRef.current) {
       return;
     }
 
-    if (!paymentLink?.acceptedTokens?.[0]) {
-      toast.error("No accepted token found for this payment link");
+    if (!isConnected || !para) {
+      toast.error("Please connect your wallet first");
       return;
     }
 
-    // Open processing modal first
-    openModal(MODAL_IDS.PROCESSING_TRANSACTION, {});
+    isAuthenticatingRef.current = true;
+    setAuthenticatingWithPara(true);
+    try {
+      // Issue JWT from Para
+      const jwtResult = await para.issueJwt();
 
-    setIsSending(true);
+      if (!jwtResult?.token) {
+        throw new Error("Failed to get JWT token from Para");
+      }
 
-    const recallableTime = 3600 * 24; // Default to 24 hours
-    // each block is 5 seconds, calculate recall height
-    const recallHeight = Math.floor(recallableTime / BLOCK_TIME);
+      await loginWithPara(jwtResult.token);
 
-    // Find the selected token from assets based on tokenAddress
-    const selectedToken = assets.find(asset => asset.faucetId === paymentLink.acceptedTokens?.[0]?.address) || {
-      amount: "0",
-      faucetId: paymentLink.acceptedTokens[0].address,
-      metadata: {
-        symbol: paymentLink.acceptedTokens[0].symbol,
-        decimals: paymentLink.acceptedTokens[0].decimals,
-        maxSupply: 0,
-      },
-    };
+      toast.success("Successfully authenticated");
 
-    // Create AccountId objects once to avoid aliasing issues
-    const senderAccountId = walletAddress;
-    const recipientAccountId = paymentLink.paymentWalletAddress;
-    const faucetAccountId = selectedToken.faucetId;
-
-    await handleSingleSendTransaction(senderAccountId, recipientAccountId, faucetAccountId, recallHeight, {
-      amount: parseFloat(paymentLink.amount || "0"),
-      recipientAddress: paymentLink.paymentWalletAddress,
-      recallableTime,
-      isPrivateTransaction: false,
-      message: paymentLink.description,
-    });
+      await refreshUser();
+    } catch (error) {
+      console.error("Para authentication failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to authenticate with Para");
+    } finally {
+      isAuthenticatingRef.current = false;
+      setAuthenticatingWithPara(false);
+    }
   };
 
-  const handleSingleSendTransaction = async (
-    senderAccountId: string,
-    recipientAccountId: string,
-    faucetAccountId: string,
-    recallHeight: number,
-    data: {
-      amount: number;
-      recipientAddress: string;
-      recallableTime: number;
-      isPrivateTransaction: boolean;
-      message?: string;
-    },
-  ) => {
+  // Auto-authenticate when Para connection is established
+  useEffect(() => {
+    if (isConnected && !isAuthenticated && !authenticatingWithPara && !isAuthenticatingRef.current) {
+      handleParaAuthentication();
+    }
+  }, [isConnected, isAuthenticated, authenticatingWithPara]);
+
+  const handleSubmitPayment = async () => {
+    const midenSdk = await import("@demox-labs/miden-sdk");
+    const {
+      Note,
+      WebClient,
+      Address,
+      NoteAssets,
+      FungibleAsset,
+      NoteType,
+      Felt,
+      TransactionRequestBuilder,
+      BasicFungibleFaucetComponent,
+      OutputNote,
+    } = midenSdk;
+    const OutputNoteArray = (midenSdk as any).OutputNoteArray;
+
     if (!walletAddress) {
-      toast.error("Wallet not connected");
-      return;
+      return toast.error("Please connect your wallet");
     }
 
-    const { amount, recipientAddress, recallableTime, isPrivateTransaction } = data;
-
     try {
-      // create note
-      // const [note, serialNumbers, noteRecallHeight] = await createP2IDENote(
-      //   senderAccountId,
-      //   recipientAccountId,
-      //   faucetAccountId,
-      //   Math.round(amount * Math.pow(10, paymentLink?.acceptedTokens?.[0]?.decimals || 8)),
-      //   isPrivateTransaction ? WrappedNoteType.PRIVATE : WrappedNoteType.PUBLIC,
-      //   recallHeight,
-      // );
+      setIsSending(true);
 
-      // const noteId = note.id().toString();
+      openModal("PROCESSING_TRANSACTION");
+      // prepare an array of p2id note
+      const p2idNotes: any[] = [];
+      const p2idNotesCopy: any[] = [];
+      const recipientAddresses = [];
+      const assets_arr = [];
+      let totalAmount = 0;
 
-      // // submit transaction to miden
-      // const txId = await submitTransactionWithOwnOutputNotes(senderAccountId, [note]);
+      // Handle single payment link
+      const paymentTokenAddress = paymentLink?.acceptedTokens?.[0]?.address;
+      const paymentAmount = parseFloat(paymentLink?.amount || "0");
+      const recipientAddress = paymentLink?.paymentWalletAddress;
 
-      // const midenTransaction = new SendTransaction(
-      //   walletAddress,
-      //   recipientAccountId,
-      //   QASH_TOKEN_ADDRESS,
-      //   "public",
-      //   amount! * 10 ** QASH_TOKEN_DECIMALS,
-      // );
+      if (!paymentTokenAddress || !recipientAddress) {
+        toast.error("Invalid payment details");
+        closeModal("PROCESSING_TRANSACTION");
+        return;
+      }
 
-      // const txId = (await (wallet?.adapter as MidenWalletAdapter).requestSend(midenTransaction)) || "";
-      // toast.success(`Transaction ${txId} submitted`);
+      const faucetAccount = await importAndGetAccount(midenClient, paymentTokenAddress);
+      // get faucet metadata
+      const faucetMetadata = await BasicFungibleFaucetComponent.fromAccount(faucetAccount);
+      assets_arr.push(faucetMetadata);
+      totalAmount += paymentAmount;
 
-      // submit transaction to server
-      // const response = await sendSingleTransaction({
-      //   assets: [
-      //     {
-      //       faucetId: paymentLink?.acceptedTokens?.[0]?.address || "",
-      //       amount: amount.toString(),
-      //       metadata: {
-      //         symbol: paymentLink?.acceptedTokens?.[0]?.symbol || "",
-      //         decimals: paymentLink?.acceptedTokens?.[0]?.decimals || 8,
-      //         maxSupply: 0,
-      //       },
-      //     },
-      //   ],
-      //   private: isPrivateTransaction,
-      //   recipient: recipientAddress,
-      //   recallable: true,
-      //   recallableTime: new Date(Date.now() + recallableTime * 1000),
-      //   recallableHeight: recallHeight,
-      //   serialNumber: ["1"],
-      //   noteType: CustomNoteType.P2IDR,
-      //   noteId: "",
-      //   transactionId: txId,
-      // });
+      // build p2id note
+      const p2idNote = Note.createP2IDNote(
+        Address.fromBech32(walletAddress).accountId(),
+        Address.fromBech32(recipientAddress).accountId(),
+        new NoteAssets([
+          new FungibleAsset(
+            Address.fromBech32(paymentTokenAddress).accountId(),
+            BigInt(paymentAmount * 10 ** faucetMetadata.decimals() || 8),
+          ),
+        ]),
+        NoteType.Private,
+        new Felt(BigInt(0)),
+      );
+      const p2idNoteCopy = p2idNote;
+      // Convert Note to OutputNote
+      p2idNotes.push(OutputNote.full(p2idNote));
+      p2idNotesCopy.push(p2idNoteCopy);
+      recipientAddresses.push(recipientAddress);
 
-      openModal<TransactionOverviewModalProps>(MODAL_IDS.TRANSACTION_OVERVIEW, {
-        amount: amount.toString(),
-        accountName: "My Account",
-        accountAddress: walletAddress,
-        recipientName: paymentLink?.title,
-        recipientAddress,
-        transactionType: isPrivateTransaction ? "Private" : "Public",
-        cancellableTime: `${recallableTime / 3600} hour(s)`,
-        message: `Payment for ${paymentLink?.title}`,
-        tokenAddress: paymentLink?.acceptedTokens?.[0]?.address,
-        tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol,
-        // transactionHash: txId,
-        onConfirm: async () => {
-          closeModal(MODAL_IDS.TRANSACTION_OVERVIEW);
+      // Build transaction request with OutputNoteArray
+      const outputNotesArray = new OutputNoteArray(p2idNotes);
+      const transactionRequest = new TransactionRequestBuilder().withOwnOutputNotes(outputNotesArray).build();
+      const midenParaClient = midenClient as import("@demox-labs/miden-sdk").WebClient;
+      const executedTx = await midenParaClient.executeTransaction(
+        Address.fromBech32(walletAddress).accountId(),
+        transactionRequest,
+      );
+      console.log("Start proving transaction");
+      const provenTx = await midenParaClient.proveTransaction(executedTx);
+      console.log("Start submitting proven transaction");
+      const submissionHeight = await midenParaClient.submitProvenTransaction(provenTx, executedTx);
+      console.log("Start applying transaction");
+      await midenParaClient.applyTransaction(executedTx, submissionHeight);
+      console.log("Start sending private notes");
+      // loop through p2idNotes and recipientAddresses, send each private note
+      for (let i = 0; i < p2idNotes.length; i++) {
+        await midenParaClient.sendPrivateNote(p2idNotesCopy[i], Address.fromBech32(recipientAddresses[i]));
+      }
+      console.log("Start recording payment");
+      recordPaymentMutation.mutate({
+        code,
+        data: {
+          payer: walletAddress,
+          txid: executedTx.executedTransaction().id().toHex(),
+          token: paymentLink?.acceptedTokens?.[0],
         },
       });
-
-      // if (response) {
-      //   // Record the payment in the payment link system
-      //   try {
-      //     await recordPaymentMutation.mutateAsync({
-      //       code,
-      //       data: {
-      //         payer: walletAddress,
-      //         txid: txId,
-      //         token: paymentLink?.acceptedTokens?.[0],
-      //       },
-      //     });
-
-      //     // Close processing modal
-      //     closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
-
-      //     toast.success("Payment completed!");
-
-      //     openModal<TransactionOverviewModalProps>(MODAL_IDS.TRANSACTION_OVERVIEW, {
-      //       amount: amount.toString(),
-      //       accountName: "My Account",
-      //       accountAddress: walletAddress,
-      //       recipientName: paymentLink?.title,
-      //       recipientAddress,
-      //       transactionType: isPrivateTransaction ? "Private" : "Public",
-      //       cancellableTime: `${recallableTime / 3600} hour(s)`,
-      //       message: `Payment for ${paymentLink?.title}`,
-      //       tokenAddress: paymentLink?.acceptedTokens?.[0]?.address,
-      //       tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol,
-      //       transactionHash: txId,
-      //       onConfirm: async () => {
-      //         router.push(`/`);
-      //       },
-      //     });
-      //   } catch (recordError: any) {
-      //     console.error("Failed to record payment:", recordError);
-      //     toast.error("Payment completed but failed to record in payment link system");
-      //   }
-      // }
-    } catch (error) {
-      // Close processing modal on error
-      console.error("Failed to send transaction:", error);
-      toast.error("Failed to send transaction :(");
+      closeModal("PROCESSING_TRANSACTION");
+      openModal<TransactionOverviewModalProps>("TRANSACTION_OVERVIEW", {
+        amount: totalAmount.toString(),
+        tokenSymbol: paymentLink?.acceptedTokens?.[0]?.symbol || "USDT",
+        tokenAddress: paymentTokenAddress,
+        accountAddress: walletAddress,
+        accountName: "You",
+        recipientAddress: recipientAddresses.join(","),
+        recipientName: paymentLink?.title || "Receiver",
+        transactionType: "Send",
+        transactionHash: executedTx.executedTransaction().id().toHex(),
+        onConfirm: () => {
+          closeModal("TRANSACTION_OVERVIEW");
+          router.push("/");
+        },
+      });
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Failed to process the transaction");
     } finally {
       setIsSending(false);
-      closeModal(MODAL_IDS.PROCESSING_TRANSACTION);
+      closeModal("PROCESSING_TRANSACTION");
     }
   };
 
@@ -342,6 +342,8 @@ const PaymentLinkDetailPage = () => {
 
         <div className="flex flex-col gap-5 py-5 w-[80%]">
           <PaymentLinkPreview
+            recipient={paymentLink.company.companyName}
+            paymentWalletAddress={paymentLink.paymentWalletAddress}
             amount={paymentLink.amount}
             title={paymentLink.title}
             description={paymentLink.description}

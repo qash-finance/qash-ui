@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import {
   useGetPaymentLinks,
   useDeletePaymentLinks,
-  useUpdatePaymentLinkOrder,
   useActivatePaymentLink,
   useDeactivatePaymentLink,
 } from "@/services/api/payment-link";
@@ -55,9 +54,10 @@ const PaymentLinkContainer = () => {
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
   const { data: paymentLinks = [], isLoading, error } = useGetPaymentLinks();
   const deletePaymentLinksMutation = useDeletePaymentLinks();
-  const updateOrderMutation = useUpdatePaymentLinkOrder();
   const activatePaymentLinkMutation = useActivatePaymentLink();
   const deactivatePaymentLinkMutation = useDeactivatePaymentLink();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Close tooltip when clicking outside
   useEffect(() => {
@@ -92,17 +92,6 @@ const PaymentLinkContainer = () => {
     };
   }, [paymentLinks]);
 
-  const handleDragEnd = async (newData: any[]) => {
-    try {
-      // Extract the IDs from the reordered data
-      const linkIds = newData.map((item: any) => item.id);
-      await updateOrderMutation.mutateAsync({ linkIds });
-      toast.success("Payment links reordered successfully");
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to reorder payment links");
-    }
-  };
-
   const handleSelectRow = (index: number) => {
     setSelectedRows(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
   };
@@ -132,25 +121,18 @@ const PaymentLinkContainer = () => {
     }
   };
 
-  const handleViewDetail = (linkIndex: number) => {
-    const link = displayedLinks[linkIndex];
-    if (link) {
-      router.push(`/payment-link/detail?code=${link.code}`);
-      setActiveTooltipId(null);
-    }
-  };
-
   const handleToggleStatus = (linkIndex: number, isActive: boolean) => {
     const link = displayedLinks[linkIndex];
     if (link) {
-      const mutation = isActive ? deactivatePaymentLinkMutation : activatePaymentLinkMutation;
+      // `isActive` is the new state coming from the ToggleSwitch: true => activate, false => deactivate
+      const mutation = isActive ? activatePaymentLinkMutation : deactivatePaymentLinkMutation;
       mutation.mutate(link.code, {
         onSuccess: () => {
-          toast.success(`Payment link ${isActive ? "deactivated" : "activated"} successfully`);
+          toast.success(`Payment link ${isActive ? "activated" : "deactivated"} successfully`);
           setActiveTooltipId(null);
         },
         onError: (error: any) => {
-          toast.error(error?.message || `Failed to ${isActive ? "deactivate" : "activate"} payment link`);
+          toast.error(error?.message || `Failed to ${isActive ? "activate" : "deactivate"} payment link`);
         },
       });
     }
@@ -192,7 +174,7 @@ const PaymentLinkContainer = () => {
     return displayedLinks.map((link: PaymentLink) => ({
       id: link.id, // Add id field for drag and drop
       "header-0": (
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
           <CustomCheckbox
             checked={selectedRows.includes(displayedLinks.indexOf(link))}
             onChange={() => handleSelectRow(displayedLinks.indexOf(link))}
@@ -228,7 +210,7 @@ const PaymentLinkContainer = () => {
         />
       ),
       Action: (
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center" onClick={e => e.stopPropagation()}>
           <SecondaryButton
             text="Copy Link"
             onClick={() => {
@@ -311,44 +293,52 @@ const PaymentLinkContainer = () => {
             />
           </div>
         }
+        childrenClassName="p-5 gap-5"
         containerClassName="w-full h-full relative"
       >
-        <div className="flex flex-col gap-4 p-5">
-          <div className="flex flex-col gap-2">
-            <span className="text-text-primary text-2xl leading-none">{activeTab.title}</span>
-            <span className="text-text-secondary text-sm leading-none">{activeTab.description}</span>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <img src="/loading-square.gif" alt="loading" className="w-12 h-12" />
-            </div>
-          ) : error ? (
-            <div className="flex justify-center items-center h-64">
-              <span className="text-text-secondary">Failed to load payment links</span>
-            </div>
-          ) : (
-            <Table
-              headers={tableHeaders}
-              data={tableData}
-              draggable={activeTab.id === "all"}
-              onDragEnd={handleDragEnd}
-              actionColumn={false}
-              showFooter={false}
-              selectedRows={selectedRows}
-              columnWidths={{
-                "1": "330px",
-                "3": "180px",
-                "6": "80px",
-                "7": "50px",
-              }}
-            />
-          )}
+        <div className="flex flex-col gap-2">
+          <span className="text-text-primary text-2xl leading-none">{activeTab.title}</span>
+          <span className="text-text-secondary text-sm leading-none">{activeTab.description}</span>
         </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <img src="/loading-square.gif" alt="loading" className="w-12 h-12" />
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-64">
+            <span className="text-text-secondary">Failed to load payment links</span>
+          </div>
+        ) : (
+          <Table
+            headers={tableHeaders}
+            data={tableData}
+            actionColumn={false}
+            showFooter={false}
+            showPagination={true}
+            selectedRows={selectedRows}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={setRowsPerPage}
+            columnWidths={{
+              "1": "330px",
+              "3": "180px",
+              "6": "80px",
+              "7": "50px",
+            }}
+            onRowClick={(_, index) => {
+              const link = displayedLinks[index];
+              if (link) {
+                router.push(`/payment-link/detail?code=${link.code}`);
+              }
+            }}
+          />
+        )}
 
         {selectedRows.length > 0 && (
           <div
-            className="flex flex-row items-center justify-between absolute bottom-5 right-5 bg-background rounded-lg p-3 border border-primary-divider gap-2 cursor-pointer hover:bg-red-50 transition-colors"
+            className="flex flex-row items-center justify-between absolute bottom-20 right-5 bg-background rounded-lg p-3 border border-primary-divider gap-2 cursor-pointer hover:bg-red-50 transition-colors"
             onClick={handleBulkDelete}
           >
             <img src="/misc/trashcan-icon.svg" alt="trash" className="w-5 h-5" />
@@ -380,7 +370,6 @@ const PaymentLinkContainer = () => {
               <PaymentLinkActionsTooltip
                 link={link}
                 onEdit={() => handleEdit(index)}
-                onViewDetail={() => handleViewDetail(index)}
                 onToggleStatus={(isActive: boolean) => handleToggleStatus(index, isActive)}
                 onRemove={() => handleRemove(index)}
               />

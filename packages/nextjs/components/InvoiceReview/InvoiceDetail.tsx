@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { InvoiceData } from "./InvoiceReviewContainer";
+import { InvoiceData } from "./EmployeeInvoiceReviewContainer";
 import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { updateInvoice } from "@/services/api/invoice";
@@ -28,7 +28,7 @@ const InvoiceDetail = (
   const onAddressUpdate = props.onAddressUpdate;
   const onWalletAddressUpdate = props.onWalletAddressUpdate;
   const searchParams = useSearchParams();
-  const invoiceUUID = searchParams.get("id") || "";
+  const invoiceUUID = searchParams.get("uuid") || "";
   const { openModal } = useModal();
 
   const [isEditingAddress, setIsEditingAddress] = useState(false);

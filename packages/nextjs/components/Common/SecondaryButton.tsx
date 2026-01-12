@@ -13,6 +13,7 @@ interface SecondaryButtonProps {
   variant?: "dark" | "light" | "red";
   closeIcon?: boolean;
   onCloseIconClick?: () => void;
+  type?: "button" | "submit" | "reset";
 }
 
 export const SecondaryButton = ({
@@ -26,6 +27,7 @@ export const SecondaryButton = ({
   variant = "dark",
   closeIcon = false,
   onCloseIconClick,
+  type = "button",
 }: SecondaryButtonProps) => {
   const getVariantStyles = () => {
     switch (variant) {
@@ -55,6 +57,7 @@ export const SecondaryButton = ({
 
   return (
     <button
+      type={type}
       className={`transition-opacity duration-300 flex gap-2 items-center justify-center rounded-[8px] py-2 border-t-2 ${buttonClassName || "w-full"}`}
       style={{
         background: variantStyles.background,

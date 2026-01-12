@@ -16,13 +16,25 @@ interface CompanyTypeDropdownProps {
   selectedCompanyType?: string;
   onCompanyTypeSelect: (companyType: string) => void;
   disabled?: boolean;
+  variant?: "outlined" | "filled";
+  size?: "default" | "compact";
 }
 
 export const CompanyTypeDropdown = ({
   selectedCompanyType,
   onCompanyTypeSelect,
   disabled = false,
+  variant = "outlined",
+  size = "default",
 }: CompanyTypeDropdownProps) => {
+  const containerStyle = useMemo(() => {
+    const baseStyle = variant === "outlined"
+      ? "border border-primary-divider rounded-xl bg-transparent"
+      : "bg-app-background border-b-2 border-primary-divider rounded-xl";
+    const heightStyle = size === "compact" ? "h-[52px]" : "h-[64px]";
+    return `${baseStyle} ${heightStyle}`;
+  }, [variant, size]);
+
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -49,24 +61,24 @@ export const CompanyTypeDropdown = ({
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 h-full w-full text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed justify-between border border-primary-divider rounded-xl bg-transparent"
+        className={`flex items-center gap-2 px-4 py-2 w-full text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed justify-between ${containerStyle}`}
         disabled={disabled}
       >
-        <div className="flex flex-col h-15 justify-center">
-          {selectedCompanyType ? (
-            <div>
-              <span className="text-text-secondary text-sm">Select your company type</span>
-              <p className="text-text-primary font-semibold">{selectedCompanyType}</p>
-            </div>
-          ) : (
-            <span className="text-text-primary text-[16px]">Select your company type</span>
+        <div className="flex flex-col justify-center">
+          <span className={`text-text-secondary ${size === "compact" ? "text-[12px]" : "text-[14px]"}`}>
+            Select company type
+          </span>
+          {selectedCompanyType && (
+            <p className={`text-text-primary font-semibold ${size === "compact" ? "text-[14px]" : "text-[16px]"}`}>
+              {selectedCompanyType}
+            </p>
           )}
         </div>
 
         <img
           src="/arrow/chevron-down.svg"
           alt="dropdown"
-          className={`w-6 h-6 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-6 h-6 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 

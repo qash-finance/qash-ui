@@ -62,6 +62,10 @@ export interface PaymentLink {
   acceptedTokens?: TokenMetadata[];
   acceptedChains?: ChainMetadata[];
   records?: PaymentLinkRecord[];
+  company: {
+    companyName: string;
+    metadata?: Record<string, any>;
+  }
   createdAt: string;
   updatedAt: string;
 }

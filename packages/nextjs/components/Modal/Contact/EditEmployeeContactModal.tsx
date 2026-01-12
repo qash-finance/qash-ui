@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { EditContactModalProps } from "@/types/modal";
+import { EditEmployeeContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { UpdateAddressBookDto, CompanyGroupResponseDto, TokenDto, NetworkDto } from "@/types/employee";
 import BaseModal from "../BaseModal";
@@ -107,7 +107,12 @@ const getNetworkFromName = (networkName?: string): { icon: string; name: string;
   return { icon: "/chain/miden.svg", name: networkName, value: "miden" };
 };
 
-export function EditContactModal({ isOpen, onClose, zIndex, contactData }: ModalProp<EditContactModalProps>) {
+export function EditEmployeeContactModal({
+  isOpen,
+  onClose,
+  zIndex,
+  contactData,
+}: ModalProp<EditEmployeeContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<TokenDto | null>(contactData?.token || null);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
@@ -256,21 +261,21 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
 
       const trimmedValue = value.trim();
 
-      // Check if email format is valid
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedValue)) {
-        return "Email must be a valid email address";
-      }
-
-      // Check max length
+      // Check max length first
       if (trimmedValue.length > 255) {
         return "Email cannot be longer than 255 characters";
       }
 
-      // Check if email has changed (similar to name and address validation)
-      // If email hasn't changed, it's valid (no need to check for duplicates)
+      // If email hasn't changed, it's valid
       if (contactData?.email && contactData.email.trim().toLowerCase() === trimmedValue.toLowerCase()) {
-        return true; // Email hasn't changed, so it's valid
+        return true;
+      }
+
+      // RFC-like email regex provided by user
+      const rfcEmailRegex =
+        /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+      if (!rfcEmailRegex.test(trimmedValue)) {
+        return "Email must be a valid email address";
       }
 
       return true;
@@ -325,9 +330,9 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
       setSelectedGroup(undefined);
       setSelectedNetwork(null);
       onClose();
-    } catch (error) {
-      console.error("Failed to update contact:", error);
-      toast.error("Failed to update contact");
+    } catch (error: any) {
+      const errorMessage = error.userMessage || error.message || "An unexpected error occurred";
+      toast.error(errorMessage);
     }
   };
 
@@ -471,4 +476,4 @@ export function EditContactModal({ isOpen, onClose, zIndex, contactData }: Modal
   );
 }
 
-export default EditContactModal;
+export default EditEmployeeContactModal;

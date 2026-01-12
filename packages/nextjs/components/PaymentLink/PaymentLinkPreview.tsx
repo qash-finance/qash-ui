@@ -42,6 +42,8 @@ const SubIcon = ({
 };
 
 interface PaymentLinkPreviewProps {
+  recipient: string;
+  paymentWalletAddress: string;
   amount: string;
   title: string;
   description: string;
@@ -52,6 +54,8 @@ interface PaymentLinkPreviewProps {
 }
 
 export const PaymentLinkPreview = ({
+  recipient,
+  paymentWalletAddress,
   amount,
   title,
   description,
@@ -60,7 +64,8 @@ export const PaymentLinkPreview = ({
   handleConnectWallet,
   isSending,
 }: PaymentLinkPreviewProps) => {
-  const { user } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
+  console.log("🚀 ~ PaymentLinkPreview ~ isAuthenticated:", isAuthenticated);
   const { address: walletAddress } = useMidenProvider();
   const [isQRCodeCollapsed, setIsQRCodeCollapsed] = useState(true);
   const [isWalletAddressCollapsed, setIsWalletAddressCollapsed] = useState(false);
@@ -77,15 +82,12 @@ export const PaymentLinkPreview = ({
               />
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="text-sm truncate text-text-primary leading-none">
-                    {(user as AuthMeResponse["user"])?.teamMembership?.firstName}{" "}
-                    {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
-                  </span>
+                  <span className="text-sm truncate text-text-primary leading-none">{recipient}</span>
                   <img src="/logo/miden.svg" className="w-4" alt="miden logo icon" />
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-sm truncate text-text-secondary leading-none">
-                    {formatAddress(walletAddress?.toString() || "0x")}
+                    {formatAddress(paymentWalletAddress || "0x")}
                   </span>
                   <img
                     src="/misc/copy-icon.svg"
@@ -264,10 +266,14 @@ export const PaymentLinkPreview = ({
 
                   {/* Connect Wallet Button */}
                   <div className="flex justify-center">
-                    {walletAddress && handleSubmitPayment ? (
+                    {user && handleSubmitPayment ? (
                       <PrimaryButton text="Pay now" onClick={handleSubmitPayment} loading={isSending} />
                     ) : (
-                      <PrimaryButton text="Connect Wallet" onClick={() => handleConnectWallet?.()} />
+                      <PrimaryButton
+                        text="Connect Wallet"
+                        onClick={() => handleConnectWallet?.()}
+                        loading={isLoading}
+                      />
                     )}
                   </div>
                 </div>

@@ -15,7 +15,7 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 const PayrollContainer = () => {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const { data: groups } = useGetAllEmployeeGroups();
@@ -78,9 +78,9 @@ const PayrollContainer = () => {
       Group: (
         <div className="flex justify-center items-center">
           <CategoryBadge
-            shape={groups?.find(grp => grp.id === payroll.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-            color={groups?.find(grp => grp.id === payroll.employee.groupId)?.color || "#35ADE9"}
-            name={groups?.find(grp => grp.id === payroll.employee.groupId)?.name || "-"}
+            shape={groups?.find(grp => grp.id === payroll?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+            color={groups?.find(grp => grp.id === payroll?.employee?.groupId)?.color || "#35ADE9"}
+            name={groups?.find(grp => grp.id === payroll?.employee?.groupId)?.name || "-"}
           />
         </div>
       ),

@@ -17,6 +17,7 @@ import { UpdatePaymentLink, TokenMetadata } from "@/types/payment-link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { PaymentLinkPreview } from "./PaymentLinkPreview";
+import { useAuth } from "@/services/auth/context";
 
 interface CreatePaymentLinkFormData {
   title: string;
@@ -118,6 +119,7 @@ const NetworkBadge = ({ networkId }: { networkId: string }) => {
 
 const EditPaymentLinkContainer = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const paymentLinkCode = searchParams.get("code");
   const { walletAddress } = useWalletState(state => state);
@@ -357,6 +359,8 @@ const EditPaymentLinkContainer = () => {
             <span className="text-text-primary text-2xl font-semibold">Preview</span>
           </div>
           <PaymentLinkPreview
+            recipient={user?.teamMembership?.company?.companyName || "Your Company"}
+            paymentWalletAddress={walletAddress || ""}
             amount={watch("amount") || ""}
             title={watch("title") || ""}
             description={watch("description") || ""}

@@ -1,9 +1,8 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { CreateContactModalProps } from "@/types/modal";
+import { CreateEmployeeContactModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { Category, CategoryShape } from "@/types/address-book";
 import BaseModal from "../BaseModal";
 import { ModalHeader } from "../../Common/ModalHeader";
 import { PrimaryButton } from "../../Common/PrimaryButton";
@@ -13,7 +12,7 @@ import { useModal } from "@/contexts/ModalManagerProvider";
 import { MODAL_IDS } from "@/types/modal";
 import { AssetWithMetadata } from "@/types/faucet";
 import toast from "react-hot-toast";
-import { CompanyGroupResponseDto, CreateContactDto, NetworkDto, TokenDto, CategoryShapeEnum } from "@/types/employee";
+import { CompanyGroupResponseDto, CreateContactDto, NetworkDto, TokenDto } from "@/types/employee";
 import {
   useCheckEmployeeAddressDuplicate,
   useCheckEmployeeNameDuplicate,
@@ -34,7 +33,7 @@ import { turnBechToHex } from "@/services/utils/turnBechToHex";
 interface CreateContactFormData {
   name: string;
   walletAddress: string;
-  email?: string;
+  email: string;
   groupId?: number;
 }
 
@@ -91,14 +90,14 @@ const DEFAULT_NETWORK: { icon: string; name: string; value: string } = {
   value: "miden",
 };
 
-export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateContactModalProps>) {
+export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalProp<CreateEmployeeContactModalProps>) {
   const { isAuthenticated } = useAuth();
   const [selectedToken, setSelectedToken] = useState<AssetWithMetadata | null>(DEFAULT_TOKEN);
   const [selectedNetwork, setSelectedNetwork] = useState<{ icon: string; name: string; value: string } | null>(
     DEFAULT_NETWORK,
   );
   const [selectedGroup, setSelectedGroup] = useState<CompanyGroupResponseDto | undefined>(undefined);
-  const { openModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
   const networkChainIds: Record<string, number> = useMemo(
     () => ({
@@ -122,6 +121,8 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
     setValue,
     watch,
   } = useForm<CreateContactFormData>({
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "",
       walletAddress: "",
@@ -194,15 +195,17 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
   });
 
   const emailRegister = register("email", {
+    required: "Email is required",
     pattern: {
-      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      // User-provided RFC-like email regex (escaped '/' for JS regex literal)
+      value:
+        /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
       message: "Email must be a valid email address",
     },
     maxLength: {
       value: 255,
       message: "Email cannot be longer than 255 characters",
     },
-    validate: () => true,
   });
 
   const onSubmit = async (data: CreateContactFormData) => {
@@ -254,6 +257,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
       setSelectedNetwork(DEFAULT_NETWORK);
       setSelectedGroup(undefined);
       onClose();
+      closeModal("CHOOSE_CONTACT_TYPE");
     } catch (error) {
       console.error("Failed to create contact:", error);
       toast.error("Failed to create contact");
@@ -314,7 +318,7 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
 
           <input type="hidden" {...groupIdRegister} value={selectedGroup?.id ?? ""} />
 
-          {/* Token Selection */}
+          {/* Network Selection */}
           <div className="bg-app-background rounded-xl border-b-2 border-primary-divider">
             <button
               type="button"
@@ -390,4 +394,4 @@ export function CreateContactModal({ isOpen, onClose, zIndex }: ModalProp<Create
   );
 }
 
-export default CreateContactModal;
+export default CreateEmployeeContactModal;

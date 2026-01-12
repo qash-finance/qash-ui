@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { SelectRecipientModalProps } from "@/types/modal";
+import { SelectEmployeeModalProps } from "@/types/modal";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
-import { ModalHeader } from "../Common/ModalHeader";
-import BaseModal from "./BaseModal";
+import { ModalHeader } from "../../Common/ModalHeader";
+import BaseModal from "../BaseModal";
 import { useGetAllEmployeeGroups, useGetEmployeesByGroup, useGetAllEmployees } from "@/services/api/employee";
 import { useForm } from "react-hook-form";
 import { formatAddress } from "@/services/utils/miden/address";
@@ -11,7 +11,7 @@ import { useWalletConnect } from "@/hooks/web3/useWalletConnect";
 import { useQueryClient } from "@tanstack/react-query";
 import { turnBechToHex } from "@/services/utils/turnBechToHex";
 import { blo } from "blo";
-import { createShapeElement } from "../Common/ToolTip/ShapeSelectionTooltip";
+import { createShapeElement } from "../../Common/ToolTip/ShapeSelectionTooltip";
 import { CompanyContactResponseDto, CompanyGroupResponseDto } from "@/types/employee";
 import { useAuth } from "@/services/auth/context";
 
@@ -40,7 +40,7 @@ function AddressItem({ name, address, email, isSelected = false, onSelect }: Add
   );
 }
 
-export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<SelectRecipientModalProps>) {
+export function SelectEmployeeModal({ isOpen, onClose, onSave }: ModalProp<SelectEmployeeModalProps>) {
   // **************** Custom Hooks *******************
   const { isAuthenticated } = useAuth();
   const { register, watch, reset } = useForm();
@@ -209,4 +209,4 @@ export function SelectRecipientModal({ isOpen, onClose, onSave }: ModalProp<Sele
   );
 }
 
-export default SelectRecipientModal;
+export default SelectEmployeeModal;

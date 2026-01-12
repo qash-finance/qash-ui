@@ -23,7 +23,9 @@ import { Environment, ParaProvider } from "@getpara/react-sdk";
 import { MidenProvider } from "@/contexts/MidenProvider";
 import "@getpara/react-sdk/styles.css";
 
-const SIDEBAR_WIDTH = 280;
+// Responsive sidebar widths: smaller on medium screens, larger on bigger screens
+// sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px
+const SIDEBAR_WIDTH_CLASSES = "w-[200px] lg:w-[240px] xl:w-[280px]";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -94,7 +96,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   const isFullscreen = useMemo(() => {
     if (!pathname) return false;
-    return Array.from(fullscreenPages).some(p => (p.endsWith("/") ? pathname.startsWith(p) : pathname === p));
+    return Array.from(fullscreenPages).some(
+      p =>
+        // Fullscreen when the pathname equals the page or is a subpath (e.g. "/invoice-review/b2b")
+        pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`),
+    );
   }, [pathname]);
 
   return (
@@ -162,7 +168,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                             <div className="flex flex-col h-screen overflow-hidden">
                               <TestnetBanner />
                               <div className="flex flex-row gap-2">
-                                <div className="top-0" style={{ width: SIDEBAR_WIDTH }}>
+                                <div className={`top-0 ${SIDEBAR_WIDTH_CLASSES}`}>
                                   <Sidebar />
                                 </div>
                                 {/* {pathname.includes("dashboard") && <DashboardMenu />} */}

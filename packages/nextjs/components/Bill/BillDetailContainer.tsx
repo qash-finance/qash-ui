@@ -256,9 +256,9 @@ const BillDetailContainer = () => {
                 <p className="text-sm text-gray-900 font-medium">{formatDate(invoice.issueDate)}</p>
                 <p className="text-sm text-gray-900 font-medium">{formatDate(invoice.dueDate)}</p>
                 <CategoryBadge
-                  shape={groups?.find(grp => grp.id === invoice.employee.groupId)?.shape || CategoryShapeEnum.CIRCLE}
-                  color={groups?.find(grp => grp.id === invoice.employee.groupId)?.color || "#35ADE9"}
-                  name={groups?.find(grp => grp.id === invoice.employee.groupId)?.name || "-"}
+                  shape={groups?.find(grp => grp.id === invoice?.employee?.groupId)?.shape || CategoryShapeEnum.CIRCLE}
+                  color={groups?.find(grp => grp.id === invoice?.employee?.groupId)?.color || "#35ADE9"}
+                  name={groups?.find(grp => grp.id === invoice?.employee?.groupId)?.name || "Client"}
                 />
               </div>
             </div>

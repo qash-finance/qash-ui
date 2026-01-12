@@ -6,6 +6,7 @@ interface PrimaryButtonProps {
   icon?: string;
   iconPosition?: "left" | "right";
   onClick?: () => void;
+  type?: "button" | "submit" | "reset";
   containerClassName?: string;
   buttonClassName?: string;
   iconClassName?: string;
@@ -18,6 +19,7 @@ export const PrimaryButton = ({
   icon,
   iconPosition,
   onClick,
+  type = "button",
   containerClassName,
   iconClassName,
   buttonClassName,
@@ -32,6 +34,7 @@ export const PrimaryButton = ({
       }}
     >
       <button
+        type={type}
         className={`w-full flex gap-2 items-center justify-center rounded-lg py-1.5 border-t-2 ${buttonClassName}`}
         style={{
           background: disabled ? "var(--primary-button-disabled)" : "var(--primary-button)",

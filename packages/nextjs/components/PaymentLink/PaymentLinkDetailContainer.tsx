@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { PrimaryButton } from "../Common/PrimaryButton";
-import { BaseContainer } from "../Common/BaseContainer";
 import { Table } from "../Common/Table";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGetPaymentLinkByCodeForOwner } from "@/services/api/payment-link";
@@ -13,6 +12,7 @@ import { Badge, BadgeStatus } from "../Common/Badge";
 import { formatAddress } from "@/services/utils/miden/address";
 import { ViewOnExplorerTooltip } from "./ViewOnExplorerTooltip";
 import { Tooltip } from "react-tooltip";
+import { useTitle } from "@/contexts/TitleProvider";
 
 const Card = ({ title, text }: { title: string; text: React.ReactNode }) => {
   return (
@@ -37,6 +37,28 @@ const PaymentLinkDetailContainer = () => {
   const paymentLinkCode = searchParams.get("code");
   const { data: paymentLink, isLoading, error } = useGetPaymentLinkByCodeForOwner(paymentLinkCode || "");
   const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
+  const { setTitle, setShowBackArrow, setOnBackClick } = useTitle();
+
+  // Set breadcrumb title when payment link data is loaded
+  useEffect(() => {
+    if (paymentLink) {
+      setTitle(
+        <div className="flex items-center gap-2">
+          <span
+            className="text-text-secondary hover:text-text-primary cursor-pointer"
+            onClick={() => router.push("/payment-link")}
+          >
+            Payment Links
+          </span>
+          <span className="text-text-secondary">/</span>
+          <span className="text-text-primary">{paymentLink.title}</span>
+        </div>,
+      );
+      setShowBackArrow(true);
+      // Wrap in another function to prevent React from calling it as a state updater
+      setOnBackClick(() => () => router.push("/payment-link"));
+    }
+  }, [paymentLink, setTitle, setShowBackArrow, setOnBackClick, router]);
 
   // Close tooltip when clicking outside
   useEffect(() => {

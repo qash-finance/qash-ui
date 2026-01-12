@@ -114,14 +114,15 @@ export const PaymentLink: React.FC<PaymentLinkProps> = ({ checkedRows, setChecke
   const handleToggleStatus = (linkIndex: number, isActive: boolean) => {
     const link = allLinks[linkIndex];
     if (link) {
-      const mutation = isActive ? deactivatePaymentLinkMutation : activatePaymentLinkMutation;
+      // `isActive` is the new state coming from the ToggleSwitch: true => activate, false => deactivate
+      const mutation = isActive ? activatePaymentLinkMutation : deactivatePaymentLinkMutation;
       mutation.mutate(link.code, {
         onSuccess: () => {
-          toast.success(`Payment link ${isActive ? "deactivated" : "activated"} successfully`);
+          toast.success(`Payment link ${isActive ? "activated" : "deactivated"} successfully`);
           setActiveTooltipId(null);
         },
         onError: (error: any) => {
-          toast.error(error?.message || `Failed to ${isActive ? "deactivate" : "activate"} payment link`);
+          toast.error(error?.message || `Failed to ${isActive ? "activate" : "deactivate"} payment link`);
         },
       });
     }
