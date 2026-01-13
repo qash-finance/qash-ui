@@ -93,14 +93,18 @@ export default function LoginContainer() {
   }, [isAuthenticated, user, router]);
 
   return (
-    <div className="flex flex-row w-full h-full p-5 bg-background">
-      <Welcome />
+    <div className="flex flex-col-reverse lg:flex-row w-full h-full p-3 md:p-5 bg-background overflow-hidden">
+      <div className="hidden lg:block lg:w-1/2 h-full">
+        <Welcome />
+      </div>
 
-      <div className="flex flex-col justify-center items-center w-1/2 h-full px-50 relative">
-        <div className="flex flex-col w-full items-center justify-center mb-10">
-          <img src="/logo/qash-icon.svg" alt="logo" className="w-15" />
-          <p className="font-barlow font-medium text-[32px] text-text-primary text-center w-full">Get started now</p>
-          <p className="font-barlow font-medium text-[16px] text-text-secondary text-center w-full">
+      <div className="flex flex-col justify-center items-center w-full lg:w-1/2 h-full px-4 md:px-8 lg:px-20 xl:px-50 relative">
+        <div className="flex flex-col w-full max-w-md items-center justify-center mb-8 md:mb-10">
+          <img src="/logo/qash-icon.svg" alt="logo" className="w-12 md:w-15" />
+          <p className="font-barlow font-medium text-[24px] md:text-[32px] text-text-primary text-center w-full">
+            Get started now
+          </p>
+          <p className="font-barlow font-medium text-[14px] md:text-[16px] text-text-secondary text-center w-full">
             Welcome to Qash - Let get started
           </p>
         </div>
@@ -111,6 +115,7 @@ export default function LoginContainer() {
           }}
           text={authenticatingWithPara ? "Authenticating..." : "Continue by email"}
           disabled={authenticatingWithPara || isLoading || isAuthenticated}
+          containerClassName="w-full max-w-md"
         />
       </div>
     </div>

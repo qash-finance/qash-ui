@@ -33,7 +33,7 @@ import { turnBechToHex } from "@/services/utils/turnBechToHex";
 interface CreateContactFormData {
   name: string;
   walletAddress: string;
-  email?: string;
+  email: string;
   groupId?: number;
 }
 
@@ -195,6 +195,7 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
   });
 
   const emailRegister = register("email", {
+    required: "Email is required",
     pattern: {
       // User-provided RFC-like email regex (escaped '/' for JS regex literal)
       value:
@@ -205,7 +206,6 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
       value: 255,
       message: "Email cannot be longer than 255 characters",
     },
-    validate: () => true,
   });
 
   const onSubmit = async (data: CreateContactFormData) => {
@@ -304,6 +304,7 @@ export function CreateEmployeeContactModal({ isOpen, onClose, zIndex }: ModalPro
             register={emailRegister}
             error={errors.email?.message}
             disabled={createEmployee.isPending}
+            required
           />
 
           <FormInput
