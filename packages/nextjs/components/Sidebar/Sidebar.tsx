@@ -45,51 +45,29 @@ export enum SidebarLink {
 
 // Enum for submenu types
 export enum SubmenuType {
+  Null = "null",
   MoveCrypto = "moveCrypto",
   // Add more submenu types here as needed
   // AnotherSubmenu = "anotherSubmenu",
 }
 
 export const actionItems = [
-  // {
-  //   icon: "/sidebar/home.svg",
-  //   filledIcon: "/sidebar/filled-home.svg",
-  //   label: "Dashboard",
-  //   isActive: true,
-  //   link: SidebarLink.Home,
-  //   disabled: false,
-  // },
+  {
+    icon: "/sidebar/home.svg",
+    filledIcon: "/sidebar/filled-home.svg",
+    label: "Dashboard",
+    isActive: true,
+    link: SidebarLink.Home,
+    disabled: false,
+    hasSubmenu: false,
+    submenuType: SubmenuType.Null,
+  },
   {
     icon: "/sidebar/payroll.svg",
     filledIcon: "/sidebar/filled-payroll.svg",
     label: "Payroll",
     isActive: false,
     link: SidebarLink.Payroll,
-    disabled: false,
-  },
-
-  {
-    icon: "/sidebar/bill.svg",
-    filledIcon: "/sidebar/filled-bill.svg",
-    label: "Bills",
-    isActive: false,
-    link: SidebarLink.Bill,
-    disabled: false,
-  },
-  {
-    icon: "/sidebar/contact-book.svg",
-    filledIcon: "/sidebar/filled-contact-book.svg",
-    label: "Contact",
-    isActive: false,
-    link: SidebarLink.ContactBook,
-    disabled: false,
-  },
-  {
-    icon: "/sidebar/payment-link.svg",
-    filledIcon: "/sidebar/filled-payment-link.svg",
-    label: "Payment Link",
-    isActive: false,
-    link: SidebarLink.PaymentLink,
     disabled: false,
   },
   {
@@ -101,6 +79,22 @@ export const actionItems = [
     disabled: false,
   },
   {
+    icon: "/sidebar/bill.svg",
+    filledIcon: "/sidebar/filled-bill.svg",
+    label: "Bills",
+    isActive: false,
+    link: SidebarLink.Bill,
+    disabled: false,
+  },
+  {
+    icon: "/sidebar/payment-link.svg",
+    filledIcon: "/sidebar/filled-payment-link.svg",
+    label: "Payment Link",
+    isActive: false,
+    link: SidebarLink.PaymentLink,
+    disabled: false,
+  },
+  {
     icon: "/sidebar/payroll.svg",
     filledIcon: "/sidebar/filled-payroll.svg",
     label: "Earn",
@@ -108,22 +102,12 @@ export const actionItems = [
     disabled: true,
   },
   {
-    icon: "/sidebar/move-crypto.svg",
-    filledIcon: "/sidebar/filled-move-crypto.svg",
-    label: "Team",
+    icon: "/sidebar/contact-book.svg",
+    filledIcon: "/sidebar/filled-contact-book.svg",
+    label: "Contact",
     isActive: false,
-    link: SidebarLink.MoveCrypto,
-    disabled: true,
-    hasSubmenu: true,
-    submenuType: SubmenuType.MoveCrypto,
-  },
-  {
-    icon: "/sidebar/credit-card.svg",
-    filledIcon: "/sidebar/filled-credit-card.svg",
-    label: "Credit Card",
-    isActive: false,
-    link: SidebarLink.CreditCard,
-    disabled: true,
+    link: SidebarLink.ContactBook,
+    disabled: false,
   },
   {
     icon: "/sidebar/transactions.svg",
@@ -132,6 +116,14 @@ export const actionItems = [
     isActive: false,
     link: SidebarLink.Transactions,
     disabled: false,
+  },
+  {
+    icon: "/sidebar/credit-card.svg",
+    filledIcon: "/sidebar/filled-credit-card.svg",
+    label: "Credit Card",
+    isActive: false,
+    link: SidebarLink.CreditCard,
+    disabled: true,
   },
   {
     icon: "/sidebar/setting.svg",

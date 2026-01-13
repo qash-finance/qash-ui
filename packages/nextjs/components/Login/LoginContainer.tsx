@@ -66,7 +66,7 @@ export default function LoginContainer() {
       // Small delay to ensure state updates
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      router.push(hasCompany ? "/payroll" : "/onboarding");
+      router.push(hasCompany ? "/" : "/onboarding");
     } catch (error) {
       console.error("Para authentication failed:", error);
       toast.error(error instanceof Error ? error.message : "Failed to authenticate with Para");
@@ -87,7 +87,7 @@ export default function LoginContainer() {
   useEffect(() => {
     if (!isAuthenticated) return;
     const hasCompany = !!(user as User)?.teamMembership?.companyId || !!(user as User)?.teamMembership?.company;
-    const destination = hasCompany ? "/payroll" : "/onboarding";
+    const destination = hasCompany ? "/" : "/onboarding";
 
     router.push(destination);
   }, [isAuthenticated, user, router]);

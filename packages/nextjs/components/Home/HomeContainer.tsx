@@ -13,9 +13,7 @@ export const HomeContainer = () => {
         <Header />
         <CardContainer />
       </div>
-      <PaymentInteraction />
       <Overview />
-      <TransactionHistory />
     </div>
   );
 };

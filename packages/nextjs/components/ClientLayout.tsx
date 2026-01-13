@@ -85,14 +85,6 @@ function ProtectedContent({ children }: { children: ReactNode }) {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
-  const router = useRouter();
-
-  // Redirect from "/" to "/payroll"
-  useEffect(() => {
-    if (pathname === "/") {
-      router.replace("/payroll");
-    }
-  }, [pathname, router]);
 
   const isFullscreen = useMemo(() => {
     if (!pathname) return false;

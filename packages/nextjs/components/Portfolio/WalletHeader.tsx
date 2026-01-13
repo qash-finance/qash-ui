@@ -5,7 +5,7 @@ import { formatNumberWithCommas } from "@/services/utils/formatNumber";
 import { useBalanceVisibility } from "@/contexts/BalanceVisibilityProvider";
 import { useMidenProvider } from "@/contexts/MidenProvider";
 
-export function WalletHeader({ onClose }: { onClose: () => void }) {
+export function WalletHeader({ onClose, onChooseAccount }: { onClose: () => void; onChooseAccount: () => void }) {
   // **************** Custom Hooks *******************
   const { isBalanceVisible, toggleBalanceVisibility } = useBalanceVisibility();
   // const blockNumber = 0;
@@ -122,18 +122,13 @@ export function WalletHeader({ onClose }: { onClose: () => void }) {
     <header className="flex relative flex-col gap-4 items-start w-full p-2  rounded-2xl">
       {/* Wallet Header */}
       <div className="flex gap-2 items-center justify-between w-full">
-        <div className="flex gap-2 items-center">
-          <span className=" text-text-primary text-2xl">Portfolio</span>
-          {balancesLoading ? (
-            <img src="/portfolio/loading-icon.gif" alt="loading" className="w-6 h-6" />
-          ) : (
-            <img
-              src="/portfolio/loading-icon.svg"
-              alt="loading"
-              className="w-4 h-4 cursor-pointer"
-              onClick={() => fetchBalances()}
-            />
-          )}
+        <div
+          className="flex gap-2 items-center rounded-full bg-background px-2 py-1 cursor-pointer"
+          onClick={onChooseAccount}
+        >
+          <img src="/portfolio/account-icon.svg" alt="wallet icon" className="w-5" />
+          <div className=" leading-none text-text-primary">Account 1</div>
+          <img src="/arrow/chevron-down.svg" alt="wallet icon" className="w-4" />
         </div>
         <div className="flex gap-3 items-center">
           {/* <ThemeToggle /> */}

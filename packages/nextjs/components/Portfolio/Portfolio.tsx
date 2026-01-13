@@ -6,9 +6,11 @@ import { TokenList } from "./TokenList";
 import { ModalProp } from "@/contexts/ModalManagerProvider";
 import { PortfolioModalProps } from "@/types/modal";
 import { BalanceVisibilityProvider } from "@/contexts/BalanceVisibilityProvider";
+import Accounts from "./Accounts";
 
 const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [choosingAccount, setChoosingAccount] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,10 +50,30 @@ const Portfolio = ({ isOpen, onClose }: ModalProp<PortfolioModalProps>) => {
         style={{ zIndex: 2 }}
       >
         {/* Wallet Header */}
-        <div className="flex relative flex-col gap-2 items-start self-stretch flex-[1_0_0]">
+        <div className="flex relative flex-col gap-2 items-start self-stretch flex-[1_0_0] overflow-hidden">
           <BalanceVisibilityProvider>
-            <WalletHeader onClose={handleClose} />
-            <TokenList />
+            <div
+              className={`flex w-[200%] h-full transition-transform duration-300 ease-in-out ${
+                choosingAccount ? "-translate-x-1/2" : "translate-x-0"
+              }`}
+            >
+              <div className="w-1/2 h-full flex flex-col gap-2">
+                <WalletHeader onClose={handleClose} onChooseAccount={() => setChoosingAccount(true)} />
+                <TokenList />
+              </div>
+              <div className="w-1/2 h-full flex flex-col gap-2">
+                <div className="w-full justify-center flex items-center p-2 relative h-20">
+                  <img
+                    src="/arrow/chevron-left.svg"
+                    alt="back"
+                    className="w-6 absolute left-2 top-1/2 -translate-y-1/2 cursor-pointer"
+                    onClick={() => setChoosingAccount(false)}
+                  />
+                  <span className="text-2xl font-medium">Accounts</span>
+                </div>
+                <Accounts />
+              </div>
+            </div>
           </BalanceVisibilityProvider>
         </div>
       </main>
