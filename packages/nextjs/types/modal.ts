@@ -59,6 +59,10 @@ import ConnectMidenWallet from "@/components/Modal/Wallet/ConnectMidenWallet";
 import RemovePayrollModal from "@/components/Modal/Payroll/RemovePayrollModal";
 import ConfirmAndReviewInvoiceModal from "@/components/Modal/Invoice/ConfirmAndReviewInvoiceModal";
 import ChooseContactTypeModal from "@/components/Modal/Contact/ChooseContactTypeModal";
+import CreateAccountModal from "@/components/Modal/Account/CreateAccountModal";
+import AddMemberModal from "@/components/Modal/Account/AddMemberModal";
+import DepositModal from "@/components/Modal/DepositModal";
+import InviteTeamMemberModal from "@/components/Modal/TeamMember/InviteTeamMemberModal";
 import { Group } from "./group-payment";
 import { CompanyGroupResponseDto } from "./employee";
 import { BatchTransaction } from "@/services/store/batchTransactions";
@@ -130,6 +134,10 @@ export const MODAL_IDS = {
   REMOVE_INVOICE: "REMOVE_INVOICE",
   CONFIRM_AND_REVIEW_INVOICE: "CONFIRM_AND_REVIEW_INVOICE",
   CHOOSE_CONTACT_TYPE: "CHOOSE_CONTACT_TYPE",
+  CREATE_ACCOUNT: "CREATE_ACCOUNT",
+  ADD_MEMBER: "ADD_MEMBER",
+  DEPOSIT: "DEPOSIT",
+  INVITE_TEAM_MEMBER: "INVITE_TEAM_MEMBER",
 } as const;
 
 export type ModalId = keyof typeof MODAL_IDS;
@@ -486,6 +494,17 @@ export interface CreateEmployeeContactModalProps extends BaseModalProps {
 export interface CreateClientContactModalProps extends BaseModalProps {
 }
 
+export interface CreateAccountModalProps extends BaseModalProps {
+}
+
+export interface AddMemberModalProps extends BaseModalProps {
+  onMembersSelected?: (members: any[]) => void;
+}
+
+export interface DepositModalProps extends BaseModalProps {}
+
+export interface InviteTeamMemberModalProps extends BaseModalProps {}
+
 export type ModalPropsMap = {
   [MODAL_IDS.SELECT_TOKEN]: SelectTokenModalProps;
   [MODAL_IDS.EDIT_TRANSACTION]: EditTransactionModalProps;
@@ -545,6 +564,10 @@ export type ModalPropsMap = {
   [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModalProps;
   [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModalProps;
   [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModalProps;
+  [MODAL_IDS.CREATE_ACCOUNT]: CreateAccountModalProps;
+  [MODAL_IDS.ADD_MEMBER]: AddMemberModalProps;
+  [MODAL_IDS.DEPOSIT]: DepositModalProps;
+  [MODAL_IDS.INVITE_TEAM_MEMBER]: InviteTeamMemberModalProps;
 };
 
 export type ModalProps = ModalPropsMap[keyof ModalPropsMap];
@@ -608,5 +631,9 @@ export const modalRegistry = {
   [MODAL_IDS.REMOVE_PAYROLL]: RemovePayrollModal,
   [MODAL_IDS.REMOVE_INVOICE]: RemoveInvoiceModal,
   [MODAL_IDS.CONFIRM_AND_REVIEW_INVOICE]: ConfirmAndReviewInvoiceModal,
-  [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModal
+  [MODAL_IDS.CHOOSE_CONTACT_TYPE]: ChooseContactTypeModal,
+  [MODAL_IDS.CREATE_ACCOUNT]: CreateAccountModal,
+  [MODAL_IDS.ADD_MEMBER]: AddMemberModal,
+  [MODAL_IDS.DEPOSIT]: DepositModal,
+  [MODAL_IDS.INVITE_TEAM_MEMBER]: InviteTeamMemberModal,
 } as const;

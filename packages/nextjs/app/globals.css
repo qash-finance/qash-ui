@@ -382,6 +382,64 @@ input:-moz-autofill:active {
 }
 /************ Custom Checkbox ************/
 
+/************ Custom Checkbox ************/
+.custom-blue-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+}
+
+.custom-blue-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 25px;
+  width: 25px;
+  z-index: 1;
+}
+
+.custom-blue-checkbox .blue-checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 25px;
+  height: 25px;
+  background: #f6f6f6;
+  border: 1px solid #e7e8ea;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.custom-blue-checkbox:hover .blue-checkmark {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-blue-checkbox input[type="checkbox"]:checked ~ .blue-checkmark {
+  background: #066EFF;
+  border: none;
+}
+
+.custom-blue-checkbox .blue-checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 15px;
+  height: 15px;
+  background-image: url("/custom-check-icon.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.custom-blue-checkbox input[type="checkbox"]:checked ~ .blue-checkmark::after {
+  display: block;
+}
+/************ Custom Checkbox ************/
+
 /************ Table Scrollbar ************/
 /* Table scrollbar styling */
 .overflow-x-auto::-webkit-scrollbar {

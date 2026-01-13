@@ -1,88 +1,65 @@
 "use client";
 import React from "react";
-import Link from "next/link";
-import { actionItems } from "../components/Sidebar/Sidebar";
+import { useRouter } from "next/navigation";
+import { SecondaryButton } from "../components/Common/SecondaryButton";
 
 export default function NotFound() {
+  const router = useRouter();
+
+  const generateRandomColor = () => {
+    const colors = ["#E9358F", "#3FDEC9", "#335CFF", "#FF9A68", "#7D52F4", "#FFD268"];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  const InfinityBannerContainer = () => {
+    const bannerItems = Array.from({ length: 40 }, (_, index) => (
+      <React.Fragment key={index}>
+        <span className="text-xl font-bold text-[#99C3FF] uppercase whitespace-nowrap anton-regular mx-2">
+          QASH.FINANCE
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="17"
+          height="18"
+          viewBox="0 0 17 18"
+          fill="none"
+          className="w-5 h-5 flex-shrink-0"
+        >
+          <path
+            d="M8.5 0.5C7.32638 6.87501 6.37496 7.82638 0 9C6.37501 10.1736 7.32638 11.125 8.5 17.5C9.67362 11.125 10.625 10.1736 17 9C10.625 7.82638 9.67357 6.87501 8.5 0.5Z"
+            fill={generateRandomColor()}
+          />
+        </svg>
+      </React.Fragment>
+    ));
+
+    return (
+      <div className="w-full bg-primary-blue py-2.5 overflow-hidden">
+        <div className="flex items-center gap-1 animate-scroll">{bannerItems}</div>
+      </div>
+    );
+  };
+
   return (
     <div
       data-testid="not-found"
-      className="bg-[#f6f6f6] fixed inset-0 w-screen h-screen flex flex-col items-center justify-center overflow-hidden z-9999"
+      className="fixed inset-0 w-screen h-screen flex flex-col items-center justify-center overflow-hidden z-[9999]"
+      style={{
+        background: "linear-gradient(180deg, #8BBFFF -21.35%, #F5F5F5 39.13%)",
+      }}
     >
-      {/* Background decorative circles */}
-      <div className="absolute left-1/2 size-[838px] top-1/2 translate-x-[-50%] translate-y-[-50%]">
-        <img alt="" className="block max-w-none size-full" height="838" src="/dark-dotted-circle.svg" width="838" />
-      </div>
-      <div className="absolute left-1/2 size-[1227px] top-1/2 translate-x-[-50%] translate-y-[-50%]">
-        <img
-          alt=""
-          className="block max-w-none size-full"
-          height="1226.996"
-          src="/light-dotted-circle.svg"
-          width="1226.996"
-        />
-      </div>
-
-      {/* Large 404 text */}
-      <div className="relative flex flex-col font-['Neue_Montreal:Bold',_sans-serif] justify-center leading-[0] not-italic text-[#ffffff] text-[433.262px]">
-        <p
-          className="block leading-[81.237px] text-center"
-          style={{
-            textShadow: "0 0 1px #1E8FFF",
-            WebkitTextStroke: "1px #1E8FFF",
-          }}
-        >
-          404
-        </p>
-      </div>
-
-      {/* Blue accent bar */}
-      <span className="bg-[#066eff] text-white text-6xl font-bold mx-auto p-[10px] w-full text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mix-blend-darken">
-        PAGE NOT FOUND
-      </span>
-
-      {/* Navigation breadcrumbs */}
-      <div className="absolute bottom-[18px] left-4 w-[238px] flex flex-col">
-        {actionItems
-          .map(item => ({
-            href: item.link === "" ? "/" : `/${item.link}`,
-            label: item.label.toLowerCase(),
-            disabled: item.disabled,
-          }))
-          .map((item, globalIndex) => ({
-            ...item,
-            number: String(globalIndex + 1).padStart(2, "0"),
-          }))
-          .map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-[7px] py-[5px] pr-2 w-full font-['Neue_Montreal:Medium',_sans-serif] text-[16px] tracking-[-0.32px] uppercase hover:bg-[#066eff] hover:text-white transition-colors ${
-                item.disabled ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              onClick={e => item.disabled && e.preventDefault()}
-            >
-              <div className="text-[#d8d8d8] text-center w-[38.971px] ">
-                <p className="adjustLetterSpacing leading-none">{item.number}</p>
-              </div>
-              <div className="flex-1 text-left ">
-                <p className="leading-none">{item.label}</p>
-              </div>
-              <img alt="" className="w-4 h-4" src="/arrow/thin-arrow-up-right.svg" />
-            </Link>
-          ))}
-      </div>
-
-      {/* Description text */}
-      <div className="absolute left-[34.857px] top-[31.697px] w-[309.652px] font-['Neue_Montreal:Medium',_sans-serif] text-black text-[16px] text-left tracking-[-0.32px] uppercase">
-        <p className="adjustLetterSpacing leading-none">
-          Designed for crypto natives and expert users, our platform offers powerful tools to automate, customize, and
-          optimize financial transactions.
-        </p>
-      </div>
+      <img
+        src="/gift/background-qash-text.svg"
+        alt="background-qash-text"
+        className="w-[1050px] absolute top-80 left-1/2 -translate-x-1/2 -translate-y-1/2 z-1"
+        style={{
+          maskImage: "linear-gradient(to bottom, black 20%, transparent 90%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 20%, transparent 90%)",
+        }}
+      />
 
       {/* Social media links */}
-      <div className="absolute right-4 top-[15px] w-[119px] flex flex-col gap-1.5">
+      <div className="absolute right-[35px] top-[15px] w-fit flex flex-row gap-1">
         {[
           {
             handle: "@qash_finance",
@@ -90,11 +67,12 @@ export default function NotFound() {
             icon: "/social/twitter.svg",
             height: "14.118px",
           },
-          // { handle: "@qash", link: "https://github.com/q3x", icon: "/social/github.svg", height: "14.694px" },
-          // { handle: "@q3xfinance", link: "https://t.me/q3xfinance", icon: "/social/telegram.svg", height: "16.579px" },
+          { handle: "@qash", link: "https://github.com/q3x", icon: "/social/github.svg", height: "14.694px" },
+          { handle: "@q3xfinance", link: "https://t.me/q3xfinance", icon: "/social/telegram.svg", height: "16.579px" },
         ].map(social => (
-          <div key={social.link} className="flex items-center gap-1 h-[19.344px] w-full">
-            <div className="flex-1 font-['Neue_Montreal:Regular',_sans-serif] text-[#191919] text-[15px] text-left">
+          <div key={social.link} className="flex items-center gap-1 w-fit bg-[#FFFFFF] rounded-full px-4 py-2">
+            <img alt="" className="w-3" src={social.icon} />
+            <div className="flex-1 text-[15px]">
               <p
                 className="leading-none hover:underline cursor-pointer"
                 onClick={() => window.open(social.link, "_blank")}
@@ -102,11 +80,35 @@ export default function NotFound() {
                 {social.handle}
               </p>
             </div>
-            <div className={`h-[${social.height}] w-[15px]`}>
-              <img alt="" className="w-full h-full" src={social.icon} />
-            </div>
           </div>
         ))}
+      </div>
+
+      <div className="flex flex-col gap-10 items-center relative z-10 w-full max-w-2xl">
+        <div className="w-full flex flex-col gap-4 items-center">
+          <div className="h-[217px] relative w-full flex justify-center">
+            <div className="flex flex-row w-[450px] h-full">
+              <span className="font-semibold text-[200px] text-primary-blue leading-none">4</span>
+              <img src="/logo/3d-qash-coin.svg" alt="404" className="w-200" />
+              <span className="font-semibold text-[200px] text-primary-blue leading-none">4</span>
+            </div>
+          </div>
+          <p className="text-[24px] font-medium uppercase text-center w-full">LOOK LIKE YOU’RE LOST</p>
+        </div>
+
+        <div className="w-[180px]">
+          <SecondaryButton
+            text="Take me Home"
+            icon="/sidebar/home.svg"
+            iconPosition="left"
+            onClick={() => router.push("/")}
+            variant="dark"
+          />
+        </div>
+      </div>
+
+      <div className="absolute bottom-[30px] w-full">
+        <InfinityBannerContainer />
       </div>
     </div>
   );

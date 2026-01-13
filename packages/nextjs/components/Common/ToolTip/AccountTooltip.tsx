@@ -1,4 +1,6 @@
 "use client";
+import { AuthMeResponse } from "@/services/auth/api";
+import { useAuth } from "@/services/auth/context";
 import React from "react";
 
 interface AccountTooltipProps {
@@ -35,8 +37,21 @@ const TooltipItem = ({
 );
 
 export const AccountTooltip = ({ onLogout }: AccountTooltipProps) => {
+  const { user } = useAuth();
+
   return (
     <div className="bg-white border border-primary-divider rounded-2xl shadow-lg w-[185px]">
+      {/* Support Button */}
+      <TooltipItem>
+        <div className="flex flex-col gap-1">
+          <span className="text-text-primary leading-none">
+            {(user as AuthMeResponse["user"])?.teamMembership?.firstName}{" "}
+            {(user as AuthMeResponse["user"])?.teamMembership?.lastName}
+          </span>
+          <span className="text-text-secondary leading-none">{(user as AuthMeResponse["user"])?.email}</span>
+        </div>
+      </TooltipItem>
+
       {/* Support Button */}
       <TooltipItem onClick={() => window.open("https://forms.gle/gtvo66cQux4a7BCe9", "_blank")}>
         <span className={`text-sm text-text-primary`}>Support</span>

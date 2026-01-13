@@ -53,7 +53,7 @@ const fullscreenPages = new Set([
 ]);
 
 const TestnetBanner = () => (
-  <div className="w-full bg-[#FFD268] text-black text-center p-2 h-[32px] flex items-center justify-center gap-2 text-sm relative">
+  <div className="w-full bg-[#FFD268] text-black text-center p-2 h-[32px] flex items-center justify-center gap-2 text-sm relative z-10">
     <img src="/misc/testnet-background-left.svg" alt="coin-icon" className="w-35 absolute left-0 top-0" />
     <img src="/misc/testnet-background-right.svg" alt="coin-icon" className="w-35 absolute right-0 top-0" />
     <img src="/misc/two-star-icon.svg" alt="coin-icon" className="w-5 h-5 " />
@@ -85,14 +85,6 @@ function ProtectedContent({ children }: { children: ReactNode }) {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   useMobileDetection();
   const pathname = usePathname();
-  const router = useRouter();
-
-  // Redirect from "/" to "/payroll"
-  useEffect(() => {
-    if (pathname === "/") {
-      router.replace("/payroll");
-    }
-  }, [pathname, router]);
 
   const isFullscreen = useMemo(() => {
     if (!pathname) return false;
