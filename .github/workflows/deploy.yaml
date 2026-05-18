@@ -88,9 +88,11 @@ jobs:
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
+      # --- Slack notifications ---
       - name: Notify Success to Slack Channel
         id: slack-success
         if: success()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1.26.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
@@ -101,9 +103,51 @@ jobs:
       - name: Notify Failure to Slack Channel
         id: slack-failure
         if: failure()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1.26.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-message: "❌ Deployment Failed!\nRepository: ${{ needs.check-commit.outputs.REPO_NAME }}\nEnvironment: ${{ needs.check-commit.outputs.ENVIRONMENT }}\nBuild Status: ${{ job.status }}\nTriggered by: ${{ github.actor }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      # --- Discord notifications ---
+      - name: Notify Discord (Success)
+        if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then echo "no Discord webhook configured"; exit 0; fi
+          commit_or_pr_url="${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+          payload=$(jq -n \
+            --arg repo "${{ needs.check-commit.outputs.REPO_NAME }}" \
+            --arg envname "${{ needs.check-commit.outputs.ENVIRONMENT }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg url "$commit_or_pr_url" \
+            '{content: (":white_check_mark: Deployment Successful!\n"
+              + "Repository: " + $repo + "\n"
+              + "Environment: " + $envname + "\n"
+              + "Build Status: success\n"
+              + "Triggered by: " + $actor + "\n"
+              + $url)}')
+          curl -sf -H "Content-Type: application/json" -X POST -d "$payload" "$DISCORD_WEBHOOK_URL"
+
+      - name: Notify Discord (Failure)
+        if: failure()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then echo "no Discord webhook configured"; exit 0; fi
+          commit_or_pr_url="${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+          payload=$(jq -n \
+            --arg repo "${{ needs.check-commit.outputs.REPO_NAME }}" \
+            --arg envname "${{ needs.check-commit.outputs.ENVIRONMENT }}" \
+            --arg actor "${{ github.actor }}" \
+            --arg url "$commit_or_pr_url" \
+            '{content: (":x: Deployment Failed!\n"
+              + "Repository: " + $repo + "\n"
+              + "Environment: " + $envname + "\n"
+              + "Build Status: failure\n"
+              + "Triggered by: " + $actor + "\n"
+              + $url)}')
+          curl -sf -H "Content-Type: application/json" -X POST -d "$payload" "$DISCORD_WEBHOOK_URL"
